@@ -1,6 +1,4 @@
-# Snowpack Demo
-
-Meet Snowpack.
+# exsesx.dev
 
 It's basically the same [my portfolio site](https://github.com/exsesx/exsesx.github.io) (which was recently built with [Next.js]() its `next export` feature), but now it uses [Snowpack](https://www.snowpack.dev/) instead.
 
