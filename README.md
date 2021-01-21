@@ -27,8 +27,12 @@ $ yarn start
 ```shell
 $ yarn build
 
-$ serve build
+$ serve -s build
 ```
+
+## To Do
+
+- [ ] Consider removing React because it's a simple static website.
 
 ## Links
 
