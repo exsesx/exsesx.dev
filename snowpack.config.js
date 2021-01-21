@@ -14,9 +14,7 @@ module.exports = {
     '@snowpack/plugin-sass',
   ],
   exclude: ['**/node_modules/**/*', '.idea', '.vscode'],
-  "routes": [
-    {"match": "routes", "src": ".*", "dest": "/index.html"}
-  ],
+  routes: [{ match: 'routes', src: '.*', dest: '/index.html' }],
   packageOptions: {},
   devOptions: {},
   buildOptions: {},

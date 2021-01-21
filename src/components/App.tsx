@@ -8,7 +8,7 @@ interface AppProps {}
 
 function App({}: AppProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 h-screen flex flex-col">
+    <>
       <Header />
       <Switch>
         <Route path="/about">
@@ -18,7 +18,7 @@ function App({}: AppProps) {
           <Home />
         </Route>
       </Switch>
-    </div>
+    </>
   );
 }
 
