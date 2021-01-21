@@ -4,7 +4,7 @@ interface HomeProps {}
 
 export default function Home({}: HomeProps) {
   return (
-    <div className="container mx-auto flex h-full justify-center items-center">
+    <main className="container mx-auto flex h-full justify-center items-center">
       <div className="grid grid-cols-2 gap-2 items-center">
         <img
           alt="Main Avatar"
@@ -39,6 +39,6 @@ export default function Home({}: HomeProps) {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
