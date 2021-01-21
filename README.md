@@ -6,7 +6,7 @@ Maybe I'll use this code for my portfolio and archive the old repository. We'll 
 
 ## Demo
 
-The demo is available [here](https://snowpack-demo-aoc5e.ondigitalocean.app/). Thanks [DigitalOcean](https://www.digitalocean.com/) (apps) for that.
+The demo is available [here](https://exsesx.dev/). Thanks [DigitalOcean](https://www.digitalocean.com/) (apps) for that.
 
 ## Installation
 
@@ -30,7 +30,7 @@ $ serve -s build
 
 ## To Do
 
-- [ ] Consider removing React because it's a simple static website.
+- [ ] ...
 
 ## Links
 
