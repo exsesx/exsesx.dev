@@ -5,4 +5,5 @@
 #root {
   /* Mobile life-hack https://css-tricks.com/the-trick-to-viewport-units-on-mobile/ */
   height: calc(var(--vh, 1vh) * 100);
+  overflow: auto;
 }
