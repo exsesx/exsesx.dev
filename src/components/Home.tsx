@@ -1,17 +1,14 @@
 import React from 'react';
+import mainImage from '../static/main-image.png';
 
 interface HomeProps {}
 
 export default function Home({}: HomeProps) {
   return (
     <main className="container mx-auto flex h-full justify-center items-center">
-      <div className="grid grid-cols-2 gap-2 items-center">
-        <img
-          alt="Main Avatar"
-          className="h-28 w-28 rounded-full mx-auto"
-          src="https://avatars1.githubusercontent.com/u/20399517?s=460&u=7659ff2e4394643c56a6223b310f3492cd6feb1f&v=4"
-        />
-        <div className="text-left">
+      <div className="grid grid-cols-1 gap-2 justify-center items-center">
+        <img alt="Main Avatar" className="h-80 w-auto object-cover mx-auto mb-4" src={mainImage} />
+        <div className="text-center">
           <h2 className="text-gray-900 dark:text-gray-50 text-xl font-bold">Oleh Vanin</h2>
           <div className="text-gray-600 dark:text-gray-300 text-lg">Software Engineer</div>
           <div className="inline-flex text-gray-600 dark:text-gray-300 mt-2 space-x-2">
