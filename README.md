@@ -30,7 +30,7 @@ $ serve -s build
 
 ## To Do
 
-- [ ] ...
+- [ ] Add ESLint to check TypeScript code
 
 ## Links
 
