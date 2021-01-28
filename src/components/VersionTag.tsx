@@ -3,6 +3,9 @@ import React from "react";
 export default function VersionTag() {
   const version = process.env.GIT_REVISION;
 
+  console.log("--> my revision", process.env.GIT_REVISION);
+  console.log("--> added by system", process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA);
+
   if (!version) return <React.Fragment />;
 
   return (
