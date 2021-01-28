@@ -26,13 +26,14 @@ export default function Home() {
                 alt="GitHub"
                 width={28}
                 height={28}
+                priority
               />
             </a>
             <a href="https://www.linkedin.com/in/exsesx/" className="flex items-center">
-              <Image src="/icons/linkedin.png" objectFit="contain" alt="LinkedIn" width={28} height={28} />
+              <Image src="/icons/linkedin.png" objectFit="contain" alt="LinkedIn" width={28} height={28} priority />
             </a>
             <a href="https://t.me/exsesx" className="flex items-center">
-              <Image src="/icons/telegram.png" objectFit="contain" alt="Telegram" width={28} height={28} />
+              <Image src="/icons/telegram.png" objectFit="contain" alt="Telegram" width={28} height={28} priority />
             </a>
           </div>
         </div>
