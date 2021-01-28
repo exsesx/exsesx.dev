@@ -3,6 +3,6 @@ const gitRevisionPlugin = new GitRevisionPlugin();
 
 module.exports = () => ({
   env: {
-    GIT_REVISION: `${gitRevisionPlugin.version()} ${gitRevisionPlugin.branch()}`,
+    GIT_REVISION: gitRevisionPlugin.version(),
   },
 });
