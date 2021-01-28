@@ -1,9 +1,6 @@
 import Image from "next/image";
-import useMediaQuery from "../utils/hooks/useMediaQuery";
 
 export default function Home() {
-  const isDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-
   return (
     <main className="container mx-auto flex h-full justify-center items-center">
       <div className="grid grid-cols-1 gap-2 justify-center items-center">
@@ -20,14 +17,12 @@ export default function Home() {
           <div className="text-gray-600 dark:text-gray-300 text-lg">Software Engineer</div>
           <div className="inline-flex text-gray-600 dark:text-gray-300 mt-2 space-x-3">
             <a href="https://github.com/exsesx" className="flex items-center">
-              <Image
-                src={isDarkMode ? "/icons/github-light.png" : "/icons/github-dark.png"}
-                objectFit="contain"
-                alt="GitHub"
-                width={28}
-                height={28}
-                priority
-              />
+              <div className="dark:hidden flex">
+                <Image src="/icons/github-dark.png" objectFit="contain" alt="GitHub" width={28} height={28} priority />
+              </div>
+              <div className="hidden dark:flex">
+                <Image src="/icons/github-light.png" objectFit="contain" alt="GitHub" width={28} height={28} priority />
+              </div>
             </a>
             <a href="https://www.linkedin.com/in/exsesx/" className="flex items-center">
               <Image src="/icons/linkedin.png" objectFit="contain" alt="LinkedIn" width={28} height={28} priority />
