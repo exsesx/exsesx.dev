@@ -30,8 +30,8 @@ $ yarn start
 
 ## To Do
 
-- [ ] Favicon
-- [ ]
+- [x] Favicon
+- [ ] Add Git hooks
 
 ## Links
 
