@@ -44,6 +44,8 @@ export default class MyDocument extends Document {
             content="https://avatars.githubusercontent.com/u/20399517?s=460&u=7659ff2e4394643c56a6223b310f3492cd6feb1f&v=4"
           />
 
+          <meta name="google-site-verification" content="NlY8lg13Q1xV0C0JlIkIOnqfpfTWHHY7IwSn-rHdIAc" />
+
           <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
           <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
           <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
