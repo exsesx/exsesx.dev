@@ -5,5 +5,7 @@ export default function VersionTag() {
 
   if (!version) return <React.Fragment />;
 
-  return <div className="fixed bottom-3 right-4 text-gray-900 dark:text-gray-50 opacity-70">{version}</div>;
+  return (
+    <div className="fixed bottom-3 right-4 text-gray-900 dark:text-gray-50 opacity-70 font-mono text-sm">{version}</div>
+  );
 }
