@@ -1,0 +1,9 @@
+import React from "react";
+
+export default function VersionTag() {
+  const version = process.env.GIT_REVISION;
+
+  if (!version) return <React.Fragment />;
+
+  return <div className="fixed bottom-3 right-4 text-gray-900 dark:text-gray-50 opacity-70">{version}</div>;
+}
