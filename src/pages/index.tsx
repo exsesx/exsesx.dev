@@ -13,8 +13,8 @@ export default function Home() {
           objectFit="contain"
         />
         <div className="text-center">
-          <h2 className="text-gray-900 dark:text-gray-50 text-xl font-bold">Oleh Vanin</h2>
-          <div className="text-gray-600 dark:text-gray-300 text-lg">Software Engineer</div>
+          <h1 className="text-gray-900 dark:text-gray-50 text-xl font-bold">Oleh Vanin</h1>
+          <h2 className="text-gray-600 dark:text-gray-300 text-lg">Software Engineer</h2>
           <div className="inline-flex text-gray-600 dark:text-gray-300 mt-2 space-x-3">
             <a href="https://github.com/exsesx" className="flex items-center">
               <div className="dark:hidden flex">

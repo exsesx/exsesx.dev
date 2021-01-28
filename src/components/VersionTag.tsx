@@ -1,14 +1,16 @@
 import React from "react";
 
 export default function VersionTag() {
-  const version = process.env.GIT_REVISION;
+  const commitHash = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
 
-  console.log("--> my revision", process.env.GIT_REVISION);
-  console.log("--> added by system", process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA);
-
-  if (!version) return <React.Fragment />;
-
-  return (
-    <div className="fixed bottom-4 right-4 text-gray-900 dark:text-gray-50 opacity-70 font-mono text-sm">{version}</div>
+  return commitHash ? (
+    <div
+      title={commitHash}
+      className="fixed bottom-4 right-4 text-gray-900 dark:text-gray-50 opacity-70 font-mono text-sm"
+    >
+      {commitHash.substring(0, 7)}
+    </div>
+  ) : (
+    <React.Fragment />
   );
 }
