@@ -4,15 +4,10 @@ export default function Home() {
   return (
     <main className="container mx-auto flex h-full justify-center items-center">
       <div className="grid grid-cols-1 gap-2 justify-center items-center">
-        <Image
-          className="mb-4 mx-auto"
-          src="/images/main.png"
-          alt="Main Picture"
-          width={320}
-          height={320}
-          objectFit="contain"
-        />
-        <div className="text-center">
+        <div className="mb-2 mx-auto">
+          <Image src="/images/main.png" alt="Main Picture" width={360} height={360} objectFit="contain" />
+        </div>
+        <div className="text-center mb-6">
           <h1 className="text-gray-900 dark:text-gray-50 text-xl font-bold">Oleh Vanin</h1>
           <h2 className="text-gray-600 dark:text-gray-300 text-lg">Software Engineer</h2>
           <div className="inline-flex text-gray-600 dark:text-gray-300 mt-2 space-x-3">
