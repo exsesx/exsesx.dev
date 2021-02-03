@@ -32,6 +32,7 @@ $ yarn start
 
 - [x] Favicon
 - [ ] Add Git hooks
+- [ ] Experiment with [AMP](https://amp.dev)
 
 ## Links
 
