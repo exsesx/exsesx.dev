@@ -10,17 +10,17 @@
     "lint": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
-    "autoprefixer": "10.3.7",
-    "next": "12.0.0",
+    "autoprefixer": "10.4.0",
+    "next": "12.0.4",
     "postcss": "8.3.11",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "sharp": "0.29.2",
-    "tailwindcss": "2.2.17"
+    "sharp": "0.29.3",
+    "tailwindcss": "2.2.19"
   },
   "devDependencies": {
-    "@types/node": "16.11.6",
-    "@types/react": "17.0.33",
+    "@types/node": "16.11.7",
+    "@types/react": "17.0.35",
     "prettier": "2.4.1",
     "prettier-plugin-organize-imports": "2.3.4",
     "typescript": "4.4.4"
