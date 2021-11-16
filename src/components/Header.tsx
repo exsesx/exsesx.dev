@@ -1,5 +1,6 @@
 import Link from "next/link";
 import NavLink from "./NavLink";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 export default function Header() {
   return (
@@ -40,12 +41,13 @@ export default function Header() {
                 Home
               </a>
             </NavLink>
-            <NavLink href="/about" activeClassName="font-bold">
+            <NavLink href="/projects" activeClassName="font-bold">
               <a className="inline-block mt-0 mr-4 text-gray-900 dark:text-gray-50 transition-all motion-reduce:transition-none">
-                About
+                Projects
               </a>
             </NavLink>
           </div>
+          <ThemeSwitcher />
         </div>
       </nav>
     </header>
