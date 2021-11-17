@@ -4,8 +4,8 @@ import ThemeSwitcher from "./ThemeSwitcher";
 
 export default function Header() {
   return (
-    <header className="sticky top-0">
-      <nav className="flex items-center justify-between flex-wrap bg-transparent p-6">
+    <header className="sticky top-0 z-50 bg-transparent backdrop-blur-xl py-1 px-6">
+      <nav className="flex items-center justify-between flex-wrap">
         <Link href="/">
           <a>
             <div className="flex items-center flex-no-shrink text-white mr-6">

@@ -1,8 +1,9 @@
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import { MdDarkMode, MdLightMode } from "react-icons/md";
 
 type Mode = "light" | "dark";
 
+// TODO: Persist from localStorage
 export default function ThemeSwitcher() {
   const defaultMode: Mode =
     typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -18,14 +19,8 @@ export default function ThemeSwitcher() {
   }, [mode]);
 
   return (
-    <>
-      <button
-        className="p-0.5 text-gray-900 dark:text-gray-50"
-        onClick={() => setMode(prevState => (prevState === "light" ? "dark" : "light"))}
-      >
-        <MdDarkMode style={{ display: mode === "dark" ? "none" : "block" }} />
-        <MdLightMode style={{ display: mode === "light" ? "none" : "block" }} />
-      </button>
-    </>
+    <button className="flex" onClick={() => setMode(prevState => (prevState === "light" ? "dark" : "light"))}>
+      <Image src={mode === "dark" ? "/icons/light_mode.svg" : "/icons/dark_mode.svg"} width={24} height={24} />
+    </button>
   );
 }
