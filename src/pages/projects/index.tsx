@@ -8,7 +8,7 @@ export default function Projects() {
       <Head>
         <title>Oleh Vanin - Projects</title>
       </Head>
-      <main className="container mx-auto flex justify-center items-center">
+      <main className="container mx-auto flex justify-center items-center mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full h-full mx-6">
           <Card
             link="https://www.huddle.uk.com/"
@@ -32,7 +32,7 @@ export default function Projects() {
             title="This is Language"
             content="thisislanguage.com is an online, video-based resource for language teachers and students around the world, founded on three core principles: Authentic, Efficient, Inspiring."
             renderMedia={() => (
-              <video className="w-full h-60 object-cover" autoPlay loop muted controls={false}>
+              <video className="w-full h-60 object-cover" autoPlay playsInline loop muted controls={false}>
                 <source src="/videos/thisislanguage_preview.mp4" type="video/mp4" />
               </video>
             )}
