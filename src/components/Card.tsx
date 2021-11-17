@@ -27,7 +27,7 @@ export default function Card({
   });
 
   return (
-    <div className="max-w-sm rounded overflow-hidden dark:bg-gray-700 bg-gray-50 shadow-xl mx-auto my-8 transform transition duration-500 hover:scale-110">
+    <div className="max-w-sm lg:max-w-md rounded overflow-hidden dark:bg-gray-700 bg-gray-50 shadow-xl mx-auto md:my-4 sm:my-2 transform transition duration-500 hover:lg:scale-110">
       <div className="relative">
         <a href={link}>
           {typeof renderMedia === "function" && renderMedia()}
