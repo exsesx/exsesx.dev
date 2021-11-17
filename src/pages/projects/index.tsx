@@ -9,7 +9,7 @@ export default function Projects() {
         <title>Oleh Vanin - Projects</title>
       </Head>
       <main className="container mx-auto flex justify-center items-center">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full h-full mx-6">
           <Card
             link="https://www.huddle.uk.com/"
             title="Huddle"
@@ -32,7 +32,7 @@ export default function Projects() {
             title="This is Language"
             content="thisislanguage.com is an online, video-based resource for language teachers and students around the world, founded on three core principles: Authentic, Efficient, Inspiring."
             renderMedia={() => (
-              <video className="w-full h-60 object-cover" autoPlay loop muted>
+              <video className="w-full h-60 object-cover" autoPlay loop muted controls={false}>
                 <source src="/videos/thisislanguage_preview.mp4" type="video/mp4" />
               </video>
             )}
@@ -60,6 +60,23 @@ export default function Projects() {
             )}
             badgePosition="center"
             tags={["restaurant", "food", "chinese"]}
+          />
+          <Card
+            link="https://www.clearstreetbank.com/"
+            title="Clear Street Bank"
+            content="A new banking experience..."
+            renderMedia={() => (
+              <div className="w-full h-60">
+                <Image src="/images/clear_street_preview.jpg" layout="fill" objectFit="cover" priority />
+              </div>
+            )}
+            renderMediaBadge={() => (
+              <div className="w-full h-24">
+                <Image src="/images/clear_street_badge.png" layout="fill" objectFit="contain" />
+              </div>
+            )}
+            badgePosition="center"
+            tags={["fintech", "finances", "microservices"]}
           />
         </div>
       </main>
