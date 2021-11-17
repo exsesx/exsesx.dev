@@ -35,8 +35,8 @@ export default function Card({
         </a>
       </div>
       <div className="px-6 py-4">
-        <div className="font-bold text-xl mb-2 text-gray-900 dark:text-gray-100">{title}</div>
-        <p className="text-gray-900 dark:text-gray-100">{content}</p>
+        <div className="font-bold mb-2 text-gray-900 dark:text-gray-100 prose-lg">{title}</div>
+        <p className="text-gray-900 dark:text-gray-100 prose">{content}</p>
       </div>
       <div className="px-6 py-4">
         {tags.map(tag => (
