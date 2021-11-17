@@ -16,7 +16,7 @@ export default function Projects() {
             content="Huddle takes all of the stress out of organising your bills and gives you one simple payment with no hidden surprises, no hassle and no fuss."
             renderMedia={() => (
               <div className="w-full h-60" style={{ backgroundColor: "#6447BB" }}>
-                <Image src="/images/huddle_preview.png" layout="fill" objectFit="cover" />
+                <Image src="/images/huddle_preview.png" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
@@ -50,7 +50,7 @@ export default function Projects() {
             content="With over 200 combined years of restaurant and technology experience, this team is deeply dedicated and committed to establishing Tso as America’s #1 choice for Chinese food delivery."
             renderMedia={() => (
               <div className="w-full h-60">
-                <Image src="/images/tso_preview.jpg" layout="fill" objectFit="cover" />
+                <Image src="/images/tso_preview.jpg" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
