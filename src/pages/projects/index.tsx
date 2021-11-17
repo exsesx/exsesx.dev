@@ -20,7 +20,7 @@ export default function Projects() {
               </div>
             )}
             renderMediaBadge={() => (
-              <div className="h-12">
+              <div className="h-16">
                 <Image src="/icons/huddle_badge.svg" layout="fill" />
               </div>
             )}
@@ -37,7 +37,7 @@ export default function Projects() {
               </video>
             )}
             renderMediaBadge={() => (
-              <div className="h-12">
+              <div className="h-16">
                 <Image src="/icons/thisislanguage_badge.svg" layout="fill" />
               </div>
             )}
@@ -71,12 +71,29 @@ export default function Projects() {
               </div>
             )}
             renderMediaBadge={() => (
-              <div className="w-full h-24">
+              <div className="w-full h-16">
                 <Image src="/images/clear_street_badge.png" layout="fill" objectFit="contain" />
               </div>
             )}
             badgePosition="center"
             tags={["fintech", "finances", "microservices"]}
+          />
+          <Card
+            link="https://www.coinmena.com"
+            title="CoinMENA"
+            content="CoinMENA is the easiest, safest, and fastest way to buy and sell cryptocurrency. Our goal is to provide direct and regulated access to the digital asset world."
+            renderMedia={() => (
+              <div className="w-full h-60">
+                <Image src="/images/coinmena_preview.jpeg" layout="fill" objectFit="cover" priority />
+              </div>
+            )}
+            renderMediaBadge={() => (
+              <div className="h-16">
+                <Image src="/images/coinmena_badge.jpg" layout="fill" objectFit="contain" />
+              </div>
+            )}
+            badgePosition="center"
+            tags={["finances", "crypto", "arabic"]}
           />
         </div>
       </main>
