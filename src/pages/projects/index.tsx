@@ -8,7 +8,7 @@ export default function Projects() {
       <Head>
         <title>Oleh Vanin - Projects</title>
       </Head>
-      <main className="container mx-auto flex justify-center items-center mb-8">
+      <main className="container mx-auto flex justify-center items-center my-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full h-full mx-6">
           <Card
             link="https://www.huddle.uk.com/"
