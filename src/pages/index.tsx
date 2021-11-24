@@ -1,6 +1,31 @@
 import Image from "next/image";
+import { useEffect } from "react";
+import useSWR, { SWRConfig } from "swr";
+import fetcher from "../lib/fetcher";
 
-export default function Home() {
+const CODEWARS_PROFILE_URL = "https://www.codewars.com/api/v1/users/exsesx";
+
+export async function getStaticProps() {
+  const stats = await fetcher(CODEWARS_PROFILE_URL);
+
+  return {
+    props: {
+      fallback: {
+        [CODEWARS_PROFILE_URL]: stats,
+      },
+    },
+  };
+}
+
+function Home() {
+  const { data, error } = useSWR(CODEWARS_PROFILE_URL, fetcher);
+
+  useEffect(() => {
+    if (!error && data) {
+      console.log("I'm glad you asked! My Codewars profile: %o", data);
+    }
+  }, [data, error]);
+
   return (
     <main className="container mx-auto flex h-full justify-center items-center">
       <div className="grid grid-cols-1 gap-2 justify-center items-center">
@@ -29,5 +54,13 @@ export default function Home() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function HomePage({ fallback }: { fallback: Record<string, unknown> }) {
+  return (
+    <SWRConfig value={{ fallback }}>
+      <Home />
+    </SWRConfig>
   );
 }
