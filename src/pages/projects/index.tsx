@@ -15,12 +15,12 @@ export default function Projects() {
             title="Huddle"
             content="Huddle takes all of the stress out of organising your bills and gives you one simple payment with no hidden surprises, no hassle and no fuss."
             renderMedia={() => (
-              <div className="w-full h-60" style={{ backgroundColor: "#6447BB" }}>
+              <div className="relative w-full h-60" style={{ backgroundColor: "#6447BB" }}>
                 <Image src="/images/huddle_preview.png" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
-              <div className="h-16">
+              <div className="relative w-full h-16">
                 <Image src="/icons/huddle_badge.svg" layout="fill" />
               </div>
             )}
@@ -37,7 +37,7 @@ export default function Projects() {
               </video>
             )}
             renderMediaBadge={() => (
-              <div className="h-16">
+              <div className="relative w-full h-16">
                 <Image src="/icons/thisislanguage_badge.svg" layout="fill" />
               </div>
             )}
@@ -49,12 +49,12 @@ export default function Projects() {
             title="TSO Chinese Delivery"
             content="With over 200 combined years of restaurant and technology experience, this team is deeply dedicated and committed to establishing Tso as America’s #1 choice for Chinese food delivery."
             renderMedia={() => (
-              <div className="w-full h-60">
+              <div className="relative w-full h-60">
                 <Image src="/images/tso_preview.jpg" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
-              <div className="w-full h-16">
+              <div className="relative w-full h-16">
                 <Image src="/icons/tso_badge.svg" layout="fill" objectFit="contain" />
               </div>
             )}
@@ -66,12 +66,12 @@ export default function Projects() {
             title="Clear Street Bank"
             content="A new banking experience..."
             renderMedia={() => (
-              <div className="w-full h-60">
+              <div className="relative w-full h-60">
                 <Image src="/images/clear_street_preview.jpg" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
-              <div className="w-full h-16">
+              <div className="relative w-full h-16">
                 <Image src="/images/clear_street_badge.png" layout="fill" objectFit="contain" />
               </div>
             )}
@@ -83,12 +83,12 @@ export default function Projects() {
             title="CoinMENA"
             content="CoinMENA is the easiest, safest, and fastest way to buy and sell cryptocurrency. Our goal is to provide direct and regulated access to the digital asset world."
             renderMedia={() => (
-              <div className="w-full h-60">
+              <div className="relative w-full h-60">
                 <Image src="/images/coinmena_preview.jpeg" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
-              <div className="h-16">
+              <div className="relative w-full h-16">
                 <Image src="/images/coinmena_badge.jpg" layout="fill" objectFit="contain" />
               </div>
             )}
