@@ -10,11 +10,11 @@ export default function Header() {
           <a>
             <div className="flex items-center flex-no-shrink text-white mr-6">
               <svg
-                className="h-12 w-12 fill-current text-white"
+                className="h-12 w-12 text-white"
                 width="54"
                 height="54"
                 viewBox="0 0 180 180"
-                fill="none"
+                fill="currentColor"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
@@ -34,8 +34,8 @@ export default function Header() {
             </div>
           </a>
         </Link>
-        <div className="flex-grow flex items-center w-auto">
-          <div className="text-sm flex-grow">
+        <div className="grow flex items-center w-auto">
+          <div className="text-sm grow">
             <NavLink href="/" activeClassName="font-bold">
               <a className="inline-block mt-0 mr-4 text-gray-900 dark:text-gray-50 transition-all motion-reduce:transition-none">
                 Home
