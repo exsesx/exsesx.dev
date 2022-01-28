@@ -6,9 +6,9 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-transparent backdrop-blur-xl py-1 px-6">
       <nav className="flex items-center justify-between flex-wrap">
-        <Link href="/">
-          <a>
-            <div className="flex items-center flex-no-shrink text-white mr-6">
+        <div className="flex items-center flex-no-shrink text-white mr-6">
+          <Link href="/">
+            <a>
               <svg
                 className="h-12 w-12 text-white"
                 width="54"
@@ -31,9 +31,9 @@ export default function Header() {
                   stroke="black"
                 />
               </svg>
-            </div>
-          </a>
-        </Link>
+            </a>
+          </Link>
+        </div>
         <div className="grow flex items-center w-auto">
           <div className="text-sm grow">
             <NavLink href="/" activeClassName="font-bold">
