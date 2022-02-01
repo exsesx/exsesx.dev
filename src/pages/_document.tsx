@@ -55,6 +55,7 @@ export default class MyDocument extends Document {
           <meta name="msapplication-config" content="/favicon/browserconfig.xml" />
         </Head>
         <body>
+          <script src="scripts/noflash.js" />
           <Main />
           <NextScript />
         </body>

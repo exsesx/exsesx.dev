@@ -1,7 +1,7 @@
 import Head from "next/head";
-import { SVGProps, useEffect } from "react";
+import { SVGProps } from "react";
 import { animated, useSpring } from "react-spring";
-import useLocalStorage from "../lib/hooks/useLocalStorage";
+import useDarkMode from "use-dark-mode";
 
 type Mode = "light" | "dark";
 
@@ -25,24 +25,16 @@ const ANIMATION_SPRING_CONFIG = { mass: 4, tension: 250, friction: 35 };
 const ICON_SIZE = 24;
 
 export default function ThemeSwitcher() {
-  const defaultMode: Mode =
-    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  const initialState = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  const [mode, setMode] = useLocalStorage<Mode>("exsesx:color-scheme", defaultMode);
+  const darkMode = useDarkMode(initialState, {
+    classNameDark: "dark",
+    classNameLight: "light",
+    element: typeof document !== "undefined" ? document.documentElement : undefined,
+    storageKey: "exsesx:color-scheme",
+  });
 
-  const toggleDarkMode = () => {
-    return setMode(mode === "light" ? "dark" : "light");
-  };
-
-  useEffect(() => {
-    if (mode === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [mode]);
-
-  const { r, transform, cx, cy, opacity } = ANIMATION_PROPERTIES[mode === "dark" ? "dark" : "light"];
+  const { r, transform, cx, cy, opacity } = ANIMATION_PROPERTIES[darkMode.value ? "dark" : "light"];
 
   const svgContainerProps = useSpring({
     to: {
@@ -61,8 +53,8 @@ export default function ThemeSwitcher() {
   return (
     <>
       <Head>
-        <meta name="msapplication-TileColor" content={mode === "dark" ? "#262626" : "#ffffff"} />
-        <meta name="theme-color" content={mode === "dark" ? "#262626" : "#ffffff"} />
+        <meta name="msapplication-TileColor" content={darkMode.value ? "#262626" : "#ffffff"} />
+        <meta name="theme-color" content={darkMode.value ? "#262626" : "#ffffff"} />
       </Head>
       <animated.svg
         xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +67,7 @@ export default function ThemeSwitcher() {
         strokeLinecap="round"
         strokeLinejoin="round"
         stroke="currentColor"
-        onClick={toggleDarkMode}
+        onClick={darkMode.toggle}
         style={{
           cursor: "pointer",
           ...svgContainerProps,
