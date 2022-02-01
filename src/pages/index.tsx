@@ -33,8 +33,10 @@ function Home() {
           <Image src="/images/main.png" alt="Main Picture" width={360} height={360} objectFit="contain" />
         </div>
         <div className="text-center mb-6">
-          <h1 className="text-gray-900 dark:text-gray-50 text-xl font-bold">Oleh Vanin</h1>
-          <h2 className="text-gray-600 dark:text-gray-300 text-lg">Software Engineer</h2>
+          <h1 className="text-gray-900 dark:text-gray-50 text-2xl font-extrabold">Oleh Vanin</h1>
+          <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-pink-400 to-red-600">
+            Software Enthusiast
+          </h2>
           <div className="inline-flex text-gray-600 dark:text-gray-300 mt-2 space-x-3">
             <a href="https://github.com/exsesx" className="flex items-center">
               <div className="dark:hidden flex">
