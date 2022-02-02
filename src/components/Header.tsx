@@ -8,7 +8,7 @@ export default function Header() {
       <nav className="flex items-center justify-between flex-wrap">
         <div className="flex items-center flex-no-shrink text-white mr-6">
           <Link href="/">
-            <a>
+            <a className="rounded-full">
               <svg
                 className="h-12 w-12 text-white"
                 width="54"

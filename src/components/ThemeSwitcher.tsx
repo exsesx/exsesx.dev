@@ -56,46 +56,47 @@ export default function ThemeSwitcher() {
         <meta name="msapplication-TileColor" content={darkMode.value ? "#262626" : "#ffffff"} />
         <meta name="theme-color" content={darkMode.value ? "#262626" : "#ffffff"} />
       </Head>
-      <animated.svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={ICON_SIZE}
-        height={ICON_SIZE}
-        viewBox="0 0 24 24"
-        fill="none"
-        className="text-gray-800 dark:text-white"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        stroke="currentColor"
+      <button
+        className="p-2 transition-colors duration-200 cursor-pointer rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-600"
         onClick={darkMode.toggle}
-        style={{
-          cursor: "pointer",
-          ...svgContainerProps,
-        }}
       >
-        <mask id="myMask2">
-          <rect x="0" y="0" width="100%" height="100%" className="fill-white" />
-          <animated.circle {...maskedCircleProps} r="9" fill="#000" />
-        </mask>
+        <animated.svg
+          xmlns="http://www.w3.org/2000/svg"
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          viewBox="0 0 24 24"
+          fill="none"
+          className="text-gray-800 dark:text-white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          stroke="currentColor"
+          style={svgContainerProps}
+        >
+          <mask id="myMask2">
+            <rect x="0" y="0" width="100%" height="100%" className="fill-white" />
+            <animated.circle {...maskedCircleProps} r="9" fill="#000" />
+          </mask>
 
-        <animated.circle
-          className="fill-gray-800 dark:fill-white"
-          cx="12"
-          cy="12"
-          {...centerCircleProps}
-          mask="url(#myMask2)"
-        />
-        <animated.g stroke="currentColor" style={linesProps}>
-          <line x1="12" y1="1" x2="12" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="23" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-          <line x1="1" y1="12" x2="3" y2="12" />
-          <line x1="21" y1="12" x2="23" y2="12" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </animated.g>
-      </animated.svg>
+          <animated.circle
+            className="fill-gray-800 dark:fill-white"
+            cx="12"
+            cy="12"
+            {...centerCircleProps}
+            mask="url(#myMask2)"
+          />
+          <animated.g stroke="currentColor" style={linesProps}>
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </animated.g>
+        </animated.svg>
+      </button>
     </>
   );
 }

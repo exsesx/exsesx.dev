@@ -8,7 +8,7 @@ interface LayoutProps {
 
 export default function MainLayout({ children }: LayoutProps) {
   return (
-    <div className="bg-slate-50 dark:bg-neutral-800 transition-colors duration-200 w-full h-full flex flex-col overflow-auto">
+    <div className="bg-neutral-50 dark:bg-neutral-800 transition-colors duration-200 w-full h-full flex flex-col overflow-auto">
       <Header />
       {children}
       <VersionTag />
