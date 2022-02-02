@@ -16,12 +16,12 @@ export default function Projects() {
             content="Huddle takes all of the stress out of organising your bills and gives you one simple payment with no hidden surprises, no hassle and no fuss."
             renderMedia={() => (
               <div className="relative w-full h-60" style={{ backgroundColor: "#6447BB" }}>
-                <Image src="/images/huddle_preview.png" layout="fill" objectFit="cover" priority />
+                <Image src="/images/huddle_preview.png" alt="Huddle" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
               <div className="relative w-full h-16">
-                <Image src="/icons/huddle_badge.svg" layout="fill" />
+                <Image src="/icons/huddle_badge.svg" alt="" layout="fill" />
               </div>
             )}
             badgePosition="center"
@@ -38,7 +38,7 @@ export default function Projects() {
             )}
             renderMediaBadge={() => (
               <div className="relative w-full h-16">
-                <Image src="/icons/thisislanguage_badge.svg" layout="fill" />
+                <Image src="/icons/thisislanguage_badge.svg" alt="TIL" layout="fill" />
               </div>
             )}
             badgePosition="center"
@@ -50,12 +50,12 @@ export default function Projects() {
             content="With over 200 combined years of restaurant and technology experience, this team is deeply dedicated and committed to establishing Tso as America’s #1 choice for Chinese food delivery."
             renderMedia={() => (
               <div className="relative w-full h-60">
-                <Image src="/images/tso_preview.jpg" layout="fill" objectFit="cover" priority />
+                <Image src="/images/tso_preview.jpg" alt="TSO" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
               <div className="relative w-full h-16">
-                <Image src="/icons/tso_badge.svg" layout="fill" objectFit="contain" />
+                <Image src="/icons/tso_badge.svg" alt="" layout="fill" objectFit="contain" />
               </div>
             )}
             badgePosition="center"
@@ -67,12 +67,12 @@ export default function Projects() {
             content="A new banking experience..."
             renderMedia={() => (
               <div className="relative w-full h-60">
-                <Image src="/images/clear_street_preview.jpg" layout="fill" objectFit="cover" priority />
+                <Image src="/images/clear_street_preview.jpg" alt="DBS" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
               <div className="relative w-full h-16">
-                <Image src="/images/clear_street_badge.png" layout="fill" objectFit="contain" />
+                <Image src="/images/clear_street_badge.png" alt="" layout="fill" objectFit="contain" />
               </div>
             )}
             badgePosition="center"
@@ -84,12 +84,12 @@ export default function Projects() {
             content="CoinMENA is the easiest, safest, and fastest way to buy and sell cryptocurrency. Our goal is to provide direct and regulated access to the digital asset world."
             renderMedia={() => (
               <div className="relative w-full h-60">
-                <Image src="/images/coinmena_preview.jpeg" layout="fill" objectFit="cover" priority />
+                <Image src="/images/coinmena_preview.jpeg" alt="CoinMENA" layout="fill" objectFit="cover" priority />
               </div>
             )}
             renderMediaBadge={() => (
               <div className="relative w-full h-16">
-                <Image src="/images/coinmena_badge.jpg" layout="fill" objectFit="contain" />
+                <Image src="/images/coinmena_badge.jpg" alt="" layout="fill" objectFit="contain" />
               </div>
             )}
             badgePosition="center"
