@@ -1,5 +1,4 @@
 import Document, { DocumentContext, Head, Html, Main, NextScript } from "next/document";
-import Script from "next/script";
 
 export default class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -56,7 +55,6 @@ export default class MyDocument extends Document {
           <meta name="msapplication-config" content="/favicon/browserconfig.xml" />
         </Head>
         <body>
-          <Script src="scripts/noflash.js" strategy="beforeInteractive" />
           <Main />
           <NextScript />
         </body>
