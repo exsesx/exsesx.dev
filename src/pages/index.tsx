@@ -34,7 +34,10 @@ function Home() {
         </div>
         <div className="text-center mb-6">
           <h1 className="text-gray-900 dark:text-gray-50 text-2xl font-extrabold">Oleh Vanin</h1>
-          <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-pink-400 to-red-600">
+          {/* red cool gradient = from-[#ff7100] to-[#f300ad] dark:from-[#ff6656] dark:to-[#ff87b2] */}
+          {/* yellow cool gradient = from-[#f3aa00] to-[#e43e29] dark:from-[#ff8272] dark:to-[#ffd87d] */}
+          {/* green cool gradient = from-[#28bcbe] to-[#3935dd] dark:from-[#9ff6d1] dark:to-[#72bdf5] */}
+          <h2 className="mb-2 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#f3aa00] to-[#e43e29] dark:from-[#ff8272] dark:to-[#ffd87d]">
             Software Enthusiast
           </h2>
           <div className="inline-flex text-gray-600 dark:text-gray-300 mt-2 space-x-3">
