@@ -7,4 +7,3 @@ Host: https://exsesx.dev
 
 # Sitemaps
 Sitemap: https://exsesx.dev/sitemap.xml
-Sitemap: https://exsesx.dev/sitemap-0.xml
