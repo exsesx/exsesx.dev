@@ -6,7 +6,8 @@ module.exports = {
     formats: ["image/avif", "image/webp"],
   },
   experimental: {
+    browsersListForSwc: true,
+    legacyBrowsers: false,
     optimizeCss: true,
-    runtime: "nodejs",
   },
 };
