@@ -7,7 +7,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-transparent backdrop-blur-md py-1 px-6">
       <nav className="flex items-center justify-between flex-wrap">
         <div className="flex items-center flex-no-shrink text-white mr-6">
-          <Link href="/">
+          <Link legacyBehavior passHref href="/">
             <a className="rounded-full">
               <svg
                 className="h-12 w-12 text-white"
