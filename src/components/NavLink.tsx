@@ -1,4 +1,5 @@
 import Link, { LinkProps } from "next/link";
+import classNames from "classnames";
 import { useRouter } from "next/router";
 import React from "react";
 
@@ -10,11 +11,11 @@ export default function NavLink({ href, children, activeClassName, ...linkProps 
   let className = children.props.className || "";
 
   if (pathname === href) {
-    className = `${className} ${activeClassName}`;
+    className = classNames(className, activeClassName);
   }
 
   return (
-    <Link href={href} {...linkProps}>
+    <Link passHref legacyBehavior href={href} {...linkProps}>
       {React.cloneElement(children, { className })}
     </Link>
   );
