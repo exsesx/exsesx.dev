@@ -16,8 +16,36 @@
   function setSeasonalFavicon() {
     var now = new Date();
     var isPrideMonth = now.getMonth() === 5;
-    var seasonalHref = "/favicon/favicon-pride.svg?v=pride-2026";
-    var iconLinks = Array.prototype.slice.call(document.querySelectorAll("link[rel~='icon']"));
+    var seasonalHrefDark = "/favicon/favicon-pride-dark.svg?v=pride-2026";
+    var seasonalHrefLight = "/favicon/favicon-pride-light.svg?v=pride-2026";
+    var seasonalHref32Dark = "/favicon/favicon-pride-dark-32x32.png?v=pride-2026";
+    var seasonalHref32Light = "/favicon/favicon-pride-light-32x32.png?v=pride-2026";
+    var seasonalHref16Dark = "/favicon/favicon-pride-dark-16x16.png?v=pride-2026";
+    var seasonalHref16Light = "/favicon/favicon-pride-light-16x16.png?v=pride-2026";
+    var seasonalAppleHrefDark = "/favicon/apple-touch-icon-pride-dark.png?v=pride-2026";
+    var seasonalAppleHrefLight = "/favicon/apple-touch-icon-pride-light.png?v=pride-2026";
+    var iconLinks = Array.prototype.slice.call(
+      document.querySelectorAll("link[rel~='icon'], link[rel='apple-touch-icon']"),
+    );
+    var isDarkResolved = element.classList.contains(classNameDark);
+
+    if (isPrideMonth) {
+      element.dataset.season = "pride";
+    } else {
+      delete element.dataset.season;
+    }
+
+    function setAttribute(link, name, value) {
+      if (link.getAttribute(name) !== value) {
+        link.setAttribute(name, value);
+      }
+    }
+
+    function removeAttribute(link, name) {
+      if (link.hasAttribute(name)) {
+        link.removeAttribute(name);
+      }
+    }
 
     function rememberDefault(link) {
       if (!("defaultHref" in link.dataset)) {
@@ -42,25 +70,29 @@
         return;
       }
 
-      link.setAttribute("href", link.dataset.defaultHref);
+      setAttribute(link, "href", link.dataset.defaultHref);
 
       if (link.dataset.defaultType) {
-        link.setAttribute("type", link.dataset.defaultType);
+        setAttribute(link, "type", link.dataset.defaultType);
       } else {
-        link.removeAttribute("type");
+        removeAttribute(link, "type");
       }
 
       if (link.dataset.defaultMedia) {
-        link.setAttribute("media", link.dataset.defaultMedia);
+        setAttribute(link, "media", link.dataset.defaultMedia);
       } else {
-        link.removeAttribute("media");
+        removeAttribute(link, "media");
       }
 
       if (link.dataset.defaultSizes) {
-        link.setAttribute("sizes", link.dataset.defaultSizes);
+        setAttribute(link, "sizes", link.dataset.defaultSizes);
       } else {
-        link.removeAttribute("sizes");
+        removeAttribute(link, "sizes");
       }
+    }
+
+    function contrastHref(darkTileHref, lightTileHref) {
+      return isDarkResolved ? lightTileHref : darkTileHref;
     }
 
     if (iconLinks.length === 0) {
@@ -74,10 +106,46 @@
       rememberDefault(link);
 
       if (isPrideMonth) {
-        link.setAttribute("href", seasonalHref);
-        link.setAttribute("type", "image/svg+xml");
-        link.removeAttribute("media");
-        link.removeAttribute("sizes");
+        if (link.getAttribute("rel") === "apple-touch-icon") {
+          setAttribute(link, "href", contrastHref(seasonalAppleHrefDark, seasonalAppleHrefLight));
+          setAttribute(link, "sizes", "180x180");
+          removeAttribute(link, "media");
+          removeAttribute(link, "type");
+
+          return;
+        }
+
+        var sizes = link.dataset.defaultSizes || link.getAttribute("sizes") || "";
+        var media = link.dataset.defaultMedia || link.getAttribute("media") || "";
+        var href = contrastHref(seasonalHrefDark, seasonalHrefLight);
+        var type = "image/svg+xml";
+
+        if (sizes === "32x32") {
+          href = contrastHref(seasonalHref32Dark, seasonalHref32Light);
+          type = "image/png";
+        } else if (sizes === "16x16") {
+          href = contrastHref(seasonalHref16Dark, seasonalHref16Light);
+          type = "image/png";
+        } else if (media.indexOf("prefers-color-scheme: light") !== -1) {
+          href = seasonalHrefDark;
+        } else if (media.indexOf("prefers-color-scheme: dark") !== -1) {
+          href = seasonalHrefLight;
+        }
+
+        setAttribute(link, "href", href);
+        setAttribute(link, "type", type);
+
+        if (media && sizes !== "32x32" && sizes !== "16x16") {
+          setAttribute(link, "media", media);
+        } else {
+          removeAttribute(link, "media");
+        }
+
+        if (sizes === "32x32" || sizes === "16x16") {
+          setAttribute(link, "sizes", sizes);
+        } else {
+          removeAttribute(link, "sizes");
+        }
 
         return;
       }
@@ -120,4 +188,20 @@
 
   setSeasonalFavicon();
   window.setInterval(setSeasonalFavicon, 60 * 60 * 1000);
+
+  if ("MutationObserver" in window) {
+    var faviconObserver = new MutationObserver(setSeasonalFavicon);
+    faviconObserver.observe(document.head, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["href", "media", "rel", "sizes", "type"],
+    });
+
+    var themeObserver = new MutationObserver(setSeasonalFavicon);
+    themeObserver.observe(element, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme-mode"],
+    });
+  }
 })();

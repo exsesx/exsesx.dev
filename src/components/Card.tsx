@@ -1,9 +1,11 @@
+"use client";
+
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import { PointerEvent, useState } from "react";
 import { Project } from "../lib/projects";
 import { Badge } from "./ui/badge";
-import { buttonVariants } from "./ui/button";
+import { buttonVariants } from "./ui/button-variants";
 import { Card as UiCard, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +59,7 @@ export default function ProjectCard({ project, featured = false, density = "defa
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   const isCompact = density === "compact";
   const visibleTags = isCompact ? project.tags.slice(0, 3) : project.tags;
+  const mediaMinHeight = isCompact ? 144 : featured ? 288 : 220;
 
   function loadVideoPreview() {
     if (media.type === "video") {
@@ -69,7 +72,7 @@ export default function ProjectCard({ project, featured = false, density = "defa
       onPointerMove={updatePointerPosition}
       className={cn(
         "interactive-card group relative isolate overflow-hidden border-border bg-card/75 py-0 shadow-project-card backdrop-blur-xl hover:border-ring/30",
-        isCompact ? "h-full rounded-[1.35rem]" : "rounded-[1.75rem]",
+        isCompact ? "h-full rounded-[1.25rem]" : "h-full rounded-[1.75rem]",
         featured && !isCompact ? "lg:grid lg:grid-cols-[1.05fr_0.95fr]" : "",
       )}
     >
@@ -81,9 +84,12 @@ export default function ProjectCard({ project, featured = false, density = "defa
         onFocusCapture={loadVideoPreview}
         className={cn(
           "relative overflow-hidden bg-zinc-950",
-          isCompact ? "aspect-[16/9] min-h-0" : featured ? "min-h-72 lg:min-h-full" : "aspect-[16/11] min-h-56",
+          isCompact ? "h-36 sm:h-40" : featured ? "h-64 sm:h-72 lg:h-auto lg:min-h-72" : "h-52 sm:h-56",
         )}
-        style={media.type === "image" && media.backgroundColor ? { backgroundColor: media.backgroundColor } : undefined}
+        style={{
+          minHeight: mediaMinHeight,
+          ...(media.type === "image" && media.backgroundColor ? { backgroundColor: media.backgroundColor } : {}),
+        }}
       >
         <a href={project.href} aria-label={`Open ${project.title}`} className="absolute inset-0 z-10" />
         {media.type === "image" ? (
@@ -93,7 +99,7 @@ export default function ProjectCard({ project, featured = false, density = "defa
             fill
             sizes={
               isCompact
-                ? "(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
+                ? "(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                 : featured
                   ? "(min-width: 1024px) 48vw, 100vw"
                   : "(min-width: 1024px) 33vw, 100vw"
@@ -115,11 +121,11 @@ export default function ProjectCard({ project, featured = false, density = "defa
         </div>
       </div>
 
-      <div className="flex min-h-full flex-col">
+      <div className="flex flex-1 flex-col">
         <CardHeader
           className={cn(
             "mb-1 flex flex-row items-start justify-between gap-4",
-            isCompact ? "px-4 pt-4 sm:px-5 sm:pt-5" : "px-6 pt-6 sm:px-7 sm:pt-7",
+            isCompact ? "px-5 pt-5" : "px-6 pt-6 sm:px-7 sm:pt-7",
           )}
         >
           <div>
@@ -140,32 +146,35 @@ export default function ProjectCard({ project, featured = false, density = "defa
             </a>
           </CardAction>
         </CardHeader>
-        <CardContent
-          className={cn("flex flex-1 flex-col", isCompact ? "px-4 pb-4 sm:px-5 sm:pb-5" : "px-6 pb-6 sm:px-7 sm:pb-7")}
-        >
+        <CardContent className={cn("flex flex-1 flex-col", isCompact ? "px-5 pb-5" : "px-6 pb-6 sm:px-7 sm:pb-7")}>
           <CardDescription
-            className={cn(
-              "text-muted-foreground",
-              isCompact ? "line-clamp-3 text-sm leading-6" : "text-base leading-7",
-            )}
+            className={cn("text-muted-foreground", isCompact ? "text-sm leading-6" : "text-base leading-7")}
           >
             {project.description}
           </CardDescription>
           <p
             className={cn(
               "border-l-2 border-border pl-4 text-sm font-bold leading-6 text-foreground",
-              isCompact ? "mt-4 line-clamp-2" : "mt-5",
+              isCompact ? "mt-4" : "mt-5",
             )}
           >
             {project.impact}
           </p>
-          <div className={cn("mt-auto flex flex-wrap gap-2", isCompact ? "pt-4" : "pt-7")}>
+          <div className={cn("flex flex-wrap gap-2", isCompact ? "mt-5" : "mt-auto pt-5")}>
             {visibleTags.map(tag => (
-              <Badge key={tag} variant="outline" className="bg-background/55 font-bold">
+              <Badge key={tag} variant="secondary" className="h-6 bg-secondary/75 px-2.5 text-[11px] font-bold">
                 {tag}
               </Badge>
             ))}
           </div>
+          {isCompact ? (
+            <div className="mt-auto pt-5">
+              <a href={project.href} className={cn(buttonVariants({ variant: "glass", size: "sm" }), "w-fit")}>
+                Open project
+                <ArrowUpRight data-icon="inline-end" strokeWidth={2.4} />
+              </a>
+            </div>
+          ) : null}
         </CardContent>
       </div>
     </UiCard>
