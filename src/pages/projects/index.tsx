@@ -1,101 +1,74 @@
+import { Code2, Layers3 } from "lucide-react";
 import Head from "next/head";
-import Image from "next/image";
 import Card from "../../components/Card";
+import { GithubIcon } from "../../components/icons/lucide-github";
+import { buttonVariants } from "../../components/ui/button";
+import { Card as UiCard, CardContent } from "../../components/ui/card";
+import { projects } from "../../lib/projects";
+import { cn } from "../../lib/utils";
 
 export default function Projects() {
   return (
     <>
       <Head>
         <title>Oleh Vanin - Projects</title>
+        <meta
+          name="description"
+          content="Selected product engineering work by Oleh Vanin across fintech, education, commerce, utilities, and digital asset products."
+        />
       </Head>
-      <main className="container mx-auto flex justify-center items-center my-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full h-full mx-6">
-          <Card
-            link="https://www.huddle.uk.com/"
-            title="Huddle"
-            content="Huddle takes all of the stress out of organising your bills and gives you one simple payment with no hidden surprises, no hassle and no fuss."
-            renderMedia={() => (
-              <div className="relative w-full h-60" style={{ backgroundColor: "#6447BB" }}>
-                <Image src="/images/huddle_preview.png" alt="Huddle" layout="fill" objectFit="cover" priority />
+      <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:pt-28">
+        <section className="grid gap-5 lg:grid-cols-[0.72fr_0.28fr] lg:items-end">
+          <div className="motion-rise">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Project index</p>
+            <h1 className="mt-3 max-w-4xl text-balance text-[clamp(2.75rem,6vw,5.75rem)] font-black leading-[0.9] tracking-tight text-foreground">
+              Built across real constraints.
+            </h1>
+          </div>
+
+          <UiCard className="motion-rise motion-delay-1 rounded-[1.5rem] border-border bg-card/75 py-0 shadow-panel backdrop-blur-2xl">
+            <CardContent className="flex gap-3 px-4 py-4 sm:px-5">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                <Layers3 size={20} strokeWidth={2.4} />
+              </span>
+              <div>
+                <p className="text-base font-black text-foreground">{projects.length} selected surfaces</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Commerce, education, banking, utilities, regulated crypto, and learning tools.
+                </p>
               </div>
-            )}
-            renderMediaBadge={() => (
-              <div className="relative w-full h-16">
-                <Image src="/icons/huddle_badge.svg" alt="" layout="fill" />
-              </div>
-            )}
-            badgePosition="center"
-            tags={["utilities", "tenancy", "landlords"]}
-          />
-          <Card
-            link="https://www.thisislanguage.com/"
-            title="This is Language"
-            content="thisislanguage.com is an online, video-based resource for language teachers and students around the world, founded on three core principles: Authentic, Efficient, Inspiring."
-            renderMedia={() => (
-              <video className="w-full h-60 object-cover" autoPlay playsInline loop muted controls={false}>
-                <source src="/videos/thisislanguage_preview.mp4" type="video/mp4" />
-              </video>
-            )}
-            renderMediaBadge={() => (
-              <div className="relative w-full h-16">
-                <Image src="/icons/thisislanguage_badge.svg" alt="TIL" layout="fill" />
-              </div>
-            )}
-            badgePosition="center"
-            tags={["learning", "platform", "students", "schools"]}
-          />
-          <Card
-            link="https://tsodelivery.com"
-            title="TSO Chinese Delivery"
-            content="With over 200 combined years of restaurant and technology experience, this team is deeply dedicated and committed to establishing Tso as America’s #1 choice for Chinese food delivery."
-            renderMedia={() => (
-              <div className="relative w-full h-60">
-                <Image src="/images/tso_preview.jpg" alt="TSO" layout="fill" objectFit="cover" priority />
-              </div>
-            )}
-            renderMediaBadge={() => (
-              <div className="relative w-full h-16">
-                <Image src="/icons/tso_badge.svg" alt="" layout="fill" objectFit="contain" />
-              </div>
-            )}
-            badgePosition="center"
-            tags={["restaurant", "food", "chinese"]}
-          />
-          <Card
-            link="https://www.clearstreetbank.com/"
-            title="Clear Street Bank"
-            content="A new banking experience..."
-            renderMedia={() => (
-              <div className="relative w-full h-60">
-                <Image src="/images/clear_street_preview.jpg" alt="DBS" layout="fill" objectFit="cover" priority />
-              </div>
-            )}
-            renderMediaBadge={() => (
-              <div className="relative w-full h-16">
-                <Image src="/images/clear_street_badge.png" alt="" layout="fill" objectFit="contain" />
-              </div>
-            )}
-            badgePosition="center"
-            tags={["fintech", "finances", "microservices"]}
-          />
-          <Card
-            link="https://www.coinmena.com"
-            title="CoinMENA"
-            content="CoinMENA is the easiest, safest, and fastest way to buy and sell cryptocurrency. Our goal is to provide direct and regulated access to the digital asset world."
-            renderMedia={() => (
-              <div className="relative w-full h-60">
-                <Image src="/images/coinmena_preview.jpeg" alt="CoinMENA" layout="fill" objectFit="cover" priority />
-              </div>
-            )}
-            renderMediaBadge={() => (
-              <div className="relative w-full h-16">
-                <Image src="/images/coinmena_badge.jpg" alt="" layout="fill" objectFit="contain" />
-              </div>
-            )}
-            badgePosition="center"
-            tags={["finances", "crypto", "arabic"]}
-          />
-        </div>
+            </CardContent>
+          </UiCard>
+        </section>
+
+        <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {projects.map(project => (
+            <div key={project.title} className="motion-rise h-full">
+              <Card project={project} density="compact" />
+            </div>
+          ))}
+        </section>
+
+        <section className="mt-10 rounded-[1.5rem] border border-border bg-primary p-5 text-primary-foreground shadow-project-cta sm:p-6">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+            <div>
+              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.24em] opacity-70">
+                <Code2 size={15} strokeWidth={2.4} />
+                Current appetite
+              </p>
+              <h2 className="mt-2 max-w-3xl text-2xl font-black tracking-tight sm:text-3xl">
+                Useful interfaces with architecture underneath, not just shine on top.
+              </h2>
+            </div>
+            <a
+              href="https://github.com/exsesx"
+              className={cn(buttonVariants({ variant: "inverse", size: "lg" }), "shrink-0")}
+            >
+              <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
+              More on GitHub
+            </a>
+          </div>
+        </section>
       </main>
     </>
   );

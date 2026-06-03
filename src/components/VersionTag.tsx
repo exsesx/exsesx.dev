@@ -6,7 +6,7 @@ export default function VersionTag() {
   return commitHash ? (
     <div
       title={commitHash}
-      className="fixed bottom-4 right-4 text-gray-900 dark:text-gray-50 opacity-70 font-mono text-sm"
+      className="fixed bottom-4 right-4 rounded-full border border-border bg-card/70 px-3 py-1 font-mono text-xs font-bold text-muted-foreground opacity-70 shadow-sm backdrop-blur-xl"
     >
       {commitHash.substring(0, 7)}
     </div>
