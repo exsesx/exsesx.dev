@@ -265,7 +265,7 @@ export default function HomePage() {
         </section>
 
         <Separator />
-        <section className="py-16">
+        <section className="py-16 pb-0">
           <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Selected projects</p>
