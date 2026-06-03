@@ -48,7 +48,7 @@ export default function Header() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 py-3 sm:px-6">
       <nav
-        className="liquid-glass mx-auto flex items-center justify-between gap-3 rounded-full px-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[var(--ease-out)]"
+        className="liquid-glass site-nav-glass mx-auto flex items-center justify-between gap-3 rounded-full px-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[var(--ease-out)]"
         style={{
           maxWidth: `${maxWidthRem}rem`,
           paddingTop: `${paddingYRem}rem`,

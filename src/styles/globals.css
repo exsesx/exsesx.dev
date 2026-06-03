@@ -318,6 +318,47 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
     0 18px 50px rgba(0, 0, 0, 0.24);
 }
 
+.site-nav-glass {
+  position: relative;
+  isolation: isolate;
+  border-color: color-mix(in oklab, currentColor 8%, transparent);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.78), transparent 34%),
+    linear-gradient(135deg, rgba(255, 250, 241, 0.54), rgba(255, 250, 241, 0.2)),
+    color-mix(in oklab, #fffaf1 34%, transparent);
+  box-shadow: 0 18px 46px rgba(24, 24, 27, 0.1);
+  transform: translateZ(0);
+  backdrop-filter: blur(30px) saturate(1.58) contrast(1.04);
+  -webkit-backdrop-filter: blur(30px) saturate(1.58) contrast(1.04);
+}
+
+.dark .site-nav-glass {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(30, 31, 31, 0.58), rgba(16, 17, 17, 0.26)),
+    color-mix(in oklab, #101111 30%, transparent);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 639px) {
+  .site-nav-glass {
+    background:
+      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.82), transparent 36%),
+      linear-gradient(135deg, rgba(255, 250, 241, 0.48), rgba(255, 250, 241, 0.16)),
+      color-mix(in oklab, #fffaf1 26%, transparent);
+    box-shadow: 0 16px 40px rgba(24, 24, 27, 0.12);
+    backdrop-filter: blur(34px) saturate(1.72) contrast(1.06);
+    -webkit-backdrop-filter: blur(34px) saturate(1.72) contrast(1.06);
+  }
+
+  .dark .site-nav-glass {
+    background:
+      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.18), transparent 36%),
+      linear-gradient(135deg, rgba(30, 31, 31, 0.48), rgba(16, 17, 17, 0.18)),
+      color-mix(in oklab, #101111 22%, transparent);
+  }
+}
+
 .interactive-card {
   --pointer-x: 50%;
   --pointer-y: 50%;
