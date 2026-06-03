@@ -144,7 +144,6 @@ export default function ThemeSwitcher() {
     root.classList.toggle("dark", isDark);
     root.classList.toggle("light", !isDark);
     root.dataset.themeMode = mode;
-    setMetaContent("msapplication-TileColor", isDark ? "#101111" : "#f8f1e7");
     setMetaContent("theme-color", isDark ? "#101111" : "#f8f1e7");
   }, [isDark, mode]);
 
