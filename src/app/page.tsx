@@ -85,7 +85,7 @@ export default function HomePage() {
   return (
     <>
       <main className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-20 pt-28 sm:px-6 lg:pt-32">
-        <section className="grid min-h-[calc(100svh-8rem)] items-center gap-10 py-8 lg:grid-cols-[1.04fr_0.96fr] lg:py-12">
+        <section className="hero-viewport grid items-center gap-10 py-8 lg:grid-cols-[1.04fr_0.96fr] lg:py-12">
           <div className="max-w-4xl">
             <div className="motion-rise liquid-glass mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground">
               <Sparkles size={15} strokeWidth={2.4} className="text-accent" />
