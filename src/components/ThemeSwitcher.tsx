@@ -1,5 +1,6 @@
+"use client";
+
 import { Check, Monitor, Moon, Sun } from "lucide-react";
-import Head from "next/head";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
@@ -104,6 +105,18 @@ function persistThemeMode(mode: ThemeMode) {
   window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
 }
 
+function setMetaContent(name: string, content: string) {
+  let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = name;
+    document.head.appendChild(meta);
+  }
+
+  meta.content = content;
+}
+
 function parseThemeSnapshot(snapshot: string) {
   const [mode = "system", resolvedTheme = "light"] = snapshot.split(":");
 
@@ -131,6 +144,8 @@ export default function ThemeSwitcher() {
     root.classList.toggle("dark", isDark);
     root.classList.toggle("light", !isDark);
     root.dataset.themeMode = mode;
+    setMetaContent("msapplication-TileColor", isDark ? "#101111" : "#f8f1e7");
+    setMetaContent("theme-color", isDark ? "#101111" : "#f8f1e7");
   }, [isDark, mode]);
 
   useEffect(() => {
@@ -160,61 +175,53 @@ export default function ThemeSwitcher() {
   }, [isOpen]);
 
   return (
-    <>
-      <Head>
-        <meta name="msapplication-TileColor" content={isDark ? "#101111" : "#f8f1e7"} />
-        <meta name="theme-color" content={isDark ? "#101111" : "#f8f1e7"} />
-      </Head>
-      <div ref={menuRef} className="relative">
-        <Button
-          type="button"
-          variant="glass"
-          size="icon"
-          className="relative active:scale-[0.97]"
-          aria-label={`Theme: ${activeOption.label}`}
-          aria-haspopup="menu"
-          aria-expanded={isOpen}
-          onClick={() => setIsOpen(current => !current)}
+    <div ref={menuRef} className="relative">
+      <Button
+        type="button"
+        variant="glass"
+        size="icon"
+        className="relative active:scale-[0.97]"
+        aria-label={`Theme: ${activeOption.label}`}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen(current => !current)}
+      >
+        <ActiveIcon strokeWidth={2.2} />
+      </Button>
+
+      {isOpen ? (
+        <div
+          role="menu"
+          aria-label="Choose color theme"
+          className="theme-menu liquid-glass absolute right-0 top-12 z-50 w-44 rounded-2xl p-1.5 shadow-menu"
         >
-          <ActiveIcon strokeWidth={2.2} />
-        </Button>
+          {themeOptions.map(option => {
+            const Icon = option.icon;
+            const isActive = option.mode === mode;
 
-        {isOpen ? (
-          <div
-            role="menu"
-            aria-label="Choose color theme"
-            className="theme-menu liquid-glass absolute right-0 top-12 z-50 w-36 rounded-2xl p-1.5 shadow-menu"
-          >
-            {themeOptions.map(option => {
-              const Icon = option.icon;
-              const isActive = option.mode === mode;
-
-              return (
-                <button
-                  key={option.mode}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={isActive}
-                  className={cn(
-                    "theme-menu-item flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition-[background-color,color,transform] duration-150 ease-[var(--ease-weight)] active:scale-[0.97]",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-muted hover:text-accent",
-                  )}
-                  onClick={() => {
-                    persistThemeMode(option.mode);
-                    setIsOpen(false);
-                  }}
-                >
-                  <Icon data-icon="inline-start" strokeWidth={2.2} />
-                  <span className="min-w-0 flex-1 font-bold leading-none">{option.label}</span>
-                  {isActive ? <Check data-icon="inline-end" strokeWidth={2.4} /> : null}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
-    </>
+            return (
+              <button
+                key={option.mode}
+                type="button"
+                role="menuitemradio"
+                aria-checked={isActive}
+                className={cn(
+                  "theme-menu-item grid h-11 w-full grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3 rounded-xl px-3 text-left text-sm transition-[background-color,color,transform] duration-150 ease-[var(--ease-weight)] active:scale-[0.97]",
+                  isActive ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted hover:text-accent",
+                )}
+                onClick={() => {
+                  persistThemeMode(option.mode);
+                  setIsOpen(false);
+                }}
+              >
+                <Icon data-icon="inline-start" strokeWidth={2.2} />
+                <span className="min-w-0 flex-1 font-bold leading-none">{option.label}</span>
+                {isActive ? <Check data-icon="inline-end" strokeWidth={2.4} /> : <span aria-hidden="true" />}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { BriefcaseBusiness, Home } from "lucide-react";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
+import LogoMark from "./LogoMark";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { GithubIcon } from "./icons/lucide-github";
-import { buttonVariants } from "./ui/button";
+import { buttonVariants } from "./ui/button-variants";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -17,14 +20,6 @@ const EXPANDED_MAX_WIDTH_REM = 80;
 const COMPACT_MAX_WIDTH_REM = 64;
 const EXPANDED_PADDING_Y_REM = 0.5;
 const COMPACT_PADDING_Y_REM = 0.375;
-
-function LogoMark() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 512 512" className="size-5" fill="none">
-      <path d="M104 116H179L256 325L333 116H408L286 420C277 444 245 444 236 420L104 116Z" fill="currentColor" />
-    </svg>
-  );
-}
 
 function subscribeToScroll(callback: () => void) {
   window.addEventListener("scroll", callback, { passive: true });
@@ -41,7 +36,7 @@ function getServerScrollProgressSnapshot() {
 }
 
 export default function Header() {
-  const { pathname } = useRouter();
+  const pathname = usePathname();
   const scrollProgress = useSyncExternalStore(
     subscribeToScroll,
     getScrollProgressSnapshot,
@@ -62,11 +57,12 @@ export default function Header() {
       >
         <Link
           href="/"
+          transitionTypes={["nav-back"]}
           className="group flex min-w-0 items-center gap-2 rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
           aria-label="Oleh Vanin home"
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.04] group-active:scale-[0.96]">
-            <LogoMark />
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.04] group-active:scale-[0.96]">
+            <LogoMark className="size-7" />
           </span>
           <span className="hidden min-w-0 flex-col leading-none sm:flex">
             <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
@@ -83,6 +79,7 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                transitionTypes={item.href === "/projects" ? ["nav-forward"] : ["nav-back"]}
                 aria-label={item.label}
                 className={cn(
                   buttonVariants({ variant: isActive ? "default" : "ghost", size: "default" }),
