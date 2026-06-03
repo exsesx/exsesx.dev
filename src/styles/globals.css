@@ -268,13 +268,17 @@ select {
   display: none;
 }
 
-html[data-season="pride"] .logo-mark-mono {
+.logo-tile {
+  --logo-foreground: var(--primary-foreground);
+}
+
+html[data-season="pride"] .logo-mark-main {
   display: none;
 }
 
 html[data-season="pride"] .logo-mark-pride {
   display: block;
-  filter: drop-shadow(0 0 0.4rem color-mix(in oklab, var(--accent) 30%, transparent));
+  filter: drop-shadow(0 0 0.18rem color-mix(in oklab, var(--accent) 26%, transparent));
   animation: pride-logo-glow 5.6s var(--ease-in-out) infinite;
 }
 
