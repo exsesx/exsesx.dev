@@ -61,8 +61,8 @@ export default function Header() {
           className="group flex min-w-0 items-center gap-2 rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
           aria-label="Oleh Vanin home"
         >
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.04] group-active:scale-[0.96]">
-            <LogoMark className="size-7" />
+          <span className="logo-tile grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.04] group-active:scale-[0.96]">
+            <LogoMark className="size-8" />
           </span>
           <span className="hidden min-w-0 flex-col leading-none sm:flex">
             <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
