@@ -1,52 +1,109 @@
 import Link from "next/link";
-import NavLink from "./NavLink";
+import { BriefcaseBusiness, Home } from "lucide-react";
+import { useRouter } from "next/router";
+import { useSyncExternalStore } from "react";
 import ThemeSwitcher from "./ThemeSwitcher";
+import { GithubIcon } from "./icons/lucide-github";
+import { buttonVariants } from "./ui/button";
+import { cn } from "@/lib/utils";
+
+const navigation = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/projects", label: "Projects", icon: BriefcaseBusiness },
+];
+
+const HEADER_SCROLL_RANGE = 96;
+const EXPANDED_MAX_WIDTH_REM = 80;
+const COMPACT_MAX_WIDTH_REM = 64;
+const EXPANDED_PADDING_Y_REM = 0.5;
+const COMPACT_PADDING_Y_REM = 0.375;
+
+function LogoMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 512 512" className="size-5" fill="none">
+      <path d="M104 116H179L256 325L333 116H408L286 420C277 444 245 444 236 420L104 116Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function subscribeToScroll(callback: () => void) {
+  window.addEventListener("scroll", callback, { passive: true });
+
+  return () => window.removeEventListener("scroll", callback);
+}
+
+function getScrollProgressSnapshot() {
+  return Math.min(Math.max(window.scrollY, 0), HEADER_SCROLL_RANGE) / HEADER_SCROLL_RANGE;
+}
+
+function getServerScrollProgressSnapshot() {
+  return 0;
+}
 
 export default function Header() {
+  const { pathname } = useRouter();
+  const scrollProgress = useSyncExternalStore(
+    subscribeToScroll,
+    getScrollProgressSnapshot,
+    getServerScrollProgressSnapshot,
+  );
+  const maxWidthRem = EXPANDED_MAX_WIDTH_REM - (EXPANDED_MAX_WIDTH_REM - COMPACT_MAX_WIDTH_REM) * scrollProgress;
+  const paddingYRem = EXPANDED_PADDING_Y_REM - (EXPANDED_PADDING_Y_REM - COMPACT_PADDING_Y_REM) * scrollProgress;
+
   return (
-    <header className="sticky top-0 z-50 bg-transparent backdrop-blur-md py-1 px-6">
-      <nav className="flex items-center justify-between flex-wrap">
-        <div className="flex items-center flex-no-shrink text-white mr-6">
-          <Link legacyBehavior passHref href="/">
-            <a className="rounded-full">
-              <svg
-                className="h-12 w-12 text-white"
-                width="54"
-                height="54"
-                viewBox="0 0 180 180"
-                fill="currentColor"
-                xmlns="http://www.w3.org/2000/svg"
+    <header className="fixed inset-x-0 top-0 z-50 px-4 py-3 sm:px-6">
+      <nav
+        className="liquid-glass mx-auto flex items-center justify-between gap-3 rounded-full px-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[var(--ease-out)]"
+        style={{
+          maxWidth: `${maxWidthRem}rem`,
+          paddingTop: `${paddingYRem}rem`,
+          paddingBottom: `${paddingYRem}rem`,
+        }}
+      >
+        <Link
+          href="/"
+          className="group flex min-w-0 items-center gap-2 rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
+          aria-label="Oleh Vanin home"
+        >
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.04] group-active:scale-[0.96]">
+            <LogoMark />
+          </span>
+          <span className="hidden min-w-0 flex-col leading-none sm:flex">
+            <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
+            <span className="mt-1 text-[11px] font-bold tracking-normal text-muted-foreground">exsesx.dev</span>
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-1 rounded-full bg-muted p-1">
+          {navigation.map(item => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                className={cn(
+                  buttonVariants({ variant: isActive ? "default" : "ghost", size: "default" }),
+                  "shadow-none sm:px-4",
+                )}
               >
-                <path
-                  d="M142.204 39.2737H38.7959C32.0656 39.2737 27.8361 46.5328 31.1551 52.3879L82.6164 143.173C85.9732 149.095 94.4997 149.113 97.8805 143.204L149.827 52.4187C153.178 46.5634 148.95 39.2737 142.204 39.2737Z"
-                  fill="black"
-                  stroke="black"
-                />
-                <path
-                  d="M63.8723 49.3113L90.2214 95.7358L117.825 49.3113H105.278L90.2214 75.033L75.1648 49.3113H63.8723Z"
-                  stroke="black"
-                />
-                <path
-                  d="M90.2214 135.259L40.66 49.3113H51.9525L90.2214 115.811L128.49 49.3113H140.41L90.2214 135.259Z"
-                  stroke="black"
-                />
-              </svg>
-            </a>
-          </Link>
+                <Icon data-icon="inline-start" strokeWidth={2.3} />
+                <span className="hidden sm:inline">{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
-        <div className="grow flex items-center w-auto">
-          <div className="text-sm grow">
-            <NavLink href="/" activeClassName="font-bold">
-              <a className="inline-block mt-0 mr-4 text-gray-900 dark:text-gray-50 transition-all motion-reduce:transition-none">
-                Home
-              </a>
-            </NavLink>
-            <NavLink href="/projects" activeClassName="font-bold">
-              <a className="inline-block mt-0 mr-4 text-gray-900 dark:text-gray-50 transition-all motion-reduce:transition-none">
-                Projects
-              </a>
-            </NavLink>
-          </div>
+
+        <div className="flex items-center gap-2">
+          <a
+            href="https://github.com/exsesx"
+            className={cn(buttonVariants({ variant: "glass", size: "default" }), "hidden md:inline-flex")}
+          >
+            <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
+            GitHub
+          </a>
           <ThemeSwitcher />
         </div>
       </nav>

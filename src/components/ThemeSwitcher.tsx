@@ -1,102 +1,220 @@
+import { Check, Monitor, Moon, Sun } from "lucide-react";
 import Head from "next/head";
-import { SVGProps } from "react";
-import { animated, useSpring } from "react-spring";
-import useDarkMode from "use-dark-mode";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
-type Mode = "light" | "dark";
+const STORAGE_KEY = "exsesx:color-scheme";
+const THEME_CHANGE_EVENT = "exsesx:theme-change";
 
-const ANIMATION_PROPERTIES: Record<Mode, SVGProps<SVGCircleElement>> = {
-  dark: {
-    r: 9,
-    transform: "rotate(40deg)",
-    cx: 12,
-    cy: 4,
-    opacity: 0,
+type ThemeMode = "light" | "dark" | "system";
+type ResolvedTheme = "light" | "dark";
+
+const themeOptions: Array<{
+  mode: ThemeMode;
+  label: string;
+  icon: typeof Sun;
+}> = [
+  {
+    mode: "light",
+    label: "Light",
+    icon: Sun,
   },
-  light: {
-    r: 5,
-    transform: "rotate(90deg)",
-    cx: 30,
-    cy: 0,
-    opacity: 1,
+  {
+    mode: "dark",
+    label: "Dark",
+    icon: Moon,
   },
-};
-const ANIMATION_SPRING_CONFIG = { mass: 4, tension: 250, friction: 35 };
-const ICON_SIZE = 24;
+  {
+    mode: "system",
+    label: "Device",
+    icon: Monitor,
+  },
+];
+
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === "light" || value === "dark" || value === "system";
+}
+
+function getStoredThemeMode(): ThemeMode {
+  if (typeof window === "undefined") {
+    return "system";
+  }
+
+  const storedValue = window.localStorage.getItem(STORAGE_KEY);
+
+  if (storedValue === null) {
+    return "system";
+  }
+
+  try {
+    const parsedValue: unknown = JSON.parse(storedValue);
+
+    if (parsedValue === true) {
+      return "dark";
+    }
+
+    if (parsedValue === false) {
+      return "light";
+    }
+
+    if (isThemeMode(parsedValue)) {
+      return parsedValue;
+    }
+  } catch {
+    if (isThemeMode(storedValue)) {
+      return storedValue;
+    }
+  }
+
+  return "system";
+}
+
+function getSystemTheme(): ResolvedTheme {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function getThemeSnapshot() {
+  const mode = getStoredThemeMode();
+  const resolvedTheme = mode === "system" ? getSystemTheme() : mode;
+
+  return `${mode}:${resolvedTheme}`;
+}
+
+function subscribeToTheme(callback: () => void) {
+  window.addEventListener(THEME_CHANGE_EVENT, callback);
+  window.addEventListener("storage", callback);
+
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  media.addEventListener("change", callback);
+
+  return () => {
+    window.removeEventListener(THEME_CHANGE_EVENT, callback);
+    window.removeEventListener("storage", callback);
+    media.removeEventListener("change", callback);
+  };
+}
+
+function getServerThemeSnapshot() {
+  return "system:light";
+}
+
+function persistThemeMode(mode: ThemeMode) {
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(mode));
+  window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+}
+
+function parseThemeSnapshot(snapshot: string) {
+  const [mode = "system", resolvedTheme = "light"] = snapshot.split(":");
+
+  return {
+    mode: isThemeMode(mode) ? mode : "system",
+    resolvedTheme: resolvedTheme === "dark" ? "dark" : "light",
+  } satisfies {
+    mode: ThemeMode;
+    resolvedTheme: ResolvedTheme;
+  };
+}
 
 export default function ThemeSwitcher() {
-  const initialState = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
+  const { mode, resolvedTheme } = parseThemeSnapshot(themeSnapshot);
+  const isDark = resolvedTheme === "dark";
+  const activeOption = themeOptions.find(option => option.mode === mode) ?? themeOptions[2];
+  const ActiveIcon = activeOption.icon;
 
-  const darkMode = useDarkMode(initialState, {
-    classNameDark: "dark",
-    classNameLight: "light",
-    element: typeof document !== "undefined" ? document.documentElement : undefined,
-    storageKey: "exsesx:color-scheme",
-  });
+  useEffect(() => {
+    const root = document.documentElement;
 
-  const { r, transform, cx, cy, opacity } = ANIMATION_PROPERTIES[darkMode.value ? "dark" : "light"];
+    root.classList.toggle("dark", isDark);
+    root.classList.toggle("light", !isDark);
+    root.dataset.themeMode = mode;
+  }, [isDark, mode]);
 
-  const svgContainerProps = useSpring({
-    to: {
-      transform,
-    },
-    config: ANIMATION_SPRING_CONFIG,
-  });
-  const centerCircleProps = useSpring({ r, config: ANIMATION_SPRING_CONFIG });
-  const maskedCircleProps = useSpring({
-    cx,
-    cy,
-    config: ANIMATION_SPRING_CONFIG,
-  });
-  const linesProps = useSpring({ opacity, config: ANIMATION_SPRING_CONFIG });
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function closeOnOutsidePress(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeOnOutsidePress);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsidePress);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOpen]);
 
   return (
     <>
       <Head>
-        <meta name="msapplication-TileColor" content={darkMode.value ? "#262626" : "#ffffff"} />
-        <meta name="theme-color" content={darkMode.value ? "#262626" : "#ffffff"} />
+        <meta name="msapplication-TileColor" content={isDark ? "#101111" : "#f8f1e7"} />
+        <meta name="theme-color" content={isDark ? "#101111" : "#f8f1e7"} />
       </Head>
-      <button
-        className="p-2 transition-colors duration-200 cursor-pointer rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-600"
-        onClick={darkMode.toggle}
-      >
-        <animated.svg
-          xmlns="http://www.w3.org/2000/svg"
-          width={ICON_SIZE}
-          height={ICON_SIZE}
-          viewBox="0 0 24 24"
-          fill="none"
-          className="text-gray-800 dark:text-white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          stroke="currentColor"
-          style={svgContainerProps}
+      <div ref={menuRef} className="relative">
+        <Button
+          type="button"
+          variant="glass"
+          size="icon"
+          className="relative active:scale-[0.97]"
+          aria-label={`Theme: ${activeOption.label}`}
+          aria-haspopup="menu"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(current => !current)}
         >
-          <mask id="myMask2">
-            <rect x="0" y="0" width="100%" height="100%" className="fill-white" />
-            <animated.circle {...maskedCircleProps} r="9" fill="#000" />
-          </mask>
+          <ActiveIcon strokeWidth={2.2} />
+        </Button>
 
-          <animated.circle
-            className="fill-gray-800 dark:fill-white"
-            cx="12"
-            cy="12"
-            {...centerCircleProps}
-            mask="url(#myMask2)"
-          />
-          <animated.g stroke="currentColor" style={linesProps}>
-            <line x1="12" y1="1" x2="12" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="23" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-            <line x1="1" y1="12" x2="3" y2="12" />
-            <line x1="21" y1="12" x2="23" y2="12" />
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-          </animated.g>
-        </animated.svg>
-      </button>
+        {isOpen ? (
+          <div
+            role="menu"
+            aria-label="Choose color theme"
+            className="theme-menu liquid-glass absolute right-0 top-12 z-50 w-36 rounded-2xl p-1.5 shadow-menu"
+          >
+            {themeOptions.map(option => {
+              const Icon = option.icon;
+              const isActive = option.mode === mode;
+
+              return (
+                <button
+                  key={option.mode}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={isActive}
+                  className={cn(
+                    "theme-menu-item flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition-[background-color,color,transform] duration-150 ease-[var(--ease-weight)] active:scale-[0.97]",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-foreground hover:bg-muted hover:text-accent",
+                  )}
+                  onClick={() => {
+                    persistThemeMode(option.mode);
+                    setIsOpen(false);
+                  }}
+                >
+                  <Icon data-icon="inline-start" strokeWidth={2.2} />
+                  <span className="min-w-0 flex-1 font-bold leading-none">{option.label}</span>
+                  {isActive ? <Check data-icon="inline-end" strokeWidth={2.4} /> : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
     </>
   );
 }
