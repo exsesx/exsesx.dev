@@ -1,32 +1,25 @@
-import {
-  Activity,
-  ArrowRight,
-  BrainCircuit,
-  BriefcaseBusiness,
-  FileDown,
-  Send,
-  Sparkles,
-  Terminal,
-  Wrench,
-} from "lucide-react";
+import { Activity, ArrowRight, BrainCircuit, BriefcaseBusiness, Send, Sparkles, Terminal, Wrench } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import ProjectCard from "../components/Card";
+import CvMenu from "../components/CvMenu";
 import { GithubIcon } from "../components/icons/lucide-github";
 import { LinkedinIcon } from "../components/icons/lucide-linkedin";
-import { Badge } from "../components/ui/badge";
+import RouteFadeTransition from "../components/RouteFadeTransition";
+import SnapshotSpecialtyRail from "../components/SnapshotSpecialtyRail";
 import { buttonVariants } from "../components/ui/button-variants";
-import { Card as UiCard, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { CardContent, CardHeader, CardTitle, Card as UiCard } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
+import { createPageMetadata } from "../lib/metadata";
 import { projects, specialties } from "../lib/projects";
 import { cn } from "../lib/utils";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Oleh Vanin - Software Engineer",
   description:
     "Oleh Vanin is a Ukrainian Senior Full Stack Engineer / AI Engineer based in Poland, building practical AI systems, full-stack products, MCP servers, LLM workflows, and developer tools.",
-};
+});
 
 const snapshotStats = [
   ["9+", "years building web products"],
@@ -83,10 +76,10 @@ export default function HomePage() {
   const featuredProjects = projects.slice(0, 3);
 
   return (
-    <>
+    <RouteFadeTransition>
       <main className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-20 pt-28 sm:px-6 lg:pt-32">
-        <section className="hero-viewport grid items-center gap-10 py-8 lg:grid-cols-[1.04fr_0.96fr] lg:py-12">
-          <div className="max-w-4xl">
+        <section className="hero-viewport grid min-w-0 items-center gap-10 py-8 lg:grid-cols-[1.04fr_0.96fr] lg:py-12">
+          <div className="min-w-0 max-w-4xl">
             <div className="motion-rise liquid-glass mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground">
               <Sparkles size={15} strokeWidth={2.4} className="text-accent" />
               Senior Full Stack Engineer / AI Engineer
@@ -105,6 +98,7 @@ export default function HomePage() {
               <Link
                 href="/projects"
                 transitionTypes={["nav-forward"]}
+                data-suppress-entry-motion
                 className={buttonVariants({ variant: "default", size: "lg" })}
               >
                 See the work
@@ -114,14 +108,7 @@ export default function HomePage() {
                   className="transition group-hover/button:translate-x-0.5"
                 />
               </Link>
-              <Link
-                href="/api/resume/pdf"
-                className={buttonVariants({ variant: "glass", size: "lg" })}
-                rel="noopener noreferrer"
-              >
-                <FileDown data-icon="inline-start" strokeWidth={2.4} />
-                Download CV
-              </Link>
+              <CvMenu />
               <a
                 href="https://www.linkedin.com/in/exsesx/"
                 className={buttonVariants({ variant: "glass", size: "lg" })}
@@ -143,52 +130,58 @@ export default function HomePage() {
             </div>
           </div>
 
-          <aside className="motion-rise motion-delay-2 liquid-glass relative overflow-hidden rounded-[2rem] p-5">
+          <aside className="motion-rise motion-delay-2 liquid-glass relative min-w-0 overflow-hidden rounded-[1.55rem] p-3 sm:rounded-[2rem] sm:p-5">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/70 to-transparent dark:via-amber-200/70" />
-            <UiCard className="liquid-glass gap-0 rounded-[1.45rem] py-0 shadow-none">
-              <CardHeader className="flex flex-row items-start justify-between gap-4 px-5 pt-5">
+            <UiCard className="snapshot-inner-card liquid-glass min-w-0 gap-0 rounded-[1.25rem] py-0 shadow-none ring-0 sm:rounded-[1.45rem] sm:ring-1">
+              <CardHeader className="flex flex-col gap-3 px-2 pt-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-5 sm:pt-5">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground">Professional snapshot</p>
-                  <CardTitle className="mt-3 text-3xl font-black tracking-tight text-foreground">
+                  <div className="flex items-start justify-between gap-3 sm:block">
+                    <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground">Professional snapshot</p>
+                    <span className="relative block size-14 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-lg shadow-foreground/10 ring-4 ring-background/55 sm:hidden">
+                      <Image
+                        src="/images/me/oleh_portrait.jpg"
+                        alt="Portrait of Oleh Vanin"
+                        fill
+                        sizes="56px"
+                        className="object-cover object-[50%_34%]"
+                        priority
+                      />
+                    </span>
+                  </div>
+                  <CardTitle className="mt-3 text-[1.85rem] font-black leading-[1.12] tracking-tight text-foreground sm:text-3xl">
                     Building AI-assisted product systems across frontend, backend, and cloud
                   </CardTitle>
-                  <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-background/55 px-3 py-1.5 text-xs font-bold text-muted-foreground">
+                  <span className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-background/55 px-3 py-1.5 text-xs font-bold text-muted-foreground">
                     <BrainCircuit size={14} strokeWidth={2.4} className="text-accent" />
-                    AI systems and product engineering
+                    <span className="min-w-0 truncate">AI systems and product engineering</span>
                   </span>
                 </div>
-                <span className="relative block size-20 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-lg shadow-foreground/10 ring-4 ring-background/55">
+                <span className="relative hidden size-20 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-lg shadow-foreground/10 ring-4 ring-background/55 sm:block">
                   <Image
                     src="/images/me/oleh_portrait.jpg"
                     alt="Portrait of Oleh Vanin"
                     fill
-                    sizes="80px"
+                    sizes="(max-width: 639px) 64px, 80px"
                     className="object-cover object-[50%_34%]"
                     priority
                   />
                 </span>
               </CardHeader>
 
-              <CardContent className="px-5 pb-5">
-                <div className="mt-7 grid grid-cols-2 gap-3">
+              <CardContent className="min-w-0 px-2 pb-2 sm:px-5 sm:pb-5">
+                <div className="mt-5 grid grid-cols-1 gap-2 sm:mt-7 sm:grid-cols-2 sm:gap-3">
                   {snapshotStats.map(([value, label]) => (
                     <UiCard
                       key={label}
-                      className="gap-0 rounded-2xl border-border bg-background/45 p-4 py-4 shadow-none"
+                      className="snapshot-stat-card gap-0 rounded-[1.05rem] border-border bg-background/40 p-3.5 py-3.5 shadow-none ring-0 sm:rounded-2xl sm:bg-background/45 sm:p-4 sm:py-4 sm:ring-1"
                     >
-                      <p className="text-3xl font-black text-foreground">{value}</p>
+                      <p className="text-[1.7rem] font-black leading-none text-foreground sm:text-3xl">{value}</p>
                       <p className="mt-2 text-xs font-bold leading-5 text-muted-foreground">{label}</p>
                     </UiCard>
                   ))}
                 </div>
 
-                <div className="mt-7 flex flex-wrap gap-2">
-                  {specialties.map(specialty => (
-                    <Badge key={specialty} variant="outline" className="h-7 bg-background/50 px-3 text-sm font-bold">
-                      {specialty}
-                    </Badge>
-                  ))}
-                </div>
+                <SnapshotSpecialtyRail specialties={specialties} />
               </CardContent>
             </UiCard>
 
@@ -196,7 +189,7 @@ export default function HomePage() {
               href="https://cal.com/exsesx/personal"
               className={cn(
                 buttonVariants({ variant: "default", size: "lg" }),
-                "mt-4 w-full justify-between rounded-[1.45rem] p-5",
+                "mt-3 min-w-0 w-full justify-between rounded-[1.1rem] p-4 sm:mt-4 sm:rounded-[1.45rem] sm:p-5",
               )}
             >
               <span className="font-black">Schedule a conversation</span>
@@ -276,6 +269,7 @@ export default function HomePage() {
             <Link
               href="/projects"
               transitionTypes={["nav-forward"]}
+              data-suppress-entry-motion
               className={buttonVariants({ variant: "glass", size: "default" })}
             >
               All projects
@@ -283,12 +277,17 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid items-stretch gap-6 lg:grid-cols-3">
-            {featuredProjects.map(project => (
-              <ProjectCard key={project.title} project={project} />
+            {featuredProjects.map((project, index) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                enableMediaTransition
+                mediaLoading={index === 0 ? "eager" : "lazy"}
+              />
             ))}
           </div>
         </section>
       </main>
-    </>
+    </RouteFadeTransition>
   );
 }

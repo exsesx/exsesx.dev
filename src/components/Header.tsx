@@ -1,16 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { BriefcaseBusiness, Home } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
+import { cn } from "@/lib/utils";
+import { GithubIcon } from "./icons/lucide-github";
 import LogoMark from "./LogoMark";
 import ThemeSwitcher from "./ThemeSwitcher";
-import { GithubIcon } from "./icons/lucide-github";
 import { buttonVariants } from "./ui/button-variants";
-import { cn } from "@/lib/utils";
 
-const navigation = [
+const navigation: Array<{ href: Route; label: string; icon: typeof Home }> = [
   { href: "/", label: "Home", icon: Home },
   { href: "/projects", label: "Projects", icon: BriefcaseBusiness },
 ];
@@ -37,6 +38,8 @@ function getServerScrollProgressSnapshot() {
 
 export default function Header() {
   const pathname = usePathname();
+  const isProjectRoute = pathname === "/projects" || pathname.startsWith("/project/");
+  const projectIndexTransitionTypes = pathname.startsWith("/project/") ? ["nav-back"] : undefined;
   const scrollProgress = useSyncExternalStore(
     subscribeToScroll,
     getScrollProgressSnapshot,
@@ -46,7 +49,7 @@ export default function Header() {
   const paddingYRem = EXPANDED_PADDING_Y_REM - (EXPANDED_PADDING_Y_REM - COMPACT_PADDING_Y_REM) * scrollProgress;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 py-3 sm:px-6">
+    <header className="fixed inset-x-0 top-0 z-50 px-4 py-3 sm:px-6" style={{ viewTransitionName: "persistent-nav" }}>
       <nav
         className="liquid-glass site-nav-glass mx-auto flex items-center justify-between gap-3 rounded-full px-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[var(--ease-out)]"
         style={{
@@ -57,7 +60,6 @@ export default function Header() {
       >
         <Link
           href="/"
-          transitionTypes={["nav-back"]}
           className="group flex min-w-0 items-center gap-2 rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
           aria-label="Oleh Vanin home"
         >
@@ -73,13 +75,15 @@ export default function Header() {
         <div className="flex items-center gap-1 rounded-full bg-muted p-1">
           {navigation.map(item => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive = item.href === "/projects" ? isProjectRoute : pathname === item.href;
+            const isProjectDetailToIndex = item.href === "/projects" && pathname.startsWith("/project/");
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                transitionTypes={item.href === "/projects" ? ["nav-forward"] : ["nav-back"]}
+                transitionTypes={isProjectDetailToIndex ? projectIndexTransitionTypes : undefined}
+                data-suppress-entry-motion={isProjectDetailToIndex ? "" : undefined}
                 aria-label={item.label}
                 className={cn(
                   buttonVariants({ variant: isActive ? "default" : "ghost", size: "default" }),

@@ -1,8 +1,45 @@
-import type { SVGProps } from "react";
+import { type SVGProps, useId, useSyncExternalStore } from "react";
 
 const logoPath = "M84 84 168 96 256 334 344 96 428 84 298 430c-4 10-12 16-23 16h-38c-11 0-19-6-23-16Z";
+const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
+
+function getLogoVariantSnapshot() {
+  const isPrideSeason = document.documentElement.dataset.season === "pride";
+  const reduceMotion = window.matchMedia(reducedMotionQuery).matches;
+
+  return `${isPrideSeason ? "pride" : "regular"}:${reduceMotion ? "reduce" : "motion"}`;
+}
+
+function getServerLogoVariantSnapshot() {
+  return "regular:motion";
+}
+
+function subscribeToLogoVariant(callback: () => void) {
+  const mediaQuery = window.matchMedia(reducedMotionQuery);
+  const seasonObserver = new MutationObserver(callback);
+
+  mediaQuery.addEventListener("change", callback);
+  seasonObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-season"],
+  });
+
+  return () => {
+    seasonObserver.disconnect();
+    mediaQuery.removeEventListener("change", callback);
+  };
+}
 
 export default function LogoMark({ className, ...props }: SVGProps<SVGSVGElement>) {
+  const gradientId = useId().replace(/:/g, "");
+  const prideFlowId = `${gradientId}-logo-pride-flow`;
+  const logoVariant = useSyncExternalStore(
+    subscribeToLogoVariant,
+    getLogoVariantSnapshot,
+    getServerLogoVariantSnapshot,
+  );
+  const shouldAnimatePride = logoVariant === "pride:motion";
+
   return (
     <svg
       aria-hidden="true"
@@ -13,67 +50,46 @@ export default function LogoMark({ className, ...props }: SVGProps<SVGSVGElement
       {...props}
     >
       <defs>
-        <linearGradient id="logo-pride-stripes" x1="0" y1="84" x2="0" y2="446" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#FF1F2D" />
-          <stop offset="16.666%" stopColor="#FF1F2D" />
-          <stop offset="16.666%" stopColor="#FF8A00" />
-          <stop offset="33.333%" stopColor="#FF8A00" />
-          <stop offset="33.333%" stopColor="#FFE500" />
-          <stop offset="50%" stopColor="#FFE500" />
-          <stop offset="50%" stopColor="#34C759" />
-          <stop offset="66.666%" stopColor="#34C759" />
-          <stop offset="66.666%" stopColor="#0A84FF" />
-          <stop offset="83.333%" stopColor="#0A84FF" />
-          <stop offset="83.333%" stopColor="#8E44FF" />
-          <stop offset="100%" stopColor="#8E44FF" />
-        </linearGradient>
-        <linearGradient id="logo-pride-shine" x1="-180" y1="42" x2="-40" y2="188" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0" />
-          <stop offset="42%" stopColor="#FFFFFF" stopOpacity="0" />
-          <stop offset="50%" stopColor="#FFFFFF" stopOpacity=".62" />
-          <stop offset="58%" stopColor="#FFFFFF" stopOpacity="0" />
-          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-          <animate
-            attributeName="x1"
-            values="-180;-180;500;500"
-            keyTimes="0;.28;.72;1"
-            dur="5.6s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="x2"
-            values="-40;-40;640;640"
-            keyTimes="0;.28;.72;1"
-            dur="5.6s"
-            repeatCount="indefinite"
-          />
-        </linearGradient>
-        <linearGradient id="logo-pride-shadow-shine" x1="-200" y1="42" x2="-60" y2="188" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#101111" stopOpacity="0" />
-          <stop offset="41%" stopColor="#101111" stopOpacity="0" />
-          <stop offset="50%" stopColor="#101111" stopOpacity=".36" />
-          <stop offset="59%" stopColor="#101111" stopOpacity="0" />
-          <stop offset="100%" stopColor="#101111" stopOpacity="0" />
-          <animate
-            attributeName="x1"
-            values="-200;-200;480;480"
-            keyTimes="0;.28;.72;1"
-            dur="5.6s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="x2"
-            values="-60;-60;620;620"
-            keyTimes="0;.28;.72;1"
-            dur="5.6s"
-            repeatCount="indefinite"
-          />
+        <linearGradient
+          id={prideFlowId}
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="512"
+          gradientUnits="userSpaceOnUse"
+          spreadMethod="repeat"
+        >
+          <stop offset="0" stopColor="#FF4FA3" />
+          <stop offset=".105" stopColor="#FF4FA3" />
+          <stop offset=".125" stopColor="#F43F3F" />
+          <stop offset=".23" stopColor="#F43F3F" />
+          <stop offset=".25" stopColor="#FF8A00" />
+          <stop offset=".355" stopColor="#FF8A00" />
+          <stop offset=".375" stopColor="#FFE500" />
+          <stop offset=".48" stopColor="#FFE500" />
+          <stop offset=".5" stopColor="#31C95E" />
+          <stop offset=".605" stopColor="#31C95E" />
+          <stop offset=".625" stopColor="#16B8D8" />
+          <stop offset=".73" stopColor="#16B8D8" />
+          <stop offset=".75" stopColor="#3457FF" />
+          <stop offset=".855" stopColor="#3457FF" />
+          <stop offset=".875" stopColor="#8E44FF" />
+          <stop offset=".98" stopColor="#8E44FF" />
+          <stop offset="1" stopColor="#FF4FA3" />
+          {shouldAnimatePride && (
+            <animateTransform
+              attributeName="gradientTransform"
+              type="translate"
+              values="0 0;0 -512"
+              dur="6.4s"
+              calcMode="linear"
+              repeatCount="indefinite"
+            />
+          )}
         </linearGradient>
       </defs>
       <path className="logo-mark-main" d={logoPath} fill="var(--logo-foreground, currentColor)" />
-      <path className="logo-mark-pride" d={logoPath} fill="url(#logo-pride-stripes)" />
-      <path className="logo-mark-shine" d={logoPath} fill="url(#logo-pride-shine)" />
-      <path className="logo-mark-shadow-shine" d={logoPath} fill="url(#logo-pride-shadow-shine)" />
+      <path className="logo-mark-pride" d={logoPath} fill={`url(#${prideFlowId})`} />
     </svg>
   );
 }

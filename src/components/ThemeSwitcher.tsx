@@ -2,8 +2,16 @@
 
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 const STORAGE_KEY = "exsesx:color-scheme";
 const THEME_CHANGE_EVENT = "exsesx:theme-change";
@@ -131,12 +139,25 @@ function parseThemeSnapshot(snapshot: string) {
 
 export default function ThemeSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const themeFrameRef = useRef<number | null>(null);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { mode, resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const isDark = resolvedTheme === "dark";
   const activeOption = themeOptions.find(option => option.mode === mode) ?? themeOptions[2];
   const ActiveIcon = activeOption.icon;
+
+  function selectThemeMode(nextMode: ThemeMode) {
+    flushSync(() => setIsOpen(false));
+
+    if (themeFrameRef.current !== null) {
+      window.cancelAnimationFrame(themeFrameRef.current);
+    }
+
+    themeFrameRef.current = window.requestAnimationFrame(() => {
+      themeFrameRef.current = null;
+      persistThemeMode(nextMode);
+    });
+  }
 
   useEffect(() => {
     const root = document.documentElement;
@@ -148,79 +169,69 @@ export default function ThemeSwitcher() {
   }, [isDark, mode]);
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function closeOnOutsidePress(event: MouseEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", closeOnOutsidePress);
-    document.addEventListener("keydown", closeOnEscape);
-
     return () => {
-      document.removeEventListener("mousedown", closeOnOutsidePress);
-      document.removeEventListener("keydown", closeOnEscape);
+      if (themeFrameRef.current !== null) {
+        window.cancelAnimationFrame(themeFrameRef.current);
+      }
     };
-  }, [isOpen]);
+  }, []);
 
   return (
-    <div ref={menuRef} className="relative">
-      <Button
-        type="button"
-        variant="glass"
-        size="icon"
-        className="relative active:scale-[0.97]"
-        aria-label={`Theme: ${activeOption.label}`}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen(current => !current)}
+    <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="glass"
+            size="icon"
+            className="relative cursor-pointer active:scale-[0.97]"
+            aria-label={`Theme: ${activeOption.label}`}
+          />
+        }
       >
         <ActiveIcon strokeWidth={2.2} />
-      </Button>
+      </DropdownMenuTrigger>
 
-      {isOpen ? (
-        <div
-          role="menu"
-          aria-label="Choose color theme"
-          className="theme-menu liquid-glass absolute right-0 top-12 z-50 w-44 rounded-2xl p-1.5 shadow-menu"
+      <DropdownMenuContent align="end" aria-label="Choose color theme" className="w-44 origin-top-right">
+        <DropdownMenuRadioGroup
+          value={mode}
+          onValueChange={value => {
+            if (isThemeMode(value)) {
+              selectThemeMode(value);
+            }
+          }}
         >
-          {themeOptions.map(option => {
-            const Icon = option.icon;
-            const isActive = option.mode === mode;
+          <DropdownMenuGroup>
+            {themeOptions.map(option => {
+              const Icon = option.icon;
+              const isActive = option.mode === mode;
 
-            return (
-              <button
-                key={option.mode}
-                type="button"
-                role="menuitemradio"
-                aria-checked={isActive}
-                className={cn(
-                  "theme-menu-item grid h-11 w-full grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3 rounded-xl px-3 text-left text-sm transition-[background-color,color,transform] duration-150 ease-[var(--ease-weight)] active:scale-[0.97]",
-                  isActive ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted hover:text-accent",
-                )}
-                onClick={() => {
-                  persistThemeMode(option.mode);
-                  setIsOpen(false);
-                }}
-              >
-                <Icon data-icon="inline-start" strokeWidth={2.2} />
-                <span className="min-w-0 flex-1 font-bold leading-none">{option.label}</span>
-                {isActive ? <Check data-icon="inline-end" strokeWidth={2.4} /> : <span aria-hidden="true" />}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
+              return (
+                <DropdownMenuRadioItem
+                  key={option.mode}
+                  value={option.mode}
+                  className="w-full"
+                  onKeyDown={event => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      selectThemeMode(option.mode);
+                    }
+                  }}
+                  onPointerDown={event => {
+                    if (event.button === 0) {
+                      selectThemeMode(option.mode);
+                    }
+                  }}
+                >
+                  <Icon data-icon="inline-start" strokeWidth={2.2} />
+                  <span className="min-w-0 flex-1 font-bold leading-none">{option.label}</span>
+                  {isActive ? <Check data-icon="inline-end" strokeWidth={2.4} /> : <span aria-hidden="true" />}
+                </DropdownMenuRadioItem>
+              );
+            })}
+          </DropdownMenuGroup>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

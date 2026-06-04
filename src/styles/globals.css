@@ -39,6 +39,9 @@
   --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-exit: 90ms;
+  --duration-enter: 140ms;
+  --duration-move: 280ms;
   --background: #f8f1e7;
   --foreground: #18181b;
   --card: color-mix(in oklab, #fffaf1 82%, transparent);
@@ -110,14 +113,7 @@ body {
   min-height: 100svh;
   background: var(--background);
   color: var(--foreground);
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-feature-settings:
     "kern" 1,
     "liga" 1;
@@ -262,9 +258,7 @@ select {
     linear-gradient(to bottom, transparent 0 68%, color-mix(in oklab, var(--background) 58%, transparent) 100%);
 }
 
-.logo-mark-pride,
-.logo-mark-shine,
-.logo-mark-shadow-shine {
+.logo-mark-pride {
   display: none;
 }
 
@@ -278,22 +272,8 @@ html[data-season="pride"] .logo-mark-main {
 
 html[data-season="pride"] .logo-mark-pride {
   display: block;
-  filter: drop-shadow(0 0 0.18rem color-mix(in oklab, var(--accent) 26%, transparent));
-  animation: pride-logo-glow 5.6s var(--ease-in-out) infinite;
-}
-
-html[data-season="pride"] .logo-mark-shine {
-  display: block;
-  mix-blend-mode: screen;
-}
-
-html.dark[data-season="pride"] .logo-mark-shine {
-  display: none;
-}
-
-html.dark[data-season="pride"] .logo-mark-shadow-shine {
-  display: block;
-  mix-blend-mode: multiply;
+  filter: saturate(1.08) drop-shadow(0 0 0.18rem color-mix(in oklab, var(--accent) 24%, transparent));
+  animation: pride-logo-glow 6.4s var(--ease-in-out) infinite;
 }
 
 .liquid-glass {
@@ -322,6 +302,97 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
     0 18px 50px rgba(0, 0, 0, 0.24);
 }
 
+.dropdown-menu.liquid-glass {
+  border-color: color-mix(in oklab, var(--foreground) 10%, transparent);
+  background:
+    radial-gradient(circle at 78% 76%, color-mix(in oklab, var(--foreground) 5%, transparent), transparent 34%),
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--background) 72%, transparent),
+      color-mix(in oklab, var(--background) 46%, transparent)
+    ),
+    color-mix(in oklab, var(--background) 52%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 58%, transparent),
+    0 22px 70px rgba(24, 24, 27, 0.16);
+}
+
+.dark .dropdown-menu.liquid-glass {
+  border-color: color-mix(in oklab, var(--foreground) 13%, transparent);
+  background:
+    radial-gradient(circle at 78% 76%, color-mix(in oklab, white 6%, transparent), transparent 34%),
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--background) 78%, transparent),
+      color-mix(in oklab, var(--background) 54%, transparent)
+    ),
+    color-mix(in oklab, var(--background) 58%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 10%, transparent),
+    0 22px 70px rgba(0, 0, 0, 0.34);
+}
+
+.dropdown-menu-item[data-highlighted]:not([data-checked]) {
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.dark .dropdown-menu-item[data-highlighted]:not([data-checked]) {
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.dropdown-menu-radio-item[data-checked],
+.dropdown-menu-radio-item[data-checked][data-highlighted] {
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+@media (max-width: 639px) {
+  .snapshot-inner-card.liquid-glass {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .snapshot-stat-card {
+    background:
+      linear-gradient(135deg, color-mix(in oklab, var(--background) 64%, transparent), transparent),
+      color-mix(in oklab, var(--foreground) 4%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent);
+  }
+
+  .snapshot-specialty-rail {
+    mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 1.5rem), transparent);
+  }
+
+  .snapshot-specialty-track {
+    animation: snapshot-specialty-marquee 42s linear infinite;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+  }
+}
+
+@keyframes snapshot-specialty-marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snapshot-specialty-track {
+    animation: none;
+    transform: none;
+  }
+
+  .hotkeys-wait-key::before,
+  .hotkeys-wait-key kbd,
+  .hotkeys-wait-body,
+  .hotkeys-wait-dots span {
+    animation: none;
+  }
+}
+
 .site-nav-glass {
   position: relative;
   isolation: isolate;
@@ -334,6 +405,135 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
   transform: translateZ(0);
   backdrop-filter: blur(30px) saturate(1.58) contrast(1.04);
   -webkit-backdrop-filter: blur(30px) saturate(1.58) contrast(1.04);
+}
+
+.hotkeys-panel {
+  border-color: color-mix(in oklab, var(--foreground) 6%, transparent);
+  transform-origin: top center;
+}
+
+.hotkeys-corner-hint,
+.hotkeys-chord-waiting {
+  width: 4.75rem;
+  border-color: transparent;
+  background:
+    radial-gradient(circle at 24% 30%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 48%),
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--background) 78%, transparent),
+      color-mix(in oklab, var(--background) 42%, transparent)
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, white 18%),
+    0 10px 30px color-mix(in oklab, var(--foreground) 10%, transparent);
+  backdrop-filter: blur(26px) saturate(1.5);
+  -webkit-backdrop-filter: blur(26px) saturate(1.5);
+  transition:
+    opacity 120ms var(--ease-out),
+    transform 120ms var(--ease-out),
+    box-shadow 160ms var(--ease-weight);
+}
+
+.hotkeys-chord-waiting {
+  min-width: 4.75rem;
+}
+
+.hotkeys-corner-hint-exit {
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(0, 0.34rem, 0) scale(0.985);
+}
+
+.hotkeys-chord-waiting-exit {
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(0, 0.28rem, 0) scale(0.985);
+}
+
+.hotkeys-wait-sequence {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.hotkeys-trigger-key {
+  position: relative;
+  display: grid;
+  width: 1.85rem;
+  height: 1.85rem;
+  place-items: center;
+  isolation: isolate;
+  color: var(--primary-foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.75rem;
+  font-weight: 900;
+  line-height: 1;
+  background: var(--primary);
+  border-radius: 999px;
+  box-shadow:
+    0 8px 18px color-mix(in oklab, var(--foreground) 14%, transparent),
+    inset 0 1px 0 color-mix(in oklab, var(--primary-foreground) 24%, transparent);
+  transform-origin: 50% 80%;
+  overflow: hidden;
+}
+
+.hotkeys-wait-key {
+  animation-delay: 0ms;
+}
+
+.hotkeys-wait-key::before {
+  position: absolute;
+  inset: -0.18rem;
+  z-index: -1;
+  content: "";
+  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 32%, transparent), transparent 68%);
+  border-radius: inherit;
+  opacity: 0.34;
+  animation: hotkeys-wait-ring 1.35s var(--ease-out) infinite;
+  animation-delay: inherit;
+}
+
+.hotkeys-wait-key kbd {
+  animation: hotkeys-key-rise 150ms var(--ease-snap) both;
+  animation-delay: inherit;
+}
+
+.hotkeys-trigger-dots {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.hotkeys-wait-body {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.25rem 0 0;
+  animation: hotkeys-wait-dots-enter 130ms var(--ease-snap) both;
+  animation-delay: 150ms;
+}
+
+.hotkeys-trigger-dots span {
+  width: 0.34rem;
+  height: 0.34rem;
+  background: color-mix(in oklab, var(--accent) 92%, var(--foreground));
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--background) 40%, transparent);
+}
+
+.hotkeys-wait-dots span {
+  animation: hotkeys-wait-dot 1.05s var(--ease-in-out) infinite;
+}
+
+.hotkeys-wait-dots span:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.hotkeys-wait-dots span:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+.hotkeys-panel-exit {
+  pointer-events: none;
 }
 
 .dark .site-nav-glass {
@@ -389,13 +589,18 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
   transition: opacity 220ms var(--ease-weight);
 }
 
-.interactive-media {
-  transform: translateZ(0) scale(1);
-  transition:
-    transform 560ms var(--ease-snap),
-    opacity 220ms var(--ease-weight),
-    filter 220ms var(--ease-weight);
-  will-change: transform;
+.project-media-frame {
+  overflow: hidden;
+  background: #09090b;
+  contain: paint;
+  isolation: isolate;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.shared-project-media {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .magnetic-icon {
@@ -406,19 +611,16 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
 @keyframes motion-rise {
   0% {
     opacity: 0;
-    filter: blur(2px);
     transform: translate3d(0, 22px, 0) scale(0.985);
   }
 
   72% {
     opacity: 1;
-    filter: blur(0);
     transform: translate3d(0, -2px, 0) scale(1.002);
   }
 
   100% {
     opacity: 1;
-    filter: blur(0);
     transform: translate3d(0, 0, 0) scale(1);
   }
 }
@@ -426,6 +628,12 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
 @media (prefers-reduced-motion: no-preference) {
   .motion-rise {
     animation: motion-rise 560ms var(--ease-snap) both;
+  }
+
+  html:active-view-transition-type(nav-forward) .motion-rise,
+  html:active-view-transition-type(nav-back) .motion-rise,
+  html[data-view-transition-navigated="true"] .motion-rise {
+    animation: none;
   }
 
   .motion-delay-1 {
@@ -440,21 +648,36 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
     animation-delay: 210ms;
   }
 
-  .theme-menu {
-    transform-origin: top right;
+  .dropdown-menu {
     animation: menu-enter 170ms var(--ease-snap) both;
   }
 
-  .theme-menu-item {
+  .dropdown-menu-item {
     animation: menu-item-enter 180ms var(--ease-weight) both;
   }
 
-  .theme-menu-item:nth-child(2) {
+  .dropdown-menu-item:nth-child(2) {
     animation-delay: 28ms;
   }
 
-  .theme-menu-item:nth-child(3) {
+  .dropdown-menu-item:nth-child(3) {
     animation-delay: 56ms;
+  }
+
+  .hotkeys-modal-backdrop {
+    animation: hotkeys-backdrop-enter 150ms var(--ease-out) both;
+  }
+
+  .hotkeys-modal-backdrop-exit {
+    animation: hotkeys-backdrop-exit 150ms var(--ease-out) both;
+  }
+
+  .hotkeys-panel:not(.hotkeys-panel-exit) {
+    animation: menu-enter 170ms var(--ease-snap) both;
+  }
+
+  .hotkeys-panel-exit {
+    animation: menu-exit 150ms var(--ease-out) both;
   }
 }
 
@@ -484,84 +707,237 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
   }
 }
 
-@keyframes route-enter-forward {
+@keyframes menu-exit {
   from {
-    opacity: 0;
-    transform: translate3d(8px, 0, 0);
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 
   to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
+    opacity: 0;
+    filter: blur(1px);
+    transform: translate3d(0, -4px, 0) scale(0.975);
   }
 }
 
-@keyframes route-exit-forward {
+@keyframes hotkeys-backdrop-enter {
   from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
+    opacity: 0;
   }
 
   to {
-    opacity: 0;
-    transform: translate3d(-8px, 0, 0);
+    opacity: 1;
   }
 }
 
-@keyframes route-enter-back {
+@keyframes hotkeys-backdrop-exit {
   from {
-    opacity: 0;
-    transform: translate3d(-8px, 0, 0);
+    opacity: 1;
   }
 
   to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
+    opacity: 0;
   }
 }
 
-@keyframes route-exit-back {
+@keyframes hotkeys-key-rise {
   from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
+    opacity: 0;
+    transform: translate3d(0, 0.26rem, 0) scale(0.96);
   }
 
   to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes hotkeys-wait-ring {
+  0% {
+    opacity: 0.38;
+    transform: scale(0.96);
+  }
+
+  72%,
+  100% {
     opacity: 0;
-    transform: translate3d(8px, 0, 0);
+    transform: scale(1.18);
+  }
+}
+
+@keyframes hotkeys-wait-dots-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.18rem, 0) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes hotkeys-wait-dot {
+  0%,
+  78%,
+  100% {
+    opacity: 0.34;
+    transform: translate3d(0, 0, 0) scale(0.82);
+  }
+
+  32% {
+    opacity: 0.86;
+    transform: translate3d(0, -0.08rem, 0) scale(1);
+  }
+}
+
+@keyframes view-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes view-slide {
+  from {
+    translate: var(--slide-offset);
+  }
+
+  to {
+    translate: 0;
+  }
+}
+
+@keyframes view-slide-y {
+  from {
+    transform: translateY(var(--slide-y-offset, 10px));
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(.fade-out) {
+    animation: var(--duration-exit) var(--ease-out) view-fade reverse;
+  }
+
+  ::view-transition-new(.fade-in) {
+    animation: var(--duration-enter) var(--ease-out) both view-fade;
+  }
+
+  ::view-transition-old(.slide-down) {
+    animation:
+      var(--duration-exit) var(--ease-out) both view-fade reverse,
+      var(--duration-exit) var(--ease-out) both view-slide-y reverse;
+  }
+
+  ::view-transition-new(.slide-up) {
+    animation:
+      var(--duration-enter) var(--ease-out) both view-fade,
+      var(--duration-move) var(--ease-snap) both view-slide-y;
+  }
+
+  ::view-transition-group(.page-enter),
+  ::view-transition-group(.page-exit) {
+    z-index: 1;
+  }
+
+  ::view-transition-old(.page-exit),
+  ::view-transition-new(.page-enter) {
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(.page-exit) {
+    animation: var(--duration-exit) var(--ease-out) both view-fade reverse;
+  }
+
+  ::view-transition-new(.page-enter) {
+    animation: var(--duration-enter) var(--ease-out) 35ms both view-fade;
+  }
+
+  ::view-transition-old(.nav-forward) {
+    --slide-offset: -18px;
+    animation:
+      var(--duration-exit) var(--ease-out) both view-fade reverse,
+      var(--duration-move) var(--ease-snap) both view-slide reverse;
+  }
+
+  ::view-transition-new(.nav-forward) {
+    --slide-offset: 22px;
+    animation:
+      var(--duration-enter) var(--ease-out) 35ms both view-fade,
+      var(--duration-move) var(--ease-snap) both view-slide;
+  }
+
+  ::view-transition-old(.nav-back) {
+    --slide-offset: 18px;
+    animation:
+      var(--duration-exit) var(--ease-out) both view-fade reverse,
+      var(--duration-move) var(--ease-snap) both view-slide reverse;
+  }
+
+  ::view-transition-new(.nav-back) {
+    --slide-offset: -22px;
+    animation:
+      var(--duration-enter) var(--ease-out) 35ms both view-fade,
+      var(--duration-move) var(--ease-snap) both view-slide;
+  }
+
+  ::view-transition-group(.morph) {
+    animation-duration: var(--duration-move);
+    animation-timing-function: var(--ease-in-out);
+    overflow: hidden;
+    z-index: 20;
+  }
+
+  ::view-transition-old(.morph),
+  ::view-transition-new(.morph) {
+    mix-blend-mode: normal;
+    overflow: clip;
+  }
+
+  ::view-transition-image-pair(.morph) {
+    animation: none;
+    border-radius: inherit;
+    overflow: clip;
+  }
+
+  ::view-transition-old(persistent-nav) {
+    display: none;
+  }
+
+  ::view-transition-new(persistent-nav),
+  ::view-transition-group(persistent-nav) {
+    animation: none;
   }
 }
 
 @keyframes pride-logo-glow {
   0%,
-  28%,
   100% {
     opacity: 1;
-    filter: drop-shadow(0 0 0.25rem color-mix(in oklab, var(--accent) 20%, transparent));
+    filter: saturate(1.12) drop-shadow(0 0 0.2rem color-mix(in oklab, var(--accent) 20%, transparent));
   }
 
-  54% {
-    opacity: 0.98;
-    filter: drop-shadow(0 0 0.55rem color-mix(in oklab, var(--accent) 42%, transparent));
+  46% {
+    opacity: 1;
+    filter: saturate(1.18) drop-shadow(0 0 0.34rem color-mix(in oklab, var(--accent) 34%, transparent));
+  }
+
+  72% {
+    opacity: 1;
+    filter: saturate(1.14) drop-shadow(0 0 0.26rem color-mix(in oklab, #ff4fa3 28%, transparent));
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  html:active-view-transition-type(nav-forward)::view-transition-old(root) {
-    animation: route-exit-forward 160ms var(--ease-weight) both;
-  }
-
-  html:active-view-transition-type(nav-forward)::view-transition-new(root) {
-    animation: route-enter-forward 220ms var(--ease-weight) both;
-  }
-
-  html:active-view-transition-type(nav-back)::view-transition-old(root) {
-    animation: route-exit-back 160ms var(--ease-weight) both;
-  }
-
-  html:active-view-transition-type(nav-back)::view-transition-new(root) {
-    animation: route-enter-back 220ms var(--ease-weight) both;
-  }
+.interactive-card:active {
+  transform: scale(0.995) translateZ(0);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -571,10 +947,6 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
 
   .interactive-card:hover::after {
     opacity: 1;
-  }
-
-  .interactive-card:hover .interactive-media {
-    transform: translateZ(0) scale(1.035);
   }
 
   .interactive-card:hover .magnetic-icon {
@@ -602,18 +974,15 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-delay: 0s !important;
+    animation-duration: 0s !important;
   }
 
   html[data-season="pride"] .logo-mark-pride {
     animation: none;
-  }
-
-  html[data-season="pride"] .logo-mark-shine,
-  html[data-season="pride"] .logo-mark-shadow-shine {
-    display: none;
   }
 
   *,
@@ -627,8 +996,7 @@ html.dark[data-season="pride"] .logo-mark-shadow-shine {
 
   .interactive-card,
   .interactive-card:hover,
-  .interactive-media,
-  .interactive-card:hover .interactive-media,
+  .shared-project-media,
   .magnetic-icon,
   .interactive-card:hover .magnetic-icon {
     transform: none !important;
