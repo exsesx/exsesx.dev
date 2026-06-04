@@ -3,6 +3,15 @@
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
+import {
+  getServerThemeSnapshot,
+  getThemeSnapshot,
+  isThemeMode,
+  parseThemeSnapshot,
+  persistThemeMode,
+  subscribeToTheme,
+  type ThemeMode,
+} from "@/lib/theme";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -12,12 +21,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-
-const STORAGE_KEY = "exsesx:color-scheme";
-const THEME_CHANGE_EVENT = "exsesx:theme-change";
-
-type ThemeMode = "light" | "dark" | "system";
-type ResolvedTheme = "light" | "dark";
 
 const themeOptions: Array<{
   mode: ThemeMode;
@@ -41,78 +44,6 @@ const themeOptions: Array<{
   },
 ];
 
-function isThemeMode(value: unknown): value is ThemeMode {
-  return value === "light" || value === "dark" || value === "system";
-}
-
-function getStoredThemeMode(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "system";
-  }
-
-  const storedValue = window.localStorage.getItem(STORAGE_KEY);
-
-  if (storedValue === null) {
-    return "system";
-  }
-
-  try {
-    const parsedValue: unknown = JSON.parse(storedValue);
-
-    if (parsedValue === true) {
-      return "dark";
-    }
-
-    if (parsedValue === false) {
-      return "light";
-    }
-
-    if (isThemeMode(parsedValue)) {
-      return parsedValue;
-    }
-  } catch {
-    if (isThemeMode(storedValue)) {
-      return storedValue;
-    }
-  }
-
-  return "system";
-}
-
-function getSystemTheme(): ResolvedTheme {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-function getThemeSnapshot() {
-  const mode = getStoredThemeMode();
-  const resolvedTheme = mode === "system" ? getSystemTheme() : mode;
-
-  return `${mode}:${resolvedTheme}`;
-}
-
-function subscribeToTheme(callback: () => void) {
-  window.addEventListener(THEME_CHANGE_EVENT, callback);
-  window.addEventListener("storage", callback);
-
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
-  media.addEventListener("change", callback);
-
-  return () => {
-    window.removeEventListener(THEME_CHANGE_EVENT, callback);
-    window.removeEventListener("storage", callback);
-    media.removeEventListener("change", callback);
-  };
-}
-
-function getServerThemeSnapshot() {
-  return "system:light";
-}
-
-function persistThemeMode(mode: ThemeMode) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(mode));
-  window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
-}
-
 function setMetaContent(name: string, content: string) {
   let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
 
@@ -123,18 +54,6 @@ function setMetaContent(name: string, content: string) {
   }
 
   meta.content = content;
-}
-
-function parseThemeSnapshot(snapshot: string) {
-  const [mode = "system", resolvedTheme = "light"] = snapshot.split(":");
-
-  return {
-    mode: isThemeMode(mode) ? mode : "system",
-    resolvedTheme: resolvedTheme === "dark" ? "dark" : "light",
-  } satisfies {
-    mode: ThemeMode;
-    resolvedTheme: ResolvedTheme;
-  };
 }
 
 export default function ThemeSwitcher() {

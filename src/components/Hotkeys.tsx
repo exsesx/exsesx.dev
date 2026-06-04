@@ -1,54 +1,214 @@
 "use client";
 
-import { Command, ExternalLink, HelpCircle } from "lucide-react";
+import { BriefcaseBusiness, Command, Home, Monitor, SunMoon } from "lucide-react";
+import type { Variants } from "motion/react";
+import { AnimatePresence, domAnimation, LazyMotion, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ElementType, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createHotkeySequencer, getHotkeySequenceKey, shouldEnableHotkeys } from "@/lib/hotkeys";
+import { getThemeSnapshot, parseThemeSnapshot, persistThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { GithubIcon } from "./icons/lucide-github";
 
-type HotkeyAction = "home" | "projects" | "github";
-type ModalState = "closed" | "open" | "closing";
+type HotkeyAction = "home" | "projects" | "github" | "theme-toggle" | "theme-device";
+type HotkeyIcon = ElementType<{ className?: string; strokeWidth?: number }>;
 
-const HOTKEY_MODAL_EXIT_MS = 160;
-const HOTKEY_SEQUENCE_EXIT_MS = 120;
+const motionEaseOut = [0.23, 1, 0.32, 1] as const;
+const motionLinear = [0, 0, 1, 1] as const;
 const HOTKEYS: Array<{
   sequence: readonly string[];
   label: string;
   action: HotkeyAction;
   description: string;
+  icon: HotkeyIcon;
   opensNewTab?: boolean;
   external?: boolean;
 }> = [
-  { sequence: ["g", "h"], label: "g h", action: "home", description: "Home" },
-  { sequence: ["g", "p"], label: "g p", action: "projects", description: "Projects" },
-  { sequence: ["g", "g"], label: "g g", action: "github", description: "GitHub", opensNewTab: true, external: true },
+  { sequence: ["g", "h"], label: "g h", action: "home", description: "Home", icon: Home },
+  { sequence: ["g", "p"], label: "g p", action: "projects", description: "Projects", icon: BriefcaseBusiness },
+  { sequence: ["g", "t"], label: "g t", action: "theme-toggle", description: "Toggle theme", icon: SunMoon },
+  { sequence: ["g", "d"], label: "g d", action: "theme-device", description: "Device theme", icon: Monitor },
+  {
+    sequence: ["g", "g"],
+    label: "g g",
+    action: "github",
+    description: "GitHub",
+    icon: GithubIcon,
+    opensNewTab: true,
+    external: true,
+  },
 ];
 
-export default function Hotkeys() {
+const hintVariants = {
+  idle: {
+    opacity: 1,
+    pointerEvents: "auto",
+    transform: "translate3d(0, 0, 0) scale(1)",
+    transition: { duration: 0.12, ease: motionEaseOut },
+  },
+  sequence: {
+    opacity: 0,
+    pointerEvents: "none",
+    transform: "translate3d(0, 0.34rem, 0) scale(0.985)",
+    transition: { duration: 0.1, ease: motionEaseOut },
+  },
+} satisfies Variants;
+
+const reducedHintVariants = {
+  idle: {
+    opacity: 1,
+    pointerEvents: "auto",
+    transition: { duration: 0.1, ease: motionLinear },
+  },
+  sequence: {
+    opacity: 0,
+    pointerEvents: "none",
+    transition: { duration: 0.08, ease: motionLinear },
+  },
+} satisfies Variants;
+
+const sequencePanelVariants = {
+  initial: {
+    opacity: 0,
+    transform: "translate3d(0, 0.28rem, 0) scale(0.985)",
+  },
+  animate: {
+    opacity: 1,
+    transform: "translate3d(0, 0, 0) scale(1)",
+    transition: { duration: 0.13, ease: motionEaseOut, delayChildren: 0.05, staggerChildren: 0.035 },
+  },
+  exit: {
+    opacity: 0,
+    transform: "translate3d(0, 0.28rem, 0) scale(0.985)",
+    transition: { duration: 0.1, ease: motionEaseOut },
+  },
+} satisfies Variants;
+
+const reducedSequencePanelVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.1, ease: motionLinear } },
+  exit: { opacity: 0, transition: { duration: 0.08, ease: motionLinear } },
+} satisfies Variants;
+
+const sequenceChildVariants = {
+  initial: {
+    opacity: 0,
+    transform: "translate3d(0, 0.2rem, 0) scale(0.96)",
+  },
+  animate: {
+    opacity: 1,
+    transform: "translate3d(0, 0, 0) scale(1)",
+    transition: { duration: 0.12, ease: motionEaseOut },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.08, ease: motionEaseOut },
+  },
+} satisfies Variants;
+
+const reducedSequenceChildVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.08, ease: motionLinear } },
+  exit: { opacity: 0, transition: { duration: 0.06, ease: motionLinear } },
+} satisfies Variants;
+
+const backdropVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.15, ease: motionEaseOut } },
+  exit: { opacity: 0, transition: { duration: 0.12, ease: motionEaseOut } },
+} satisfies Variants;
+
+const panelVariants = {
+  initial: {
+    opacity: 0,
+    filter: "blur(2px)",
+    transform: "translate3d(0, -0.375rem, 0) scale(0.965)",
+  },
+  animate: {
+    opacity: 1,
+    filter: "blur(0px)",
+    transform: "translate3d(0, 0, 0) scale(1)",
+    transition: { duration: 0.17, ease: motionEaseOut, delayChildren: 0.04, staggerChildren: 0.028 },
+  },
+  exit: {
+    opacity: 0,
+    filter: "blur(1px)",
+    transform: "translate3d(0, -0.25rem, 0) scale(0.975)",
+    transition: { duration: 0.12, ease: motionEaseOut },
+  },
+} satisfies Variants;
+
+const reducedPanelVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.12, ease: motionLinear } },
+  exit: { opacity: 0, transition: { duration: 0.1, ease: motionLinear } },
+} satisfies Variants;
+
+const modalChildVariants = {
+  initial: {
+    opacity: 0,
+    transform: "translate3d(0, -0.18rem, 0)",
+  },
+  animate: {
+    opacity: 1,
+    transform: "translate3d(0, 0, 0)",
+    transition: { duration: 0.13, ease: motionEaseOut },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.08, ease: motionEaseOut },
+  },
+} satisfies Variants;
+
+const reducedModalChildVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.08, ease: motionLinear } },
+  exit: { opacity: 0, transition: { duration: 0.06, ease: motionLinear } },
+} satisfies Variants;
+
+const Hotkeys = memo(function Hotkeys() {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(false);
-  const [modalState, setModalState] = useState<ModalState>("closed");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingSequence, setPendingSequence] = useState<string[]>([]);
-  const [exitingSequence, setExitingSequence] = useState<string[]>([]);
+  const shouldReduceMotion = useReducedMotion();
+  const isModalOpenRef = useRef(false);
+  const pendingSequenceRef = useRef<string[]>([]);
   const sequencer = useMemo(() => createHotkeySequencer(HOTKEYS), []);
-  const isModalRendered = modalState !== "closed";
-  const visibleSequence = pendingSequence.length > 0 ? pendingSequence : exitingSequence;
-  const isSequenceRendered = visibleSequence.length > 0;
-  const isSequenceExiting = pendingSequence.length === 0 && exitingSequence.length > 0;
-  const openHotkeyModal = useCallback(() => setModalState("open"), []);
+  const isSequenceRendered = pendingSequence.length > 0;
+  const commitModalOpen = useCallback((nextIsOpen: boolean) => {
+    isModalOpenRef.current = nextIsOpen;
+    setIsModalOpen(current => (current === nextIsOpen ? current : nextIsOpen));
+  }, []);
+  const commitPendingSequence = useCallback((nextSequence: string[]) => {
+    pendingSequenceRef.current = nextSequence;
+    setPendingSequence(current =>
+      current.length === nextSequence.length && current.every((key, index) => key === nextSequence[index])
+        ? current
+        : nextSequence,
+    );
+  }, []);
+  const clearPendingSequence = useCallback(() => {
+    commitPendingSequence([]);
+  }, [commitPendingSequence]);
+  const toggleHotkeyModal = useCallback(() => {
+    sequencer.reset();
+    clearPendingSequence();
+    commitModalOpen(!isModalOpenRef.current);
+  }, [clearPendingSequence, commitModalOpen, sequencer]);
   const closeHotkeyModal = useCallback(() => {
-    setModalState(current => (current === "closed" ? current : "closing"));
-  }, []);
-  const exitPendingSequence = useCallback(() => {
-    setPendingSequence(current => {
-      if (current.length > 0) {
-        setExitingSequence(current);
-      }
+    commitModalOpen(false);
+  }, [commitModalOpen]);
 
-      return [];
-    });
-  }, []);
+  useEffect(() => {
+    isModalOpenRef.current = isModalOpen;
+  }, [isModalOpen]);
+
+  useEffect(() => {
+    pendingSequenceRef.current = pendingSequence;
+  }, [pendingSequence]);
 
   useEffect(() => {
     const hoverQuery = window.matchMedia("(hover: hover)");
@@ -63,9 +223,8 @@ export default function Hotkeys() {
       setIsEnabled(nextIsEnabled);
 
       if (!nextIsEnabled) {
-        setModalState("closed");
-        setPendingSequence([]);
-        setExitingSequence([]);
+        commitModalOpen(false);
+        clearPendingSequence();
         sequencer.reset();
       }
     }
@@ -78,31 +237,7 @@ export default function Hotkeys() {
       hoverQuery.removeEventListener("change", syncEnabledState);
       coarsePointerQuery.removeEventListener("change", syncEnabledState);
     };
-  }, [sequencer]);
-
-  useEffect(() => {
-    if (modalState !== "closing") {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setModalState("closed");
-    }, HOTKEY_MODAL_EXIT_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [modalState]);
-
-  useEffect(() => {
-    if (exitingSequence.length === 0) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setExitingSequence([]);
-    }, HOTKEY_SEQUENCE_EXIT_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [exitingSequence]);
+  }, [clearPendingSequence, commitModalOpen, sequencer]);
 
   useEffect(() => {
     if (!isEnabled) {
@@ -114,24 +249,19 @@ export default function Hotkeys() {
         return;
       }
 
-      if (event.key === "Escape" && (isModalRendered || pendingSequence.length > 0)) {
+      if (event.key === "Escape" && (isModalOpenRef.current || pendingSequenceRef.current.length > 0)) {
         event.preventDefault();
         sequencer.reset();
         closeHotkeyModal();
-        exitPendingSequence();
+        clearPendingSequence();
         return;
       }
 
       if (isHelpShortcut(event)) {
         event.preventDefault();
         sequencer.reset();
-        setPendingSequence([]);
-        setExitingSequence([]);
-        if (isModalRendered) {
-          closeHotkeyModal();
-        } else {
-          openHotkeyModal();
-        }
+        clearPendingSequence();
+        commitModalOpen(!isModalOpenRef.current);
         return;
       }
 
@@ -148,21 +278,19 @@ export default function Hotkeys() {
       const result = sequencer.press(normalizedKey);
 
       if (result.state === "idle") {
-        exitPendingSequence();
+        clearPendingSequence();
         return;
       }
 
       event.preventDefault();
 
       if (result.state === "pending") {
-        setExitingSequence([]);
-        setPendingSequence([normalizedKey]);
+        commitPendingSequence([normalizedKey]);
       }
 
       if (result.state === "matched") {
-        setPendingSequence([]);
-        setExitingSequence([]);
-        setModalState("closed");
+        clearPendingSequence();
+        commitModalOpen(false);
         runHotkeyAction(result.action, router);
       }
     }
@@ -170,157 +298,207 @@ export default function Hotkeys() {
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    closeHotkeyModal,
-    exitPendingSequence,
-    isEnabled,
-    isModalRendered,
-    openHotkeyModal,
-    pendingSequence.length,
-    router,
-    sequencer,
-  ]);
+  }, [clearPendingSequence, closeHotkeyModal, commitModalOpen, commitPendingSequence, isEnabled, router, sequencer]);
 
   if (!isEnabled) {
     return null;
   }
 
   return (
-    <>
-      <button
-        type="button"
-        aria-label={isModalRendered ? "Close keyboard shortcuts" : "Open keyboard shortcuts"}
-        className={cn(
-          "hotkeys-corner-hint liquid-glass fixed bottom-4 left-4 z-40 hidden h-11 items-center rounded-full px-1.5 text-foreground shadow-menu transition-[opacity,transform] duration-150 hover:scale-[1.03] md:inline-flex",
-          isModalRendered && "z-[80]",
-          isSequenceRendered && "hotkeys-corner-hint-exit",
-        )}
-        onClick={() => {
-          setPendingSequence([]);
-          setExitingSequence([]);
-          sequencer.reset();
-          if (isModalRendered) {
-            closeHotkeyModal();
-          } else {
-            openHotkeyModal();
-          }
-        }}
-      >
-        <kbd className="hotkeys-trigger-key">⌘.</kbd>
-        <span aria-hidden="true" className="hotkeys-trigger-dots opacity-0">
+    <LazyMotion features={domAnimation}>
+      <HotkeyHint
+        isSequenceRendered={isSequenceRendered}
+        reduceMotion={shouldReduceMotion}
+        onToggle={toggleHotkeyModal}
+      />
+
+      <AnimatePresence initial={false}>
+        {isSequenceRendered ? (
+          <PendingSequence
+            key={pendingSequence.join(" ")}
+            reduceMotion={shouldReduceMotion}
+            sequence={pendingSequence}
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence initial={false}>
+        {isModalOpen ? <HotkeyModal reduceMotion={shouldReduceMotion} onClose={closeHotkeyModal} /> : null}
+      </AnimatePresence>
+    </LazyMotion>
+  );
+});
+
+export default Hotkeys;
+
+const HotkeyHint = memo(function HotkeyHint({
+  isSequenceRendered,
+  reduceMotion,
+  onToggle,
+}: {
+  isSequenceRendered: boolean;
+  reduceMotion: boolean | null;
+  onToggle: () => void;
+}) {
+  return (
+    <m.button
+      type="button"
+      aria-label="Toggle keyboard shortcuts"
+      animate={isSequenceRendered ? "sequence" : "idle"}
+      className="hotkeys-corner-hint liquid-glass fixed bottom-4 left-4 z-[80] hidden h-11 items-center rounded-full px-1.5 text-foreground shadow-menu md:inline-flex"
+      variants={reduceMotion ? reducedHintVariants : hintVariants}
+      whileTap={reduceMotion ? undefined : { transform: "translate3d(0, 0, 0) scale(0.97)" }}
+      onClick={onToggle}
+    >
+      <kbd aria-label="Command period" className="hotkeys-trigger-key hotkeys-command-key">
+        <Command aria-hidden="true" size={13} strokeWidth={2.5} />
+        <span aria-hidden="true" className="hotkeys-command-period" />
+      </kbd>
+      <span aria-hidden="true" className="hotkeys-trigger-dots opacity-0">
+        <span />
+        <span />
+        <span />
+      </span>
+    </m.button>
+  );
+});
+
+const PendingSequence = memo(function PendingSequence({
+  reduceMotion,
+  sequence,
+}: {
+  reduceMotion: boolean | null;
+  sequence: string[];
+}) {
+  const panelMotion = reduceMotion ? reducedSequencePanelVariants : sequencePanelVariants;
+  const childMotion = reduceMotion ? reducedSequenceChildVariants : sequenceChildVariants;
+
+  return (
+    <m.aside
+      aria-live="polite"
+      aria-label={`${sequence.join(" ")} pressed; awaiting next shortcut key`}
+      className="hotkeys-chord-panel hotkeys-chord-waiting liquid-glass fixed bottom-4 left-4 z-[65] hidden h-11 items-center gap-1.5 rounded-full px-1.5 text-foreground shadow-menu md:flex"
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={panelMotion}
+    >
+      <span className="hotkeys-wait-sequence">
+        {sequence.map((key, index) => (
+          <m.span
+            key={getHotkeySequenceKey("pending", key, index)}
+            className="hotkeys-trigger-key hotkeys-wait-key"
+            variants={childMotion}
+          >
+            <kbd className="relative z-10 font-mono text-xs font-black leading-none">{key}</kbd>
+          </m.span>
+        ))}
+      </span>
+      <m.span className="hotkeys-wait-body" variants={childMotion}>
+        <span aria-hidden="true" className="hotkeys-trigger-dots hotkeys-wait-dots">
           <span />
           <span />
           <span />
         </span>
-      </button>
+      </m.span>
+    </m.aside>
+  );
+});
 
-      {isSequenceRendered ? (
-        <aside
-          aria-live="polite"
-          aria-label={`${visibleSequence.join(" ")} pressed; awaiting next shortcut key`}
-          className={cn(
-            "hotkeys-chord-panel hotkeys-chord-waiting liquid-glass fixed bottom-4 left-4 z-[65] hidden h-11 items-center gap-1.5 rounded-full px-1.5 text-foreground shadow-menu md:flex",
-            isSequenceExiting && "hotkeys-chord-waiting-exit",
-          )}
-        >
-          <span className="hotkeys-wait-sequence">
-            {visibleSequence.map((key, index) => (
-              <span
-                key={getHotkeySequenceKey("pending", key, index)}
-                className="hotkeys-trigger-key hotkeys-wait-key"
-                style={{ animationDelay: isSequenceExiting ? "0ms" : `${88 + index * 38}ms` }}
-              >
-                <kbd className="relative z-10 font-mono text-xs font-black leading-none">{key}</kbd>
-              </span>
-            ))}
-          </span>
-          <span className="hotkeys-wait-body">
-            <span aria-hidden="true" className="hotkeys-trigger-dots hotkeys-wait-dots">
-              <span />
-              <span />
-              <span />
+const HotkeyModal = memo(function HotkeyModal({
+  reduceMotion,
+  onClose,
+}: {
+  reduceMotion: boolean | null;
+  onClose: () => void;
+}) {
+  const activePanelVariants = reduceMotion ? reducedPanelVariants : panelVariants;
+  const activeChildVariants = reduceMotion ? reducedModalChildVariants : modalChildVariants;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 py-6 sm:px-6" role="presentation">
+      <m.button
+        type="button"
+        aria-label="Close keyboard shortcuts"
+        className="hotkeys-modal-backdrop absolute inset-0 bg-background/42 backdrop-blur-[2px]"
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={backdropVariants}
+        onClick={onClose}
+      />
+      <m.section
+        aria-label="Keyboard shortcuts"
+        className="hotkeys-panel liquid-glass relative w-full max-w-lg rounded-[1.75rem] p-3 text-foreground shadow-menu sm:p-4"
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={activePanelVariants}
+      >
+        <m.div className="flex items-center justify-between gap-4 px-2.5 py-2 sm:px-3" variants={activeChildVariants}>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+              <Command size={24} strokeWidth={2.35} />
             </span>
-          </span>
-        </aside>
-      ) : null}
-
-      {isModalRendered ? (
-        <div className="fixed inset-0 z-[70] px-4 py-6 sm:px-6" role="presentation">
+            <h2 className="truncate text-lg font-black tracking-normal">Hotkeys</h2>
+          </div>
           <button
             type="button"
             aria-label="Close keyboard shortcuts"
-            className={cn(
-              "hotkeys-modal-backdrop absolute inset-0 bg-background/42 backdrop-blur-[2px]",
-              modalState === "closing" && "hotkeys-modal-backdrop-exit",
-            )}
-            onClick={closeHotkeyModal}
-          />
-          <section
-            aria-label="Keyboard shortcuts"
-            className={cn(
-              "hotkeys-panel liquid-glass relative mx-auto mt-20 w-full max-w-xs rounded-2xl p-2 text-foreground shadow-menu sm:mt-24",
-              modalState === "closing" && "hotkeys-panel-exit",
-            )}
+            className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+            onClick={onClose}
           >
-            <div className="flex items-center justify-between gap-3 px-2.5 py-1.5">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                  <Command size={16} strokeWidth={2.35} />
-                </span>
-                <h2 className="truncate text-xs font-black tracking-normal">Hotkeys</h2>
-              </div>
-              <button
-                type="button"
-                aria-label="Close keyboard shortcuts"
-                className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
-                onClick={closeHotkeyModal}
+            <span aria-hidden="true" className="text-2xl leading-none">
+              ×
+            </span>
+          </button>
+        </m.div>
+
+        <m.div className="mt-2 grid gap-1" variants={activeChildVariants}>
+          {HOTKEYS.map(shortcut => {
+            const Icon = shortcut.icon;
+
+            return (
+              <m.div
+                key={shortcut.action}
+                className="flex items-center justify-between gap-4 rounded-2xl px-3 py-3 sm:px-4"
+                variants={activeChildVariants}
               >
-                <span aria-hidden="true" className="text-lg leading-none">
-                  ×
-                </span>
-              </button>
-            </div>
-
-            <div className="mt-1 grid gap-0.5">
-              {HOTKEYS.map(shortcut => (
-                <div key={shortcut.action} className="flex items-center justify-between gap-3 rounded-xl px-2.5 py-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    {shortcut.opensNewTab || shortcut.external ? (
-                      <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2.3} />
-                    ) : (
-                      <HelpCircle className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2.3} />
-                    )}
-                    <span className="truncate text-xs font-bold">{shortcut.description}</span>
-                  </div>
-                  <span className="flex shrink-0 items-center gap-1">
-                    {shortcut.sequence.map((key, index) => (
-                      <kbd
-                        key={getHotkeySequenceKey(shortcut.action, key, index)}
-                        className={cn(
-                          "grid min-w-6 place-items-center rounded-md border border-border bg-secondary px-1.5 py-1",
-                          "font-mono text-[10px] font-black leading-none text-secondary-foreground shadow-sm",
-                        )}
-                      >
-                        {key}
-                      </kbd>
-                    ))}
-                  </span>
+                <div className="flex min-w-0 items-center gap-3">
+                  <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={2.3} />
+                  <span className="truncate text-base font-bold">{shortcut.description}</span>
                 </div>
-              ))}
-            </div>
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {shortcut.sequence.map((key, index) => (
+                    <kbd
+                      key={getHotkeySequenceKey(shortcut.action, key, index)}
+                      className={cn(
+                        "grid min-w-8 place-items-center rounded-lg border border-border bg-secondary px-2 py-1.5",
+                        "font-mono text-xs font-black leading-none text-secondary-foreground shadow-sm",
+                      )}
+                    >
+                      {key}
+                    </kbd>
+                  ))}
+                </span>
+              </m.div>
+            );
+          })}
+        </m.div>
 
-            <div className="mt-1.5 border-t border-border px-2.5 py-2 text-[11px] font-bold text-muted-foreground">
-              <kbd className="rounded-md border border-border bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-secondary-foreground">
-                ⌘.
-              </kbd>{" "}
-              toggles this menu
-            </div>
-          </section>
-        </div>
-      ) : null}
-    </>
+        <m.div
+          className="mt-2 border-t border-border px-3 pt-3 pb-0 text-sm font-bold text-muted-foreground sm:px-4"
+          variants={activeChildVariants}
+        >
+          <kbd className="rounded-lg border border-border bg-secondary px-2 py-1 font-mono text-xs text-secondary-foreground">
+            ⌘.
+          </kbd>{" "}
+          toggles this menu
+        </m.div>
+      </m.section>
+    </div>
   );
-}
+});
 
 function normalizeSequenceKey(key: string) {
   return key.length === 1 ? key : undefined;
@@ -342,6 +520,16 @@ function isEditableTarget(target: EventTarget | null) {
 }
 
 function runHotkeyAction(action: HotkeyAction, router: ReturnType<typeof useRouter>) {
+  if (action === "theme-toggle") {
+    toggleThemeMode();
+    return;
+  }
+
+  if (action === "theme-device") {
+    persistThemeMode("system");
+    return;
+  }
+
   if (action === "github") {
     openInNewTab("https://github.com/exsesx");
     return;
@@ -349,6 +537,11 @@ function runHotkeyAction(action: HotkeyAction, router: ReturnType<typeof useRout
 
   const route: Route = action === "home" ? "/" : "/projects";
   router.push(route);
+}
+
+function toggleThemeMode() {
+  const { resolvedTheme } = parseThemeSnapshot(getThemeSnapshot());
+  persistThemeMode(resolvedTheme === "dark" ? "light" : "dark");
 }
 
 function openInNewTab(href: string) {

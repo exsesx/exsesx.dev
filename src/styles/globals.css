@@ -386,8 +386,6 @@ html[data-season="pride"] .logo-mark-pride {
   }
 
   .hotkeys-wait-key::before,
-  .hotkeys-wait-key kbd,
-  .hotkeys-wait-body,
   .hotkeys-wait-dots span {
     animation: none;
   }
@@ -428,26 +426,10 @@ html[data-season="pride"] .logo-mark-pride {
     0 10px 30px color-mix(in oklab, var(--foreground) 10%, transparent);
   backdrop-filter: blur(26px) saturate(1.5);
   -webkit-backdrop-filter: blur(26px) saturate(1.5);
-  transition:
-    opacity 120ms var(--ease-out),
-    transform 120ms var(--ease-out),
-    box-shadow 160ms var(--ease-weight);
 }
 
 .hotkeys-chord-waiting {
   min-width: 4.75rem;
-}
-
-.hotkeys-corner-hint-exit {
-  pointer-events: none;
-  opacity: 0;
-  transform: translate3d(0, 0.34rem, 0) scale(0.985);
-}
-
-.hotkeys-chord-waiting-exit {
-  pointer-events: none;
-  opacity: 0;
-  transform: translate3d(0, 0.28rem, 0) scale(0.985);
 }
 
 .hotkeys-wait-sequence {
@@ -481,6 +463,21 @@ html[data-season="pride"] .logo-mark-pride {
   animation-delay: 0ms;
 }
 
+.hotkeys-command-key svg {
+  transform: translate3d(0, 0, 0);
+}
+
+.hotkeys-command-period {
+  position: absolute;
+  right: 0.42rem;
+  bottom: 0.45rem;
+  width: 0.16rem;
+  height: 0.16rem;
+  background: currentColor;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 38%, transparent);
+}
+
 .hotkeys-wait-key::before {
   position: absolute;
   inset: -0.18rem;
@@ -490,11 +487,6 @@ html[data-season="pride"] .logo-mark-pride {
   border-radius: inherit;
   opacity: 0.34;
   animation: hotkeys-wait-ring 1.35s var(--ease-out) infinite;
-  animation-delay: inherit;
-}
-
-.hotkeys-wait-key kbd {
-  animation: hotkeys-key-rise 150ms var(--ease-snap) both;
   animation-delay: inherit;
 }
 
@@ -508,8 +500,6 @@ html[data-season="pride"] .logo-mark-pride {
   display: inline-flex;
   align-items: center;
   padding: 0 0.25rem 0 0;
-  animation: hotkeys-wait-dots-enter 130ms var(--ease-snap) both;
-  animation-delay: 150ms;
 }
 
 .hotkeys-trigger-dots span {
@@ -530,10 +520,6 @@ html[data-season="pride"] .logo-mark-pride {
 
 .hotkeys-wait-dots span:nth-child(3) {
   animation-delay: 240ms;
-}
-
-.hotkeys-panel-exit {
-  pointer-events: none;
 }
 
 .dark .site-nav-glass {
@@ -663,22 +649,6 @@ html[data-season="pride"] .logo-mark-pride {
   .dropdown-menu-item:nth-child(3) {
     animation-delay: 56ms;
   }
-
-  .hotkeys-modal-backdrop {
-    animation: hotkeys-backdrop-enter 150ms var(--ease-out) both;
-  }
-
-  .hotkeys-modal-backdrop-exit {
-    animation: hotkeys-backdrop-exit 150ms var(--ease-out) both;
-  }
-
-  .hotkeys-panel:not(.hotkeys-panel-exit) {
-    animation: menu-enter 170ms var(--ease-snap) both;
-  }
-
-  .hotkeys-panel-exit {
-    animation: menu-exit 150ms var(--ease-out) both;
-  }
 }
 
 @keyframes menu-enter {
@@ -707,52 +677,6 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
-@keyframes menu-exit {
-  from {
-    opacity: 1;
-    filter: blur(0);
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  to {
-    opacity: 0;
-    filter: blur(1px);
-    transform: translate3d(0, -4px, 0) scale(0.975);
-  }
-}
-
-@keyframes hotkeys-backdrop-enter {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes hotkeys-backdrop-exit {
-  from {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes hotkeys-key-rise {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 0.26rem, 0) scale(0.96);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
 @keyframes hotkeys-wait-ring {
   0% {
     opacity: 0.38;
@@ -763,18 +687,6 @@ html[data-season="pride"] .logo-mark-pride {
   100% {
     opacity: 0;
     transform: scale(1.18);
-  }
-}
-
-@keyframes hotkeys-wait-dots-enter {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 0.18rem, 0) scale(0.96);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
