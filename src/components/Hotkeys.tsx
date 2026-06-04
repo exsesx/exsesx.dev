@@ -1,6 +1,6 @@
 "use client";
 
-import { BriefcaseBusiness, Command, Home, Monitor, SunMoon } from "lucide-react";
+import { BriefcaseBusiness, Command, Home, Monitor, SunMoon, X } from "lucide-react";
 import type { Variants } from "motion/react";
 import { AnimatePresence, domAnimation, LazyMotion, useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
@@ -40,6 +40,9 @@ const HOTKEYS: Array<{
     external: true,
   },
 ];
+const repeatableHotkeyActions = new Set<HotkeyAction>(
+  HOTKEYS.filter(shortcut => !shortcut.external && !shortcut.opensNewTab).map(shortcut => shortcut.action),
+);
 
 const hintVariants = {
   idle: {
@@ -175,6 +178,7 @@ const Hotkeys = memo(function Hotkeys() {
   const [pendingSequence, setPendingSequence] = useState<string[]>([]);
   const shouldReduceMotion = useReducedMotion();
   const isModalOpenRef = useRef(false);
+  const lastRepeatableActionRef = useRef<HotkeyAction | null>(null);
   const pendingSequenceRef = useRef<string[]>([]);
   const sequencer = useMemo(() => createHotkeySequencer(HOTKEYS), []);
   const isSequenceRendered = pendingSequence.length > 0;
@@ -275,6 +279,19 @@ const Hotkeys = memo(function Hotkeys() {
         return;
       }
 
+      if (normalizedKey === "." && pendingSequenceRef.current.length === 0) {
+        if (lastRepeatableActionRef.current === null) {
+          return;
+        }
+
+        event.preventDefault();
+        sequencer.reset();
+        clearPendingSequence();
+        commitModalOpen(false);
+        runHotkeyAction(lastRepeatableActionRef.current, router);
+        return;
+      }
+
       const result = sequencer.press(normalizedKey);
 
       if (result.state === "idle") {
@@ -289,6 +306,10 @@ const Hotkeys = memo(function Hotkeys() {
       }
 
       if (result.state === "matched") {
+        if (repeatableHotkeyActions.has(result.action)) {
+          lastRepeatableActionRef.current = result.action;
+        }
+
         clearPendingSequence();
         commitModalOpen(false);
         runHotkeyAction(result.action, router);
@@ -435,7 +456,10 @@ const HotkeyModal = memo(function HotkeyModal({
         exit="exit"
         variants={activePanelVariants}
       >
-        <m.div className="flex items-center justify-between gap-4 px-2.5 py-2 sm:px-3" variants={activeChildVariants}>
+        <m.div
+          className="flex items-center justify-between gap-4 px-2.5 pt-0 pb-2 sm:px-3"
+          variants={activeChildVariants}
+        >
           <div className="flex min-w-0 items-center gap-3">
             <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
               <Command size={24} strokeWidth={2.35} />
@@ -448,9 +472,7 @@ const HotkeyModal = memo(function HotkeyModal({
             className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
             onClick={onClose}
           >
-            <span aria-hidden="true" className="text-2xl leading-none">
-              ×
-            </span>
+            <X aria-hidden="true" size={24} strokeWidth={2.5} />
           </button>
         </m.div>
 
@@ -487,13 +509,21 @@ const HotkeyModal = memo(function HotkeyModal({
         </m.div>
 
         <m.div
-          className="mt-2 border-t border-border px-3 pt-3 pb-0 text-sm font-bold text-muted-foreground sm:px-4"
+          className="mt-2 flex items-center justify-between gap-3 border-t border-border px-3 pt-3 pb-0 text-sm font-bold text-muted-foreground sm:px-4"
           variants={activeChildVariants}
         >
-          <kbd className="rounded-lg border border-border bg-secondary px-2 py-1 font-mono text-xs text-secondary-foreground">
-            ⌘.
-          </kbd>{" "}
-          toggles this menu
+          <span className="flex h-8 min-w-0 items-center gap-2">
+            <kbd className="grid place-items-center rounded-lg border border-border bg-secondary px-2 py-1 font-mono text-xs leading-none text-secondary-foreground">
+              ⌘.
+            </kbd>
+            <span className="truncate leading-none">toggles this menu</span>
+          </span>
+          <span className="flex h-8 shrink-0 items-center gap-1.5 text-xs font-semibold text-muted-foreground/60">
+            <kbd className="grid place-items-center rounded-md border border-border/70 bg-secondary/70 px-1.5 py-0.5 font-mono text-[0.6875rem] leading-none text-secondary-foreground/70">
+              .
+            </kbd>
+            <span className="hidden leading-none sm:inline">repeats last</span>
+          </span>
         </m.div>
       </m.section>
     </div>
