@@ -17,28 +17,32 @@ function CvMenu() {
 
   return (
     <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
-      <div className="relative inline-flex w-full shrink-0 sm:w-auto">
+      <div
+        className={cn(
+          buttonVariants({ variant: "glass", size: "lg" }),
+          "w-full gap-0 overflow-hidden !p-0 active:scale-100 hover:!bg-secondary sm:w-auto",
+          isOpen && "border-ring/50 text-accent",
+        )}
+      >
         <a
           href="/api/resume/pdf"
-          className={cn(
-            buttonVariants({ variant: "glass", size: "lg" }),
-            "min-w-0 flex-1 rounded-r-none border-r-0 pr-4 sm:flex-none",
-          )}
+          className="inline-flex h-full min-w-0 flex-1 items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97] sm:flex-none"
           rel="noopener noreferrer"
           target="_blank"
         >
           <FileText data-icon="inline-start" strokeWidth={2.4} />
           Open CV
         </a>
+        <span
+          aria-hidden="true"
+          className="h-7 w-px shrink-0 bg-border/80 transition-colors duration-200 ease-[var(--ease-weight)] group-hover/button:bg-ring/35"
+        />
         <DropdownMenuTrigger
           render={
             <button
               type="button"
               aria-label="Show CV actions"
-              className={cn(
-                buttonVariants({ variant: "glass", size: "icon-lg" }),
-                "rounded-l-none px-3 transition data-popup-open:border-ring/50 data-popup-open:bg-muted data-popup-open:text-accent sm:px-3",
-              )}
+              className="inline-flex h-full w-12 items-center justify-center rounded-none bg-transparent outline-none focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/40 sm:w-12"
             />
           }
         >
