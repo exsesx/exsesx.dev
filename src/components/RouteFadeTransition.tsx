@@ -1,13 +1,14 @@
-import { type ReactNode, ViewTransition } from "react";
+import { type ReactNode } from "react";
+import { DesktopViewTransition } from "./DesktopViewTransition";
 
 export default function RouteFadeTransition({ children }: { children: ReactNode }) {
   return (
-    <ViewTransition
+    <DesktopViewTransition
       enter={{ "nav-forward": "nav-forward", "nav-back": "nav-back", default: "none" }}
       exit={{ "nav-forward": "nav-forward", "nav-back": "nav-back", default: "none" }}
       default="none"
     >
       {children}
-    </ViewTransition>
+    </DesktopViewTransition>
   );
 }

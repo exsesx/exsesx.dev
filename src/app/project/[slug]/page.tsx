@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ViewTransition } from "react";
 import ProjectCard from "../../../components/Card";
+import { DesktopViewTransition } from "../../../components/DesktopViewTransition";
 import ProjectBackButton from "../../../components/ProjectBackButton";
 import RouteFadeTransition from "../../../components/RouteFadeTransition";
 import { Badge } from "../../../components/ui/badge";
@@ -91,7 +91,7 @@ function ProjectMedia({ project, priority = false }: { project: Project; priorit
   const projectTransitionType = getProjectTransitionType(project);
 
   return (
-    <ViewTransition
+    <DesktopViewTransition
       name={`project-media-${project.id}`}
       share={{ [projectTransitionType]: "morph", default: "none" }}
       default="none"
@@ -126,7 +126,7 @@ function ProjectMedia({ project, priority = false }: { project: Project; priorit
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/55 via-transparent to-transparent" />
       </div>
-    </ViewTransition>
+    </DesktopViewTransition>
   );
 }
 
