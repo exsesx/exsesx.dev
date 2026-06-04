@@ -852,6 +852,11 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
+/*
+ * Theme sweep transition.
+ * Gated in JS (canUseDesktopViewTransitions) before document.startViewTransition
+ * is ever called, so these rules only need the reduced-motion guard.
+ */
 @media (prefers-reduced-motion: no-preference) {
   html[data-theme-transition="active"] *,
   html[data-theme-transition="active"] *::before,
@@ -874,7 +879,28 @@ html[data-season="pride"] .logo-mark-pride {
   html[data-theme-transition="active"]::view-transition-new(root) {
     animation: theme-sweep var(--duration-theme) var(--ease-snap) both;
   }
+}
 
+/*
+ * Persistent header isolation. Kept ungated so the fixed header never slides or
+ * cross-fades with the page snapshot, on every device and every navigation.
+ */
+::view-transition-old(persistent-nav) {
+  display: none;
+}
+
+::view-transition-new(persistent-nav),
+::view-transition-group(persistent-nav) {
+  animation: none;
+}
+
+/*
+ * Page navigation transitions (route fade/slide, directional nav, shared-element
+ * morph). The <ViewTransition> boundaries always render so React can pair
+ * shared elements old<->new; the animation is gated to pointer-precise desktop.
+ * On touch / small screens the snapshot resolves instantly (see below).
+ */
+@media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (hover: hover) and (pointer: fine) {
   ::view-transition-old(.fade-out) {
     animation: var(--duration-exit) var(--ease-out) view-fade reverse;
   }
@@ -959,14 +985,20 @@ html[data-season="pride"] .logo-mark-pride {
     border-radius: inherit;
     overflow: clip;
   }
+}
 
-  ::view-transition-old(persistent-nav) {
-    display: none;
-  }
-
-  ::view-transition-new(persistent-nav),
-  ::view-transition-group(persistent-nav) {
-    animation: none;
+/*
+ * Touch / small screens: the <ViewTransition> boundaries still produce a
+ * snapshot, but no page animation should play. Collapse every page transition
+ * to an instant swap so navigation feels native instead of flashing the
+ * browser's default cross-fade. (Header isolation above still applies.)
+ */
+@media not all and (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-delay: 0s !important;
+    animation-duration: 0s !important;
   }
 }
 
