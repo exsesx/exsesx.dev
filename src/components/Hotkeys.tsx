@@ -441,7 +441,7 @@ const HotkeyModal = memo(function HotkeyModal({
       <m.button
         type="button"
         aria-label="Close keyboard shortcuts"
-        className="hotkeys-modal-backdrop absolute inset-0 bg-background/42 backdrop-blur-[2px]"
+        className="hotkeys-modal-backdrop absolute inset-0 cursor-pointer bg-background/42 backdrop-blur-[2px]"
         initial="initial"
         animate="animate"
         exit="exit"
@@ -469,7 +469,7 @@ const HotkeyModal = memo(function HotkeyModal({
           <button
             type="button"
             aria-label="Close keyboard shortcuts"
-            className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+            className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
             onClick={onClose}
           >
             <X aria-hidden="true" size={24} strokeWidth={2.5} />

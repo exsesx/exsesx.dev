@@ -3,7 +3,7 @@
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { startTransition } from "react";
+import { startTransition, useCallback, useEffect } from "react";
 import { getPreviousRoute, queueScrollRestore } from "@/lib/navigation-history";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "./ui/button-variants";
@@ -17,10 +17,16 @@ function shouldRestoreSharedProjectMedia(path: string) {
   return path === "/projects" || path.startsWith("/projects?") || path.startsWith("/projects#");
 }
 
+function isEditableTarget(target: EventTarget | null) {
+  return (
+    target instanceof Element && target.closest("input, textarea, select, [contenteditable='true'], [role='textbox']")
+  );
+}
+
 export default function ProjectBackButton({ fallbackHref, fallbackTransitionTypes }: ProjectBackButtonProps) {
   const router = useRouter();
 
-  function navigateBack() {
+  const navigateBack = useCallback(() => {
     const previousRoute = getPreviousRoute();
     document.documentElement.dataset.viewTransitionNavigated = "true";
 
@@ -39,12 +45,32 @@ export default function ProjectBackButton({ fallbackHref, fallbackTransitionType
     startTransition(() => {
       router.push(fallbackHref, { transitionTypes: fallbackTransitionTypes });
     });
-  }
+  }, [fallbackHref, fallbackTransitionTypes, router]);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        event.defaultPrevented ||
+        event.key !== "Escape" ||
+        isEditableTarget(event.target) ||
+        document.querySelector(".hotkeys-panel")
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      navigateBack();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigateBack]);
 
   return (
     <button
       type="button"
-      className={cn(buttonVariants({ variant: "glass", size: "sm" }), "w-fit")}
+      className={cn(buttonVariants({ variant: "glass", size: "sm" }), "w-fit cursor-pointer")}
       onClick={navigateBack}
     >
       <ArrowLeft data-icon="inline-start" strokeWidth={2.4} />

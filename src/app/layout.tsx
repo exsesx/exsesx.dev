@@ -11,6 +11,82 @@ import "../styles/globals.css";
 const siteDescription =
   "Oleh Vanin is a senior full-stack engineer and AI engineer building scalable product systems with React, Next.js, Node.js, Go, cloud infrastructure, and LLM workflows.";
 
+const noFlashScript = String.raw`
+(() => {
+  var storageKey = "exsesx:color-scheme";
+  var classNameDark = "dark";
+  var classNameLight = "light";
+  var element = document.documentElement;
+  var preferDarkQuery = "(prefers-color-scheme: dark)";
+  var mql = window.matchMedia(preferDarkQuery);
+  var supportsColorSchemeQuery = mql.media === preferDarkQuery;
+
+  function getStoredMode() {
+    var localStorageTheme = null;
+
+    try {
+      localStorageTheme = localStorage.getItem(storageKey);
+    } catch {}
+
+    if (localStorageTheme !== null) {
+      try {
+        localStorageTheme = JSON.parse(localStorageTheme);
+      } catch {}
+
+      if (localStorageTheme === true) return "dark";
+      if (localStorageTheme === false) return "light";
+      if (localStorageTheme === "light" || localStorageTheme === "dark" || localStorageTheme === "system") {
+        return localStorageTheme;
+      }
+    }
+
+    return "system";
+  }
+
+  function setClassOnDocumentBody(darkMode, mode) {
+    element.classList.add(darkMode ? classNameDark : classNameLight);
+    element.classList.remove(darkMode ? classNameLight : classNameDark);
+    element.dataset.themeMode = mode;
+  }
+
+  function setSeason() {
+    var now = new Date();
+
+    if (now.getMonth() === 5) {
+      element.dataset.season = "pride";
+    } else {
+      delete element.dataset.season;
+    }
+  }
+
+  function applyTheme() {
+    var mode = getStoredMode();
+
+    if (mode === "dark") {
+      setClassOnDocumentBody(true, mode);
+    } else if (mode === "light") {
+      setClassOnDocumentBody(false, mode);
+    } else if (supportsColorSchemeQuery) {
+      setClassOnDocumentBody(mql.matches, mode);
+    } else {
+      setClassOnDocumentBody(element.classList.contains(classNameDark), mode);
+    }
+  }
+
+  applyTheme();
+  setSeason();
+  window.setInterval(setSeason, 60 * 60 * 1000);
+  window.addEventListener("storage", applyTheme);
+  window.addEventListener("exsesx:theme-change", applyTheme);
+
+  if (mql.addEventListener) {
+    mql.addEventListener("change", applyTheme);
+  } else if (mql.addListener) {
+    mql.addListener(applyTheme);
+  }
+})();
+`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -85,7 +161,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body>
-        <Script src="/scripts/noflash.js" strategy="beforeInteractive" />
+        <Script id="noflash" strategy="beforeInteractive">
+          {noFlashScript}
+        </Script>
         <RouteMotionGuard />
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />
