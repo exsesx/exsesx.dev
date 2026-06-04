@@ -1,6 +1,6 @@
 // Keep theme and seasonal header treatment ahead of hydration.
 
-(function () {
+(() => {
   // Change these if you use something different in your hook.
   var storageKey = "exsesx:color-scheme";
   var classNameDark = "dark";
@@ -47,6 +47,7 @@
     var isDark = element.classList.contains(classNameDark);
     var href = isDark ? "/favicon/favicon-dark.svg" : "/favicon/favicon-light.svg";
     var iconLinks = Array.prototype.slice.call(document.querySelectorAll("link[rel~='icon']"));
+    var link;
 
     function setAttribute(link, name, value) {
       if (link.getAttribute(name) !== value) {
@@ -61,13 +62,13 @@
     }
 
     if (iconLinks.length === 0) {
-      var link = document.createElement("link");
+      link = document.createElement("link");
       link.rel = "icon";
       document.head.appendChild(link);
       iconLinks.push(link);
     }
 
-    iconLinks.forEach(function (link) {
+    iconLinks.forEach(link => {
       setAttribute(link, "href", href);
       setAttribute(link, "type", "image/svg+xml");
       removeAttribute(link, "media");
@@ -116,8 +117,10 @@
     mql.addListener(applyTheme);
   }
 
+  var faviconObserver;
+
   if ("MutationObserver" in window) {
-    var faviconObserver = new MutationObserver(syncFavicon);
+    faviconObserver = new MutationObserver(syncFavicon);
     faviconObserver.observe(document.head, {
       childList: true,
       subtree: true,

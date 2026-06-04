@@ -1,10 +1,20 @@
 const DEFAULT_RXRESUME_BASE_URL = "https://rxresu.me";
 const DEFAULT_RESUME_ID = "019befbe-521d-71d8-ad3b-f1610eda247a";
 const PDF_FILENAME = "Oleh Vanin CV.pdf";
-
+const RESUME_PDF_BROWSER_CACHE_SECONDS = 60 * 60;
+const RESUME_PDF_STALE_SECONDS = 60 * 60 * 24;
 export const runtime = "nodejs";
+export const revalidate = 21600;
 
-export async function GET() {
+const RESUME_PDF_REVALIDATE_SECONDS = revalidate;
+const RESUME_PDF_CACHE_CONTROL = [
+  "public",
+  `max-age=${RESUME_PDF_BROWSER_CACHE_SECONDS}`,
+  `s-maxage=${RESUME_PDF_REVALIDATE_SECONDS}`,
+  `stale-while-revalidate=${RESUME_PDF_STALE_SECONDS}`,
+].join(", ");
+
+export async function GET(request: Request) {
   const apiKey = process.env.RXRESUME_API_KEY;
 
   if (!apiKey) {
@@ -19,6 +29,9 @@ export async function GET() {
     headers: {
       "x-api-key": apiKey,
     },
+    next: {
+      revalidate: RESUME_PDF_REVALIDATE_SECONDS,
+    },
   });
 
   if (!upstreamResponse.ok) {
@@ -26,13 +39,14 @@ export async function GET() {
   }
 
   const pdf = await upstreamResponse.arrayBuffer();
+  const shouldDownload = new URL(request.url).searchParams.has("download");
 
   return new Response(pdf, {
     headers: {
-      "Cache-Control": "no-store, max-age=0",
+      "Cache-Control": RESUME_PDF_CACHE_CONTROL,
       "Content-Type": upstreamResponse.headers.get("content-type") || "application/pdf",
       "Content-Length": String(pdf.byteLength),
-      "Content-Disposition": `attachment; filename="${PDF_FILENAME}"`,
+      "Content-Disposition": `${shouldDownload ? "attachment" : "inline"}; filename="${PDF_FILENAME}"`,
     },
   });
 }
