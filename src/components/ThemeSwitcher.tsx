@@ -11,6 +11,7 @@ import {
   subscribeToTheme,
   type ThemeMode,
 } from "@/lib/theme";
+import { canUseDesktopViewTransitions } from "@/lib/view-transitions";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -76,6 +77,7 @@ function shouldUseThemeViewTransition() {
   return (
     typeof document !== "undefined" &&
     typeof (document as DocumentWithNativeViewTransition).startViewTransition === "function" &&
+    canUseDesktopViewTransitions() &&
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 }
