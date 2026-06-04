@@ -20,13 +20,13 @@ function CvMenu() {
       <div
         className={cn(
           buttonVariants({ variant: "glass", size: "lg" }),
-          "w-full gap-0 overflow-hidden !p-0 active:scale-100 hover:!bg-secondary sm:w-auto",
+          "gap-0 overflow-hidden !p-0 active:scale-100 hover:!bg-secondary",
           isOpen && "border-ring/50 text-accent",
         )}
       >
         <a
           href="/api/resume/pdf"
-          className="inline-flex h-full min-w-0 flex-1 items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97] sm:flex-none"
+          className="inline-flex h-full min-w-0 flex-none items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97]"
           rel="noopener noreferrer"
           target="_blank"
         >
@@ -52,7 +52,7 @@ function CvMenu() {
           />
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] origin-top-right sm:w-52">
+        <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] origin-top-right sm:w-52">
           <DropdownMenuGroup>
             <DropdownMenuLinkItem href="/api/resume/pdf" rel="noopener noreferrer" target="_blank">
               <FileText size={16} strokeWidth={2.3} />

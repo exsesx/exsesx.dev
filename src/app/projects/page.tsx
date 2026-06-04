@@ -49,6 +49,7 @@ export default function Projects() {
                 density="compact"
                 enableMediaTransition
                 mediaLoading={index === 0 ? "eager" : "lazy"}
+                mediaPriority={index === 0}
               />
             </div>
           ))}
