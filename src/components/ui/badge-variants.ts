@@ -22,5 +22,5 @@ const badgeVariants = cva(
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
-export { badgeVariants };
 export type { BadgeVariant };
+export { badgeVariants };

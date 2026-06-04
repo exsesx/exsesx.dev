@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import Header from "../components/Header";
+import Hotkeys from "../components/Hotkeys";
 import KineticBackdrop from "../components/KineticBackdrop";
+import RouteMotionGuard from "../components/RouteMotionGuard";
 import VersionTag from "../components/VersionTag";
+import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
 import "../styles/globals.css";
 
-const siteUrl = "https://exsesx.dev";
 const siteDescription =
   "Oleh Vanin is a senior full-stack engineer and AI engineer building scalable product systems with React, Next.js, Node.js, Go, cloud infrastructure, and LLM workflows.";
 
@@ -35,19 +37,11 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteUrl,
-    siteName: "exsesx.dev",
+    siteName,
     title: "Oleh Vanin - Senior Full Stack Engineer",
     description:
       "Senior full-stack engineer and AI engineer building scalable product systems across frontend, backend, cloud, and LLM workflows.",
-    images: [
-      {
-        url: "/images/me/oleh_portrait.jpg",
-        width: 1200,
-        height: 1200,
-        alt: "Portrait of Oleh Vanin",
-        type: "image/jpeg",
-      },
-    ],
+    images: [defaultSocialImage],
   },
   twitter: {
     card: "summary_large_image",
@@ -56,8 +50,8 @@ export const metadata: Metadata = {
       "Senior full-stack engineer and AI engineer building scalable product systems across frontend, backend, cloud, and LLM workflows.",
     images: [
       {
-        url: "/images/me/oleh_portrait.jpg",
-        alt: "Portrait of Oleh Vanin",
+        url: defaultSocialImage.url,
+        alt: defaultSocialImage.alt,
       },
     ],
   },
@@ -92,9 +86,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body>
         <Script src="/scripts/noflash.js" strategy="beforeInteractive" />
+        <RouteMotionGuard />
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />
           <Header />
+          <Hotkeys />
           {children}
           <VersionTag />
         </div>
