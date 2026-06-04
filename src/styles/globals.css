@@ -662,12 +662,10 @@ html[data-season="pride"] .logo-mark-pride {
 .interactive-card {
   --pointer-x: 50%;
   --pointer-y: 50%;
-  transform: translateZ(0);
   transition:
     transform 260ms var(--ease-weight),
     border-color 180ms var(--ease-weight),
     box-shadow 280ms var(--ease-weight);
-  will-change: transform;
 }
 
 .interactive-card::after {
@@ -979,6 +977,7 @@ html[data-season="pride"] .logo-mark-pride {
 @media (hover: hover) and (pointer: fine) {
   .interactive-card:hover {
     transform: translateY(-5px) scale(1.006) translateZ(0);
+    will-change: transform;
   }
 
   .interactive-card:hover::after {
