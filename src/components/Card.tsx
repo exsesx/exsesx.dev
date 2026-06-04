@@ -25,6 +25,8 @@ interface Props {
   density?: "default" | "compact";
   enableMediaTransition?: boolean;
   mediaLoading?: "eager" | "lazy";
+  mediaPlayback?: "poster" | "autoplay";
+  mediaPriority?: boolean;
 }
 
 function ProjectMediaFrame({
@@ -59,6 +61,8 @@ export default function ProjectCard({
   density = "default",
   enableMediaTransition = false,
   mediaLoading,
+  mediaPlayback = "poster",
+  mediaPriority = false,
 }: Props) {
   const media = project.media;
   const isCompact = density === "compact";
@@ -67,6 +71,7 @@ export default function ProjectCard({
   const visibleTags = isCompact ? project.tags.slice(0, 3) : project.tags;
   const mediaMinHeight = isCompact ? 144 : featured ? 288 : 220;
   const imageLoading = mediaLoading ?? (featured ? "eager" : "lazy");
+  const shouldRenderVideo = media.type === "video" && mediaPlayback === "autoplay";
   const mediaSizes = isCompact
     ? "(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
     : featured
@@ -123,13 +128,14 @@ export default function ProjectCard({
             )}
             style={media.type === "image" && media.backgroundColor ? { backgroundColor: media.backgroundColor } : {}}
           >
-            {media.type === "image" ? (
+            {media.type === "image" || !shouldRenderVideo ? (
               <Image
-                src={media.src}
-                alt={media.alt}
+                src={media.type === "image" ? media.src : media.poster}
+                alt={media.type === "image" ? media.alt : media.label}
                 fill
                 sizes={mediaSizes}
-                loading={imageLoading}
+                priority={mediaPriority}
+                loading={mediaPriority ? undefined : imageLoading}
                 className="shared-project-media object-cover opacity-95 saturate-[0.94]"
               />
             ) : (
@@ -137,7 +143,7 @@ export default function ProjectCard({
                 className="shared-project-media h-full w-full object-cover opacity-95 saturate-[0.94]"
                 poster={media.poster}
                 autoPlay
-                preload="auto"
+                preload="metadata"
                 muted
                 loop
                 playsInline
