@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const desktopViewTransitionQuery = "(min-width: 768px) and (hover: hover) and (pointer: fine)";
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
-export function canUseDesktopViewTransitions() {
+export function getDesktopViewTransitionSnapshot() {
   if (typeof window === "undefined") {
     return false;
   }
@@ -13,18 +13,25 @@ export function canUseDesktopViewTransitions() {
   return window.matchMedia(desktopViewTransitionQuery).matches && !window.matchMedia(reducedMotionQuery).matches;
 }
 
-export function useDesktopViewTransitions() {
-  const [isEnabled, setIsEnabled] = useState(false);
+export const canUseDesktopViewTransitions = getDesktopViewTransitionSnapshot;
 
-  useEffect(() => {
-    const desktopViewTransitionMedia = window.matchMedia(desktopViewTransitionQuery);
-    const reducedMotionMedia = window.matchMedia(reducedMotionQuery);
+function getServerDesktopViewTransitionSnapshot() {
+  return false;
+}
 
+function subscribeToDesktopViewTransitions(callback: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const desktopViewTransitionMedia = window.matchMedia(desktopViewTransitionQuery);
+  const reducedMotionMedia = window.matchMedia(reducedMotionQuery);
+
+  if ("addEventListener" in desktopViewTransitionMedia && "addEventListener" in reducedMotionMedia) {
     function updatePreference() {
-      setIsEnabled(desktopViewTransitionMedia.matches && !reducedMotionMedia.matches);
+      callback();
     }
 
-    updatePreference();
     desktopViewTransitionMedia.addEventListener("change", updatePreference);
     reducedMotionMedia.addEventListener("change", updatePreference);
 
@@ -32,7 +39,15 @@ export function useDesktopViewTransitions() {
       desktopViewTransitionMedia.removeEventListener("change", updatePreference);
       reducedMotionMedia.removeEventListener("change", updatePreference);
     };
-  }, []);
+  }
 
-  return isEnabled;
+  return () => {};
+}
+
+export function useDesktopViewTransitions() {
+  return useSyncExternalStore(
+    subscribeToDesktopViewTransitions,
+    getDesktopViewTransitionSnapshot,
+    getServerDesktopViewTransitionSnapshot,
+  );
 }
