@@ -7,7 +7,9 @@ import * as m from "motion/react-m";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
+import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
 import LogoMark from "./LogoMark";
@@ -63,6 +65,10 @@ function getNavActionPillTransforms(selectedNavHref: Route) {
   return navActionPillToHomeTransforms;
 }
 
+function scrollToPageTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 export default function Header() {
   const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
@@ -95,6 +101,15 @@ export default function Header() {
     setSelectedNavHref(activeNavHref);
   }, [activeNavHref]);
 
+  function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, href: Route) {
+    setSelectedNavHref(href);
+
+    if (shouldScrollToTopForNavClick({ pathname, href, scrollY: window.scrollY })) {
+      event.preventDefault();
+      scrollToPageTop();
+    }
+  }
+
   return (
     <header
       className="site-header fixed inset-x-0 top-0 z-50 px-4 py-3 sm:px-6"
@@ -109,6 +124,7 @@ export default function Header() {
             href="/"
             className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
             aria-label="Oleh Vanin home"
+            onClick={event => handleNavLinkClick(event, "/")}
           >
             <span className="logo-tile grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.04] group-active:scale-[0.96]">
               <LogoMark className="size-8" />
@@ -145,7 +161,7 @@ export default function Header() {
                     navActionBaseClassName,
                     isActive ? navActionActiveClassName : navActionInactiveClassName,
                   )}
-                  onClick={() => setSelectedNavHref(item.href)}
+                  onClick={event => handleNavLinkClick(event, item.href)}
                   onPointerDown={() => setSelectedNavHref(item.href)}
                 >
                   <Icon data-icon="inline-start" strokeWidth={2.3} />
