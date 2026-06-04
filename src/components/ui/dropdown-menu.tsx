@@ -60,6 +60,17 @@ function DropdownMenuLinkItem({ className, closeOnClick = true, ...props }: Menu
   );
 }
 
+function DropdownMenuItem({ className, closeOnClick = true, ...props }: MenuPrimitive.Item.Props) {
+  return (
+    <MenuPrimitive.Item
+      closeOnClick={closeOnClick}
+      data-slot="dropdown-menu-item"
+      className={cn(dropdownMenuItemClass, "flex w-full cursor-pointer items-center gap-2 px-3 py-3 text-left")}
+      {...props}
+    />
+  );
+}
+
 function DropdownMenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
   return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
 }
@@ -79,6 +90,7 @@ export {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuItem,
   DropdownMenuLinkItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
