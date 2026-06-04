@@ -1,10 +1,9 @@
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { type ReactNode } from "react";
+import { type ReactNode, ViewTransition } from "react";
 import { cn } from "@/lib/utils";
 import { getProjectPath, getProjectTransitionType, type Project } from "../lib/projects";
-import { DesktopViewTransition } from "./DesktopViewTransition";
 import { InteractiveCardShell } from "./InteractiveCardShell";
 import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button-variants";
@@ -46,13 +45,13 @@ function ProjectMediaFrame({
   }
 
   return (
-    <DesktopViewTransition
+    <ViewTransition
       name={`project-media-${projectId}`}
       share={{ [transitionType]: "morph", default: "none" }}
       default="none"
     >
       {children}
-    </DesktopViewTransition>
+    </ViewTransition>
   );
 }
 
