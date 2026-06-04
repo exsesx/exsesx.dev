@@ -11,21 +11,21 @@ Live website is available [here](https://exsesx.dev/). Deployed using [Vercel](h
 ## Installation
 
 ```shell
-$ pnpm install
+$ bun install
 ```
 
 ## Development
 
 ```shell
-$ pnpm dev
+$ bun dev
 ```
 
 ## Production
 
 ```shell
-$ pnpm build
+$ bun run build
 
-$ pnpm start
+$ bun start
 ```
 
 ## To Do
