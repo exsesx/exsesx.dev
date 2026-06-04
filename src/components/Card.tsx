@@ -67,6 +67,11 @@ export default function ProjectCard({
   const visibleTags = isCompact ? project.tags.slice(0, 3) : project.tags;
   const mediaMinHeight = isCompact ? 144 : featured ? 288 : 220;
   const imageLoading = mediaLoading ?? (featured ? "eager" : "lazy");
+  const mediaSizes = isCompact
+    ? "(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+    : featured
+      ? "(min-width: 1024px) 48vw, 100vw"
+      : "(min-width: 1024px) 33vw, 100vw";
 
   return (
     <InteractiveCardShell
@@ -123,31 +128,24 @@ export default function ProjectCard({
                 src={media.src}
                 alt={media.alt}
                 fill
-                sizes={
-                  isCompact
-                    ? "(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    : featured
-                      ? "(min-width: 1024px) 48vw, 100vw"
-                      : "(min-width: 1024px) 33vw, 100vw"
-                }
+                sizes={mediaSizes}
                 loading={imageLoading}
                 className="shared-project-media object-cover opacity-95 saturate-[0.94]"
               />
             ) : (
-              <Image
-                src={media.poster}
-                alt={media.label}
-                fill
-                sizes={
-                  isCompact
-                    ? "(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    : featured
-                      ? "(min-width: 1024px) 48vw, 100vw"
-                      : "(min-width: 1024px) 33vw, 100vw"
-                }
-                loading={imageLoading}
-                className="shared-project-media object-cover opacity-95 saturate-[0.94]"
-              />
+              <video
+                className="shared-project-media h-full w-full object-cover opacity-95 saturate-[0.94]"
+                poster={media.poster}
+                autoPlay
+                preload="auto"
+                muted
+                loop
+                playsInline
+                aria-label={media.label}
+              >
+                <source src={media.src} type="video/mp4" />
+                {media.label}
+              </video>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/65 via-transparent to-transparent" />
           </div>

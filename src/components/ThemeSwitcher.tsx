@@ -2,7 +2,6 @@
 
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { flushSync } from "react-dom";
 import {
   getServerThemeSnapshot,
   getThemeSnapshot,
@@ -44,6 +43,14 @@ const themeOptions: Array<{
   },
 ];
 
+type NativeViewTransition = {
+  finished: Promise<void>;
+};
+
+type DocumentWithNativeViewTransition = Document & {
+  startViewTransition?: (updateCallback: () => void) => NativeViewTransition;
+};
+
 function setMetaContent(name: string, content: string) {
   let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
 
@@ -56,9 +63,62 @@ function setMetaContent(name: string, content: string) {
   meta.content = content;
 }
 
+function getThemeTransitionOrigin(element: HTMLElement | null) {
+  const rect = element?.getBoundingClientRect();
+  const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+  const y = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+  const radius = Math.ceil(Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))) + 16;
+
+  return { radius, x, y };
+}
+
+function shouldUseThemeViewTransition() {
+  return (
+    typeof document !== "undefined" &&
+    typeof (document as DocumentWithNativeViewTransition).startViewTransition === "function" &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+function persistThemeModeWithTransition(mode: ThemeMode, originElement: HTMLElement | null) {
+  const startViewTransition = (document as DocumentWithNativeViewTransition).startViewTransition;
+
+  if (!shouldUseThemeViewTransition() || !startViewTransition) {
+    persistThemeMode(mode);
+    return;
+  }
+
+  const root = document.documentElement;
+  const { radius, x, y } = getThemeTransitionOrigin(originElement);
+
+  root.style.setProperty("--theme-transition-x", `${x}px`);
+  root.style.setProperty("--theme-transition-y", `${y}px`);
+  root.style.setProperty("--theme-transition-radius", `${radius}px`);
+  root.dataset.themeTransition = "active";
+
+  const cleanup = () => {
+    delete root.dataset.themeTransition;
+    root.style.removeProperty("--theme-transition-x");
+    root.style.removeProperty("--theme-transition-y");
+    root.style.removeProperty("--theme-transition-radius");
+  };
+
+  try {
+    const transition = startViewTransition(() => {
+      persistThemeMode(mode);
+    });
+
+    void transition.finished.then(cleanup, cleanup);
+  } catch {
+    cleanup();
+    persistThemeMode(mode);
+  }
+}
+
 export default function ThemeSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const themeFrameRef = useRef<number | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { mode, resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const isDark = resolvedTheme === "dark";
@@ -66,7 +126,11 @@ export default function ThemeSwitcher() {
   const ActiveIcon = activeOption.icon;
 
   function selectThemeMode(nextMode: ThemeMode) {
-    flushSync(() => setIsOpen(false));
+    setIsOpen(false);
+
+    if (nextMode === mode) {
+      return;
+    }
 
     if (themeFrameRef.current !== null) {
       window.cancelAnimationFrame(themeFrameRef.current);
@@ -74,7 +138,7 @@ export default function ThemeSwitcher() {
 
     themeFrameRef.current = window.requestAnimationFrame(() => {
       themeFrameRef.current = null;
-      persistThemeMode(nextMode);
+      persistThemeModeWithTransition(nextMode, triggerRef.current);
     });
   }
 
@@ -100,6 +164,7 @@ export default function ThemeSwitcher() {
       <DropdownMenuTrigger
         render={
           <Button
+            ref={triggerRef}
             type="button"
             variant="glass"
             size="icon"
