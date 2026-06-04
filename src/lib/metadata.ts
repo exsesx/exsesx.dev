@@ -1,0 +1,66 @@
+import type { Metadata } from "next";
+
+export const siteUrl = "https://exsesx.dev";
+export const siteName = "exsesx.dev";
+
+export const defaultSocialImage = {
+  url: "/images/me/oleh_portrait.jpg",
+  width: 1200,
+  height: 1200,
+  alt: "Portrait of Oleh Vanin",
+  type: "image/jpeg",
+} as const;
+
+type SocialImage = {
+  url: string;
+  width: number;
+  height: number;
+  alt: string;
+  type?: string;
+};
+
+export function getCanonicalUrl(path = "/") {
+  return path === "/" ? siteUrl : `${siteUrl}${path}`;
+}
+
+export function createPageMetadata({
+  title,
+  description,
+  path = "/",
+  image = defaultSocialImage,
+}: {
+  title: string;
+  description: string;
+  path?: string;
+  image?: SocialImage;
+}): Metadata {
+  const url = getCanonicalUrl(path);
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      type: "website",
+      locale: "en_US",
+      url,
+      siteName,
+      title,
+      description,
+      images: [image],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [
+        {
+          url: image.url,
+          alt: image.alt,
+        },
+      ],
+    },
+  };
+}
