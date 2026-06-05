@@ -13,8 +13,21 @@ export interface HotkeyInputCapabilities {
   hasCoarsePointer: boolean;
 }
 
+export type NavbarHotkeyDirection = "left" | "right";
+
+const NAVBAR_HOTKEY_ROUTES = ["/", "/projects"] as const;
+
 export function shouldEnableHotkeys(capabilities: HotkeyInputCapabilities) {
   return capabilities.hasHover || !capabilities.hasCoarsePointer;
+}
+
+export function getNavbarHotkeyRoute(pathname: string, direction: NavbarHotkeyDirection) {
+  const activeRoute = pathname === "/projects" || pathname.startsWith("/project/") ? "/projects" : "/";
+  const activeIndex = NAVBAR_HOTKEY_ROUTES.indexOf(activeRoute);
+  const offset = direction === "left" ? -1 : 1;
+  const nextIndex = (activeIndex + offset + NAVBAR_HOTKEY_ROUTES.length) % NAVBAR_HOTKEY_ROUTES.length;
+
+  return NAVBAR_HOTKEY_ROUTES[nextIndex];
 }
 
 export function getHotkeySequenceKey(action: string, key: string, index: number) {
