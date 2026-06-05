@@ -1,13 +1,19 @@
 "use client";
 
-import { BriefcaseBusiness, Command, Home, Monitor, SunMoon, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Command, Home, Monitor, SunMoon, X } from "lucide-react";
 import type { Variants } from "motion/react";
 import { AnimatePresence, domAnimation, LazyMotion, useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { type ElementType, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createHotkeySequencer, getHotkeySequenceKey, shouldEnableHotkeys } from "@/lib/hotkeys";
+import {
+  createHotkeySequencer,
+  getHotkeySequenceKey,
+  getNavbarHotkeyRoute,
+  type NavbarHotkeyDirection,
+  shouldEnableHotkeys,
+} from "@/lib/hotkeys";
 import { getThemeSnapshot, parseThemeSnapshot, persistThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
@@ -39,6 +45,24 @@ const HOTKEYS: Array<{
     opensNewTab: true,
     external: true,
   },
+];
+const NAVBAR_HOTKEYS: Array<{
+  sequence: readonly string[];
+  id: string;
+  description: string;
+  icon: HotkeyIcon;
+}> = [
+  { sequence: ["⇧", "h"], id: "navbar-left", description: "Navbar left", icon: ArrowLeft },
+  { sequence: ["⇧", "l"], id: "navbar-right", description: "Navbar right", icon: ArrowRight },
+];
+const HOTKEY_MENU_ITEMS = [
+  ...HOTKEYS.map(shortcut => ({
+    sequence: shortcut.sequence,
+    id: shortcut.action,
+    description: shortcut.description,
+    icon: shortcut.icon,
+  })),
+  ...NAVBAR_HOTKEYS,
 ];
 const repeatableHotkeyActions = new Set<HotkeyAction>(
   HOTKEYS.filter(shortcut => !shortcut.external && !shortcut.opensNewTab).map(shortcut => shortcut.action),
@@ -273,6 +297,19 @@ const Hotkeys = memo(function Hotkeys() {
         return;
       }
 
+      if (event.shiftKey) {
+        const navbarDirection = getNavbarHotkeyDirection(event.key);
+
+        if (navbarDirection) {
+          event.preventDefault();
+          sequencer.reset();
+          clearPendingSequence();
+          commitModalOpen(false);
+          runHotkeyAction(getNavbarHotkeyAction(window.location.pathname, navbarDirection), router);
+          return;
+        }
+      }
+
       const normalizedKey = normalizeSequenceKey(event.key);
 
       if (!normalizedKey) {
@@ -477,12 +514,12 @@ const HotkeyModal = memo(function HotkeyModal({
         </m.div>
 
         <m.div className="mt-2 grid gap-1" variants={activeChildVariants}>
-          {HOTKEYS.map(shortcut => {
+          {HOTKEY_MENU_ITEMS.map(shortcut => {
             const Icon = shortcut.icon;
 
             return (
               <m.div
-                key={shortcut.action}
+                key={shortcut.id}
                 className="flex items-center justify-between gap-4 rounded-2xl px-3 py-3 sm:px-4"
                 variants={activeChildVariants}
               >
@@ -493,7 +530,7 @@ const HotkeyModal = memo(function HotkeyModal({
                 <span className="flex shrink-0 items-center gap-1.5">
                   {shortcut.sequence.map((key, index) => (
                     <kbd
-                      key={getHotkeySequenceKey(shortcut.action, key, index)}
+                      key={getHotkeySequenceKey(shortcut.id, key, index)}
                       className={cn(
                         "grid min-w-8 place-items-center rounded-lg border border-border bg-secondary px-2 py-1.5",
                         "font-mono text-xs font-black leading-none text-secondary-foreground shadow-sm",
@@ -532,6 +569,24 @@ const HotkeyModal = memo(function HotkeyModal({
 
 function normalizeSequenceKey(key: string) {
   return key.length === 1 ? key : undefined;
+}
+
+function getNavbarHotkeyDirection(key: string): NavbarHotkeyDirection | null {
+  const normalizedKey = key.toLowerCase();
+
+  if (normalizedKey === "h") {
+    return "left";
+  }
+
+  if (normalizedKey === "l") {
+    return "right";
+  }
+
+  return null;
+}
+
+function getNavbarHotkeyAction(pathname: string, direction: NavbarHotkeyDirection): HotkeyAction {
+  return getNavbarHotkeyRoute(pathname, direction) === "/" ? "home" : "projects";
 }
 
 function isHelpShortcut(event: KeyboardEvent) {
