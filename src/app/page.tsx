@@ -272,7 +272,7 @@ export default function HomePage() {
               data-suppress-entry-motion
               className={buttonVariants({ variant: "glass", size: "default" })}
             >
-              All projects
+              Featured projects
               <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
             </Link>
           </div>

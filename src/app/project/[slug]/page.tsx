@@ -28,20 +28,50 @@ type ProjectPageProps = {
   }>;
 };
 
+// Brand accents, mirroring src/components/Card.tsx for the detail hero.
 const accentClasses: Record<Project["accent"], string> = {
-  amber: "from-amber-300/70 via-orange-400/25 to-transparent",
-  cyan: "from-cyan-300/70 via-sky-400/25 to-transparent",
-  mint: "from-emerald-300/70 via-teal-400/25 to-transparent",
+  amber: "from-[rgba(132,92,246,0.5)] via-[rgba(74,28,170,0.2)] to-transparent",
+  controlup: "from-[rgba(56,135,232,0.5)] via-[rgba(16,60,120,0.22)] to-[rgba(251,176,59,0.1)]",
+  cyan: "from-cyan-400/45 via-sky-950/20 to-transparent",
+  mint: "from-[rgba(58,128,224,0.5)] via-[rgba(12,46,96,0.22)] to-transparent",
   neutral: "from-zinc-950/90 via-zinc-950/45 to-transparent",
-  rose: "from-rose-300/70 via-red-400/25 to-transparent",
-  steel: "from-slate-300/70 via-cyan-500/20 to-transparent",
-  violet: "from-violet-400/45 via-purple-950/20 to-transparent",
+  quicklizard: "from-[rgba(64,168,196,0.5)] via-[rgba(28,92,112,0.2)] to-[rgba(255,140,40,0.1)]",
+  rose: "from-[rgba(232,80,104,0.5)] via-[rgba(176,24,40,0.2)] to-[rgba(235,120,70,0.1)]",
+  steel: "from-[rgba(96,150,196,0.42)] via-[rgba(52,80,116,0.2)] to-transparent",
+  violet: "from-[rgba(150,96,214,0.5)] via-[rgba(84,42,150,0.2)] to-[rgba(190,110,210,0.1)]",
+};
+
+const accentSurfaceClasses: Record<Project["accent"], string> = {
+  amber: "border-[rgba(132,92,246,0.18)] shadow-[0_0_0_1px_rgba(132,92,246,0.10),0_30px_90px_rgba(112,42,236,0.18)]",
+  controlup: "border-[rgba(56,135,232,0.18)] shadow-[0_0_0_1px_rgba(56,135,232,0.10),0_30px_90px_rgba(7,31,61,0.24)]",
+  cyan: "border-cyan-200/15 shadow-[0_0_0_1px_rgba(165,243,252,0.07),0_30px_90px_rgba(14,165,233,0.08)]",
+  mint: "border-[rgba(58,128,224,0.18)] shadow-[0_0_0_1px_rgba(58,128,224,0.10),0_30px_90px_rgba(9,30,57,0.24)]",
+  neutral: "",
+  quicklizard:
+    "border-[rgba(64,168,196,0.18)] shadow-[0_0_0_1px_rgba(64,168,196,0.10),0_30px_90px_rgba(64,121,140,0.18)]",
+  rose: "border-[rgba(232,80,104,0.18)] shadow-[0_0_0_1px_rgba(232,80,104,0.10),0_30px_90px_rgba(235,31,40,0.16)]",
+  steel: "border-[rgba(96,150,196,0.16)] shadow-[0_0_0_1px_rgba(96,150,196,0.08),0_30px_90px_rgba(52,80,116,0.16)]",
+  violet: "border-[rgba(150,96,214,0.18)] shadow-[0_0_0_1px_rgba(150,96,214,0.10),0_30px_90px_rgba(114,65,195,0.22)]",
+};
+
+const accentTopLightClasses: Record<Project["accent"], string> = {
+  amber: "bg-[linear-gradient(180deg,rgba(132,92,246,0.22),rgba(112,42,236,0.05)_48%,rgba(24,24,27,0))]",
+  controlup: "bg-[linear-gradient(180deg,rgba(56,135,232,0.22),rgba(251,176,59,0.06)_48%,rgba(24,24,27,0))]",
+  cyan: "bg-[linear-gradient(180deg,rgba(6,182,212,0.20),rgba(59,130,246,0.05)_48%,rgba(24,24,27,0))]",
+  mint: "bg-[linear-gradient(180deg,rgba(58,128,224,0.22),rgba(12,46,96,0.05)_48%,rgba(24,24,27,0))]",
+  neutral: "",
+  quicklizard: "bg-[linear-gradient(180deg,rgba(64,168,196,0.22),rgba(255,140,40,0.06)_48%,rgba(24,24,27,0))]",
+  rose: "bg-[linear-gradient(180deg,rgba(232,80,104,0.22),rgba(235,120,70,0.06)_48%,rgba(24,24,27,0))]",
+  steel: "bg-[linear-gradient(180deg,rgba(96,150,196,0.18),rgba(52,80,116,0.05)_48%,rgba(24,24,27,0))]",
+  violet: "bg-[linear-gradient(180deg,rgba(150,96,214,0.20),rgba(190,110,210,0.05)_55%,rgba(24,24,27,0))]",
 };
 
 const projectSocialImageSizes: Record<string, { width: number; height: number }> = {
   "/images/clear_street_preview.jpg": { width: 960, height: 540 },
   "/images/coinmena_preview.jpeg": { width: 1600, height: 900 },
+  "/images/controlup_preview.webp": { width: 1200, height: 630 },
   "/images/huddle_preview_balanced.png": { width: 1093, height: 1134 },
+  "/images/quicklizard_preview.webp": { width: 1200, height: 630 },
   "/images/thisislanguage_poster.jpg": { width: 960, height: 540 },
   "/images/tso_preview.jpg": { width: 1440, height: 1800 },
 };
@@ -186,15 +216,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     </div>
                   ))}
                 </div>
-                <a
-                  href={project.href}
-                  className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-fit")}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Visit product
-                  <ArrowUpRight data-icon="inline-end" strokeWidth={2.4} />
-                </a>
+                {project.href ? (
+                  <a
+                    href={project.href}
+                    className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-fit")}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    Visit product
+                    <ArrowUpRight data-icon="inline-end" strokeWidth={2.4} />
+                  </a>
+                ) : null}
               </CardContent>
             </UiCard>
           </div>
@@ -202,16 +234,19 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           <aside
             className={cn(
               "motion-rise motion-delay-1 liquid-glass relative overflow-hidden rounded-[2rem] p-3",
-              project.accent === "violet"
-                ? "border-violet-200/15 shadow-[0_0_0_1px_rgba(167,139,250,0.10),0_30px_90px_rgba(88,28,135,0.20)]"
-                : "",
+              accentSurfaceClasses[project.accent],
             )}
           >
             <div
               className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClasses[project.accent]}`}
             />
-            {project.accent === "violet" ? (
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-52 bg-[linear-gradient(180deg,rgba(124,58,237,0.18),rgba(24,24,27,0.04)_58%,rgba(24,24,27,0))]" />
+            {accentTopLightClasses[project.accent] ? (
+              <div
+                className={cn(
+                  "pointer-events-none absolute inset-x-0 top-0 h-52",
+                  accentTopLightClasses[project.accent],
+                )}
+              />
             ) : null}
             <div className="relative h-full">
               <ProjectMedia project={project} priority />
