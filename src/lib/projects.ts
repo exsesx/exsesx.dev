@@ -6,7 +6,8 @@ export interface Project {
   slug: string;
   name: string;
   role: string;
-  href: string;
+  /** External product URL, or `null` to render no outbound link. */
+  href: string | null;
   period: string;
   description: string;
   impact: string;
@@ -18,7 +19,7 @@ export interface Project {
     outcome: string;
     scope: string[];
   };
-  accent: "cyan" | "amber" | "rose" | "mint" | "steel" | "neutral" | "violet";
+  accent: "amber" | "controlup" | "cyan" | "mint" | "neutral" | "quicklizard" | "rose" | "steel" | "violet";
   media:
     | {
         type: "image";
@@ -36,6 +37,70 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    id: "project-controlup",
+    slug: "controlup",
+    name: "ControlUp",
+    role: "Senior Full Stack / AI Engineer",
+    href: "https://www.controlup.com/",
+    period: "DEX / autonomous IT",
+    description:
+      "A Digital Employee Experience platform where I'm building the AI Assistant from scratch: MCP servers, multi-agent tooling, and LLM pipelines on Foundry.",
+    impact: "A license-aware AI platform that acts directly on enterprise monitoring and automation infrastructure.",
+    tags: ["ai assistant", "mcp", "multi-agent"],
+    detail: {
+      headline: "AI assistant platform work for enterprise digital employee experience.",
+      context:
+        "ControlUp helps IT teams monitor, troubleshoot, and optimize enterprise endpoints, virtual desktops, applications, and employee experience signals.",
+      contribution: [
+        "Building the dex-ai-assistant platform from the ground up: MCP servers, tool orchestration, and skill-based workflows powered by LLM pipelines on Foundry.",
+        "Designing license-aware features so assistant capabilities adapt to each customer's subscription tier.",
+        "Building multi-agent tooling and MCP integrations that let the assistant act on ControlUp's monitoring and automation infrastructure, full-stack in TypeScript, Node.js, and React.",
+      ],
+      outcome: "AI tooling that turns slow manual investigation into guided, automated fixes.",
+      scope: ["AI assistant platform", "Multi-agent + MCP", "Enterprise IT operations"],
+    },
+    accent: "controlup",
+    media: {
+      type: "image",
+      src: "/images/controlup_preview.webp",
+      alt: "ControlUp brand preview",
+      backgroundColor: "#09090B",
+    },
+  },
+  {
+    id: "project-quicklizard",
+    slug: "quicklizard",
+    name: "Quicklizard",
+    role: "Senior Full Stack Developer",
+    href: "https://quicklizard.com/en/",
+    period: "AI dynamic pricing",
+    description:
+      "An AI-powered dynamic pricing platform where I owned full-stack delivery: Next.js workflows, Go services, and rollouts behind feature flags.",
+    impact:
+      "Modernized the frontend stack, cut repository overhead, and shipped the pricing dashboard, i18n, auth, and bulk-override workflows.",
+    tags: ["next.js", "go", "pricing"],
+    detail: {
+      headline: "Full-stack delivery for AI-powered retail pricing automation.",
+      context:
+        "Quicklizard is a B2B SaaS platform that helps retailers and brands automate pricing across channels by reading market data, competitor prices, and demand patterns in real time.",
+      contribution: [
+        "Owned features end to end: scoping with stakeholders, implementation, reviews, rollout behind feature flags, and iteration on production feedback.",
+        "Drove core Next.js workflows for pricing dashboards, localization, authentication, and bulk pricing overrides, plus Go API work across a microservices backend.",
+        "Modernized the stack to Next.js 16 and Tailwind CSS 4, dropped Nx where a single-app setup didn't justify it, and tracked Next.js / RSC security advisories to coordinate upgrades.",
+      ],
+      outcome:
+        "A more maintainable codebase, faster local development, and reliable releases for pricing analytics and automation.",
+      scope: ["Pricing dashboards", "Stack modernization", "Go microservices"],
+    },
+    accent: "quicklizard",
+    media: {
+      type: "image",
+      src: "/images/quicklizard_preview.webp",
+      alt: "Quicklizard dynamic pricing dashboard preview",
+      backgroundColor: "#070B08",
+    },
+  },
+  {
     id: "project-huddle",
     slug: "huddle",
     name: "Huddle",
@@ -44,18 +109,18 @@ export const projects: Project[] = [
     period: "Utilities / tenancy",
     description:
       "Household utility management work where I adapted from Angular.js to React and worked closely with PostgreSQL stored procedures and PostGraphQL.",
-    impact: "Helped move a real everyday product through a practical frontend and data-layer transition.",
+    impact: "Moved an everyday utility product through a frontend rebuild and a shift in its data layer.",
     tags: ["react", "postgresql", "postgraphql"],
     detail: {
       headline: "A practical product transition for household utility management.",
       context:
-        "Huddle sat in the messy, useful part of software: everyday household services, tenancy needs, data flows, and operational expectations.",
+        "Huddle handled the everyday plumbing of household services: tenancy, utility accounts, and the operational edge cases that come with them.",
       contribution: [
-        "Adapted quickly from Angular.js to React while keeping product delivery moving.",
+        "Switched from Angular.js to React mid-project without stalling delivery.",
         "Worked close to the data layer through PostgreSQL stored procedures and PostGraphQL.",
-        "Helped translate utility-management requirements into maintainable frontend surfaces.",
+        "Turned utility-management requirements into maintainable frontend surfaces.",
       ],
-      outcome: "Supported a product transition without losing sight of the everyday users depending on the service.",
+      outcome: "A frontend and data-layer move that kept the live product working for everyday users.",
       scope: ["Frontend migration", "Data-backed product UI", "Utility operations"],
     },
     accent: "violet",
@@ -71,24 +136,22 @@ export const projects: Project[] = [
     slug: "this-is-language",
     name: "This is Language",
     role: "Platform work",
-    href: "https://www.thisislanguage.com/",
+    href: "https://www.thisisschool.com/",
     period: "Learning platform",
     description:
       "A language-learning platform where I built scalable backend features around video transcoding, learning puzzles, and a multiplayer game.",
-    impact:
-      "Built product features around learning, media, and play: the kind of software where the user impact is visible.",
+    impact: "Backend features for learning, media, and play that students used directly.",
     tags: ["video", "backend", "multiplayer"],
     detail: {
       headline: "Learning-platform engineering across media, puzzles, and multiplayer play.",
       context:
-        "This is Language combined language learning with video-heavy content and interactive practice, where reliability and user momentum both mattered.",
+        "This is Language pairs language learning with video-heavy content and interactive practice, so the backend has to stay fast while students are mid-lesson.",
       contribution: [
-        "Built backend features around video transcoding and learning workflows.",
-        "Worked on product mechanics for learning puzzles and a multiplayer game.",
-        "Shaped features where performance and feedback loops directly affected student engagement.",
+        "Built a scalable backend around video transcoding and learning workflows.",
+        "Built the product mechanics for learning puzzles and a multiplayer game.",
+        "Tuned the performance and feedback loops that students felt while practicing.",
       ],
-      outcome:
-        "Helped turn learning content into product experiences that felt active, responsive, and visible to users.",
+      outcome: "The work led to a UK team invitation with potential visa sponsorship.",
       scope: ["Video workflows", "Learning mechanics", "Backend product features"],
     },
     accent: "amber",
@@ -104,24 +167,24 @@ export const projects: Project[] = [
     slug: "tso-chinese-delivery",
     name: "TSO Chinese Delivery",
     role: "Commerce systems",
-    href: "https://tsodelivery.com",
+    href: "https://tsochinese.com",
     period: "Restaurant delivery",
     description:
-      "Dark-kitchen automation software where I helped architect TSO 3.0, moving toward microservices and rewriting REST APIs to GraphQL.",
+      "Dark-kitchen automation software where I designed the TSO 3.0 architecture, moving to microservices and rewriting the REST APIs as GraphQL.",
     impact:
-      "Led a cross-functional team of up to 10 people on a product that supported live operations, jobs, delivery, and payment migration work.",
+      "Led a cross-functional team of up to 10 on a product running live operations, jobs, delivery, and a payment-processor migration.",
     tags: ["microservices", "graphql", "team lead"],
     detail: {
       headline: "Commerce and operations software for a dark-kitchen delivery business.",
       context:
-        "TSO 3.0 needed product architecture that could support live restaurant operations, delivery coordination, jobs, and payment migration work.",
+        "TSO 3.0 ran live restaurant operations: delivery coordination, jobs, and a move to a new payment processor, all while the old system stayed up.",
       contribution: [
-        "Helped architect the move toward microservices for the next product generation.",
-        "Reworked REST API surfaces toward GraphQL where that better fit product needs.",
-        "Led a cross-functional team of up to 10 people through delivery and operational constraints.",
+        "Designed the TSO 3.0 architecture from the ground up and moved the system to microservices.",
+        "Rewrote the REST APIs as GraphQL, which unblocked the other teams building on top.",
+        "Led a cross-functional team of up to 10 while staying hands-on in the codebase.",
       ],
       outcome:
-        "Supported a live commerce system where product decisions had immediate operational weight for kitchens, delivery, and payments.",
+        "A live commerce system where a bad architecture call would have hit real kitchens, drivers, and payments.",
       scope: ["Team leadership", "GraphQL architecture", "Delivery operations"],
     },
     accent: "rose",
@@ -129,37 +192,6 @@ export const projects: Project[] = [
       type: "image",
       src: "/images/tso_preview.jpg",
       alt: "TSO delivery preview",
-    },
-  },
-  {
-    id: "project-clear-street-bank",
-    slug: "clear-street-bank",
-    name: "Clear Street Bank",
-    role: "Fintech engineering",
-    href: "https://www.clearstreetbank.com/",
-    period: "Banking",
-    description:
-      "A banking product surface shaped by the same priorities I bring to finance software: reliability, restraint, and service detail.",
-    impact:
-      "Kept in the portfolio as fintech-facing product work while the public details stay intentionally lightweight.",
-    tags: ["fintech", "banking", "systems"],
-    detail: {
-      headline: "A restrained banking surface where reliability mattered more than spectacle.",
-      context:
-        "The public portfolio details are intentionally lightweight, but the work belongs in the same category of careful product engineering I bring to finance software.",
-      contribution: [
-        "Worked around fintech-facing product priorities with attention to reliability and restraint.",
-        "Kept the implementation posture practical: clear surfaces, service detail, and low-noise UX.",
-        "Balanced public presentation with confidentiality around deeper product specifics.",
-      ],
-      outcome: "Represents banking-oriented product work without overstating details that should stay private.",
-      scope: ["Fintech product UI", "Confidential delivery", "Service reliability"],
-    },
-    accent: "steel",
-    media: {
-      type: "image",
-      src: "/images/clear_street_preview.jpg",
-      alt: "Clear Street Bank preview",
     },
   },
   {
@@ -172,19 +204,19 @@ export const projects: Project[] = [
     description:
       "A UAE-based cryptocurrency application where I implemented asynchronous frontend architecture for real-time verifications and updates.",
     impact:
-      "Helped meet a critical regulatory certification deadline, enabling business operations across the MENA region.",
+      "Hit a critical regulatory certification deadline that opened up business operations across the MENA region.",
     tags: ["crypto", "real-time", "regulated"],
     detail: {
       headline: "Real-time regulated crypto product work under a certification deadline.",
       context:
-        "CoinMENA required frontend architecture that could support asynchronous verification flows and regulated digital-asset operations.",
+        "CoinMENA needed a frontend that could handle asynchronous verification flows and regulated digital-asset operations, with a hard certification deadline attached.",
       contribution: [
-        "Implemented asynchronous frontend architecture for real-time verifications and updates.",
-        "Worked in a regulated product context where correctness and timing were both business-critical.",
-        "Helped the team move toward a key certification milestone.",
+        "Built an asynchronous frontend architecture for real-time verifications and updates.",
+        "Worked in a regulated setting where correctness and timing were both business-critical.",
+        "Adapted fast as requirements shifted on the way to a key certification milestone.",
       ],
       outcome:
-        "Contributed to meeting a critical regulatory certification deadline, enabling operations across the MENA region.",
+        "Met a critical regulatory certification deadline, clearing the way for operations across the MENA region.",
       scope: ["Async frontend architecture", "Real-time verification", "Regulated crypto"],
     },
     accent: "mint",
@@ -192,6 +224,37 @@ export const projects: Project[] = [
       type: "image",
       src: "/images/coinmena_preview.jpeg",
       alt: "CoinMENA preview",
+    },
+  },
+  {
+    id: "project-clear-street-bank",
+    slug: "clear-street-bank",
+    name: "Clear Street Bank",
+    role: "Fintech engineering",
+    // No stable public URL for the product I worked on.
+    href: null,
+    period: "Banking",
+    description:
+      "Banking product work where reliability and restraint mattered more than flash. The specifics stay private.",
+    impact: "Fintech-facing product engineering; the details are confidential.",
+    tags: ["fintech", "banking", "systems"],
+    detail: {
+      headline: "A banking surface where reliability came first.",
+      context:
+        "I can't say much about the specifics, but it was the same careful product engineering any banking surface needs.",
+      contribution: [
+        "Built fintech-facing product surfaces with reliability and restraint as the defaults.",
+        "Kept the implementation practical: clear surfaces, real service detail, low-noise UX.",
+        "Stayed inside what I can share publicly without touching confidential specifics.",
+      ],
+      outcome: "Solid banking product work that I keep deliberately light on public detail.",
+      scope: ["Fintech product UI", "Confidential delivery", "Service reliability"],
+    },
+    accent: "steel",
+    media: {
+      type: "image",
+      src: "/images/clear_street_preview.jpg",
+      alt: "Clear Street Bank preview",
     },
   },
 ];
