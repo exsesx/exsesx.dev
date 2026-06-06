@@ -204,7 +204,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const initialClassName = mode === "dark" ? "dark" : mode === "light" ? "light" : undefined;
   const initialBackground =
     mode === "dark" ? THEME_CHROME_COLORS.dark : mode === "light" ? THEME_CHROME_COLORS.light : undefined;
-  const initialStyle = initialBackground ? { backgroundColor: initialBackground } : undefined;
+  // Inline color-scheme + background as an early, strong chrome signal: Safari
+  // samples chrome before the stylesheet's html.dark { color-scheme } applies.
+  const initialStyle: React.CSSProperties | undefined = initialBackground
+    ? { backgroundColor: initialBackground, colorScheme: mode === "dark" ? "dark" : "light" }
+    : undefined;
 
   return (
     <html
