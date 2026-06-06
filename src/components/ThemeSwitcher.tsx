@@ -10,7 +10,6 @@ import {
   persistThemeMode,
   subscribeToTheme,
   type ThemeMode,
-  writeThemeCookie,
 } from "@/lib/theme";
 import { canUseDesktopViewTransitions } from "@/lib/view-transitions";
 import { Button } from "./ui/button";
@@ -134,11 +133,6 @@ export default function ThemeSwitcher() {
     if (nextMode === mode) {
       return;
     }
-
-    // Commit the cookie synchronously, right now — before the rAF + view
-    // transition defer persistThemeMode. This guarantees the server reads the
-    // new value on the very next refresh, fixing the stale-chrome-on-reload lag.
-    writeThemeCookie(nextMode);
 
     if (themeFrameRef.current !== null) {
       window.cancelAnimationFrame(themeFrameRef.current);

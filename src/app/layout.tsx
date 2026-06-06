@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
 import Script from "next/script";
 import Header from "../components/Header";
 import Hotkeys from "../components/Hotkeys";
@@ -7,13 +6,7 @@ import KineticBackdrop from "../components/KineticBackdrop";
 import RouteMotionGuard from "../components/RouteMotionGuard";
 import VersionTag from "../components/VersionTag";
 import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
-import {
-  isThemeMode,
-  THEME_CHROME_COLORS,
-  THEME_COOKIE_MAX_AGE,
-  THEME_COOKIE_NAME,
-  THEME_RESOLVED_COOKIE_NAME,
-} from "../lib/theme";
+import { THEME_CHROME_COLORS } from "../lib/theme";
 import "../styles/globals.css";
 
 const siteDescription =
@@ -22,20 +15,31 @@ const siteDescription =
 const noFlashScript = String.raw`
 (() => {
   var storageKey = "exsesx:color-scheme";
-  var cookieKey = "${THEME_COOKIE_NAME}";
-  var resolvedCookieKey = "${THEME_RESOLVED_COOKIE_NAME}";
-  var cookieMaxAge = ${THEME_COOKIE_MAX_AGE};
   var classNameDark = "dark";
   var classNameLight = "light";
+  var themeColorDark = "${THEME_CHROME_COLORS.dark}";
+  var themeColorLight = "${THEME_CHROME_COLORS.light}";
   var element = document.documentElement;
   var preferDarkQuery = "(prefers-color-scheme: dark)";
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
 
-  function writeCookie(key, value) {
-    try {
-      document.cookie = key + "=" + value + "; path=/; max-age=" + cookieMaxAge + "; samesite=lax";
-    } catch {}
+  // Safari 26 ignores theme-color and tints its chrome from the <body> (then
+  // <html>) background-color, via a live WebKit observer. Setting these inline,
+  // instantly (no transition), is what retints both bars in real time on toggle —
+  // no refresh, no SSR, no cookies. viewport-fit=cover (static viewport) covers
+  // the bottom bar.
+  function paintSafariChrome(darkMode) {
+    var color = darkMode ? themeColorDark : themeColorLight;
+    var scheme = darkMode ? "dark" : "light";
+
+    element.style.backgroundColor = color;
+    element.style.colorScheme = scheme;
+
+    if (document.body) {
+      document.body.style.backgroundColor = color;
+      document.body.style.colorScheme = scheme;
+    }
   }
 
   function getStoredMode() {
@@ -64,9 +68,14 @@ const noFlashScript = String.raw`
     element.classList.add(darkMode ? classNameDark : classNameLight);
     element.classList.remove(darkMode ? classNameLight : classNameDark);
     element.dataset.themeMode = mode;
-    writeCookie(cookieKey, mode);
-    // Persist the resolved light/dark so the server can SSR system mode correctly.
-    writeCookie(resolvedCookieKey, darkMode ? "dark" : "light");
+    paintSafariChrome(darkMode);
+
+    // body may not exist yet at beforeInteractive; paint it once it does.
+    if (!document.body) {
+      document.addEventListener("DOMContentLoaded", function () {
+        paintSafariChrome(darkMode);
+      }, { once: true });
+    }
   }
 
   function setSeason() {
@@ -168,82 +177,25 @@ export const metadata: Metadata = {
   manifest: "/favicon/site.webmanifest",
 };
 
-const baseViewport: Viewport = {
+// Static viewport — no cookie, no per-request render, so pages stay static.
+// viewport-fit=cover is required for the bottom Safari bar to tint. theme-color
+// is kept only for non-Safari-26 browsers; Safari 26 ignores it and reads the
+// <body> background that the no-flash script paints client-side.
+export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: THEME_CHROME_COLORS.light },
+    { media: "(prefers-color-scheme: dark)", color: THEME_CHROME_COLORS.dark },
+  ],
 };
 
-async function getCookieThemeMode() {
-  const cookieStore = await cookies();
-  const cookieMode = cookieStore.get(THEME_COOKIE_NAME)?.value;
-
-  return isThemeMode(cookieMode) ? cookieMode : "system";
-}
-
-// The effective light/dark to render server-side. Explicit choice wins; for
-// "system" we fall back to the resolved-scheme cookie (what the OS last picked),
-// which is the only way the server can SSR system mode correctly — it can't read
-// prefers-color-scheme. undefined = unknown (true first visit): stay unset and
-// let the no-flash script resolve it client-side.
-async function getServerResolvedTheme(): Promise<"light" | "dark" | undefined> {
-  const mode = await getCookieThemeMode();
-
-  if (mode === "light" || mode === "dark") {
-    return mode;
-  }
-
-  const cookieStore = await cookies();
-  const resolved = cookieStore.get(THEME_RESOLVED_COOKIE_NAME)?.value;
-
-  return resolved === "dark" || resolved === "light" ? resolved : undefined;
-}
-
-// theme-color is for non-Safari-26 browsers (Safari 26 ignores it and tints from
-// the <body> background instead — handled by the SSR'd class + inline bg below).
-export async function generateViewport(): Promise<Viewport> {
-  const mode = await getCookieThemeMode();
-
-  if (mode === "light" || mode === "dark") {
-    return {
-      ...baseViewport,
-      colorScheme: mode,
-      themeColor: THEME_CHROME_COLORS[mode],
-    };
-  }
-
-  return {
-    ...baseViewport,
-    colorScheme: "light dark",
-    themeColor: [
-      { media: "(prefers-color-scheme: light)", color: THEME_CHROME_COLORS.light },
-      { media: "(prefers-color-scheme: dark)", color: THEME_CHROME_COLORS.dark },
-    ],
-  };
-}
-
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  // Safari 26 ignores theme-color and tints its chrome from the SSR'd <body>
-  // background, so we render the resolved class + inline background/color-scheme
-  // server-side, before first paint. For "system" this uses the resolved-scheme
-  // cookie; only a true first visit stays unset (no-flash script resolves it).
-  const resolvedTheme = await getServerResolvedTheme();
-  const initialClassName = resolvedTheme;
-  // Inline color-scheme + background as an early, strong chrome signal: Safari
-  // samples chrome before the stylesheet's html.dark { color-scheme } applies.
-  const initialStyle: React.CSSProperties | undefined = resolvedTheme
-    ? { backgroundColor: THEME_CHROME_COLORS[resolvedTheme], colorScheme: resolvedTheme }
-    : undefined;
-
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={initialClassName}
-      data-scroll-behavior="smooth"
-      style={initialStyle}
-      suppressHydrationWarning
-    >
-      <body style={initialStyle}>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <body>
         <Script id="noflash" strategy="beforeInteractive">
           {noFlashScript}
         </Script>
