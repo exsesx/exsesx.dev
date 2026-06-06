@@ -54,15 +54,24 @@ type DocumentWithNativeViewTransition = Document & {
 };
 
 function setMetaContent(name: string, content: string) {
-  let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+  let metas = Array.from(document.querySelectorAll<HTMLMetaElement>(`meta[name="${name}"]`));
 
-  if (!meta) {
-    meta = document.createElement("meta");
+  if (metas.length === 0) {
+    const meta = document.createElement("meta");
     meta.name = name;
     document.head.appendChild(meta);
+    metas = [meta];
   }
 
-  meta.content = content;
+  for (const meta of metas) {
+    if (meta.content !== content) {
+      meta.content = content;
+    }
+
+    if (name === "theme-color" && meta.hasAttribute("media")) {
+      meta.removeAttribute("media");
+    }
+  }
 }
 
 function paintSafariChromeSamples(isDark: boolean) {

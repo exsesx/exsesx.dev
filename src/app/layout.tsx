@@ -18,10 +18,39 @@ const noFlashScript = String.raw`
   var classNameLight = "light";
   var themeColorDark = "${THEME_CHROME_COLORS.dark}";
   var themeColorLight = "${THEME_CHROME_COLORS.light}";
+  var currentThemeColor = themeColorLight;
   var element = document.documentElement;
   var preferDarkQuery = "(prefers-color-scheme: dark)";
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
+  var isSyncingThemeColorMeta = false;
+
+  function syncThemeColorMeta() {
+    if (isSyncingThemeColorMeta) return;
+
+    isSyncingThemeColorMeta = true;
+
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+
+    if (metas.length === 0) {
+      var meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+      metas = [meta];
+    }
+
+    for (var index = 0; index < metas.length; index += 1) {
+      if (metas[index].content !== currentThemeColor) {
+        metas[index].content = currentThemeColor;
+      }
+
+      if (metas[index].hasAttribute("media")) {
+        metas[index].removeAttribute("media");
+      }
+    }
+
+    isSyncingThemeColorMeta = false;
+  }
 
   // Safari 26 samples actual rendered background colors for its chrome. This
   // script runs in <head>, before <body> and the fixed header are parsed, so the
@@ -30,10 +59,12 @@ const noFlashScript = String.raw`
     var color = darkMode ? themeColorDark : themeColorLight;
     var scheme = darkMode ? "dark" : "light";
 
+    currentThemeColor = color;
     element.style.setProperty("--background", color);
     element.style.setProperty("--safari-chrome-color", color);
     element.style.backgroundColor = color;
     element.style.colorScheme = scheme;
+    syncThemeColorMeta();
   }
 
   function getStoredMode() {
@@ -95,6 +126,12 @@ const noFlashScript = String.raw`
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
+  new MutationObserver(syncThemeColorMeta).observe(document.head, {
+    attributes: true,
+    attributeFilter: ["content", "media"],
+    childList: true,
+    subtree: true,
+  });
 
   if (mql.addEventListener) {
     mql.addEventListener("change", applyTheme);
