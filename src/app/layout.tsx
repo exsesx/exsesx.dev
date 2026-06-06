@@ -1,19 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
-import Script from "next/script";
 import Header from "../components/Header";
 import Hotkeys from "../components/Hotkeys";
 import KineticBackdrop from "../components/KineticBackdrop";
 import RouteMotionGuard from "../components/RouteMotionGuard";
 import VersionTag from "../components/VersionTag";
 import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
-import {
-  isThemeMode,
-  THEME_CHROME_COLORS,
-  THEME_COOKIE_MAX_AGE,
-  THEME_COOKIE_NAME,
-  THEME_RESOLVED_COOKIE_NAME,
-} from "../lib/theme";
+import { THEME_CHROME_COLORS } from "../lib/theme";
 import "../styles/globals.css";
 
 const siteDescription =
@@ -22,20 +14,55 @@ const siteDescription =
 const noFlashScript = String.raw`
 (() => {
   var storageKey = "exsesx:color-scheme";
-  var cookieKey = "${THEME_COOKIE_NAME}";
-  var resolvedCookieKey = "${THEME_RESOLVED_COOKIE_NAME}";
-  var cookieMaxAge = ${THEME_COOKIE_MAX_AGE};
   var classNameDark = "dark";
   var classNameLight = "light";
+  var themeColorDark = "${THEME_CHROME_COLORS.dark}";
+  var themeColorLight = "${THEME_CHROME_COLORS.light}";
+  var currentThemeColor = themeColorLight;
   var element = document.documentElement;
   var preferDarkQuery = "(prefers-color-scheme: dark)";
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
+  var isSyncingThemeColorMeta = false;
 
-  function writeCookie(key, value) {
-    try {
-      document.cookie = key + "=" + value + "; path=/; max-age=" + cookieMaxAge + "; samesite=lax";
-    } catch {}
+  function syncThemeColorMeta() {
+    if (isSyncingThemeColorMeta) return;
+
+    isSyncingThemeColorMeta = true;
+
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+
+    for (var index = 0; index < metas.length; index += 1) {
+      if (index > 0) {
+        metas[index].remove();
+        continue;
+      }
+
+      if (metas[index].content !== currentThemeColor) {
+        metas[index].content = currentThemeColor;
+      }
+
+      if (metas[index].hasAttribute("media")) {
+        metas[index].removeAttribute("media");
+      }
+    }
+
+    isSyncingThemeColorMeta = false;
+  }
+
+  // Safari 26 samples actual rendered background colors for its chrome. This
+  // script runs in <head>, before <body> and the fixed header are parsed, so the
+  // document starts with the resolved theme color instead of first painting cream.
+  function paintSafariChrome(darkMode) {
+    var color = darkMode ? themeColorDark : themeColorLight;
+    var scheme = darkMode ? "dark" : "light";
+
+    currentThemeColor = color;
+    element.style.setProperty("--background", color);
+    element.style.setProperty("--safari-chrome-color", color);
+    element.style.backgroundColor = color;
+    element.style.colorScheme = scheme;
+    syncThemeColorMeta();
   }
 
   function getStoredMode() {
@@ -64,9 +91,7 @@ const noFlashScript = String.raw`
     element.classList.add(darkMode ? classNameDark : classNameLight);
     element.classList.remove(darkMode ? classNameLight : classNameDark);
     element.dataset.themeMode = mode;
-    writeCookie(cookieKey, mode);
-    // Persist the resolved light/dark so the server can SSR system mode correctly.
-    writeCookie(resolvedCookieKey, darkMode ? "dark" : "light");
+    paintSafariChrome(darkMode);
   }
 
   function setSeason() {
@@ -98,6 +123,15 @@ const noFlashScript = String.raw`
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
+
+  if (window.MutationObserver) {
+    new MutationObserver(syncThemeColorMeta).observe(document.head, {
+      attributes: true,
+      attributeFilter: ["content", "media"],
+      childList: true,
+      subtree: true,
+    });
+  }
 
   if (mql.addEventListener) {
     mql.addEventListener("change", applyTheme);
@@ -168,84 +202,28 @@ export const metadata: Metadata = {
   manifest: "/favicon/site.webmanifest",
 };
 
-const baseViewport: Viewport = {
+// Static viewport — no cookie, no per-request render, so pages stay static.
+// viewport-fit=cover is required for the bottom Safari bar to tint. A single
+// non-media theme-color (light default) is kept for non-Safari-26 browsers; the
+// no-flash script overwrites it with the resolved theme. It is intentionally NOT
+// a prefers-color-scheme array — media-keyed tags let iOS override the JS value,
+// and the script would only have to strip them back out.
+export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
+  colorScheme: "light dark",
+  themeColor: THEME_CHROME_COLORS.light,
 };
 
-async function getCookieThemeMode() {
-  const cookieStore = await cookies();
-  const cookieMode = cookieStore.get(THEME_COOKIE_NAME)?.value;
-
-  return isThemeMode(cookieMode) ? cookieMode : "system";
-}
-
-// The effective light/dark to render server-side. Explicit choice wins; for
-// "system" we fall back to the resolved-scheme cookie (what the OS last picked),
-// which is the only way the server can SSR system mode correctly — it can't read
-// prefers-color-scheme. undefined = unknown (true first visit): stay unset and
-// let the no-flash script resolve it client-side.
-async function getServerResolvedTheme(): Promise<"light" | "dark" | undefined> {
-  const mode = await getCookieThemeMode();
-
-  if (mode === "light" || mode === "dark") {
-    return mode;
-  }
-
-  const cookieStore = await cookies();
-  const resolved = cookieStore.get(THEME_RESOLVED_COOKIE_NAME)?.value;
-
-  return resolved === "dark" || resolved === "light" ? resolved : undefined;
-}
-
-// theme-color is for non-Safari-26 browsers (Safari 26 ignores it and tints from
-// the <body> background instead — handled by the SSR'd class + inline bg below).
-export async function generateViewport(): Promise<Viewport> {
-  const mode = await getCookieThemeMode();
-
-  if (mode === "light" || mode === "dark") {
-    return {
-      ...baseViewport,
-      colorScheme: mode,
-      themeColor: THEME_CHROME_COLORS[mode],
-    };
-  }
-
-  return {
-    ...baseViewport,
-    colorScheme: "light dark",
-    themeColor: [
-      { media: "(prefers-color-scheme: light)", color: THEME_CHROME_COLORS.light },
-      { media: "(prefers-color-scheme: dark)", color: THEME_CHROME_COLORS.dark },
-    ],
-  };
-}
-
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  // Safari 26 ignores theme-color and tints its chrome from the SSR'd <body>
-  // background, so we render the resolved class + inline background/color-scheme
-  // server-side, before first paint. For "system" this uses the resolved-scheme
-  // cookie; only a true first visit stays unset (no-flash script resolves it).
-  const resolvedTheme = await getServerResolvedTheme();
-  const initialClassName = resolvedTheme;
-  // Inline color-scheme + background as an early, strong chrome signal: Safari
-  // samples chrome before the stylesheet's html.dark { color-scheme } applies.
-  const initialStyle: React.CSSProperties | undefined = resolvedTheme
-    ? { backgroundColor: THEME_CHROME_COLORS[resolvedTheme], colorScheme: resolvedTheme }
-    : undefined;
-
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={initialClassName}
-      data-scroll-behavior="smooth"
-      style={initialStyle}
-      suppressHydrationWarning
-    >
-      <body style={initialStyle}>
-        <Script id="noflash" strategy="beforeInteractive">
-          {noFlashScript}
-        </Script>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static theme bootstrap must run before Safari samples document chrome. */}
+        <script id="noflash" dangerouslySetInnerHTML={{ __html: noFlashScript }} />
+      </head>
+      <body>
         <RouteMotionGuard />
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />
