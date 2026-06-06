@@ -44,6 +44,9 @@
   --duration-move: 280ms;
   --duration-theme: 420ms;
   --background: #f8f1e7;
+  /* Solid color Safari 26 samples for chrome tint; mirrors --background, painted
+     inline by the no-flash script so the live observer retints the bars. */
+  --safari-chrome-color: #f8f1e7;
   --foreground: #18181b;
   --card: color-mix(in oklab, #fffaf1 82%, transparent);
   --card-foreground: #18181b;
@@ -69,6 +72,7 @@
 
 .dark {
   --background: #101111;
+  --safari-chrome-color: #101111;
   --foreground: #fff7e8;
   --card: color-mix(in oklab, #18181b 76%, transparent);
   --card-foreground: #fff7e8;
@@ -391,20 +395,41 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
+/*
+  Safari 26 samples .site-header for the TOP chrome bar (proven by diagnostic) and
+  reliably samples a solid background-color (not gradients). So the header IS a thin
+  solid bar pinned to the very top edge: tall enough to qualify (>= the safe-area /
+  6px), carrying var(--safari-chrome-color) which the no-flash script paints inline
+  so the live observer retints the top bar in real time. The visible glass nav is an
+  absolutely-positioned child (.site-header-nav-frame) floated BELOW this bar, so the
+  solid color is invisible in the status-bar zone and the frosted glass is untouched.
+*/
 .site-header {
+  height: max(env(safe-area-inset-top), 6px);
   isolation: isolate;
+  background-color: var(--safari-chrome-color);
+  transition: none;
+}
+
+/* The floating glass nav, positioned below the sampled header bar. */
+.site-header-nav-frame {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 0.75rem);
+  right: 1rem;
+  left: 1rem;
+}
+
+@media (min-width: 640px) {
+  .site-header-nav-frame {
+    right: 1.5rem;
+    left: 1.5rem;
+  }
 }
 
 .site-header::before {
   position: absolute;
-  /*
-    Start the fade BELOW the status-bar safe-area strip. That leaves the very top
-    edge free of any header background, so Safari 26 samples <body> there (painted
-    dark inline by the no-flash script, live-observed) for the top chrome bar —
-    same source as the working bottom bar. Covering the top edge here is what made
-    the top bar latch to the stale class-driven var(--background) (cream).
-  */
-  inset: env(safe-area-inset-top) 0 -1.8rem;
+  /* Soft fade behind the nav, below the solid sample bar. */
+  inset: max(env(safe-area-inset-top), 6px) 0 -1.8rem;
   z-index: -1;
   pointer-events: none;
   content: "";

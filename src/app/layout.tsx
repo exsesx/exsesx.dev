@@ -24,23 +24,32 @@ const noFlashScript = String.raw`
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
 
-  // Safari 26 ignores theme-color and tints its chrome from the background-color
-  // of <body> (fallback <html>) via a live WebKit observer — UNLESS a fixed/sticky
-  // element with a background sits at the edge, which then wins the sample. We keep
-  // the fixed header transparent at the very top edge (see .site-header::before),
-  // so BOTH bars sample <body>. Painting --background/<html>/<body> inline (no
-  // transition) lets the observer retint both bars in real time. No SSR/cookies.
+  // Safari 26 ignores theme-color and tints its chrome from a solid background-color
+  // via a live WebKit observer. BOTTOM bar samples <body>; TOP bar samples the fixed
+  // .site-header (a thin solid bar at the top edge — see globals.css). Paint <body>,
+  // <html> and the header inline (no transition) so the observer retints both bars in
+  // real time. No SSR/cookies.
   function paintSafariChrome(darkMode) {
     var color = darkMode ? themeColorDark : themeColorLight;
     var scheme = darkMode ? "dark" : "light";
 
     element.style.setProperty("--background", color);
+    element.style.setProperty("--safari-chrome-color", color);
     element.style.backgroundColor = color;
     element.style.colorScheme = scheme;
 
     if (document.body) {
       document.body.style.backgroundColor = color;
       document.body.style.colorScheme = scheme;
+    }
+
+    // The header is the TOP-bar sample source (Safari samples its solid bg). Paint
+    // it inline so the live observer retints the top bar. It's React-rendered, so
+    // it may be absent on the first beforeInteractive run — the DOMContentLoaded
+    // re-run below covers that.
+    var samples = document.querySelectorAll("[data-safari-chrome-sample]");
+    for (var i = 0; i < samples.length; i++) {
+      samples[i].style.backgroundColor = color;
     }
   }
 
@@ -106,9 +115,10 @@ const noFlashScript = String.raw`
 
   applyTheme();
   setSeason();
-  // <body> is the chrome sample source; at beforeInteractive it may not exist yet.
-  // Repaint once it does so both bars get the inline background.
-  if (!document.body) {
+  // <body> and the React-rendered .site-header are the chrome sample sources; at
+  // beforeInteractive they may not exist yet. Repaint once the DOM is parsed so both
+  // bars (and the header bar) get their inline background.
+  if (!document.body || !document.querySelector("[data-safari-chrome-sample]")) {
     document.addEventListener(
       "DOMContentLoaded",
       function () {

@@ -111,78 +111,79 @@ export default function Header() {
   }
 
   return (
-    <header
-      className="site-header fixed inset-x-0 top-0 z-50 px-4 py-3 sm:px-6"
-      style={{ viewTransitionName: "persistent-nav" }}
-    >
-      <LazyMotion features={domAnimation}>
-        <m.nav
-          className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-full px-3 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between"
-          style={navStyle}
-        >
-          <Link
-            href="/"
-            className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
-            aria-label="Oleh Vanin home"
-            onClick={event => handleNavLinkClick(event, "/")}
+    <header className="site-header fixed inset-x-0 top-0 z-50" data-safari-chrome-sample>
+      <div className="site-header-nav-frame" style={{ viewTransitionName: "persistent-nav" }}>
+        <LazyMotion features={domAnimation}>
+          <m.nav
+            className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-full px-3 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between"
+            style={navStyle}
           >
-            <span className="logo-tile grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.04] group-active:scale-[0.96]">
-              <LogoMark className="size-8" />
-            </span>
-            <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
-              <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
-              <span className="mt-1 text-[11px] font-bold tracking-normal text-muted-foreground">exsesx.dev</span>
-            </span>
-          </Link>
-
-          <div className="relative grid grid-cols-[3rem_3rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-2">
-            <m.span
-              aria-hidden="true"
-              animate={{
-                transform: prefersReducedMotion ? navActionPillTransform : getNavActionPillTransforms(selectedNavHref),
-              }}
-              className="site-nav-active-pill absolute inset-y-1 left-1 z-0 rounded-full"
-              initial={false}
-              transition={prefersReducedMotion ? { duration: 0 } : navActionPillTransition}
-            />
-            {navigation.map(item => {
-              const Icon = item.icon;
-              const isActive = item.href === selectedNavHref;
-              const isProjectDetailToIndex = item.href === "/projects" && pathname.startsWith("/project/");
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  transitionTypes={isProjectDetailToIndex ? projectIndexTransitionTypes : undefined}
-                  data-suppress-entry-motion={isProjectDetailToIndex ? "" : undefined}
-                  aria-label={item.label}
-                  className={cn(
-                    navActionBaseClassName,
-                    isActive ? navActionActiveClassName : navActionInactiveClassName,
-                  )}
-                  onClick={event => handleNavLinkClick(event, item.href)}
-                  onPointerDown={() => setSelectedNavHref(item.href)}
-                >
-                  <Icon data-icon="inline-start" strokeWidth={2.3} />
-                  <span className="hidden sm:inline">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center justify-end gap-2">
-            <a
-              href="https://github.com/exsesx"
-              className={cn(buttonVariants({ variant: "glass", size: "default" }), "hidden md:inline-flex")}
+            <Link
+              href="/"
+              className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
+              aria-label="Oleh Vanin home"
+              onClick={event => handleNavLinkClick(event, "/")}
             >
-              <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
-              GitHub
-            </a>
-            <ThemeSwitcher />
-          </div>
-        </m.nav>
-      </LazyMotion>
+              <span className="logo-tile grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.04] group-active:scale-[0.96]">
+                <LogoMark className="size-8" />
+              </span>
+              <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
+                <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
+                <span className="mt-1 text-[11px] font-bold tracking-normal text-muted-foreground">exsesx.dev</span>
+              </span>
+            </Link>
+
+            <div className="relative grid grid-cols-[3rem_3rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-2">
+              <m.span
+                aria-hidden="true"
+                animate={{
+                  transform: prefersReducedMotion
+                    ? navActionPillTransform
+                    : getNavActionPillTransforms(selectedNavHref),
+                }}
+                className="site-nav-active-pill absolute inset-y-1 left-1 z-0 rounded-full"
+                initial={false}
+                transition={prefersReducedMotion ? { duration: 0 } : navActionPillTransition}
+              />
+              {navigation.map(item => {
+                const Icon = item.icon;
+                const isActive = item.href === selectedNavHref;
+                const isProjectDetailToIndex = item.href === "/projects" && pathname.startsWith("/project/");
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    transitionTypes={isProjectDetailToIndex ? projectIndexTransitionTypes : undefined}
+                    data-suppress-entry-motion={isProjectDetailToIndex ? "" : undefined}
+                    aria-label={item.label}
+                    className={cn(
+                      navActionBaseClassName,
+                      isActive ? navActionActiveClassName : navActionInactiveClassName,
+                    )}
+                    onClick={event => handleNavLinkClick(event, item.href)}
+                    onPointerDown={() => setSelectedNavHref(item.href)}
+                  >
+                    <Icon data-icon="inline-start" strokeWidth={2.3} />
+                    <span className="hidden sm:inline">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <a
+                href="https://github.com/exsesx"
+                className={cn(buttonVariants({ variant: "glass", size: "default" }), "hidden md:inline-flex")}
+              >
+                <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
+                GitHub
+              </a>
+              <ThemeSwitcher />
+            </div>
+          </m.nav>
+        </LazyMotion>
+      </div>
     </header>
   );
 }
