@@ -52,6 +52,22 @@ Fix attempt (iter 2): drive `--background` **inline on `<html>`** so EVERY `var(
 
 Status: needs on-device confirmation. If the top bar is still light, the sampled element is something else — use a diagnostic build (set the suspect element to a glaring color) to identify it visually.
 
+## Investigation log (iter 3 — diagnostic + external research)
+
+Color diagnostic (paint each candidate a unique color, read the bar):
+- TOP bar = BLUE → Safari samples **`.site-header`** for the top bar. z-index strips never win (a `z-60` strip still showed blue) — Safari's sampler doesn't honor our stacking. `isolate` is a red herring.
+- BOTTOM bar = GREEN → samples **`<body>`** (painted inline → works live).
+
+External research (key sources):
+- Ben Frain: tried exactly the "fixed element bg = tint + gradient for visible look" → "ineffective, made it worse". Matches our failed iter (e978bc2).
+- Pavel (1ar.io) / Jahir: **the winning pattern is a TRANSPARENT fixed parent** — keep visuals in an absolute child / off the very top edge so Safari ignores the header and **falls through to `<body>`**. Plus: set explicit `<html>`/`<body>` bg, never rely on theme-color, `display:none` (not opacity:0) for hidden overlays.
+- Safari 26.2 release notes: no chrome-tinting changes (not waiting for a platform fix).
+
+Fix (iter 3): make `.site-header` transparent at the very top edge by insetting
+`.site-header::before` to start below `env(safe-area-inset-top)`. The header then
+contributes no sampled pixel at the top → Safari samples `<body>` (painted dark
+inline, live-observed) for BOTH bars. Glass pill untouched.
+
 ## Verification gates
 
 - `bun run build` shows `/` and `/projects` as `○ (Static)`.

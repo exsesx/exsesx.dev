@@ -121,19 +121,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/*
-  Safari 26 samples .site-header for the TOP chrome bar (confirmed by diagnostic).
-  The no-flash script paints the header's background inline as a gradient that is
-  solid var(--background) only across the status-bar safe-area strip at the very
-  top, then transparent — so Safari samples the theme color at the top edge while
-  the floating glass pill below stays transparent. A solid background-color would
-  show as a band; a gradient background-image avoids that and isn't a mask (so it
-  never clips the nav content).
-*/
-.site-header {
-  --safari-sample-band: max(env(safe-area-inset-top), 3px);
-}
-
 @supports (height: 100dvh) {
   body {
     min-height: 100dvh;
@@ -410,7 +397,14 @@ html[data-season="pride"] .logo-mark-pride {
 
 .site-header::before {
   position: absolute;
-  inset: 0 0 -1.8rem;
+  /*
+    Start the fade BELOW the status-bar safe-area strip. That leaves the very top
+    edge free of any header background, so Safari 26 samples <body> there (painted
+    dark inline by the no-flash script, live-observed) for the top chrome bar —
+    same source as the working bottom bar. Covering the top edge here is what made
+    the top bar latch to the stale class-driven var(--background) (cream).
+  */
+  inset: env(safe-area-inset-top) 0 -1.8rem;
   z-index: -1;
   pointer-events: none;
   content: "";

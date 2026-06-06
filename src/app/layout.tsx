@@ -25,12 +25,11 @@ const noFlashScript = String.raw`
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
 
   // Safari 26 ignores theme-color and tints its chrome from the background-color
-  // of the topmost qualifying element at each edge, via a live WebKit observer.
-  // Diagnostic confirmed: the TOP bar samples a fixed element at top:0, the
-  // BOTTOM samples <body>. We can't paint the glass header solid (kills the
-  // frosted look), so a dedicated invisible 1px strip pinned to top:0 is the
-  // top-bar sample source. Painting it + <body> inline (no transition) lets the
-  // observer retint both bars in real time. No SSR/cookies.
+  // of <body> (fallback <html>) via a live WebKit observer — UNLESS a fixed/sticky
+  // element with a background sits at the edge, which then wins the sample. We keep
+  // the fixed header transparent at the very top edge (see .site-header::before),
+  // so BOTH bars sample <body>. Painting --background/<html>/<body> inline (no
+  // transition) lets the observer retint both bars in real time. No SSR/cookies.
   function paintSafariChrome(darkMode) {
     var color = darkMode ? themeColorDark : themeColorLight;
     var scheme = darkMode ? "dark" : "light";
@@ -42,19 +41,6 @@ const noFlashScript = String.raw`
     if (document.body) {
       document.body.style.backgroundColor = color;
       document.body.style.colorScheme = scheme;
-    }
-
-    // Diagnostic proved Safari samples .site-header for the TOP bar (regardless
-    // of z-index/strips). Paint its background as a gradient that is solid only
-    // across the status-bar safe-area band (var set in CSS), then transparent —
-    // Safari samples the theme color at the top edge while the floating glass
-    // pill below stays transparent (no solid band, and not a mask so the nav
-    // content is never clipped).
-    var header = document.querySelector(".site-header");
-    if (header) {
-      var band = "var(--safari-sample-band, 3px)";
-      header.style.backgroundImage =
-        "linear-gradient(to bottom, " + color + " 0, " + color + " " + band + ", transparent " + band + ")";
     }
   }
 
@@ -120,9 +106,9 @@ const noFlashScript = String.raw`
 
   applyTheme();
   setSeason();
-  // .site-header is React-rendered; repaint once the DOM is parsed so the header
-  // (the top-bar sample source) gets its inline background.
-  if (!document.querySelector(".site-header")) {
+  // <body> is the chrome sample source; at beforeInteractive it may not exist yet.
+  // Repaint once it does so both bars get the inline background.
+  if (!document.body) {
     document.addEventListener(
       "DOMContentLoaded",
       function () {
