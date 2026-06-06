@@ -9,6 +9,7 @@ import {
   parseThemeSnapshot,
   persistThemeMode,
   subscribeToTheme,
+  THEME_CHROME_COLORS,
   type ThemeMode,
 } from "@/lib/theme";
 import { canUseDesktopViewTransitions } from "@/lib/view-transitions";
@@ -62,6 +63,24 @@ function setMetaContent(name: string, content: string) {
   }
 
   meta.content = content;
+}
+
+function paintSafariChromeSamples(isDark: boolean) {
+  const color = isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light;
+  const scheme = isDark ? "dark" : "light";
+  const root = document.documentElement;
+
+  root.style.setProperty("--background", color);
+  root.style.setProperty("--safari-chrome-color", color);
+  root.style.backgroundColor = color;
+  root.style.colorScheme = scheme;
+  document.body.style.backgroundColor = color;
+  document.body.style.colorScheme = scheme;
+
+  for (const sample of document.querySelectorAll<HTMLElement>("[data-safari-chrome-sample]")) {
+    sample.style.backgroundColor = color;
+    sample.style.colorScheme = scheme;
+  }
 }
 
 function getThemeTransitionOrigin(element: HTMLElement | null) {
@@ -150,7 +169,8 @@ export default function ThemeSwitcher() {
     root.classList.toggle("dark", isDark);
     root.classList.toggle("light", !isDark);
     root.dataset.themeMode = mode;
-    setMetaContent("theme-color", isDark ? "#101111" : "#f8f1e7");
+    paintSafariChromeSamples(isDark);
+    setMetaContent("theme-color", isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light);
   }, [isDark, mode]);
 
   useEffect(() => {

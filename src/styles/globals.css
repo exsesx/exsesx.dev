@@ -418,10 +418,14 @@ html[data-season="pride"] .logo-mark-pride {
   transition: none;
 }
 
-/* The floating glass nav, positioned below the sampled header bar. */
+/*
+  The floating glass nav keeps the original visual `py-3` (0.75rem) gap. It is
+  intentionally decoupled from --safari-sample-band, which only exists to tint
+  Safari's status-bar zone and would push the nav too low.
+*/
 .site-header-nav-frame {
   position: absolute;
-  top: calc(var(--safari-sample-band) + 0.5rem);
+  top: 0.75rem;
   right: 1rem;
   left: 1rem;
 }
