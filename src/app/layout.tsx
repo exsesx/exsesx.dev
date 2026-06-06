@@ -57,12 +57,19 @@ const noFlashScript = String.raw`
         el.style.setProperty("background-color", color, "important");
       }
     }
-    paint(document.documentElement, "#ff0000"); // <html>  = RED
-    paint(document.body, "#00ff00"); // <body>  = GREEN
-    paint(document.querySelector(".site-header"), "#0000ff"); // header  = BLUE
-    // KineticBackdrop root (first fixed inset-0 -z-10 element)
-    paint(document.querySelector(".fixed.inset-0.-z-10"), "#ff00ff"); // backdrop = MAGENTA
-    paint(document.querySelector(".page-top-fade"), "#ff9900"); // top-fade = ORANGE
+    function paintAll(selector, color) {
+      try {
+        var els = document.querySelectorAll(selector);
+        for (var i = 0; i < els.length; i++) {
+          paint(els[i], color);
+        }
+      } catch (e) {}
+    }
+    paint(document.documentElement, "#ff0000"); // <html>       = RED
+    paint(document.body, "#00ff00"); // <body>       = GREEN
+    paintAll(".site-header", "#0000ff"); // header       = BLUE
+    paintAll(".bg-background", "#ff00ff"); // backdrop     = MAGENTA  (fixed inset-0 bg-background)
+    paintAll(".page-top-fade", "#ff9900"); // top-fade     = ORANGE
   }
 
   function getStoredMode() {
