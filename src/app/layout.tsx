@@ -26,10 +26,11 @@ const noFlashScript = String.raw`
 
   // Safari 26 ignores theme-color and tints its chrome from the background-color
   // of the topmost qualifying element at each edge, via a live WebKit observer.
-  // Diagnostic confirmed: the TOP bar samples .site-header (fixed top-0, no
-  // backdrop-filter on the container), the BOTTOM samples <body>. So we paint
-  // <html>/<body> (bottom) AND .site-header (top) inline — instantly, no
-  // transition — and the observer retints both bars in real time. No SSR/cookies.
+  // Diagnostic confirmed: the TOP bar samples a fixed element at top:0, the
+  // BOTTOM samples <body>. We can't paint the glass header solid (kills the
+  // frosted look), so a dedicated invisible 1px strip pinned to top:0 is the
+  // top-bar sample source. Painting it + <body> inline (no transition) lets the
+  // observer retint both bars in real time. No SSR/cookies.
   function paintSafariChrome(darkMode) {
     var color = darkMode ? themeColorDark : themeColorLight;
     var scheme = darkMode ? "dark" : "light";
@@ -43,9 +44,9 @@ const noFlashScript = String.raw`
       document.body.style.colorScheme = scheme;
     }
 
-    var header = document.querySelector(".site-header");
-    if (header) {
-      header.style.backgroundColor = color;
+    var strip = document.querySelector("[data-safari-top-sample]");
+    if (strip) {
+      strip.style.backgroundColor = color;
     }
   }
 
@@ -111,10 +112,9 @@ const noFlashScript = String.raw`
 
   applyTheme();
   setSeason();
-  // .site-header is rendered by React, so it may not exist on the first
-  // applyTheme() at beforeInteractive. Repaint once the DOM is parsed so the
-  // header (the top-bar sample source) gets its inline background.
-  if (!document.querySelector(".site-header")) {
+  // The top sample strip lives in <body>; at beforeInteractive it may not be
+  // parsed yet. Repaint once the DOM is ready so the strip gets its background.
+  if (!document.querySelector("[data-safari-top-sample]")) {
     document.addEventListener(
       "DOMContentLoaded",
       function () {
@@ -218,6 +218,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Script id="noflash" strategy="beforeInteractive">
           {noFlashScript}
         </Script>
+        {/*
+          Invisible top-edge sample strip for Safari 26 chrome tinting. The glass
+          header can't carry a solid background (it would lose the frosted look),
+          so this filter-free strip at top:0 is what Safari samples for the top
+          bar. The no-flash script paints it inline; the live observer retints the
+          bar in real time. It sits in the status-bar safe-area, behind the glass.
+        */}
+        <div aria-hidden="true" data-safari-top-sample="" className="safari-top-sample" />
         <RouteMotionGuard />
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />

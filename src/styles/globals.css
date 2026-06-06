@@ -121,6 +121,34 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/*
+  Safari 26 top-bar sample source. Pinned to the very top edge, full width, no
+  backdrop-filter (so it qualifies for sampling), behind the glass header and
+  page content (low z-index, pointer-events:none) so it stays invisible. Only as
+  tall as the status-bar safe area, painted var(--background) by the no-flash
+  script. Hidden on desktop where Safari chrome tinting doesn't apply.
+*/
+.safari-top-sample {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 0;
+  height: max(env(safe-area-inset-top), 4px);
+  pointer-events: none;
+  background-color: var(--background);
+  transition: none !important;
+}
+
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+    .safari-top-sample {
+      display: block;
+    }
+  }
+}
+
 @supports (height: 100dvh) {
   body {
     min-height: 100dvh;
