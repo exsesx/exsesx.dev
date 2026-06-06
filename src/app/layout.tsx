@@ -50,6 +50,27 @@ const noFlashScript = String.raw`
     }
   }
 
+  // ===== TEMP DIAGNOSTIC 2 — top-bar sample among the 3 top-edge candidates =====
+  // strip=CYAN, header=BLUE, body=GREEN. Whatever the iOS TOP bar shows is what
+  // Safari samples. Also logs geometry to console. REMOVE after.
+  function diagnoseTop() {
+    function paint(el, c) {
+      if (el) el.style.setProperty("background-color", c, "important");
+    }
+    var strip = document.querySelector("[data-safari-top-sample]");
+    var header = document.querySelector(".site-header");
+    paint(strip, "#00ffff"); // strip  = CYAN
+    paint(header, "#0000ff"); // header = BLUE
+    paint(document.body, "#00ff00"); // body  = GREEN
+    try {
+      var info = {
+        strip: strip ? strip.getBoundingClientRect().top + "/" + strip.getBoundingClientRect().height + " z=" + getComputedStyle(strip).zIndex : "MISSING",
+        header: header ? header.getBoundingClientRect().top + "/" + header.getBoundingClientRect().height + " z=" + getComputedStyle(header).zIndex : "MISSING",
+      };
+      console.log("[safari-diag]", JSON.stringify(info));
+    } catch (e) {}
+  }
+
   function getStoredMode() {
     var localStorageTheme = null;
 
@@ -119,9 +140,12 @@ const noFlashScript = String.raw`
       "DOMContentLoaded",
       function () {
         applyTheme();
+        diagnoseTop();
       },
       { once: true },
     );
+  } else {
+    diagnoseTop();
   }
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
