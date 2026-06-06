@@ -1,5 +1,11 @@
 export const THEME_CHANGE_EVENT = "exsesx:theme-change";
 export const THEME_STORAGE_KEY = "exsesx:color-scheme";
+export const THEME_COOKIE_NAME = "exsesx-color-scheme";
+export const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+export const THEME_CHROME_COLORS = {
+  light: "#f8f1e7",
+  dark: "#101111",
+} as const;
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -73,6 +79,10 @@ export function subscribeToTheme(callback: () => void) {
 
 export function persistThemeMode(mode: ThemeMode) {
   window.localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(mode));
+  // Mirror to a cookie so the server can render the correct theme-color on the
+  // next load (SSR chrome tint). Read only in generateViewport, never in the
+  // layout body, to keep the page itself statically rendered.
+  document.cookie = `${THEME_COOKIE_NAME}=${mode}; path=/; max-age=${THEME_COOKIE_MAX_AGE}; samesite=lax`;
   window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
 }
 
