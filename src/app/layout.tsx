@@ -49,7 +49,10 @@ const noFlashScript = String.raw`
     // re-run below covers that.
     var samples = document.querySelectorAll("[data-safari-chrome-sample]");
     for (var i = 0; i < samples.length; i++) {
-      samples[i].style.backgroundColor = color;
+      // TEMP DIAGNOSTIC: force RED to test if THIS header structure is still
+      // sampled for the top bar. Red top bar = sampled (color var issue);
+      // cream/other = restructure broke header sampling. REMOVE after.
+      samples[i].style.setProperty("background-color", "#ff0000", "important");
     }
   }
 
