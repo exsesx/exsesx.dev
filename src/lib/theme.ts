@@ -1,11 +1,8 @@
 export const THEME_CHANGE_EVENT = "exsesx:theme-change";
 export const THEME_STORAGE_KEY = "exsesx:color-scheme";
-export const THEME_COOKIE_NAME = "exsesx-color-scheme";
-// Holds the *resolved* light/dark value (what "system" actually picked). The
-// server can't read prefers-color-scheme, so this is its SSR fallback for system
-// mode — it makes the system-mode chrome consistent after the first load.
-export const THEME_RESOLVED_COOKIE_NAME = "exsesx-resolved-scheme";
-export const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+// Source of truth for the page + Safari 26 chrome colors. The no-flash script
+// applies these inline to <html>/<body> so the WebKit live observer retints the
+// browser chrome in real time. Keep in sync with --background in globals.css.
 export const THEME_CHROME_COLORS = {
   light: "#f8f1e7",
   dark: "#101111",
@@ -81,18 +78,10 @@ export function subscribeToTheme(callback: () => void) {
   };
 }
 
-// Mirror the theme choice to a cookie so the server can render the correct
-// theme-color on the next load (SSR chrome tint), read only in generateViewport.
-// Exposed separately so the switcher can commit it synchronously on tap, well
-// before a manual refresh — client-set cookies set inside a deferred callback
-// (e.g. a view transition) may not reach the very next navigation in Safari.
-export function writeThemeCookie(mode: ThemeMode) {
-  document.cookie = `${THEME_COOKIE_NAME}=${mode}; path=/; max-age=${THEME_COOKIE_MAX_AGE}; samesite=lax`;
-}
-
 export function persistThemeMode(mode: ThemeMode) {
   window.localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(mode));
-  writeThemeCookie(mode);
+  // The no-flash script listens for this and repaints the Safari chrome inline,
+  // which the WebKit live observer picks up in real time — no refresh needed.
   window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
 }
 

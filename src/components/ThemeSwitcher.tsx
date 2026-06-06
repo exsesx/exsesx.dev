@@ -9,8 +9,8 @@ import {
   parseThemeSnapshot,
   persistThemeMode,
   subscribeToTheme,
+  THEME_CHROME_COLORS,
   type ThemeMode,
-  writeThemeCookie,
 } from "@/lib/theme";
 import { canUseDesktopViewTransitions } from "@/lib/view-transitions";
 import { Button } from "./ui/button";
@@ -54,15 +54,61 @@ type DocumentWithNativeViewTransition = Document & {
 };
 
 function setMetaContent(name: string, content: string) {
-  let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+  let metas = Array.from(document.querySelectorAll<HTMLMetaElement>(`meta[name="${name}"]`));
 
-  if (!meta) {
-    meta = document.createElement("meta");
+  if (metas.length === 0) {
+    if (name === "theme-color") {
+      return;
+    }
+
+    const meta = document.createElement("meta");
     meta.name = name;
     document.head.appendChild(meta);
+    metas = [meta];
   }
 
-  meta.content = content;
+  if (name === "theme-color") {
+    for (const [index, meta] of metas.entries()) {
+      if (index > 0) {
+        meta.remove();
+        continue;
+      }
+
+      if (meta.content !== content) {
+        meta.content = content;
+      }
+
+      if (meta.hasAttribute("media")) {
+        meta.removeAttribute("media");
+      }
+    }
+
+    return;
+  }
+
+  for (const meta of metas) {
+    if (meta.content !== content) {
+      meta.content = content;
+    }
+  }
+}
+
+function paintSafariChromeSamples(isDark: boolean) {
+  const color = isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light;
+  const scheme = isDark ? "dark" : "light";
+  const root = document.documentElement;
+
+  root.style.setProperty("--background", color);
+  root.style.setProperty("--safari-chrome-color", color);
+  root.style.backgroundColor = color;
+  root.style.colorScheme = scheme;
+  document.body.style.backgroundColor = color;
+  document.body.style.colorScheme = scheme;
+
+  for (const sample of document.querySelectorAll<HTMLElement>("[data-safari-chrome-sample]")) {
+    sample.style.backgroundColor = color;
+    sample.style.colorScheme = scheme;
+  }
 }
 
 function getThemeTransitionOrigin(element: HTMLElement | null) {
@@ -135,11 +181,6 @@ export default function ThemeSwitcher() {
       return;
     }
 
-    // Commit the cookie synchronously, right now — before the rAF + view
-    // transition defer persistThemeMode. This guarantees the server reads the
-    // new value on the very next refresh, fixing the stale-chrome-on-reload lag.
-    writeThemeCookie(nextMode);
-
     if (themeFrameRef.current !== null) {
       window.cancelAnimationFrame(themeFrameRef.current);
     }
@@ -156,7 +197,8 @@ export default function ThemeSwitcher() {
     root.classList.toggle("dark", isDark);
     root.classList.toggle("light", !isDark);
     root.dataset.themeMode = mode;
-    setMetaContent("theme-color", isDark ? "#101111" : "#f8f1e7");
+    paintSafariChromeSamples(isDark);
+    setMetaContent("theme-color", isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light);
   }, [isDark, mode]);
 
   useEffect(() => {
