@@ -406,26 +406,33 @@ html[data-season="pride"] .logo-mark-pride {
 */
 .site-header {
   /*
-    The bar must FILL the status-bar zone to be sampled — a few px sit below the
-    zone and Safari samples the page above it (confirmed on device). env(safe-area-
-    inset-top) underreports in this context, so floor it generously. The bar's
-    color === page background, so this opaque band is invisible against the page.
+    --safari-sample-band is the solid status-bar tint zone for Safari 26 (see the
+    iOS-only block below). It defaults to 0 so DESKTOP keeps the original layout
+    (no 44px bar, nav at the normal 0.75rem gap). Only iOS-touch gets the real bar.
   */
-  --safari-sample-band: max(env(safe-area-inset-top), 44px);
+  --safari-sample-band: 0px;
   height: var(--safari-sample-band);
   isolation: isolate;
   background-color: var(--safari-chrome-color);
   transition: none;
 }
 
-/*
-  The floating glass nav keeps the original visual `py-3` (0.75rem) gap. It is
-  intentionally decoupled from --safari-sample-band, which only exists to tint
-  Safari's status-bar zone and would push the nav too low.
-*/
+/* iOS-touch only: the header becomes the solid status-bar sample bar. env(safe-
+   area-inset-top) underreports in this context, so floor it to 44px. The bar's
+   color === page bg so it's invisible; the nav (below) clears it. */
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+    .site-header {
+      --safari-sample-band: max(env(safe-area-inset-top), 44px);
+    }
+  }
+}
+
+/* The floating glass nav sits below the sample band with the original 0.75rem gap
+   (on desktop the band is 0, so this is just 0.75rem like before). */
 .site-header-nav-frame {
   position: absolute;
-  top: 0.75rem;
+  top: calc(var(--safari-sample-band) + 0.75rem);
   right: 1rem;
   left: 1rem;
 }
