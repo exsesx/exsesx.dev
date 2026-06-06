@@ -44,6 +44,9 @@
   --duration-move: 280ms;
   --duration-theme: 420ms;
   --background: #f8f1e7;
+  /* Solid color Safari 26 samples for chrome tint; mirrors --background, painted
+     inline by the no-flash script so the live observer retints the bars. */
+  --safari-chrome-color: #f8f1e7;
   --foreground: #18181b;
   --card: color-mix(in oklab, #fffaf1 82%, transparent);
   --card-foreground: #18181b;
@@ -69,6 +72,7 @@
 
 .dark {
   --background: #101111;
+  --safari-chrome-color: #101111;
   --foreground: #fff7e8;
   --card: color-mix(in oklab, #18181b 76%, transparent);
   --card-foreground: #fff7e8;
@@ -391,13 +395,64 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
+/*
+  Safari 26 samples .site-header for the TOP chrome bar (proven by diagnostic) and
+  reliably samples a solid background-color (not gradients). So the header IS a thin
+  solid bar pinned to the very top edge: tall enough to qualify (>= the safe-area /
+  6px), carrying var(--safari-chrome-color) which the no-flash script paints inline
+  so the live observer retints the top bar in real time. The visible glass nav is an
+  absolutely-positioned child (.site-header-nav-frame) floated BELOW this bar, so the
+  solid color is invisible in the status-bar zone and the frosted glass is untouched.
+*/
 .site-header {
+  /*
+    --safari-sample-band is the solid status-bar tint zone for Safari 26 (see the
+    iOS-only block below). It defaults to 0 so DESKTOP keeps the original layout
+    (no 44px bar, nav at the normal 0.75rem gap). Only iOS-touch gets the real bar.
+  */
+  --safari-sample-band: 0px;
+  height: var(--safari-sample-band);
   isolation: isolate;
+  background-color: var(--safari-chrome-color);
+  transition: none;
+}
+
+/* iOS-touch only: the header becomes the solid status-bar sample bar. env(safe-
+   area-inset-top) underreports in this context, so floor it to 44px. The bar's
+   color === page bg so it's invisible; the nav (below) clears it. */
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+    .site-header {
+      --safari-sample-band: max(env(safe-area-inset-top), 44px);
+    }
+  }
+}
+
+/*
+  The floating glass nav sits just below the real status bar — the original
+  position: env(safe-area-inset-top) + 0.75rem. It is decoupled from
+  --safari-sample-band: that band is floored to 44px ONLY so Safari samples the
+  bar, which would push the nav too low if reused here. On desktop both terms are
+  0 → 0.75rem, the original gap.
+*/
+.site-header-nav-frame {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 0.75rem);
+  right: 1rem;
+  left: 1rem;
+}
+
+@media (min-width: 640px) {
+  .site-header-nav-frame {
+    right: 1.5rem;
+    left: 1.5rem;
+  }
 }
 
 .site-header::before {
   position: absolute;
-  inset: 0 0 -1.8rem;
+  /* Soft fade behind the nav, below the solid sample bar. */
+  inset: var(--safari-sample-band) 0 -1.8rem;
   z-index: -1;
   pointer-events: none;
   content: "";
