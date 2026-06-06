@@ -120,6 +120,7 @@ function baseSvg(inner: string) {
     .body { font: 700 28px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.3px; }
     .body-dark { font: 700 22px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.creamSoft}; opacity: 0.88; }
     .label { font: 850 18px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -0.2px; }
+    .stat-label { font: 850 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.15px; }
     .tiny { font: 800 16px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
     .mono { font: 800 18px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; fill: ${colors.creamSoft}; }
   </style>
@@ -174,11 +175,11 @@ function mobileFrame(x: number, y: number, w: number, h: number) {
   </g>`;
 }
 
-function statCard(x: number, y: number, value: string, label: string) {
+function statCard(x: number, y: number, width: number, value: string, label: string, maxChars: number) {
   return `<g>
-    <rect x="${x}" y="${y}" width="184" height="110" rx="24" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.1"/>
+    <rect x="${x}" y="${y}" width="${width}" height="112" rx="24" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.1"/>
     <text x="${x + 24}" y="${y + 48}" class="headline-small" font-size="42">${escapeXml(value)}</text>
-    ${textLines(label, { x: x + 24, y: y + 76, maxChars: 18, lineHeight: 20, className: "tiny" })}
+    ${textLines(label, { x: x + 24, y: y + 77, maxChars, lineHeight: 18, className: "stat-label" })}
   </g>`;
 }
 
@@ -199,9 +200,9 @@ function homeSvg() {
       className: "body",
     })}
     ${browserFrame(630, 88, 442, 350)}
-    ${mobileFrame(966, 254, 154, 274)}
-    ${statCard(632, 464, "9+", "years building web products")}
-    ${statCard(830, 464, "17+", "projects supported as lead engineer")}
+    ${mobileFrame(976, 254, 148, 274)}
+    ${statCard(632, 464, 178, "9+", "years building web products", 15)}
+    ${statCard(826, 464, 202, "17+", "projects supported as lead engineer", 20)}
   `);
 }
 
