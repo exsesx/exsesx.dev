@@ -122,11 +122,12 @@ body {
 }
 
 /*
-  Safari 26 top-bar sample source. Pinned to the very top edge, full width, no
-  backdrop-filter (so it qualifies for sampling), behind the glass header and
-  page content (low z-index, pointer-events:none) so it stays invisible. Only as
-  tall as the status-bar safe area, painted var(--background) by the no-flash
-  script. Hidden on desktop where Safari chrome tinting doesn't apply.
+  Safari 26 top-bar sample source. Safari picks the topmost fixed element at the
+  edge — so this must stack ABOVE the glass header (z-50) to win the sample, but
+  it only covers the status-bar safe-area zone (where there's no visible nav
+  content, since the header is padded below the inset), so it stays invisible.
+  Full width, no backdrop-filter (required to qualify), painted var(--background)
+  by the no-flash script. iOS-only.
 */
 .safari-top-sample {
   display: none;
@@ -134,8 +135,8 @@ body {
   top: 0;
   right: 0;
   left: 0;
-  z-index: 0;
-  height: max(env(safe-area-inset-top), 4px);
+  z-index: 60;
+  height: max(env(safe-area-inset-top), 3px);
   pointer-events: none;
   background-color: var(--background);
   transition: none !important;
