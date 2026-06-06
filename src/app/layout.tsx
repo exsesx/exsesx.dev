@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import Script from "next/script";
 import Header from "../components/Header";
 import Hotkeys from "../components/Hotkeys";
@@ -6,6 +7,7 @@ import KineticBackdrop from "../components/KineticBackdrop";
 import RouteMotionGuard from "../components/RouteMotionGuard";
 import VersionTag from "../components/VersionTag";
 import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
+import { isThemeMode, THEME_CHROME_COLORS, THEME_COOKIE_MAX_AGE, THEME_COOKIE_NAME } from "../lib/theme";
 import "../styles/globals.css";
 
 const siteDescription =
@@ -14,12 +16,20 @@ const siteDescription =
 const noFlashScript = String.raw`
 (() => {
   var storageKey = "exsesx:color-scheme";
+  var cookieKey = "${THEME_COOKIE_NAME}";
+  var cookieMaxAge = ${THEME_COOKIE_MAX_AGE};
   var classNameDark = "dark";
   var classNameLight = "light";
   var element = document.documentElement;
   var preferDarkQuery = "(prefers-color-scheme: dark)";
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
+
+  function syncCookie(mode) {
+    try {
+      document.cookie = cookieKey + "=" + mode + "; path=/; max-age=" + cookieMaxAge + "; samesite=lax";
+    } catch {}
+  }
 
   function getStoredMode() {
     var localStorageTheme = null;
@@ -47,6 +57,7 @@ const noFlashScript = String.raw`
     element.classList.add(darkMode ? classNameDark : classNameLight);
     element.classList.remove(darkMode ? classNameLight : classNameDark);
     element.dataset.themeMode = mode;
+    syncCookie(mode);
   }
 
   function setSeason() {
@@ -148,14 +159,38 @@ export const metadata: Metadata = {
   manifest: "/favicon/site.webmanifest",
 };
 
-export const viewport: Viewport = {
+const baseViewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f1e7" },
-    { media: "(prefers-color-scheme: dark)", color: "#101111" },
-  ],
+  viewportFit: "cover",
 };
+
+// Reading the cookie ONLY here (not in RootLayout) keeps the page tree static
+// while letting the server emit the correct theme-color for the SSR'd chrome.
+// Explicit light/dark -> single resolved color. system / no cookie -> media
+// fallback, which correctly follows the OS for users who haven't chosen.
+export async function generateViewport(): Promise<Viewport> {
+  const cookieStore = await cookies();
+  const cookieMode = cookieStore.get(THEME_COOKIE_NAME)?.value;
+  const mode = isThemeMode(cookieMode) ? cookieMode : "system";
+
+  if (mode === "light" || mode === "dark") {
+    return {
+      ...baseViewport,
+      colorScheme: mode,
+      themeColor: THEME_CHROME_COLORS[mode],
+    };
+  }
+
+  return {
+    ...baseViewport,
+    colorScheme: "light dark",
+    themeColor: [
+      { media: "(prefers-color-scheme: light)", color: THEME_CHROME_COLORS.light },
+      { media: "(prefers-color-scheme: dark)", color: THEME_CHROME_COLORS.dark },
+    ],
+  };
+}
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
