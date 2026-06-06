@@ -44,31 +44,18 @@ const noFlashScript = String.raw`
       document.body.style.colorScheme = scheme;
     }
 
-    var strip = document.querySelector("[data-safari-top-sample]");
-    if (strip) {
-      strip.style.backgroundColor = color;
-    }
-  }
-
-  // ===== TEMP DIAGNOSTIC 2 — top-bar sample among the 3 top-edge candidates =====
-  // strip=CYAN, header=BLUE, body=GREEN. Whatever the iOS TOP bar shows is what
-  // Safari samples. Also logs geometry to console. REMOVE after.
-  function diagnoseTop() {
-    function paint(el, c) {
-      if (el) el.style.setProperty("background-color", c, "important");
-    }
-    var strip = document.querySelector("[data-safari-top-sample]");
+    // Diagnostic proved Safari samples .site-header for the TOP bar (regardless
+    // of z-index/strips). Paint its background as a gradient that is solid only
+    // across the status-bar safe-area band (var set in CSS), then transparent —
+    // Safari samples the theme color at the top edge while the floating glass
+    // pill below stays transparent (no solid band, and not a mask so the nav
+    // content is never clipped).
     var header = document.querySelector(".site-header");
-    paint(strip, "#00ffff"); // strip  = CYAN
-    paint(header, "#0000ff"); // header = BLUE
-    paint(document.body, "#00ff00"); // body  = GREEN
-    try {
-      var info = {
-        strip: strip ? strip.getBoundingClientRect().top + "/" + strip.getBoundingClientRect().height + " z=" + getComputedStyle(strip).zIndex : "MISSING",
-        header: header ? header.getBoundingClientRect().top + "/" + header.getBoundingClientRect().height + " z=" + getComputedStyle(header).zIndex : "MISSING",
-      };
-      console.log("[safari-diag]", JSON.stringify(info));
-    } catch (e) {}
+    if (header) {
+      var band = "var(--safari-sample-band, 3px)";
+      header.style.backgroundImage =
+        "linear-gradient(to bottom, " + color + " 0, " + color + " " + band + ", transparent " + band + ")";
+    }
   }
 
   function getStoredMode() {
@@ -133,19 +120,16 @@ const noFlashScript = String.raw`
 
   applyTheme();
   setSeason();
-  // The top sample strip lives in <body>; at beforeInteractive it may not be
-  // parsed yet. Repaint once the DOM is ready so the strip gets its background.
-  if (!document.querySelector("[data-safari-top-sample]")) {
+  // .site-header is React-rendered; repaint once the DOM is parsed so the header
+  // (the top-bar sample source) gets its inline background.
+  if (!document.querySelector(".site-header")) {
     document.addEventListener(
       "DOMContentLoaded",
       function () {
         applyTheme();
-        diagnoseTop();
       },
       { once: true },
     );
-  } else {
-    diagnoseTop();
   }
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
@@ -242,14 +226,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Script id="noflash" strategy="beforeInteractive">
           {noFlashScript}
         </Script>
-        {/*
-          Invisible top-edge sample strip for Safari 26 chrome tinting. The glass
-          header can't carry a solid background (it would lose the frosted look),
-          so this filter-free strip at top:0 is what Safari samples for the top
-          bar. The no-flash script paints it inline; the live observer retints the
-          bar in real time. It sits in the status-bar safe-area, behind the glass.
-        */}
-        <div aria-hidden="true" data-safari-top-sample="" className="safari-top-sample" />
         <RouteMotionGuard />
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />
