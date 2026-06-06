@@ -165,14 +165,17 @@ const baseViewport: Viewport = {
   viewportFit: "cover",
 };
 
-// Reading the cookie ONLY here (not in RootLayout) keeps the page tree static
-// while letting the server emit the correct theme-color for the SSR'd chrome.
-// Explicit light/dark -> single resolved color. system / no cookie -> media
-// fallback, which correctly follows the OS for users who haven't chosen.
-export async function generateViewport(): Promise<Viewport> {
+async function getCookieThemeMode() {
   const cookieStore = await cookies();
   const cookieMode = cookieStore.get(THEME_COOKIE_NAME)?.value;
-  const mode = isThemeMode(cookieMode) ? cookieMode : "system";
+
+  return isThemeMode(cookieMode) ? cookieMode : "system";
+}
+
+// theme-color is for non-Safari-26 browsers (Safari 26 ignores it and tints from
+// the <body> background instead — handled by the SSR'd class + inline bg below).
+export async function generateViewport(): Promise<Viewport> {
+  const mode = await getCookieThemeMode();
 
   if (mode === "light" || mode === "dark") {
     return {
@@ -192,10 +195,26 @@ export async function generateViewport(): Promise<Viewport> {
   };
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const mode = await getCookieThemeMode();
+  // Safari 26 ignores theme-color and tints its chrome from the SSR'd <body>
+  // background. So for an explicit choice we must render the class AND an inline
+  // background server-side, before first paint. system/no-cookie stays unset and
+  // is resolved client-side by the no-flash script (we can't know the OS here).
+  const initialClassName = mode === "dark" ? "dark" : mode === "light" ? "light" : undefined;
+  const initialBackground =
+    mode === "dark" ? THEME_CHROME_COLORS.dark : mode === "light" ? THEME_CHROME_COLORS.light : undefined;
+  const initialStyle = initialBackground ? { backgroundColor: initialBackground } : undefined;
+
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <body>
+    <html
+      lang="en"
+      className={initialClassName}
+      data-scroll-behavior="smooth"
+      style={initialStyle}
+      suppressHydrationWarning
+    >
+      <body style={initialStyle}>
         <Script id="noflash" strategy="beforeInteractive">
           {noFlashScript}
         </Script>
