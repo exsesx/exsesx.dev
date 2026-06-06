@@ -33,6 +33,12 @@ const noFlashScript = String.raw`
     var color = darkMode ? themeColorDark : themeColorLight;
     var scheme = darkMode ? "dark" : "light";
 
+    // Drive --background inline on :root so EVERY var(--background) consumer
+    // updates together — including the decorative overlays (page-top-fade etc.)
+    // that paint over the edges and would otherwise contaminate Safari's sample
+    // with a stale class-driven color. This is what the WebKit live observer
+    // tracks, retinting both bars in real time.
+    element.style.setProperty("--background", color);
     element.style.backgroundColor = color;
     element.style.colorScheme = scheme;
 

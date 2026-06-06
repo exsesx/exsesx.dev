@@ -37,6 +37,21 @@ Branch: `feat/client-safari-tinting`
 3. Ensure the theme class flip updates `<body>` (or a dedicated clean sample element) background **instantly, no transition**, so the live observer retints both bars in real time.
 4. Verify on-device (iOS 26): toggle → both bars retint with NO refresh; nav is first-tap; pages static in build output.
 
+## Investigation log (iter 2)
+
+Symptom: dark page, **top bar light**, bottom bar dark (even on toggle, not just refresh).
+
+Sample-candidate inventory (andesco rules applied to actual DOM):
+- `KineticBackdrop` `fixed inset-0`, full-width, no backdrop-filter → **qualifies, wins the top sample** (priority over `<body>`).
+- BUT its child `page-top-fade` (`absolute inset-x-0 top-0 h-52`) paints **solid `var(--background)` at the very top edge** → Safari samples that composited pixel.
+- `page-top-fade` bg is **class-driven `var(--background)`**; the live observer doesn't track it when we only set the backdrop's own inline backgroundColor → top bar stays at first-paint light.
+- Bottom edge has no solid overlay → composites near the inline base → bottom bar worked.
+- Header (`fixed top-0`): no background on container (glass child has backdrop-filter → disqualified) → not the source.
+
+Fix attempt (iter 2): drive `--background` **inline on `<html>`** so EVERY `var(--background)` consumer (page-top-fade, backdrop, body) updates together and the live observer tracks it.
+
+Status: needs on-device confirmation. If the top bar is still light, the sampled element is something else — use a diagnostic build (set the suspect element to a glaring color) to identify it visually.
+
 ## Verification gates
 
 - `bun run build` shows `/` and `/projects` as `○ (Static)`.
