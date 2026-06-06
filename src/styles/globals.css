@@ -405,9 +405,14 @@ html[data-season="pride"] .logo-mark-pride {
   solid color is invisible in the status-bar zone and the frosted glass is untouched.
 */
 .site-header {
-  /* TEMP: generous fixed height to test whether the bar must FILL the status-bar
-     zone to be sampled (env(safe-area-inset-top) may be resolving to ~0 here). */
-  height: 60px;
+  /*
+    The bar must FILL the status-bar zone to be sampled — a few px sit below the
+    zone and Safari samples the page above it (confirmed on device). env(safe-area-
+    inset-top) underreports in this context, so floor it generously. The bar's
+    color === page background, so this opaque band is invisible against the page.
+  */
+  --safari-sample-band: max(env(safe-area-inset-top), 44px);
+  height: var(--safari-sample-band);
   isolation: isolate;
   background-color: var(--safari-chrome-color);
   transition: none;
@@ -416,7 +421,7 @@ html[data-season="pride"] .logo-mark-pride {
 /* The floating glass nav, positioned below the sampled header bar. */
 .site-header-nav-frame {
   position: absolute;
-  top: calc(env(safe-area-inset-top) + 0.75rem);
+  top: calc(var(--safari-sample-band) + 0.5rem);
   right: 1rem;
   left: 1rem;
 }
@@ -431,7 +436,7 @@ html[data-season="pride"] .logo-mark-pride {
 .site-header::before {
   position: absolute;
   /* Soft fade behind the nav, below the solid sample bar. */
-  inset: max(env(safe-area-inset-top), 6px) 0 -1.8rem;
+  inset: var(--safari-sample-band) 0 -1.8rem;
   z-index: -1;
   pointer-events: none;
   content: "";

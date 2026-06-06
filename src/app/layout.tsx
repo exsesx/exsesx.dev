@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import Header from "../components/Header";
 import Hotkeys from "../components/Hotkeys";
 import KineticBackdrop from "../components/KineticBackdrop";
@@ -24,11 +23,9 @@ const noFlashScript = String.raw`
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
 
-  // Safari 26 ignores theme-color and tints its chrome from a solid background-color
-  // via a live WebKit observer. BOTTOM bar samples <body>; TOP bar samples the fixed
-  // .site-header (a thin solid bar at the top edge — see globals.css). Paint <body>,
-  // <html> and the header inline (no transition) so the observer retints both bars in
-  // real time. No SSR/cookies.
+  // Safari 26 samples actual rendered background colors for its chrome. This
+  // script runs in <head>, before <body> and the fixed header are parsed, so the
+  // document starts with the resolved theme color instead of first painting cream.
   function paintSafariChrome(darkMode) {
     var color = darkMode ? themeColorDark : themeColorLight;
     var scheme = darkMode ? "dark" : "light";
@@ -37,23 +34,6 @@ const noFlashScript = String.raw`
     element.style.setProperty("--safari-chrome-color", color);
     element.style.backgroundColor = color;
     element.style.colorScheme = scheme;
-
-    if (document.body) {
-      document.body.style.backgroundColor = color;
-      document.body.style.colorScheme = scheme;
-    }
-
-    // The header is the TOP-bar sample source (Safari samples its solid bg). Paint
-    // it inline so the live observer retints the top bar. It's React-rendered, so
-    // it may be absent on the first beforeInteractive run — the DOMContentLoaded
-    // re-run below covers that.
-    var samples = document.querySelectorAll("[data-safari-chrome-sample]");
-    for (var i = 0; i < samples.length; i++) {
-      // TEMP DIAGNOSTIC: force RED to test if THIS header structure is still
-      // sampled for the top bar. Red top bar = sampled (color var issue);
-      // cream/other = restructure broke header sampling. REMOVE after.
-      samples[i].style.setProperty("background-color", "#ff0000", "important");
-    }
   }
 
   function getStoredMode() {
@@ -84,12 +64,6 @@ const noFlashScript = String.raw`
     element.dataset.themeMode = mode;
     paintSafariChrome(darkMode);
 
-    // body may not exist yet at beforeInteractive; paint it once it does.
-    if (!document.body) {
-      document.addEventListener("DOMContentLoaded", function () {
-        paintSafariChrome(darkMode);
-      }, { once: true });
-    }
   }
 
   function setSeason() {
@@ -118,18 +92,6 @@ const noFlashScript = String.raw`
 
   applyTheme();
   setSeason();
-  // <body> and the React-rendered .site-header are the chrome sample sources; at
-  // beforeInteractive they may not exist yet. Repaint once the DOM is parsed so both
-  // bars (and the header bar) get their inline background.
-  if (!document.body || !document.querySelector("[data-safari-chrome-sample]")) {
-    document.addEventListener(
-      "DOMContentLoaded",
-      function () {
-        applyTheme();
-      },
-      { once: true },
-    );
-  }
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
@@ -221,10 +183,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static theme bootstrap must run before Safari samples document chrome. */}
+        <script id="noflash" dangerouslySetInnerHTML={{ __html: noFlashScript }} />
+      </head>
       <body>
-        <Script id="noflash" strategy="beforeInteractive">
-          {noFlashScript}
-        </Script>
         <RouteMotionGuard />
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />
