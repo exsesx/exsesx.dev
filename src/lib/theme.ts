@@ -77,12 +77,18 @@ export function subscribeToTheme(callback: () => void) {
   };
 }
 
+// Mirror the theme choice to a cookie so the server can render the correct
+// theme-color on the next load (SSR chrome tint), read only in generateViewport.
+// Exposed separately so the switcher can commit it synchronously on tap, well
+// before a manual refresh — client-set cookies set inside a deferred callback
+// (e.g. a view transition) may not reach the very next navigation in Safari.
+export function writeThemeCookie(mode: ThemeMode) {
+  document.cookie = `${THEME_COOKIE_NAME}=${mode}; path=/; max-age=${THEME_COOKIE_MAX_AGE}; samesite=lax`;
+}
+
 export function persistThemeMode(mode: ThemeMode) {
   window.localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(mode));
-  // Mirror to a cookie so the server can render the correct theme-color on the
-  // next load (SSR chrome tint). Read only in generateViewport, never in the
-  // layout body, to keep the page itself statically rendered.
-  document.cookie = `${THEME_COOKIE_NAME}=${mode}; path=/; max-age=${THEME_COOKIE_MAX_AGE}; samesite=lax`;
+  writeThemeCookie(mode);
   window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
 }
 
