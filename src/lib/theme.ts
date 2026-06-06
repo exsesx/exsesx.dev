@@ -1,6 +1,10 @@
 export const THEME_CHANGE_EVENT = "exsesx:theme-change";
 export const THEME_STORAGE_KEY = "exsesx:color-scheme";
 export const THEME_COOKIE_NAME = "exsesx-color-scheme";
+// Holds the *resolved* light/dark value (what "system" actually picked). The
+// server can't read prefers-color-scheme, so this is its SSR fallback for system
+// mode — it makes the system-mode chrome consistent after the first load.
+export const THEME_RESOLVED_COOKIE_NAME = "exsesx-resolved-scheme";
 export const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 export const THEME_CHROME_COLORS = {
   light: "#f8f1e7",
