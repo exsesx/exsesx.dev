@@ -48,6 +48,23 @@ const noFlashScript = String.raw`
     }
   }
 
+  // ===== TEMPORARY DIAGNOSTIC — identify Safari's chrome sample element =====
+  // Paints each top-edge candidate a unique color. Whatever color the iOS top
+  // bar shows = the element Safari samples. REMOVE after identifying it.
+  function diagnoseSafariSample() {
+    function paint(el, color) {
+      if (el) {
+        el.style.setProperty("background-color", color, "important");
+      }
+    }
+    paint(document.documentElement, "#ff0000"); // <html>  = RED
+    paint(document.body, "#00ff00"); // <body>  = GREEN
+    paint(document.querySelector(".site-header"), "#0000ff"); // header  = BLUE
+    // KineticBackdrop root (first fixed inset-0 -z-10 element)
+    paint(document.querySelector(".fixed.inset-0.-z-10"), "#ff00ff"); // backdrop = MAGENTA
+    paint(document.querySelector(".page-top-fade"), "#ff9900"); // top-fade = ORANGE
+  }
+
   function getStoredMode() {
     var localStorageTheme = null;
 
@@ -110,6 +127,12 @@ const noFlashScript = String.raw`
 
   applyTheme();
   setSeason();
+  // TEMPORARY: run the diagnostic once the DOM exists.
+  if (document.body) {
+    diagnoseSafariSample();
+  } else {
+    document.addEventListener("DOMContentLoaded", diagnoseSafariSample, { once: true });
+  }
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
