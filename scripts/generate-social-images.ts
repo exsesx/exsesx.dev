@@ -71,6 +71,44 @@ function splitLine(value: string, maxChars: number) {
   return lines;
 }
 
+// Rough advance-width estimate for Inter at a given size (no font metrics in the
+// SVG pipeline). Tuned for the weights used here; good enough to size pills so
+// they hug their text instead of using fixed widths.
+function approxTextWidth(value: string, fontSize: number, letterSpacing = 0) {
+  const widths: Record<string, number> = { narrow: 0.34, normal: 0.56, wide: 0.78 };
+  let units = 0;
+
+  for (const char of value) {
+    if (".,:;!|'i l".includes(char)) units += widths.narrow;
+    else if ("mwMW—".includes(char)) units += widths.wide;
+    else units += widths.normal;
+  }
+
+  return units * fontSize + Math.max(value.length - 1, 0) * letterSpacing;
+}
+
+// Auto-width pill that hugs its text with even horizontal padding.
+function pill(
+  x: number,
+  y: number,
+  text: string,
+  options: { fill: string; stroke: string; textClass: string; fontSize: number; padX?: number; height?: number },
+) {
+  const padX = options.padX ?? 22;
+  const height = options.height ?? 40;
+  const textWidth = approxTextWidth(text, options.fontSize);
+  const width = Math.round(textWidth + padX * 2);
+  const textY = Math.round(y + height / 2 + options.fontSize * 0.34);
+
+  return {
+    width,
+    svg: `<g>
+      <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${height / 2}" fill="${options.fill}" stroke="${options.stroke}" stroke-opacity="0.28"/>
+      <text x="${x + padX}" y="${textY}" class="${options.textClass}">${escapeXml(text)}</text>
+    </g>`,
+  };
+}
+
 function textLines(
   value: string,
   options: { x: number; y: number; maxChars: number; lineHeight: number; className: string },
@@ -120,7 +158,9 @@ function baseSvg(inner: string) {
     .body { font: 700 28px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.3px; }
     .body-dark { font: 700 22px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.creamSoft}; opacity: 0.88; }
     .label { font: 850 18px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -0.2px; }
-    .stat-label { font: 850 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.15px; }
+    .stat-value { font: 950 44px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -2px; }
+    .stat-label { font: 800 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.1px; }
+    .pill-text { font: 800 17px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -0.1px; }
     .tiny { font: 800 16px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
     .mono { font: 800 18px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; fill: ${colors.creamSoft}; }
   </style>
@@ -176,10 +216,12 @@ function mobileFrame(x: number, y: number, w: number, h: number) {
 }
 
 function statCard(x: number, y: number, width: number, value: string, label: string, maxChars: number) {
+  const height = 128;
+  const padX = 26;
   return `<g>
-    <rect x="${x}" y="${y}" width="${width}" height="112" rx="24" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.1"/>
-    <text x="${x + 24}" y="${y + 48}" class="headline-small" font-size="42">${escapeXml(value)}</text>
-    ${textLines(label, { x: x + 24, y: y + 77, maxChars, lineHeight: 18, className: "stat-label" })}
+    <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="26" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.1"/>
+    <text x="${x + padX}" y="${y + 56}" class="stat-value">${escapeXml(value)}</text>
+    ${textLines(label, { x: x + padX, y: y + 88, maxChars, lineHeight: 20, className: "stat-label" })}
   </g>`;
 }
 
@@ -199,10 +241,10 @@ function homeSvg() {
       lineHeight: 34,
       className: "body",
     })}
-    ${browserFrame(630, 88, 442, 350)}
-    ${mobileFrame(976, 254, 148, 274)}
-    ${statCard(632, 464, 178, "9+", "years building web products", 15)}
-    ${statCard(826, 464, 202, "17+", "projects supported as lead engineer", 20)}
+    ${browserFrame(630, 92, 442, 300)}
+    ${mobileFrame(986, 96, 150, 300)}
+    ${statCard(630, 426, 246, "9+", "years building web products", 22)}
+    ${statCard(890, 426, 246, "17+", "projects supported as lead engineer", 22)}
   `);
 }
 
@@ -227,13 +269,18 @@ function projectsSvg() {
         const accent = accentColors[project.accent];
         const x = 628 + (index % 2) * 238;
         const y = 82 + Math.floor(index / 2) * 154;
+        // Shrink the name to fit the card instead of truncating, with an 18px
+        // ideal and a 13px floor so longer names (e.g. "TSO Chinese Delivery")
+        // stay readable and whole.
+        const nameMaxWidth = 166;
+        const nameSize = Math.max(13, Math.min(18, (nameMaxWidth / approxTextWidth(project.name, 18)) * 18));
 
         return `<g filter="url(#soft-shadow)">
           <rect x="${x}" y="${y}" width="214" height="126" rx="26" fill="${colors.card}" stroke="${accent.main}" stroke-opacity="0.26"/>
           <circle cx="${x + 34}" cy="${y + 34}" r="12" fill="${accent.main}"/>
           <rect x="${x + 56}" y="${y + 26}" width="112" height="12" rx="6" fill="${colors.ink}" opacity="0.2"/>
-          <text x="${x + 24}" y="${y + 76}" class="label">${escapeXml(truncate(project.name, 18))}</text>
-          <text x="${x + 24}" y="${y + 102}" class="tiny">${escapeXml(truncate(project.period, 22))}</text>
+          <text x="${x + 24}" y="${y + 76}" class="label" font-size="${nameSize.toFixed(1)}">${escapeXml(project.name)}</text>
+          <text x="${x + 24}" y="${y + 102}" class="tiny">${escapeXml(truncate(project.period, 24))}</text>
         </g>`;
       })
       .join("")}
@@ -268,13 +315,21 @@ function projectSvg(project: Project) {
       .map((line, index) => `<text x="600" y="${334 + index * 62}" class="project-title">${escapeXml(line)}</text>`)
       .join("")}
     ${textLines(project.detail.headline, { x: 604, y: detailY, maxChars: 36, lineHeight: 30, className: "body" })}
-    ${tags
-      .map((tag, index) => {
-        const x = 604 + index * 150;
-        return `<rect x="${x}" y="484" width="132" height="38" rx="19" fill="${colors.card}" stroke="${accent.main}" stroke-opacity="0.24"/>
-          <text x="${x + 18}" y="509" class="tiny">${escapeXml(truncate(tag, 13))}</text>`;
-      })
-      .join("")}
+    ${(() => {
+      let cursor = 604;
+      return tags
+        .map(tag => {
+          const built = pill(cursor, 482, tag, {
+            fill: colors.card,
+            stroke: accent.main,
+            textClass: "pill-text",
+            fontSize: 17,
+          });
+          cursor += built.width + 14;
+          return built.svg;
+        })
+        .join("");
+    })()}
   `);
 }
 
