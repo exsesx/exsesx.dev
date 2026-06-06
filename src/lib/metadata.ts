@@ -4,11 +4,11 @@ export const siteUrl = "https://exsesx.dev";
 export const siteName = "exsesx.dev";
 
 export const defaultSocialImage = {
-  url: "/images/me/oleh_portrait.jpg",
+  url: "/images/social-preview.png",
   width: 1200,
-  height: 1200,
-  alt: "Portrait of Oleh Vanin",
-  type: "image/jpeg",
+  height: 630,
+  alt: "Abstract website preview for Oleh Vanin's engineering portfolio",
+  type: "image/png",
 } as const;
 
 type SocialImage = {
