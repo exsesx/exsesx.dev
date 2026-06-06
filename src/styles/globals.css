@@ -405,7 +405,9 @@ html[data-season="pride"] .logo-mark-pride {
   solid color is invisible in the status-bar zone and the frosted glass is untouched.
 */
 .site-header {
-  height: max(env(safe-area-inset-top), 6px);
+  /* TEMP: generous fixed height to test whether the bar must FILL the status-bar
+     zone to be sampled (env(safe-area-inset-top) may be resolving to ~0 here). */
+  height: 60px;
   isolation: isolate;
   background-color: var(--safari-chrome-color);
   transition: none;
