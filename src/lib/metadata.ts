@@ -8,13 +8,32 @@ const previewDeploymentUrl = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL
 const socialImageOrigin =
   process.env.VERCEL_ENV === "preview" && previewDeploymentUrl ? `https://${previewDeploymentUrl}` : siteUrl;
 
-export const defaultSocialImage = {
-  url: `${socialImageOrigin}${socialPreviewPath}`,
-  width: 1200,
-  height: 630,
-  alt: "Abstract website preview for Oleh Vanin's engineering portfolio",
-  type: "image/png",
-} as const;
+export function createSocialImage(path: string, alt: string) {
+  return {
+    url: `${socialImageOrigin}${path}`,
+    width: 1200,
+    height: 630,
+    alt,
+    type: "image/png",
+  } as const;
+}
+
+export const defaultSocialImage = createSocialImage(
+  socialPreviewPath,
+  "Stylized website preview for Oleh Vanin's engineering portfolio",
+);
+
+export const projectsSocialImage = createSocialImage(
+  "/images/og/projects.png",
+  "Stylized projects preview for Oleh Vanin's engineering portfolio",
+);
+
+export function createProjectSocialImage(slug: string, name: string) {
+  return createSocialImage(
+    `/images/og/project-${slug}.png`,
+    `Stylized social preview for the ${name} project by Oleh Vanin`,
+  );
+}
 
 type SocialImage = {
   url: string;

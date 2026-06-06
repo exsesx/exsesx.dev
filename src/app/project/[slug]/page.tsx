@@ -11,7 +11,7 @@ import { Badge } from "../../../components/ui/badge";
 import { buttonVariants } from "../../../components/ui/button-variants";
 import { CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "../../../components/ui/card";
 import { Separator } from "../../../components/ui/separator";
-import { createPageMetadata } from "../../../lib/metadata";
+import { createPageMetadata, createProjectSocialImage } from "../../../lib/metadata";
 import {
   getAdjacentProjects,
   getProjectBySlug,
@@ -66,29 +66,6 @@ const accentTopLightClasses: Record<Project["accent"], string> = {
   violet: "bg-[linear-gradient(180deg,rgba(150,96,214,0.20),rgba(190,110,210,0.05)_55%,rgba(24,24,27,0))]",
 };
 
-const projectSocialImageSizes: Record<string, { width: number; height: number }> = {
-  "/images/clear_street_preview.jpg": { width: 960, height: 540 },
-  "/images/coinmena_preview.jpeg": { width: 1600, height: 900 },
-  "/images/controlup_preview.webp": { width: 1200, height: 630 },
-  "/images/huddle_preview_balanced.png": { width: 1093, height: 1134 },
-  "/images/quicklizard_preview.webp": { width: 1200, height: 630 },
-  "/images/thisislanguage_poster.jpg": { width: 960, height: 540 },
-  "/images/tso_preview.jpg": { width: 1440, height: 1800 },
-};
-
-function getProjectSocialImage(project: Project) {
-  const mediaImage = project.media.type === "video" ? project.media.poster : project.media.src;
-  const imageUrl = typeof mediaImage === "string" ? mediaImage : mediaImage.src;
-  const size = projectSocialImageSizes[imageUrl] ?? { width: 1200, height: 630 };
-
-  return {
-    url: imageUrl,
-    width: size.width,
-    height: size.height,
-    alt: project.media.type === "video" ? project.media.label : project.media.alt,
-  };
-}
-
 export const dynamicParams = false;
 
 export function generateStaticParams() {
@@ -112,7 +89,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
     title,
     description,
     path: getProjectPath(project),
-    image: getProjectSocialImage(project),
+    image: createProjectSocialImage(project.slug, project.name),
   });
 }
 
