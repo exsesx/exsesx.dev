@@ -32,14 +32,12 @@ const noFlashScript = String.raw`
 
     var metas = document.querySelectorAll('meta[name="theme-color"]');
 
-    if (metas.length === 0) {
-      var meta = document.createElement("meta");
-      meta.name = "theme-color";
-      document.head.appendChild(meta);
-      metas = [meta];
-    }
-
     for (var index = 0; index < metas.length; index += 1) {
+      if (index > 0) {
+        metas[index].remove();
+        continue;
+      }
+
       if (metas[index].content !== currentThemeColor) {
         metas[index].content = currentThemeColor;
       }
@@ -126,12 +124,15 @@ const noFlashScript = String.raw`
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
-  new MutationObserver(syncThemeColorMeta).observe(document.head, {
-    attributes: true,
-    attributeFilter: ["content", "media"],
-    childList: true,
-    subtree: true,
-  });
+
+  if (window.MutationObserver) {
+    new MutationObserver(syncThemeColorMeta).observe(document.head, {
+      attributes: true,
+      attributeFilter: ["content", "media"],
+      childList: true,
+      subtree: true,
+    });
+  }
 
   if (mql.addEventListener) {
     mql.addEventListener("change", applyTheme);

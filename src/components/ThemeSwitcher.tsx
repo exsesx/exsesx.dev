@@ -57,19 +57,38 @@ function setMetaContent(name: string, content: string) {
   let metas = Array.from(document.querySelectorAll<HTMLMetaElement>(`meta[name="${name}"]`));
 
   if (metas.length === 0) {
+    if (name === "theme-color") {
+      return;
+    }
+
     const meta = document.createElement("meta");
     meta.name = name;
     document.head.appendChild(meta);
     metas = [meta];
   }
 
+  if (name === "theme-color") {
+    for (const [index, meta] of metas.entries()) {
+      if (index > 0) {
+        meta.remove();
+        continue;
+      }
+
+      if (meta.content !== content) {
+        meta.content = content;
+      }
+
+      if (meta.hasAttribute("media")) {
+        meta.removeAttribute("media");
+      }
+    }
+
+    return;
+  }
+
   for (const meta of metas) {
     if (meta.content !== content) {
       meta.content = content;
-    }
-
-    if (name === "theme-color" && meta.hasAttribute("media")) {
-      meta.removeAttribute("media");
     }
   }
 }
