@@ -92,7 +92,6 @@ const noFlashScript = String.raw`
     element.classList.remove(darkMode ? classNameLight : classNameDark);
     element.dataset.themeMode = mode;
     paintSafariChrome(darkMode);
-
   }
 
   function setSeason() {
@@ -204,18 +203,17 @@ export const metadata: Metadata = {
 };
 
 // Static viewport — no cookie, no per-request render, so pages stay static.
-// viewport-fit=cover is required for the bottom Safari bar to tint. theme-color
-// is kept only for non-Safari-26 browsers; Safari 26 ignores it and reads the
-// <body> background that the no-flash script paints client-side.
+// viewport-fit=cover is required for the bottom Safari bar to tint. A single
+// non-media theme-color (light default) is kept for non-Safari-26 browsers; the
+// no-flash script overwrites it with the resolved theme. It is intentionally NOT
+// a prefers-color-scheme array — media-keyed tags let iOS override the JS value,
+// and the script would only have to strip them back out.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
   colorScheme: "light dark",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: THEME_CHROME_COLORS.light },
-    { media: "(prefers-color-scheme: dark)", color: THEME_CHROME_COLORS.dark },
-  ],
+  themeColor: THEME_CHROME_COLORS.light,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
