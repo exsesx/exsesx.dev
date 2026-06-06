@@ -24,20 +24,16 @@ const noFlashScript = String.raw`
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
 
-  // Safari 26 ignores theme-color and tints its chrome from the <body> (then
-  // <html>) background-color, via a live WebKit observer. Setting these inline,
-  // instantly (no transition), is what retints both bars in real time on toggle —
-  // no refresh, no SSR, no cookies. viewport-fit=cover (static viewport) covers
-  // the bottom bar.
+  // Safari 26 ignores theme-color and tints its chrome from the background-color
+  // of the topmost qualifying element at each edge, via a live WebKit observer.
+  // Diagnostic confirmed: the TOP bar samples .site-header (fixed top-0, no
+  // backdrop-filter on the container), the BOTTOM samples <body>. So we paint
+  // <html>/<body> (bottom) AND .site-header (top) inline — instantly, no
+  // transition — and the observer retints both bars in real time. No SSR/cookies.
   function paintSafariChrome(darkMode) {
     var color = darkMode ? themeColorDark : themeColorLight;
     var scheme = darkMode ? "dark" : "light";
 
-    // Drive --background inline on :root so EVERY var(--background) consumer
-    // updates together — including the decorative overlays (page-top-fade etc.)
-    // that paint over the edges and would otherwise contaminate Safari's sample
-    // with a stale class-driven color. This is what the WebKit live observer
-    // tracks, retinting both bars in real time.
     element.style.setProperty("--background", color);
     element.style.backgroundColor = color;
     element.style.colorScheme = scheme;
@@ -46,30 +42,11 @@ const noFlashScript = String.raw`
       document.body.style.backgroundColor = color;
       document.body.style.colorScheme = scheme;
     }
-  }
 
-  // ===== TEMPORARY DIAGNOSTIC — identify Safari's chrome sample element =====
-  // Paints each top-edge candidate a unique color. Whatever color the iOS top
-  // bar shows = the element Safari samples. REMOVE after identifying it.
-  function diagnoseSafariSample() {
-    function paint(el, color) {
-      if (el) {
-        el.style.setProperty("background-color", color, "important");
-      }
+    var header = document.querySelector(".site-header");
+    if (header) {
+      header.style.backgroundColor = color;
     }
-    function paintAll(selector, color) {
-      try {
-        var els = document.querySelectorAll(selector);
-        for (var i = 0; i < els.length; i++) {
-          paint(els[i], color);
-        }
-      } catch (e) {}
-    }
-    paint(document.documentElement, "#ff0000"); // <html>       = RED
-    paint(document.body, "#00ff00"); // <body>       = GREEN
-    paintAll(".site-header", "#0000ff"); // header       = BLUE
-    paintAll(".bg-background", "#ff00ff"); // backdrop     = MAGENTA  (fixed inset-0 bg-background)
-    paintAll(".page-top-fade", "#ff9900"); // top-fade     = ORANGE
   }
 
   function getStoredMode() {
@@ -134,11 +111,17 @@ const noFlashScript = String.raw`
 
   applyTheme();
   setSeason();
-  // TEMPORARY: run the diagnostic once the DOM exists.
-  if (document.body) {
-    diagnoseSafariSample();
-  } else {
-    document.addEventListener("DOMContentLoaded", diagnoseSafariSample, { once: true });
+  // .site-header is rendered by React, so it may not exist on the first
+  // applyTheme() at beforeInteractive. Repaint once the DOM is parsed so the
+  // header (the top-bar sample source) gets its inline background.
+  if (!document.querySelector(".site-header")) {
+    document.addEventListener(
+      "DOMContentLoaded",
+      function () {
+        applyTheme();
+      },
+      { once: true },
+    );
   }
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
