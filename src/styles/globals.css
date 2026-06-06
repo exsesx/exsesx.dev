@@ -428,11 +428,16 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
-/* The floating glass nav sits below the sample band with the original 0.75rem gap
-   (on desktop the band is 0, so this is just 0.75rem like before). */
+/*
+  The floating glass nav sits just below the real status bar — the original
+  position: env(safe-area-inset-top) + 0.75rem. It is decoupled from
+  --safari-sample-band: that band is floored to 44px ONLY so Safari samples the
+  bar, which would push the nav too low if reused here. On desktop both terms are
+  0 → 0.75rem, the original gap.
+*/
 .site-header-nav-frame {
   position: absolute;
-  top: calc(var(--safari-sample-band) + 0.75rem);
+  top: calc(env(safe-area-inset-top) + 0.75rem);
   right: 1rem;
   left: 1rem;
 }
