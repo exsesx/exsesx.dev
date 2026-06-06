@@ -171,7 +171,6 @@ export const metadata: Metadata = {
 const baseViewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
 };
 
 async function getCookieThemeMode() {
