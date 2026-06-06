@@ -68,6 +68,26 @@ Fix (iter 3): make `.site-header` transparent at the very top edge by insetting
 contributes no sampled pixel at the top → Safari samples `<body>` (painted dark
 inline, live-observed) for BOTH bars. Glass pill untouched.
 
+## Consolidated research findings (all sources)
+
+Sampling rules (union of andesco + grooovinger + nasedk.in + benfrain + 1ar.io):
+- TOP bar samples the topmost qualifying **fixed/sticky element near top**, else `<body>`, else `<html>`, else white/black.
+- A fixed element qualifies at: ≥**6px** tall (grooovinger; andesco said 3px — use 6px to be safe), ≥80% wide (iOS), within ~4px of the edge.
+- NOT sampled: `position:absolute` children of fixed/sticky parents; `::before`/`::after` on them; `display:none`; anything with `backdrop-filter`.
+- Hidden overlays must use `display:none`, never `opacity:0` (opacity still tints).
+- theme-color is fully ignored in Safari 26.
+
+Conflict on live-update:
+- nasedk.in / benfrain: "sampling happens at render time; JS bg changes after paint don't update the toolbar."
+- andesco: "WebKit has a live observer that updates as bg changes."
+- **OUR DEVICE: bottom bar DOES retint live on toggle** (it's `<body>`-driven) → the live observer works here. So `<body>`-as-source should retint live for the top too once the header stops intercepting.
+
+Ranked fallback strategies if iter 3 (transparent header) fails the top bar:
+1. **Forced-resample nudge** (evan kirkiles): after setting bg, momentarily perturb it (e.g. toggle last hex digit) to force WebKit to re-read. Cheap, no DOM change.
+2. **Dedicated 6px top sample element** (grooovinger): `position:fixed; top:0; height:6px; width:100%`, hidden on scroll via scroll-timeline; paint it inline. It must out-qualify the header (≥6px, at the exact edge).
+3. **Transparent-parent + absolute-child header refactor** (1ar.io): move ALL header visuals into an `position:absolute` child so the fixed `.site-header` is truly transparent/ignored; the absolute child isn't sampled.
+4. Accept top-bar limitation; ship bottom-bar tint only.
+
 ## Verification gates
 
 - `bun run build` shows `/` and `/projects` as `○ (Static)`.
