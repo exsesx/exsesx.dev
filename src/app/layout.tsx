@@ -11,6 +11,9 @@ import "../styles/globals.css";
 const siteDescription =
   "Oleh Vanin is a senior full-stack engineer and AI engineer building scalable product systems with React, Next.js, Node.js, Go, cloud infrastructure, and LLM workflows.";
 
+const faviconVersion = "v=2";
+const faviconAsset = (path: string) => `${path}?${faviconVersion}`;
+
 const noFlashScript = String.raw`
 (() => {
   var storageKey = "exsesx:color-scheme";
@@ -175,16 +178,24 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon/favicon-light.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
-      { url: "/favicon/favicon-dark.svg", type: "image/svg+xml", media: "(prefers-color-scheme: dark)" },
-      { url: "/favicon/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      {
+        url: faviconAsset("/favicon/favicon-light.svg"),
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: faviconAsset("/favicon/favicon-dark.svg"),
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+      },
+      { url: faviconAsset("/favicon/favicon-32x32.png"), sizes: "32x32", type: "image/png" },
+      { url: faviconAsset("/favicon/favicon-16x16.png"), sizes: "16x16", type: "image/png" },
     ],
-    shortcut: "/favicon/favicon.ico",
-    apple: [{ url: "/favicon/apple-touch-icon.png", sizes: "180x180" }],
-    other: [{ rel: "mask-icon", url: "/favicon/safari-pinned-tab.svg", color: "#18181b" }],
+    shortcut: faviconAsset("/favicon/favicon.ico"),
+    apple: [{ url: faviconAsset("/favicon/apple-touch-icon.png"), sizes: "180x180" }],
+    other: [{ rel: "mask-icon", url: faviconAsset("/favicon/safari-pinned-tab.svg"), color: "#18181b" }],
   },
-  manifest: "/favicon/site.webmanifest",
+  manifest: faviconAsset("/favicon/site.webmanifest"),
 };
 
 // Static viewport — no cookie, no per-request render, so pages stay static.
