@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Card from "../../components/Card";
 import RouteFadeTransition from "../../components/RouteFadeTransition";
 import { CardContent, Card as UiCard } from "../../components/ui/card";
-import { createPageMetadata } from "../../lib/metadata";
+import { createPageMetadata, projectsSocialImage } from "../../lib/metadata";
 import { projects } from "../../lib/projects";
 
 export const metadata: Metadata = createPageMetadata({
@@ -11,6 +11,7 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Featured product engineering work by Oleh Vanin across AI, enterprise IT, pricing, fintech, education, commerce, utilities, and digital asset products.",
   path: "/projects",
+  image: projectsSocialImage,
 });
 
 export default function Projects() {
