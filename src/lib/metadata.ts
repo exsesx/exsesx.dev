@@ -3,13 +3,37 @@ import type { Metadata } from "next";
 export const siteUrl = "https://exsesx.dev";
 export const siteName = "exsesx.dev";
 
-export const defaultSocialImage = {
-  url: "/images/me/oleh_portrait.jpg",
-  width: 1200,
-  height: 1200,
-  alt: "Portrait of Oleh Vanin",
-  type: "image/jpeg",
-} as const;
+const socialPreviewPath = "/images/social-preview.png";
+const previewDeploymentUrl = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
+const socialImageOrigin =
+  process.env.VERCEL_ENV === "preview" && previewDeploymentUrl ? `https://${previewDeploymentUrl}` : siteUrl;
+
+export function createSocialImage(path: string, alt: string) {
+  return {
+    url: `${socialImageOrigin}${path}`,
+    width: 1200,
+    height: 630,
+    alt,
+    type: "image/png",
+  } as const;
+}
+
+export const defaultSocialImage = createSocialImage(
+  socialPreviewPath,
+  "Stylized website preview for Oleh Vanin's engineering portfolio",
+);
+
+export const projectsSocialImage = createSocialImage(
+  "/images/og/projects.png",
+  "Stylized projects preview for Oleh Vanin's engineering portfolio",
+);
+
+export function createProjectSocialImage(slug: string, name: string) {
+  return createSocialImage(
+    `/images/og/project-${slug}.png`,
+    `Stylized social preview for the ${name} project by Oleh Vanin`,
+  );
+}
 
 type SocialImage = {
   url: string;

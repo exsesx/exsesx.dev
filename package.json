@@ -8,6 +8,7 @@
     "start": "bun --bun next start",
     "check": "biome check . --diagnostic-level=error",
     "check:write": "biome check --write .",
+    "generate:social-images": "bun scripts/generate-social-images.ts",
     "generate:sitemap": "bunx next-sitemap --config next-sitemap.js",
     "prepare": "husky"
   },
