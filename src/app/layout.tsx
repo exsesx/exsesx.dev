@@ -23,31 +23,25 @@ const noFlashScript = String.raw`
   var preferDarkQuery = "(prefers-color-scheme: dark)";
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
-  var isSyncingThemeColorMeta = false;
+  var themeColorMeta = null;
 
+  // Own the theme-color meta instead of touching React's: React hoists head
+  // metas and mutating one it tracks breaks its deletion pass on navigation.
   function syncThemeColorMeta() {
-    if (isSyncingThemeColorMeta) return;
-
-    isSyncingThemeColorMeta = true;
-
-    var metas = document.querySelectorAll('meta[name="theme-color"]');
-
-    for (var index = 0; index < metas.length; index += 1) {
-      if (index > 0) {
-        metas[index].remove();
-        continue;
-      }
-
-      if (metas[index].content !== currentThemeColor) {
-        metas[index].content = currentThemeColor;
-      }
-
-      if (metas[index].hasAttribute("media")) {
-        metas[index].removeAttribute("media");
-      }
+    if (themeColorMeta === null || !themeColorMeta.isConnected) {
+      themeColorMeta = document.querySelector('meta[name="theme-color"][data-exsesx-theme-color]');
     }
 
-    isSyncingThemeColorMeta = false;
+    if (themeColorMeta === null) {
+      themeColorMeta = document.createElement("meta");
+      themeColorMeta.setAttribute("name", "theme-color");
+      themeColorMeta.setAttribute("data-exsesx-theme-color", "");
+      document.head.appendChild(themeColorMeta);
+    }
+
+    if (themeColorMeta.content !== currentThemeColor) {
+      themeColorMeta.content = currentThemeColor;
+    }
   }
 
   // Safari 26 samples actual rendered background colors for its chrome. This
@@ -124,15 +118,6 @@ const noFlashScript = String.raw`
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
 
-  if (window.MutationObserver) {
-    new MutationObserver(syncThemeColorMeta).observe(document.head, {
-      attributes: true,
-      attributeFilter: ["content", "media"],
-      childList: true,
-      subtree: true,
-    });
-  }
-
   if (mql.addEventListener) {
     mql.addEventListener("change", applyTheme);
   } else if (mql.addListener) {
@@ -203,17 +188,14 @@ export const metadata: Metadata = {
 };
 
 // Static viewport — no cookie, no per-request render, so pages stay static.
-// viewport-fit=cover is required for the bottom Safari bar to tint. A single
-// non-media theme-color (light default) is kept for non-Safari-26 browsers; the
-// no-flash script overwrites it with the resolved theme. It is intentionally NOT
-// a prefers-color-scheme array — media-keyed tags let iOS override the JS value,
-// and the script would only have to strip them back out.
+// viewport-fit=cover is required for the bottom Safari bar to tint. themeColor is
+// omitted on purpose: the no-flash script owns the theme-color meta (see
+// syncThemeColorMeta) so React never tracks a node the script mutates.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
   colorScheme: "light dark",
-  themeColor: THEME_CHROME_COLORS.light,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
