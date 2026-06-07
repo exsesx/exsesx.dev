@@ -48,3 +48,7 @@ yarn-error.log*
 
 # graphify
 /graphify-out/
+
+# claude: ignore everything local, track only the skills symlink
+/.claude/*
+!/.claude/skills
