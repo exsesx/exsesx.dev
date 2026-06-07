@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
 import ProjectCard from "../../../components/Card";
+import { HapticAnchor, HapticRouteLink } from "../../../components/HapticLink";
 import ProjectBackButton from "../../../components/ProjectBackButton";
 import RouteFadeTransition from "../../../components/RouteFadeTransition";
 import { Badge } from "../../../components/ui/badge";
@@ -194,7 +195,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   ))}
                 </div>
                 {project.href ? (
-                  <a
+                  <HapticAnchor
                     href={project.href}
                     className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-fit")}
                     rel="noopener noreferrer"
@@ -202,7 +203,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   >
                     Visit product
                     <ArrowUpRight data-icon="inline-end" strokeWidth={2.4} />
-                  </a>
+                  </HapticAnchor>
                 ) : null}
               </CardContent>
             </UiCard>
@@ -305,7 +306,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             </div>
             <div className="flex flex-wrap gap-3">
               {previousProject ? (
-                <Link
+                <HapticRouteLink
                   href={getProjectPath(previousProject)}
                   transitionTypes={["nav-back", getProjectTransitionType(previousProject)]}
                   data-suppress-entry-motion
@@ -313,10 +314,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 >
                   <ArrowLeft data-icon="inline-start" strokeWidth={2.4} />
                   Previous
-                </Link>
+                </HapticRouteLink>
               ) : null}
               {nextProject ? (
-                <Link
+                <HapticRouteLink
                   href={getProjectPath(nextProject)}
                   transitionTypes={["nav-forward", getProjectTransitionType(nextProject)]}
                   data-suppress-entry-motion
@@ -324,7 +325,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 >
                   Next
                   <ArrowRight data-icon="inline-end" strokeWidth={2.4} />
-                </Link>
+                </HapticRouteLink>
               ) : null}
             </div>
           </div>

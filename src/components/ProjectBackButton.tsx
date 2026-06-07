@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { startTransition, useCallback, useEffect } from "react";
+import { triggerHaptic } from "@/lib/haptics";
 import { getPreviousRoute, queueScrollRestore } from "@/lib/navigation-history";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "./ui/button-variants";
@@ -71,7 +72,10 @@ export default function ProjectBackButton({ fallbackHref, fallbackTransitionType
     <button
       type="button"
       className={cn(buttonVariants({ variant: "glass", size: "sm" }), "w-fit cursor-pointer")}
-      onClick={navigateBack}
+      onClick={() => {
+        triggerHaptic("tap");
+        navigateBack();
+      }}
     >
       <ArrowLeft data-icon="inline-start" strokeWidth={2.4} />
       Back

@@ -1,9 +1,9 @@
 import { Activity, ArrowRight, BrainCircuit, BriefcaseBusiness, Send, Sparkles, Terminal, Wrench } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import ProjectCard from "../components/Card";
 import CvMenu from "../components/CvMenu";
+import { HapticAnchor, HapticRouteLink } from "../components/HapticLink";
 import { GithubIcon } from "../components/icons/lucide-github";
 import { LinkedinIcon } from "../components/icons/lucide-linkedin";
 import RouteFadeTransition from "../components/RouteFadeTransition";
@@ -95,7 +95,7 @@ export default function HomePage() {
             </p>
 
             <div className="motion-rise motion-delay-3 mt-8 flex flex-wrap gap-3">
-              <Link
+              <HapticRouteLink
                 href="/projects"
                 transitionTypes={["nav-forward"]}
                 data-suppress-entry-motion
@@ -107,9 +107,9 @@ export default function HomePage() {
                   strokeWidth={2.5}
                   className="transition group-hover/button:translate-x-0.5"
                 />
-              </Link>
+              </HapticRouteLink>
               <CvMenu />
-              <a
+              <HapticAnchor
                 href="https://www.linkedin.com/in/exsesx/"
                 className={buttonVariants({ variant: "glass", size: "lg" })}
                 rel="noopener noreferrer"
@@ -117,8 +117,8 @@ export default function HomePage() {
               >
                 <LinkedinIcon data-icon="inline-start" strokeWidth={2.4} />
                 LinkedIn
-              </a>
-              <a
+              </HapticAnchor>
+              <HapticAnchor
                 href="https://github.com/exsesx"
                 className={buttonVariants({ variant: "glass", size: "lg" })}
                 rel="noopener noreferrer"
@@ -126,7 +126,7 @@ export default function HomePage() {
               >
                 <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
                 GitHub
-              </a>
+              </HapticAnchor>
             </div>
           </div>
 
@@ -185,7 +185,7 @@ export default function HomePage() {
               </CardContent>
             </UiCard>
 
-            <a
+            <HapticAnchor
               href="https://cal.com/exsesx/personal"
               className={cn(
                 buttonVariants({ variant: "default", size: "lg" }),
@@ -194,7 +194,7 @@ export default function HomePage() {
             >
               <span className="font-black">Schedule a conversation</span>
               <Send data-icon="inline-end" strokeWidth={2.4} />
-            </a>
+            </HapticAnchor>
           </aside>
         </section>
 
@@ -266,7 +266,7 @@ export default function HomePage() {
                 Real product surfaces, not just shiny screenshots
               </h2>
             </div>
-            <Link
+            <HapticRouteLink
               href="/projects"
               transitionTypes={["nav-forward"]}
               data-suppress-entry-motion
@@ -274,7 +274,7 @@ export default function HomePage() {
             >
               Featured projects
               <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
-            </Link>
+            </HapticRouteLink>
           </div>
           <div className="grid items-stretch gap-6 lg:grid-cols-3">
             {featuredProjects.map((project, index) => (

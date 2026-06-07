@@ -2,6 +2,7 @@
 
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { triggerHaptic } from "@/lib/haptics";
 import {
   getServerThemeSnapshot,
   getThemeSnapshot,
@@ -245,6 +246,7 @@ export default function ThemeSwitcher() {
                   key={option.mode}
                   value={option.mode}
                   className="w-full"
+                  haptics={false}
                   onKeyDown={event => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
@@ -253,6 +255,10 @@ export default function ThemeSwitcher() {
                   }}
                   onPointerDown={event => {
                     if (event.button === 0) {
+                      if (option.mode !== mode) {
+                        triggerHaptic("selection");
+                      }
+
                       selectThemeMode(option.mode);
                     }
                   }}

@@ -7,6 +7,7 @@ import * as m from "motion/react-m";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { type ElementType, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { triggerHaptic } from "@/lib/haptics";
 import {
   createHotkeySequencer,
   getHotkeySequenceKey,
@@ -222,11 +223,13 @@ const Hotkeys = memo(function Hotkeys() {
     commitPendingSequence([]);
   }, [commitPendingSequence]);
   const toggleHotkeyModal = useCallback(() => {
+    triggerHaptic("tap");
     sequencer.reset();
     clearPendingSequence();
     commitModalOpen(!isModalOpenRef.current);
   }, [clearPendingSequence, commitModalOpen, sequencer]);
   const closeHotkeyModal = useCallback(() => {
+    triggerHaptic("tap");
     commitModalOpen(false);
   }, [commitModalOpen]);
 

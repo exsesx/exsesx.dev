@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type ReactNode, ViewTransition } from "react";
 import { cn } from "@/lib/utils";
 import { getProjectPath, getProjectTransitionType, type Project } from "../lib/projects";
+import { HapticAnchor, HapticRouteLink } from "./HapticLink";
 import { InteractiveCardShell } from "./InteractiveCardShell";
 import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button-variants";
@@ -238,7 +239,7 @@ export default function ProjectCard({
           </div>
           {project.href ? (
             <CardAction>
-              <a
+              <HapticAnchor
                 href={project.href}
                 className={buttonVariants({ variant: "default", size: "icon" })}
                 aria-label={`Open ${project.name} website`}
@@ -246,7 +247,7 @@ export default function ProjectCard({
                 target="_blank"
               >
                 <ArrowUpRight strokeWidth={2.5} className="magnetic-icon" />
-              </a>
+              </HapticAnchor>
             </CardAction>
           ) : null}
         </CardHeader>
@@ -272,7 +273,7 @@ export default function ProjectCard({
             ))}
           </div>
           <div className={cn(isCompact ? "mt-auto pt-5" : "pt-5")}>
-            <Link
+            <HapticRouteLink
               href={projectPath}
               transitionTypes={["nav-forward", projectTransitionType]}
               scroll
@@ -281,7 +282,7 @@ export default function ProjectCard({
             >
               View details
               <ArrowUpRight data-icon="inline-end" strokeWidth={2.4} />
-            </Link>
+            </HapticRouteLink>
           </div>
         </CardContent>
       </div>

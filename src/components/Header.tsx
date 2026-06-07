@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
+import { triggerHaptic } from "@/lib/haptics";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
@@ -102,6 +103,7 @@ export default function Header() {
   }, [activeNavHref]);
 
   function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, href: Route) {
+    triggerHaptic("tap");
     setSelectedNavHref(href);
 
     if (shouldScrollToTopForNavClick({ pathname, href, scrollY: window.scrollY })) {
@@ -175,6 +177,7 @@ export default function Header() {
               <a
                 href="https://github.com/exsesx"
                 className={cn(buttonVariants({ variant: "glass", size: "default" }), "hidden md:inline-flex")}
+                onClick={() => triggerHaptic("tap")}
               >
                 <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
                 GitHub

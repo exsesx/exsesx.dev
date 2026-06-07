@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronDown, FileDown, FileText, Share2 } from "lucide-react";
-import { useState, useSyncExternalStore } from "react";
+import { ChevronDown, FileDown, FileText, LoaderCircle, Share2 } from "lucide-react";
+import { type MouseEvent, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { buttonVariants } from "@/components/ui/button-variants";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
   DropdownMenuLinkItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { triggerHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 import { type CvSecondaryAction, getCvSecondaryAction } from "./cv-actions";
 
@@ -48,9 +49,20 @@ function openResumePdf() {
   window.open(RESUME_PDF_URL, "_blank", "noopener,noreferrer");
 }
 
+function clearPendingTimeout(ref: { current: number | null }) {
+  if (ref.current !== null) {
+    window.clearTimeout(ref.current);
+    ref.current = null;
+  }
+}
+
 function CvMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const openingTimeoutRef = useRef<number | null>(null);
+  const downloadingTimeoutRef = useRef<number | null>(null);
   const secondaryAction = useSyncExternalStore(
     subscribeToCvCapabilities,
     getClientSecondaryAction,
@@ -58,11 +70,49 @@ function CvMenu() {
   );
   const hasSecondaryAction = secondaryAction !== "none";
 
+  function showOpeningState() {
+    clearPendingTimeout(openingTimeoutRef);
+    setIsOpening(true);
+    openingTimeoutRef.current = window.setTimeout(() => {
+      setIsOpening(false);
+      openingTimeoutRef.current = null;
+    }, 900);
+  }
+
+  function showDownloadingState() {
+    clearPendingTimeout(downloadingTimeoutRef);
+    setIsDownloading(true);
+    downloadingTimeoutRef.current = window.setTimeout(() => {
+      setIsDownloading(false);
+      downloadingTimeoutRef.current = null;
+    }, 1200);
+  }
+
+  function handleOpenCv(event: MouseEvent<HTMLAnchorElement>) {
+    if (isOpening) {
+      event.preventDefault();
+      return;
+    }
+
+    triggerHaptic("tap");
+    showOpeningState();
+  }
+
+  function handleDownloadCv(event: MouseEvent<HTMLAnchorElement>) {
+    if (isDownloading) {
+      event.preventDefault();
+      return;
+    }
+
+    showDownloadingState();
+  }
+
   async function handleShareCv() {
     if (typeof navigator.share !== "function" || typeof File === "undefined") {
       return;
     }
 
+    triggerHaptic("selection");
     setIsSharing(true);
 
     try {
@@ -70,7 +120,6 @@ function CvMenu() {
 
       if (!response.ok) {
         openResumePdf();
-        setIsSharing(false);
         return;
       }
 
@@ -79,7 +128,6 @@ function CvMenu() {
 
       if (navigator.canShare?.({ files: [file] }) === false) {
         openResumePdf();
-        setIsSharing(false);
         return;
       }
 
@@ -87,14 +135,22 @@ function CvMenu() {
         files: [file],
         title: "Oleh Vanin CV",
       });
+      triggerHaptic("success");
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) {
         openResumePdf();
       }
+    } finally {
+      setIsSharing(false);
     }
-
-    setIsSharing(false);
   }
+
+  useEffect(() => {
+    return () => {
+      clearPendingTimeout(openingTimeoutRef);
+      clearPendingTimeout(downloadingTimeoutRef);
+    };
+  }, []);
 
   return (
     <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
@@ -110,9 +166,15 @@ function CvMenu() {
           className="inline-flex h-full min-w-0 flex-none items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97]"
           rel="noopener noreferrer"
           target="_blank"
+          aria-busy={isOpening}
+          onClick={handleOpenCv}
         >
-          <FileText data-icon="inline-start" strokeWidth={2.4} />
-          Open CV
+          {isOpening ? (
+            <LoaderCircle data-icon="inline-start" className="animate-spin" strokeWidth={2.4} />
+          ) : (
+            <FileText data-icon="inline-start" strokeWidth={2.4} />
+          )}
+          {isOpening ? "Opening CV" : "Open CV"}
         </a>
         {hasSecondaryAction ? (
           <>
@@ -137,19 +199,41 @@ function CvMenu() {
 
             <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] origin-top-right sm:w-52">
               <DropdownMenuGroup>
-                <DropdownMenuLinkItem href={RESUME_PDF_URL} rel="noopener noreferrer" target="_blank">
-                  <FileText size={16} strokeWidth={2.3} />
-                  Open CV
+                <DropdownMenuLinkItem
+                  href={RESUME_PDF_URL}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  aria-busy={isOpening}
+                  onClick={handleOpenCv}
+                >
+                  {isOpening ? (
+                    <LoaderCircle size={16} className="animate-spin" strokeWidth={2.3} />
+                  ) : (
+                    <FileText size={16} strokeWidth={2.3} />
+                  )}
+                  {isOpening ? "Opening CV" : "Open CV"}
                 </DropdownMenuLinkItem>
                 {secondaryAction === "share" ? (
-                  <DropdownMenuItem disabled={isSharing} onClick={handleShareCv}>
-                    <Share2 size={16} strokeWidth={2.3} />
+                  <DropdownMenuItem disabled={isSharing} aria-busy={isSharing} onClick={handleShareCv}>
+                    {isSharing ? (
+                      <LoaderCircle size={16} className="animate-spin" strokeWidth={2.3} />
+                    ) : (
+                      <Share2 size={16} strokeWidth={2.3} />
+                    )}
                     {isSharing ? "Preparing CV" : "Share CV"}
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuLinkItem href={RESUME_PDF_DOWNLOAD_URL}>
-                    <FileDown size={16} strokeWidth={2.3} />
-                    Download CV
+                  <DropdownMenuLinkItem
+                    href={RESUME_PDF_DOWNLOAD_URL}
+                    aria-busy={isDownloading}
+                    onClick={handleDownloadCv}
+                  >
+                    {isDownloading ? (
+                      <LoaderCircle size={16} className="animate-spin" strokeWidth={2.3} />
+                    ) : (
+                      <FileDown size={16} strokeWidth={2.3} />
+                    )}
+                    {isDownloading ? "Downloading CV" : "Download CV"}
                   </DropdownMenuLinkItem>
                 )}
               </DropdownMenuGroup>
