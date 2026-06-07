@@ -1,5 +1,12 @@
 # Repo notes
 
+## Pull requests
+
+When creating a PR, after `gh pr create`:
+
+1. Assign the PR to the current user: `gh pr edit <number> --add-assignee @me`. `@me` resolves to the authenticated GitHub account, so this works for any dev — do not hardcode a username. Skip only if the user specified a different assignee.
+2. Apply existing labels that match the work (`gh pr edit <number> --add-label <label>`): `bug` for a bugfix, `enhancement` for a new feature, `documentation` for docs. Pick from labels already in the repo (`gh label list`) — never create new labels. Omit labels if none clearly fit.
+
 ## Vercel
 
 Keep `.vercel/` gitignored. It is local CLI link state from `vercel link`, not shared repo configuration.
