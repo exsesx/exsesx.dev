@@ -151,18 +151,17 @@ function baseSvg(inner: string) {
   </defs>
   <style>
     .brand { font: 900 30px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: ${colors.ink}; letter-spacing: -0.4px; }
-    .eyebrow { font: 800 18px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.cyan}; letter-spacing: 2.2px; text-transform: uppercase; }
+    .eyebrow { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 800; font-size: 18px; fill: ${colors.cyan}; letter-spacing: 2.2px; text-transform: uppercase; }
     .headline { font: 950 86px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -3.8px; }
     .headline-small { font: 950 62px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -2.2px; }
     .project-title { font: 950 58px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -2px; }
     .body { font: 700 28px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.3px; }
     .body-dark { font: 700 22px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.creamSoft}; opacity: 0.88; }
-    .label { font: 850 18px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -0.2px; }
-    .stat-value { font: 950 44px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -2px; }
+    .label { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 850; font-size: 18px; fill: ${colors.ink}; letter-spacing: -0.2px; }
+    .snapshot-value { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 950; fill: ${colors.ink}; letter-spacing: -2.4px; }
     .stat-label { font: 800 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.1px; }
     .pill-text { font: 800 17px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -0.1px; }
     .tiny { font: 800 16px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
-    .mono { font: 800 18px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; fill: ${colors.creamSoft}; }
   </style>
   <rect width="${width}" height="${height}" fill="url(#paper)"/>
   <rect width="${width}" height="${height}" fill="url(#grid)" opacity="0.62"/>
@@ -180,48 +179,60 @@ function logo(x: number, y: number, size: number, fill = colors.ink) {
   </g>`;
 }
 
-function browserFrame(x: number, y: number, w: number, h: number, title = "exsesx.dev") {
-  return `<g filter="url(#shadow)">
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="34" fill="url(#glass)" stroke="${colors.ink}" stroke-opacity="0.12"/>
-    <rect x="${x}" y="${y}" width="${w}" height="62" rx="34" fill="${colors.night}"/>
-    <circle cx="${x + 34}" cy="${y + 31}" r="7" fill="${colors.creamSoft}" opacity="0.34"/>
-    <circle cx="${x + 58}" cy="${y + 31}" r="7" fill="${colors.creamSoft}" opacity="0.26"/>
-    <circle cx="${x + 82}" cy="${y + 31}" r="7" fill="${colors.creamSoft}" opacity="0.2"/>
-    <text x="${x + 122}" y="${y + 39}" class="mono" opacity="0.72">${escapeXml(title)}</text>
-    <rect x="${x + 44}" y="${y + 108}" width="${w - 88}" height="42" rx="21" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.08"/>
-    <circle cx="${x + 76}" cy="${y + 129}" r="10" fill="${colors.cyan}"/>
-    <rect x="${x + 100}" y="${y + 120}" width="178" height="10" rx="5" fill="${colors.ink}" opacity="0.20"/>
-    <rect x="${x + 304}" y="${y + 120}" width="82" height="10" rx="5" fill="${colors.ink}" opacity="0.12"/>
-    <rect x="${x + 44}" y="${y + 184}" width="${w - 88}" height="126" rx="28" fill="${colors.night}"/>
-    <path d="M${x + 82} ${y + 262} C${x + 142} ${y + 196} ${x + 210} ${y + 292} ${x + 278} ${y + 230} S${x + 366} ${y + 214} ${x + 398} ${y + 266}" fill="none" stroke="${colors.amber}" stroke-width="7" stroke-linecap="round"/>
-    <path d="M${x + 82} ${y + 230} H${x + 390}" stroke="${colors.creamSoft}" stroke-width="2" opacity="0.16"/>
-    <circle cx="${x + 158}" cy="${y + 230}" r="9" fill="${colors.cyanBright}"/>
-    <circle cx="${x + 298}" cy="${y + 250}" r="9" fill="${colors.amber}"/>
-  </g>`;
-}
-
-function mobileFrame(x: number, y: number, w: number, h: number) {
-  return `<g filter="url(#soft-shadow)">
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="42" fill="${colors.night}"/>
-    <rect x="${x + 12}" y="${y + 14}" width="${w - 24}" height="${h - 28}" rx="32" fill="${colors.cream}"/>
-    <rect x="${x + 46}" y="${y + 32}" width="${w - 92}" height="11" rx="6" fill="${colors.ink}" opacity="0.18"/>
-    ${logo(x + 32, y + 64, 52, colors.ink)}
-    <rect x="${x + 32}" y="${y + 142}" width="${w - 64}" height="18" rx="9" fill="${colors.ink}" opacity="0.26"/>
-    <rect x="${x + 32}" y="${y + 174}" width="${w - 88}" height="18" rx="9" fill="${colors.ink}" opacity="0.18"/>
-    <rect x="${x + 32}" y="${y + 224}" width="${w - 64}" height="68" rx="22" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.1"/>
-    <circle cx="${x + 64}" cy="${y + 258}" r="13" fill="${colors.cyan}"/>
-    <rect x="${x + 88}" y="${y + 244}" width="${w - 134}" height="10" rx="5" fill="${colors.ink}" opacity="0.22"/>
-    <rect x="${x + 88}" y="${y + 266}" width="${w - 162}" height="10" rx="5" fill="${colors.ink}" opacity="0.14"/>
-  </g>`;
-}
-
-function statCard(x: number, y: number, width: number, value: string, label: string, maxChars: number) {
-  const height = 128;
+// A single stat tile inside the home snapshot panel: large value + 2-line label.
+function snapshotTile(x: number, y: number, width: number, value: string, label: string) {
+  // Shrink long word-values (e.g. "Full-stack") to fit; numbers stay large. The
+  // value is 950-weight with tight tracking, which renders wider than the generic
+  // estimate, so apply a heaviness factor (1.12) and a real right margin so it
+  // never reaches the tile edge. Floor low enough that the longest value fits.
   const padX = 26;
+  const available = width - padX - 24;
+  // The value is 950-weight Inter; it renders a bit wider than the generic
+  // estimate, so apply a small heaviness factor so long words like "Full-stack"
+  // sit inside the tile with margin while short numbers stay at full size.
+  const estimatedAt50 = approxTextWidth(value, 50) * 1.18;
+  const valueSize = Math.max(24, Math.min(50, (available / estimatedAt50) * 50));
   return `<g>
-    <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="26" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.1"/>
-    <text x="${x + padX}" y="${y + 56}" class="stat-value">${escapeXml(value)}</text>
-    ${textLines(label, { x: x + padX, y: y + 88, maxChars, lineHeight: 20, className: "stat-label" })}
+    <rect x="${x}" y="${y}" width="${width}" height="118" rx="24" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.09"/>
+    <text x="${x + padX}" y="${y + 54}" class="snapshot-value" font-size="${valueSize.toFixed(1)}">${escapeXml(value)}</text>
+    ${textLines(label, { x: x + padX, y: y + 82, maxChars: 24, lineHeight: 19, className: "stat-label" })}
+  </g>`;
+}
+
+// Signature pulse waveform — the site's "with a pulse" motif, used as the
+// connective accent across the top of the home snapshot panel.
+function pulseWave(x: number, y: number, w: number) {
+  const u = w / 4;
+  return `<g>
+    <path d="M${x} ${y} C${x + u * 0.6} ${y - 34} ${x + u * 1.2} ${y + 30} ${x + u * 1.9} ${y - 4}
+      S${x + u * 3} ${y - 40} ${x + w} ${y - 18}"
+      fill="none" stroke="${colors.amber}" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="${x + u * 1.18}" cy="${y + 12}" r="9" fill="${colors.cyanBright}"/>
+    <circle cx="${x + u * 2.62}" cy="${y - 24}" r="9" fill="${colors.amber}"/>
+  </g>`;
+}
+
+function homeStatsPanel(x: number, y: number, w: number, h: number) {
+  const stats: Array<[string, string]> = [
+    ["9+", "years building web products"],
+    ["17+", "projects led as lead engineer"],
+    ["AI", "assistant systems, MCP, LLM"],
+    ["Full-stack", "React, Next, Node, Go, cloud"],
+  ];
+  const gap = 22;
+  const colW = (w - 56 - gap) / 2;
+  const rowY = y + 144;
+  const rowGap = 130;
+
+  return `<g filter="url(#shadow)">
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="40" fill="url(#glass)" stroke="${colors.ink}" stroke-opacity="0.1"/>
+    <circle cx="${x + 30}" cy="${y + 44}" r="6" fill="${colors.cyan}"/>
+    <text x="${x + 48}" y="${y + 50}" class="eyebrow" font-size="16">Professional snapshot</text>
+    ${pulseWave(x + 30, y + 96, w - 60)}
+    ${snapshotTile(x + 28, rowY, colW, stats[0][0], stats[0][1])}
+    ${snapshotTile(x + 28 + colW + gap, rowY, colW, stats[1][0], stats[1][1])}
+    ${snapshotTile(x + 28, rowY + rowGap, colW, stats[2][0], stats[2][1])}
+    ${snapshotTile(x + 28 + colW + gap, rowY + rowGap, colW, stats[3][0], stats[3][1])}
   </g>`;
 }
 
@@ -241,10 +252,7 @@ function homeSvg() {
       lineHeight: 34,
       className: "body",
     })}
-    ${browserFrame(630, 92, 442, 300)}
-    ${mobileFrame(986, 96, 150, 300)}
-    ${statCard(630, 426, 246, "9+", "years building web products", 22)}
-    ${statCard(890, 426, 246, "17+", "projects supported as lead engineer", 22)}
+    ${homeStatsPanel(626, 92, 488, 446)}
   `);
 }
 
