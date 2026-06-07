@@ -216,8 +216,8 @@ export default function ProjectCard({
       <div className="flex flex-1 flex-col">
         <CardHeader
           className={cn(
-            "mb-1 flex flex-row items-start justify-between gap-4",
-            isCompact ? "px-5 pt-5" : "px-6 pt-6 sm:px-7 sm:pt-7",
+            "mb-1 flex flex-row items-start justify-between gap-4 pt-0",
+            isCompact ? "px-5" : "px-6 sm:px-7",
           )}
         >
           <div>
