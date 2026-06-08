@@ -278,7 +278,7 @@ function projectsSvg() {
         const x = 628 + (index % 2) * 238;
         const y = 82 + Math.floor(index / 2) * 154;
         // Shrink the name to fit the card instead of truncating, with an 18px
-        // ideal and a 13px floor so longer names (e.g. "TSO Chinese Delivery")
+        // ideal and a 13px floor so longer names (e.g. "Clear Street Bank")
         // stay readable and whole.
         const nameMaxWidth = 166;
         const nameSize = Math.max(13, Math.min(18, (nameMaxWidth / approxTextWidth(project.name, 18)) * 18));

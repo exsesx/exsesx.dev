@@ -1,0 +1,44 @@
+{
+  "name": "remotion-presentation",
+  "version": "1.0.0",
+  "description": "exsesx.dev motion presentation (Remotion)",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.474",
+    "@remotion/google-fonts": "4.0.474",
+    "@remotion/media": "4.0.474",
+    "@remotion/tailwind-v4": "4.0.474",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "remotion": "4.0.474",
+    "tailwindcss": "catalog:"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@remotion/eslint-config-flat": "4.0.474",
+    "@types/react": "catalog:",
+    "@types/web": "0.0.350",
+    "eslint": "9.19.0",
+    "typescript": "catalog:"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "upgrade": "remotion upgrade",
+    "check": "biome check . --diagnostic-level=error && tsc --noEmit",
+    "check:write": "biome check --write .",
+    "check:remotion": "eslint src",
+    "render": "remotion render Showreel out/Showreel.mp4",
+    "render:showreel": "remotion render Showreel out/Showreel.mp4",
+    "render:vertical": "remotion render Vertical out/Vertical.mp4",
+    "render:loop": "remotion render LoopBanner out/LoopBanner.mp4",
+    "render:terminal": "remotion render TerminalReel out/TerminalReel.mp4",
+    "render:terminal-vertical": "remotion render TerminalReelVertical out/TerminalReelVertical.mp4",
+    "render:all": "remotion render Showreel out/Showreel.mp4 && remotion render Vertical out/Vertical.mp4 && remotion render LoopBanner out/LoopBanner.mp4 && remotion render TerminalReel out/TerminalReel.mp4 && remotion render TerminalReelVertical out/TerminalReelVertical.mp4"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}
