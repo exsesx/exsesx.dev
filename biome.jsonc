@@ -1,7 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
   "files": {
-    "includes": ["**", "!!**/.next", "!!**/.agents", "!!bun.lock"]
+    // remotion/ is a separate workspace (the video project) with its own eslint + tsc.
+    "includes": ["**", "!!**/.next", "!!**/.agents", "!!bun.lock", "!remotion"]
   },
   "vcs": {
     "enabled": true,
