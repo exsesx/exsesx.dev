@@ -373,7 +373,17 @@ html[data-season="pride"] .logo-mark-pride {
   .snapshot-specialty-track {
     animation: snapshot-specialty-marquee 42s linear infinite;
     transform: translate3d(0, 0, 0);
+  }
+
+  /* Pause the loop when the rail is scrolled out of view (data-visible toggled
+     by an IntersectionObserver) so it doesn't run off-screen. will-change is
+     only promised while it actually animates. */
+  .snapshot-specialty-rail[data-visible="true"] .snapshot-specialty-track {
     will-change: transform;
+  }
+
+  .snapshot-specialty-rail[data-visible="false"] .snapshot-specialty-track {
+    animation-play-state: paused;
   }
 }
 
