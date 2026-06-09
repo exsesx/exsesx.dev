@@ -186,7 +186,7 @@ export default function HomePage() {
             </UiCard>
 
             <a
-              href="https://cal.com/exsesx/personal"
+              href="https://cal.com/exsesx/meet"
               className={cn(
                 buttonVariants({ variant: "default", size: "lg" }),
                 "mt-3 min-w-0 w-full justify-between rounded-[1.1rem] p-4 sm:mt-4 sm:rounded-[1.45rem] sm:p-5",
