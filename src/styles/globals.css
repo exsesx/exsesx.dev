@@ -443,8 +443,8 @@ html[data-season="pride"] .logo-mark-pride {
 /*
   Safari 26 samples .site-header for the TOP chrome bar (proven by diagnostic) and
   reliably samples a solid background-color (not gradients). So the header IS a thin
-  solid bar pinned to the very top edge: tall enough to qualify (>= the safe-area /
-  6px), carrying var(--safari-chrome-color) which the no-flash script paints inline
+  solid bar pinned to the very top edge: tall enough to qualify (≥11px — 10px stops
+  being sampled), carrying var(--safari-chrome-color) which the no-flash script paints inline
   so the live observer retints the top bar in real time. The visible glass nav is an
   absolutely-positioned child (.site-header-nav-frame) floated BELOW this bar, so the
   solid color is invisible in the status-bar zone and the frosted glass is untouched.
@@ -453,7 +453,7 @@ html[data-season="pride"] .logo-mark-pride {
   /*
     --safari-sample-band is the solid status-bar tint zone for Safari 26 (see the
     iOS-only block below). It defaults to 0 so DESKTOP keeps the original layout
-    (no 44px bar, nav at the normal 0.75rem gap). Only iOS-touch gets the real bar.
+    (no sample bar, nav at the normal 0.75rem gap). Only iOS-touch gets the real bar.
   */
   --safari-sample-band: 0px;
   height: var(--safari-sample-band);
@@ -463,68 +463,14 @@ html[data-season="pride"] .logo-mark-pride {
 }
 
 /* iOS-touch only: the header becomes the solid status-bar sample bar. env(safe-
-   area-inset-top) underreports in this context, so floor it to 44px. The bar's
-   color === page bg so it's invisible; the nav (below) clears it. */
+   area-inset-top) underreports in this context, so floor it to 11px — the
+   empirical minimum Safari still samples (10px breaks tinting; found on device
+   2026-06-10). The sliver hides behind the status bar itself, so content
+   scrolls visibly beneath Safari's own chrome glass — no feathering needed. */
 @supports (-webkit-touch-callout: none) {
   @media (hover: none) and (pointer: coarse) {
     .site-header {
-      --safari-sample-band: max(env(safe-area-inset-top), 44px);
-    }
-
-    /*
-      Feather the sample bar's bottom edge. The fade must live on child layers:
-      the .site-header background-color itself is what Safari samples and has to
-      stay a solid color (gradients don't qualify — see safari-tinting-handoff).
-      Both gradients use eased multi-stop curves — a plain two-stop gradient
-      terminates with a Mach-band edge that read as a solid card on device.
-      The color veil is short and just kisses the band; the frost below carries
-      the transition.
-    */
-    .site-header::before,
-    .dark .site-header::before {
-      inset: var(--safari-sample-band) 0 -1.5rem;
-      background: linear-gradient(
-        to bottom,
-        var(--safari-chrome-color) 0%,
-        color-mix(in oklab, var(--safari-chrome-color) 73.8%, transparent) 19%,
-        color-mix(in oklab, var(--safari-chrome-color) 54.1%, transparent) 34%,
-        color-mix(in oklab, var(--safari-chrome-color) 38.2%, transparent) 47%,
-        color-mix(in oklab, var(--safari-chrome-color) 27.8%, transparent) 56.5%,
-        color-mix(in oklab, var(--safari-chrome-color) 19.4%, transparent) 65%,
-        color-mix(in oklab, var(--safari-chrome-color) 12.6%, transparent) 73%,
-        color-mix(in oklab, var(--safari-chrome-color) 7.5%, transparent) 80.2%,
-        color-mix(in oklab, var(--safari-chrome-color) 4.2%, transparent) 86.1%,
-        color-mix(in oklab, var(--safari-chrome-color) 2.1%, transparent) 91%,
-        color-mix(in oklab, var(--safari-chrome-color) 0.8%, transparent) 95.2%,
-        transparent 100%
-      );
-      mask-image: none;
-    }
-
-    /* Progressive frost under the status bar: content blurs as it slides
-       beneath the solid band, strongest at the top, dissolving downward. */
-    .site-header::after {
-      position: absolute;
-      inset: var(--safari-sample-band) 0 -2.25rem;
-      z-index: -1;
-      pointer-events: none;
-      content: "";
-      backdrop-filter: blur(8px);
-      mask-image: linear-gradient(
-        to bottom,
-        black 0%,
-        rgba(0, 0, 0, 0.738) 19%,
-        rgba(0, 0, 0, 0.541) 34%,
-        rgba(0, 0, 0, 0.382) 47%,
-        rgba(0, 0, 0, 0.278) 56.5%,
-        rgba(0, 0, 0, 0.194) 65%,
-        rgba(0, 0, 0, 0.126) 73%,
-        rgba(0, 0, 0, 0.075) 80.2%,
-        rgba(0, 0, 0, 0.042) 86.1%,
-        rgba(0, 0, 0, 0.021) 91%,
-        rgba(0, 0, 0, 0.008) 95.2%,
-        transparent 100%
-      );
+      --safari-sample-band: max(env(safe-area-inset-top), 11px);
     }
   }
 }
@@ -532,9 +478,9 @@ html[data-season="pride"] .logo-mark-pride {
 /*
   The floating glass nav sits just below the real status bar — the original
   position: env(safe-area-inset-top) + 0.75rem. It is decoupled from
-  --safari-sample-band: that band is floored to 44px ONLY so Safari samples the
-  bar, which would push the nav too low if reused here. On desktop both terms are
-  0 → 0.75rem, the original gap.
+  --safari-sample-band: that band is floored to 11px ONLY so Safari samples the
+  bar and no longer tracks the real inset, so reusing it here would misplace the
+  nav. On desktop both terms are 0 → 0.75rem, the original gap.
 */
 .site-header-nav-frame {
   position: absolute;
@@ -650,10 +596,6 @@ html[data-season="pride"] .logo-mark-pride {
   html.glass-lens .dropdown-menu.liquid-glass {
     background: color-mix(in oklab, var(--background) 94%, var(--foreground) 4%);
     backdrop-filter: none;
-  }
-
-  .site-header::after {
-    content: none;
   }
 }
 
