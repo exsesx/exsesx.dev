@@ -6,6 +6,7 @@ import ProjectCard from "../components/Card";
 import CvMenu from "../components/CvMenu";
 import { GithubIcon } from "../components/icons/lucide-github";
 import { LinkedinIcon } from "../components/icons/lucide-linkedin";
+import PulseTrace from "../components/PulseTrace";
 import RouteFadeTransition from "../components/RouteFadeTransition";
 import SnapshotSpecialtyRail from "../components/SnapshotSpecialtyRail";
 import { buttonVariants } from "../components/ui/button-variants";
@@ -86,7 +87,11 @@ export default function HomePage() {
             </div>
 
             <h1 className="motion-rise motion-delay-1 max-w-5xl text-balance text-[clamp(3.25rem,8.2vw,8.9rem)] font-black leading-[0.88] tracking-tight text-foreground">
-              Software with a pulse
+              Software with a{" "}
+              <span className="whitespace-nowrap">
+                pulse
+                <PulseTrace />
+              </span>
             </h1>
 
             <p className="motion-rise motion-delay-2 mt-8 max-w-2xl text-pretty text-xl leading-8 text-muted-foreground sm:text-2xl sm:leading-10">
