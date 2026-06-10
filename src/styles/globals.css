@@ -475,19 +475,30 @@ html[data-season="pride"] .logo-mark-pride {
       Feather the sample bar's bottom edge. The fade must live on child layers:
       the .site-header background-color itself is what Safari samples and has to
       stay a solid color (gradients don't qualify — see safari-tinting-handoff).
-      Starting the fade at the full chrome color, flush with the band, removes
-      the hard line; the default fade starts at 86% which reads as a step.
+      Both gradients use eased multi-stop curves — a plain two-stop gradient
+      terminates with a Mach-band edge that read as a solid card on device.
+      The color veil is short and just kisses the band; the frost below carries
+      the transition.
     */
     .site-header::before,
     .dark .site-header::before {
-      inset: var(--safari-sample-band) 0 -3rem;
+      inset: var(--safari-sample-band) 0 -1.5rem;
       background: linear-gradient(
         to bottom,
-        var(--safari-chrome-color),
-        color-mix(in oklab, var(--background) 55%, transparent) 45%,
-        transparent
+        var(--safari-chrome-color) 0%,
+        color-mix(in oklab, var(--safari-chrome-color) 73.8%, transparent) 19%,
+        color-mix(in oklab, var(--safari-chrome-color) 54.1%, transparent) 34%,
+        color-mix(in oklab, var(--safari-chrome-color) 38.2%, transparent) 47%,
+        color-mix(in oklab, var(--safari-chrome-color) 27.8%, transparent) 56.5%,
+        color-mix(in oklab, var(--safari-chrome-color) 19.4%, transparent) 65%,
+        color-mix(in oklab, var(--safari-chrome-color) 12.6%, transparent) 73%,
+        color-mix(in oklab, var(--safari-chrome-color) 7.5%, transparent) 80.2%,
+        color-mix(in oklab, var(--safari-chrome-color) 4.2%, transparent) 86.1%,
+        color-mix(in oklab, var(--safari-chrome-color) 2.1%, transparent) 91%,
+        color-mix(in oklab, var(--safari-chrome-color) 0.8%, transparent) 95.2%,
+        transparent 100%
       );
-      mask-image: linear-gradient(to bottom, black 0 28%, transparent 94%);
+      mask-image: none;
     }
 
     /* Progressive frost under the status bar: content blurs as it slides
@@ -498,8 +509,22 @@ html[data-season="pride"] .logo-mark-pride {
       z-index: -1;
       pointer-events: none;
       content: "";
-      backdrop-filter: blur(10px);
-      mask-image: linear-gradient(to bottom, black 0 15%, transparent 85%);
+      backdrop-filter: blur(8px);
+      mask-image: linear-gradient(
+        to bottom,
+        black 0%,
+        rgba(0, 0, 0, 0.738) 19%,
+        rgba(0, 0, 0, 0.541) 34%,
+        rgba(0, 0, 0, 0.382) 47%,
+        rgba(0, 0, 0, 0.278) 56.5%,
+        rgba(0, 0, 0, 0.194) 65%,
+        rgba(0, 0, 0, 0.126) 73%,
+        rgba(0, 0, 0, 0.075) 80.2%,
+        rgba(0, 0, 0, 0.042) 86.1%,
+        rgba(0, 0, 0, 0.021) 91%,
+        rgba(0, 0, 0, 0.008) 95.2%,
+        transparent 100%
+      );
     }
   }
 }
