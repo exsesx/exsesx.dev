@@ -470,6 +470,37 @@ html[data-season="pride"] .logo-mark-pride {
     .site-header {
       --safari-sample-band: max(env(safe-area-inset-top), 44px);
     }
+
+    /*
+      Feather the sample bar's bottom edge. The fade must live on child layers:
+      the .site-header background-color itself is what Safari samples and has to
+      stay a solid color (gradients don't qualify — see safari-tinting-handoff).
+      Starting the fade at the full chrome color, flush with the band, removes
+      the hard line; the default fade starts at 86% which reads as a step.
+    */
+    .site-header::before,
+    .dark .site-header::before {
+      inset: var(--safari-sample-band) 0 -3rem;
+      background: linear-gradient(
+        to bottom,
+        var(--safari-chrome-color),
+        color-mix(in oklab, var(--background) 55%, transparent) 45%,
+        transparent
+      );
+      mask-image: linear-gradient(to bottom, black 0 28%, transparent 94%);
+    }
+
+    /* Progressive frost under the status bar: content blurs as it slides
+       beneath the solid band, strongest at the top, dissolving downward. */
+    .site-header::after {
+      position: absolute;
+      inset: var(--safari-sample-band) 0 -2.25rem;
+      z-index: -1;
+      pointer-events: none;
+      content: "";
+      backdrop-filter: blur(10px);
+      mask-image: linear-gradient(to bottom, black 0 15%, transparent 85%);
+    }
   }
 }
 
@@ -594,6 +625,10 @@ html[data-season="pride"] .logo-mark-pride {
   html.glass-lens .dropdown-menu.liquid-glass {
     background: color-mix(in oklab, var(--background) 94%, var(--foreground) 4%);
     backdrop-filter: none;
+  }
+
+  .site-header::after {
+    content: none;
   }
 }
 
