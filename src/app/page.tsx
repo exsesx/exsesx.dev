@@ -205,7 +205,7 @@ export default function HomePage() {
 
         <Separator />
         <section className="py-14">
-          <div className="mb-8 flex flex-col gap-3">
+          <div className="scroll-rise mb-8 flex flex-col gap-3">
             <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
               <BriefcaseBusiness size={15} strokeWidth={2.4} />
               Experience
@@ -218,7 +218,7 @@ export default function HomePage() {
             {experienceHighlights.map(item => (
               <UiCard
                 key={item.company}
-                className="liquid-glass gap-0 rounded-[1.35rem] px-5 py-4 shadow-none sm:grid sm:grid-cols-[0.34fr_0.66fr] sm:gap-6 sm:px-6"
+                className="scroll-rise liquid-glass gap-0 rounded-[1.35rem] px-5 py-4 shadow-none sm:grid sm:grid-cols-[0.34fr_0.66fr] sm:gap-6 sm:px-6"
               >
                 <div>
                   <h3 className="text-xl font-black text-foreground">{item.company}</h3>
@@ -232,7 +232,7 @@ export default function HomePage() {
 
         <Separator />
         <section className="py-14">
-          <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div className="scroll-rise mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Operating style</p>
               <h2 className="mt-3 max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
@@ -250,7 +250,7 @@ export default function HomePage() {
               const Icon = item.icon;
 
               return (
-                <UiCard key={item.title} className="liquid-glass gap-0 rounded-[1.35rem] p-5 shadow-none">
+                <UiCard key={item.title} className="scroll-rise liquid-glass gap-0 rounded-[1.35rem] p-5 shadow-none">
                   <span className="grid size-11 place-items-center rounded-full bg-primary text-primary-foreground">
                     <Icon size={19} strokeWidth={2.4} />
                   </span>
@@ -264,7 +264,7 @@ export default function HomePage() {
 
         <Separator />
         <section className="py-16 pb-0">
-          <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div className="scroll-rise mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Selected projects</p>
               <h2 className="mt-3 max-w-2xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
@@ -283,12 +283,9 @@ export default function HomePage() {
           </div>
           <div className="grid items-stretch gap-6 lg:grid-cols-3">
             {featuredProjects.map((project, index) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                enableMediaTransition
-                mediaLoading={index === 0 ? "eager" : "lazy"}
-              />
+              <div key={project.id} className="scroll-rise h-full">
+                <ProjectCard project={project} enableMediaTransition mediaLoading={index === 0 ? "eager" : "lazy"} />
+              </div>
             ))}
           </div>
         </section>

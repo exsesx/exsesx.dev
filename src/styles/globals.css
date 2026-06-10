@@ -902,9 +902,88 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
+.pulse-trace-glow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: blur(5px);
+  stroke-dasharray: 100.5;
+  stroke-dashoffset: 0;
+  opacity: 0.2;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The glow draws in with the trace, then beats twice — finite on purpose,
+     so nothing loops off-screen. */
+  .pulse-trace-glow {
+    stroke-dashoffset: 100.5;
+    animation:
+      pulse-draw 1.25s var(--ease-in-out) 640ms both,
+      pulse-beat 1.7s var(--ease-in-out) 2.1s 2;
+  }
+
+  html:active-view-transition-type(nav-forward) .pulse-trace-glow,
+  html:active-view-transition-type(nav-back) .pulse-trace-glow,
+  html[data-view-transition-navigated="true"] .pulse-trace-glow {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
 @keyframes pulse-draw {
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse-beat {
+  0%,
+  64%,
+  100% {
+    opacity: 0.2;
+  }
+
+  10% {
+    opacity: 0.52;
+  }
+
+  26% {
+    opacity: 0.24;
+  }
+
+  38% {
+    opacity: 0.44;
+  }
+}
+
+/*
+ * Scroll-driven reveals: below-the-fold blocks drift up and fade in as they
+ * enter the viewport. Pure CSS view-timeline — engines without support (or
+ * reduced-motion users) simply see the content in place. Compositor props
+ * only; each element is driven by its own visibility, so reveals sequence
+ * naturally with scroll and reverse when scrolling back up.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-rise {
+      animation: scroll-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 12% entry 56%;
+    }
+  }
+}
+
+@keyframes scroll-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.3rem, 0) scale(0.994);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
