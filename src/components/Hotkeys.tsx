@@ -6,7 +6,7 @@ import { AnimatePresence, domAnimation, LazyMotion, useReducedMotion } from "mot
 import * as m from "motion/react-m";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { type ElementType, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ElementType, startTransition, useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   createHotkeySequencer,
   getHotkeySequenceKey,
@@ -65,7 +65,7 @@ const HOTKEY_MENU_ITEMS = [
   ...NAVBAR_HOTKEYS,
 ];
 const repeatableHotkeyActions = new Set<HotkeyAction>(
-  HOTKEYS.filter(shortcut => !shortcut.external && !shortcut.opensNewTab).map(shortcut => shortcut.action),
+  HOTKEYS.flatMap(shortcut => (shortcut.external || shortcut.opensNewTab ? [] : [shortcut.action])),
 );
 
 const hintVariants = {
@@ -195,7 +195,7 @@ const reducedModalChildVariants = {
   exit: { opacity: 0, transition: { duration: 0.06, ease: motionLinear } },
 } satisfies Variants;
 
-const Hotkeys = memo(function Hotkeys() {
+function Hotkeys() {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -204,68 +204,149 @@ const Hotkeys = memo(function Hotkeys() {
   const isModalOpenRef = useRef(false);
   const lastRepeatableActionRef = useRef<HotkeyAction | null>(null);
   const pendingSequenceRef = useRef<string[]>([]);
-  const sequencer = useMemo(() => createHotkeySequencer(HOTKEYS), []);
+  // Lazy useState is a create-once *guarantee*; useMemo is only a hint the
+  // compiler may discard, and the sequencer holds mutable chord progress.
+  const [sequencer] = useState(() => createHotkeySequencer(HOTKEYS));
   const isSequenceRendered = pendingSequence.length > 0;
-  const commitModalOpen = useCallback((nextIsOpen: boolean) => {
+
+  function commitModalOpen(nextIsOpen: boolean) {
     isModalOpenRef.current = nextIsOpen;
     setIsModalOpen(current => (current === nextIsOpen ? current : nextIsOpen));
-  }, []);
-  const commitPendingSequence = useCallback((nextSequence: string[]) => {
+  }
+
+  function commitPendingSequence(nextSequence: string[]) {
     pendingSequenceRef.current = nextSequence;
     setPendingSequence(current =>
       current.length === nextSequence.length && current.every((key, index) => key === nextSequence[index])
         ? current
         : nextSequence,
     );
-  }, []);
-  const clearPendingSequence = useCallback(() => {
+  }
+
+  function clearPendingSequence() {
     commitPendingSequence([]);
-  }, [commitPendingSequence]);
-  const toggleHotkeyModal = useCallback(() => {
+  }
+
+  function toggleHotkeyModal() {
     sequencer.reset();
     clearPendingSequence();
     commitModalOpen(!isModalOpenRef.current);
-  }, [clearPendingSequence, commitModalOpen, sequencer]);
-  const closeHotkeyModal = useCallback(() => {
+  }
+
+  function closeHotkeyModal() {
     commitModalOpen(false);
-  }, [commitModalOpen]);
+  }
 
-  useEffect(() => {
-    isModalOpenRef.current = isModalOpen;
-  }, [isModalOpen]);
+  const syncEnabledState = useEffectEvent((hasHover: boolean, hasCoarsePointer: boolean) => {
+    const nextIsEnabled = shouldEnableHotkeys({ hasHover, hasCoarsePointer });
 
-  useEffect(() => {
-    pendingSequenceRef.current = pendingSequence;
-  }, [pendingSequence]);
+    setIsEnabled(nextIsEnabled);
+
+    if (!nextIsEnabled) {
+      commitModalOpen(false);
+      clearPendingSequence();
+      sequencer.reset();
+    }
+  });
 
   useEffect(() => {
     const hoverQuery = window.matchMedia("(hover: hover)");
     const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
 
-    function syncEnabledState() {
-      const nextIsEnabled = shouldEnableHotkeys({
-        hasHover: hoverQuery.matches,
-        hasCoarsePointer: coarsePointerQuery.matches,
-      });
+    function handleChange() {
+      syncEnabledState(hoverQuery.matches, coarsePointerQuery.matches);
+    }
 
-      setIsEnabled(nextIsEnabled);
+    handleChange();
+    hoverQuery.addEventListener("change", handleChange);
+    coarsePointerQuery.addEventListener("change", handleChange);
 
-      if (!nextIsEnabled) {
-        commitModalOpen(false);
-        clearPendingSequence();
+    return () => {
+      hoverQuery.removeEventListener("change", handleChange);
+      coarsePointerQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  const handleHotkeyKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (isEditableTarget(event.target)) {
+      return;
+    }
+
+    if (event.key === "Escape" && (isModalOpenRef.current || pendingSequenceRef.current.length > 0)) {
+      event.preventDefault();
+      sequencer.reset();
+      closeHotkeyModal();
+      clearPendingSequence();
+      return;
+    }
+
+    if (isHelpShortcut(event)) {
+      event.preventDefault();
+      sequencer.reset();
+      clearPendingSequence();
+      commitModalOpen(!isModalOpenRef.current);
+      return;
+    }
+
+    if (event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+
+    if (event.shiftKey) {
+      const navbarDirection = getNavbarHotkeyDirection(event.key);
+
+      if (navbarDirection) {
+        event.preventDefault();
         sequencer.reset();
+        clearPendingSequence();
+        commitModalOpen(false);
+        runHotkeyAction(getNavbarHotkeyAction(window.location.pathname, navbarDirection), router);
+        return;
       }
     }
 
-    syncEnabledState();
-    hoverQuery.addEventListener("change", syncEnabledState);
-    coarsePointerQuery.addEventListener("change", syncEnabledState);
+    const normalizedKey = normalizeSequenceKey(event.key);
 
-    return () => {
-      hoverQuery.removeEventListener("change", syncEnabledState);
-      coarsePointerQuery.removeEventListener("change", syncEnabledState);
-    };
-  }, [clearPendingSequence, commitModalOpen, sequencer]);
+    if (!normalizedKey) {
+      return;
+    }
+
+    if (normalizedKey === "." && pendingSequenceRef.current.length === 0) {
+      if (lastRepeatableActionRef.current === null) {
+        return;
+      }
+
+      event.preventDefault();
+      sequencer.reset();
+      clearPendingSequence();
+      commitModalOpen(false);
+      runHotkeyAction(lastRepeatableActionRef.current, router);
+      return;
+    }
+
+    const result = sequencer.press(normalizedKey);
+
+    if (result.state === "idle") {
+      clearPendingSequence();
+      return;
+    }
+
+    event.preventDefault();
+
+    if (result.state === "pending") {
+      commitPendingSequence([normalizedKey]);
+    }
+
+    if (result.state === "matched") {
+      if (repeatableHotkeyActions.has(result.action)) {
+        lastRepeatableActionRef.current = result.action;
+      }
+
+      clearPendingSequence();
+      commitModalOpen(false);
+      runHotkeyAction(result.action, router);
+    }
+  });
 
   useEffect(() => {
     if (!isEnabled) {
@@ -273,90 +354,13 @@ const Hotkeys = memo(function Hotkeys() {
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (isEditableTarget(event.target)) {
-        return;
-      }
-
-      if (event.key === "Escape" && (isModalOpenRef.current || pendingSequenceRef.current.length > 0)) {
-        event.preventDefault();
-        sequencer.reset();
-        closeHotkeyModal();
-        clearPendingSequence();
-        return;
-      }
-
-      if (isHelpShortcut(event)) {
-        event.preventDefault();
-        sequencer.reset();
-        clearPendingSequence();
-        commitModalOpen(!isModalOpenRef.current);
-        return;
-      }
-
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return;
-      }
-
-      if (event.shiftKey) {
-        const navbarDirection = getNavbarHotkeyDirection(event.key);
-
-        if (navbarDirection) {
-          event.preventDefault();
-          sequencer.reset();
-          clearPendingSequence();
-          commitModalOpen(false);
-          runHotkeyAction(getNavbarHotkeyAction(window.location.pathname, navbarDirection), router);
-          return;
-        }
-      }
-
-      const normalizedKey = normalizeSequenceKey(event.key);
-
-      if (!normalizedKey) {
-        return;
-      }
-
-      if (normalizedKey === "." && pendingSequenceRef.current.length === 0) {
-        if (lastRepeatableActionRef.current === null) {
-          return;
-        }
-
-        event.preventDefault();
-        sequencer.reset();
-        clearPendingSequence();
-        commitModalOpen(false);
-        runHotkeyAction(lastRepeatableActionRef.current, router);
-        return;
-      }
-
-      const result = sequencer.press(normalizedKey);
-
-      if (result.state === "idle") {
-        clearPendingSequence();
-        return;
-      }
-
-      event.preventDefault();
-
-      if (result.state === "pending") {
-        commitPendingSequence([normalizedKey]);
-      }
-
-      if (result.state === "matched") {
-        if (repeatableHotkeyActions.has(result.action)) {
-          lastRepeatableActionRef.current = result.action;
-        }
-
-        clearPendingSequence();
-        commitModalOpen(false);
-        runHotkeyAction(result.action, router);
-      }
+      handleHotkeyKeyDown(event);
     }
 
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [clearPendingSequence, closeHotkeyModal, commitModalOpen, commitPendingSequence, isEnabled, router, sequencer]);
+  }, [isEnabled]);
 
   if (!isEnabled) {
     return null;
@@ -385,11 +389,11 @@ const Hotkeys = memo(function Hotkeys() {
       </AnimatePresence>
     </LazyMotion>
   );
-});
+}
 
 export default Hotkeys;
 
-const HotkeyHint = memo(function HotkeyHint({
+function HotkeyHint({
   isSequenceRendered,
   reduceMotion,
   onToggle,
@@ -419,15 +423,9 @@ const HotkeyHint = memo(function HotkeyHint({
       </span>
     </m.button>
   );
-});
+}
 
-const PendingSequence = memo(function PendingSequence({
-  reduceMotion,
-  sequence,
-}: {
-  reduceMotion: boolean | null;
-  sequence: string[];
-}) {
+function PendingSequence({ reduceMotion, sequence }: { reduceMotion: boolean | null; sequence: string[] }) {
   const panelMotion = reduceMotion ? reducedSequencePanelVariants : sequencePanelVariants;
   const childMotion = reduceMotion ? reducedSequenceChildVariants : sequenceChildVariants;
 
@@ -461,15 +459,9 @@ const PendingSequence = memo(function PendingSequence({
       </m.span>
     </m.aside>
   );
-});
+}
 
-const HotkeyModal = memo(function HotkeyModal({
-  reduceMotion,
-  onClose,
-}: {
-  reduceMotion: boolean | null;
-  onClose: () => void;
-}) {
+function HotkeyModal({ reduceMotion, onClose }: { reduceMotion: boolean | null; onClose: () => void }) {
   const activePanelVariants = reduceMotion ? reducedPanelVariants : panelVariants;
   const activeChildVariants = reduceMotion ? reducedModalChildVariants : modalChildVariants;
 
@@ -565,7 +557,7 @@ const HotkeyModal = memo(function HotkeyModal({
       </m.section>
     </div>
   );
-});
+}
 
 function normalizeSequenceKey(key: string) {
   return key.length === 1 ? key : undefined;
@@ -621,7 +613,15 @@ function runHotkeyAction(action: HotkeyAction, router: ReturnType<typeof useRout
   }
 
   const route: Route = action === "home" ? "/" : "/projects";
-  router.push(route);
+
+  // Match link navigation: lateral cross-fade via the page-level
+  // <ViewTransition>, and suppress the motion-rise entry stagger so the
+  // destination doesn't double-animate. transitionTypes only takes effect
+  // inside startTransition (same pattern as ProjectBackButton).
+  document.documentElement.dataset.viewTransitionNavigated = "true";
+  startTransition(() => {
+    router.push(route, { transitionTypes: ["nav-fade"] });
+  });
 }
 
 function toggleThemeMode() {
