@@ -4,6 +4,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-bricolage), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -43,6 +45,16 @@
   --duration-enter: 140ms;
   --duration-move: 280ms;
   --duration-theme: 420ms;
+  /* Liquid glass: the rim is drawn with layered inset shadows (a crisp top
+     specular, soft curved corner light, and a bottom counter-shade) so every
+     glass surface reads as a curved lens instead of flat frosted plastic. */
+  --glass-blur: 20px;
+  --glass-saturate: 1.8;
+  --glass-brightness: 1.04;
+  --glass-rim-spec: rgba(255, 255, 255, 0.9);
+  --glass-rim-soft: rgba(255, 255, 255, 0.7);
+  --glass-rim-faint: rgba(255, 255, 255, 0.38);
+  --glass-rim-shade: rgba(24, 24, 27, 0.08);
   --background: #f8f1e7;
   /* Solid color Safari 26 samples for chrome tint; mirrors --background, painted
      inline by the no-flash script so the live observer retints the bars. */
@@ -71,6 +83,12 @@
 }
 
 .dark {
+  --glass-saturate: 1.55;
+  --glass-brightness: 1.12;
+  --glass-rim-spec: rgba(255, 255, 255, 0.24);
+  --glass-rim-soft: rgba(255, 255, 255, 0.14);
+  --glass-rim-faint: rgba(255, 255, 255, 0.06);
+  --glass-rim-shade: rgba(0, 0, 0, 0.5);
   --background: #101111;
   --safari-chrome-color: #101111;
   --foreground: #fff7e8;
@@ -118,11 +136,18 @@ body {
   min-height: 100svh;
   background: var(--background);
   color: var(--foreground);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-feature-settings:
     "kern" 1,
     "liga" 1;
   text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+[data-slot="card-title"] {
+  font-family: var(--font-display);
 }
 
 @supports (height: 100dvh) {
@@ -283,13 +308,15 @@ html[data-season="pride"] .logo-mark-pride {
 .liquid-glass {
   border: 1px solid color-mix(in oklab, currentColor 10%, transparent);
   background:
-    linear-gradient(135deg, rgba(255, 250, 241, 0.72), rgba(255, 250, 241, 0.38)),
-    color-mix(in oklab, #fffaf1 55%, transparent);
+    linear-gradient(135deg, rgba(255, 250, 241, 0.55), rgba(255, 250, 241, 0.2) 58%, rgba(255, 250, 241, 0.34)),
+    color-mix(in oklab, #fffaf1 38%, transparent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 1px 1px -0.5px var(--glass-rim-spec),
+    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
+    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
+    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
     0 18px 50px rgba(24, 24, 27, 0.08);
-  backdrop-filter: blur(22px) saturate(1.35);
-  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
   transition:
     border-color 180ms var(--ease-weight),
     background-color 180ms var(--ease-weight),
@@ -299,11 +326,14 @@ html[data-season="pride"] .logo-mark-pride {
 
 .dark .liquid-glass {
   background:
-    linear-gradient(135deg, rgba(30, 31, 31, 0.76), rgba(16, 17, 17, 0.46)),
-    color-mix(in oklab, #101111 56%, transparent);
+    linear-gradient(135deg, rgba(30, 31, 31, 0.6), rgba(16, 17, 17, 0.26) 58%, rgba(30, 31, 31, 0.42)),
+    color-mix(in oklab, #101111 40%, transparent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 18px 50px rgba(0, 0, 0, 0.24);
+    inset 0 1px 1px -0.5px var(--glass-rim-spec),
+    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
+    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
+    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
+    0 18px 50px rgba(0, 0, 0, 0.26);
 }
 
 .dropdown-menu.liquid-glass {
@@ -312,12 +342,15 @@ html[data-season="pride"] .logo-mark-pride {
     radial-gradient(circle at 78% 76%, color-mix(in oklab, var(--foreground) 5%, transparent), transparent 34%),
     linear-gradient(
       135deg,
-      color-mix(in oklab, var(--background) 72%, transparent),
-      color-mix(in oklab, var(--background) 46%, transparent)
+      color-mix(in oklab, var(--background) 64%, transparent),
+      color-mix(in oklab, var(--background) 34%, transparent)
     ),
-    color-mix(in oklab, var(--background) 52%, transparent);
+    color-mix(in oklab, var(--background) 44%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white 58%, transparent),
+    inset 0 1px 1px -0.5px var(--glass-rim-spec),
+    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
+    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
+    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
     0 22px 70px rgba(24, 24, 27, 0.16);
 }
 
@@ -327,12 +360,15 @@ html[data-season="pride"] .logo-mark-pride {
     radial-gradient(circle at 78% 76%, color-mix(in oklab, white 6%, transparent), transparent 34%),
     linear-gradient(
       135deg,
-      color-mix(in oklab, var(--background) 78%, transparent),
-      color-mix(in oklab, var(--background) 54%, transparent)
+      color-mix(in oklab, var(--background) 70%, transparent),
+      color-mix(in oklab, var(--background) 42%, transparent)
     ),
-    color-mix(in oklab, var(--background) 58%, transparent);
+    color-mix(in oklab, var(--background) 50%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white 10%, transparent),
+    inset 0 1px 1px -0.5px var(--glass-rim-spec),
+    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
+    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
+    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
     0 22px 70px rgba(0, 0, 0, 0.34);
 }
 
@@ -356,7 +392,6 @@ html[data-season="pride"] .logo-mark-pride {
     background: transparent;
     box-shadow: none;
     backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
 
   .snapshot-stat-card {
@@ -408,8 +443,8 @@ html[data-season="pride"] .logo-mark-pride {
 /*
   Safari 26 samples .site-header for the TOP chrome bar (proven by diagnostic) and
   reliably samples a solid background-color (not gradients). So the header IS a thin
-  solid bar pinned to the very top edge: tall enough to qualify (>= the safe-area /
-  6px), carrying var(--safari-chrome-color) which the no-flash script paints inline
+  solid bar pinned to the very top edge: tall enough to qualify (≥11px — 10px stops
+  being sampled), carrying var(--safari-chrome-color) which the no-flash script paints inline
   so the live observer retints the top bar in real time. The visible glass nav is an
   absolutely-positioned child (.site-header-nav-frame) floated BELOW this bar, so the
   solid color is invisible in the status-bar zone and the frosted glass is untouched.
@@ -418,7 +453,7 @@ html[data-season="pride"] .logo-mark-pride {
   /*
     --safari-sample-band is the solid status-bar tint zone for Safari 26 (see the
     iOS-only block below). It defaults to 0 so DESKTOP keeps the original layout
-    (no 44px bar, nav at the normal 0.75rem gap). Only iOS-touch gets the real bar.
+    (no sample bar, nav at the normal 0.75rem gap). Only iOS-touch gets the real bar.
   */
   --safari-sample-band: 0px;
   height: var(--safari-sample-band);
@@ -428,12 +463,20 @@ html[data-season="pride"] .logo-mark-pride {
 }
 
 /* iOS-touch only: the header becomes the solid status-bar sample bar. env(safe-
-   area-inset-top) underreports in this context, so floor it to 44px. The bar's
-   color === page bg so it's invisible; the nav (below) clears it. */
+   area-inset-top) underreports in this context, so floor it to 11px — the
+   empirical minimum Safari still samples (10px breaks tinting; found on device
+   2026-06-10). The sliver hides behind the status bar itself, so content
+   scrolls visibly beneath Safari's own chrome glass — no feathering needed. */
 @supports (-webkit-touch-callout: none) {
   @media (hover: none) and (pointer: coarse) {
     .site-header {
-      --safari-sample-band: max(env(safe-area-inset-top), 44px);
+      --safari-sample-band: max(env(safe-area-inset-top), 11px);
+    }
+
+    /* Wider gap than the desktop 0.75rem so the nav stays clear of the
+       11px sample sliver. */
+    .site-header-nav-frame {
+      top: calc(env(safe-area-inset-top) + 1.4rem);
     }
   }
 }
@@ -441,9 +484,9 @@ html[data-season="pride"] .logo-mark-pride {
 /*
   The floating glass nav sits just below the real status bar — the original
   position: env(safe-area-inset-top) + 0.75rem. It is decoupled from
-  --safari-sample-band: that band is floored to 44px ONLY so Safari samples the
-  bar, which would push the nav too low if reused here. On desktop both terms are
-  0 → 0.75rem, the original gap.
+  --safari-sample-band: that band is floored to 11px ONLY so Safari samples the
+  bar and no longer tracks the real inset, so reusing it here would misplace the
+  nav. On desktop both terms are 0 → 0.75rem, the original gap.
 */
 .site-header-nav-frame {
   position: absolute;
@@ -494,17 +537,21 @@ html[data-season="pride"] .logo-mark-pride {
   background:
     radial-gradient(
       circle at calc(18% + var(--nav-scroll-progress) * 54%) 0%,
-      rgba(255, 255, 255, 0.58),
-      transparent 34%
+      rgba(255, 255, 255, 0.52),
+      transparent 36%
     ),
-    linear-gradient(135deg, rgba(255, 250, 241, 0.62), rgba(255, 250, 241, 0.3)),
-    color-mix(in oklab, #fffaf1 42%, transparent);
-  box-shadow: 0 15px 36px rgba(24, 24, 27, 0.085);
+    linear-gradient(135deg, rgba(255, 250, 241, 0.46), rgba(255, 250, 241, 0.14) 55%, rgba(255, 250, 241, 0.3)),
+    color-mix(in oklab, #fffaf1 27%, transparent);
+  box-shadow:
+    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
+    inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.85),
+    inset -1.5px -2px 7px -3px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px -0.5px rgba(24, 24, 27, 0.07),
+    0 15px 36px rgba(24, 24, 27, 0.1);
   transform: translate3d(0, calc(var(--nav-scroll-progress) * -0.24rem), 0)
     scale(calc(1 - var(--nav-scroll-progress) * 0.01));
   transform-origin: top center;
-  backdrop-filter: blur(24px) saturate(1.36);
-  -webkit-backdrop-filter: blur(24px) saturate(1.36);
+  backdrop-filter: blur(22px) saturate(1.9);
   will-change: transform;
   contain: paint;
 }
@@ -526,6 +573,38 @@ html[data-season="pride"] .logo-mark-pride {
   z-index: 1;
 }
 
+/*
+ * Liquid lens refraction — Chromium only (html.glass-lens, set by the layout
+ * bootstrap script). The SVG displacement filter in <LiquidGlassLens /> bends
+ * the frosted backdrop at the rim like a convex lens. Other engines drop the
+ * entire backdrop-filter when the list contains url(), so this MUST stay
+ * behind the .glass-lens gate or Safari/Firefox lose the blur completely.
+ */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  html.glass-lens .site-nav-glass {
+    backdrop-filter: blur(22px) saturate(1.9) url("#liquid-lens");
+  }
+
+  html.glass-lens .dropdown-menu.liquid-glass {
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness))
+      url("#liquid-lens");
+  }
+}
+
+/* Transparency is a preference, not a requirement: collapse every glass
+   surface to a near-solid panel and drop the expensive blur entirely. */
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass,
+  .site-nav-glass,
+  .site-nav-active-pill,
+  .dropdown-menu.liquid-glass,
+  html.glass-lens .site-nav-glass,
+  html.glass-lens .dropdown-menu.liquid-glass {
+    background: color-mix(in oklab, var(--background) 94%, var(--foreground) 4%);
+    backdrop-filter: none;
+  }
+}
+
 .site-nav-brand-link {
   gap: calc(0.5rem + var(--nav-scroll-progress) * 0.28rem);
 }
@@ -534,13 +613,19 @@ html[data-season="pride"] .logo-mark-pride {
   width: calc(50% - 0.375rem);
   border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
   background:
-    linear-gradient(135deg, color-mix(in oklab, white 58%, transparent), color-mix(in oklab, white 24%, transparent)),
-    color-mix(in oklab, var(--background) 48%, transparent);
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, white 56%, transparent),
+      color-mix(in oklab, white 18%, transparent) 60%,
+      color-mix(in oklab, white 34%, transparent)
+    ),
+    color-mix(in oklab, var(--background) 42%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white 58%, transparent),
-    0 7px 18px color-mix(in oklab, var(--foreground) 9%, transparent);
-  backdrop-filter: blur(18px) saturate(1.22);
-  -webkit-backdrop-filter: blur(18px) saturate(1.22);
+    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
+    inset 1px 2px 4px -2px rgba(255, 255, 255, 0.7),
+    inset 0 -1px 1px -0.5px rgba(24, 24, 27, 0.08),
+    0 7px 18px color-mix(in oklab, var(--foreground) 11%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5);
   pointer-events: none;
   transform: translate3d(0, 0, 0);
   will-change: transform;
@@ -549,11 +634,18 @@ html[data-season="pride"] .logo-mark-pride {
 .dark .site-nav-active-pill {
   border-color: color-mix(in oklab, white 9%, transparent);
   background:
-    linear-gradient(135deg, color-mix(in oklab, white 13%, transparent), color-mix(in oklab, white 5%, transparent)),
-    color-mix(in oklab, var(--background) 38%, transparent);
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, white 14%, transparent),
+      color-mix(in oklab, white 4%, transparent) 60%,
+      color-mix(in oklab, white 9%, transparent)
+    ),
+    color-mix(in oklab, var(--background) 34%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white 8%, transparent),
-    0 8px 20px color-mix(in oklab, black 24%, transparent);
+    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.26),
+    inset 1px 2px 4px -2px rgba(255, 255, 255, 0.14),
+    inset 0 -1px 1px -0.5px rgba(0, 0, 0, 0.45),
+    0 8px 20px color-mix(in oklab, black 26%, transparent);
 }
 
 @media (max-width: 639px) {
@@ -588,7 +680,6 @@ html[data-season="pride"] .logo-mark-pride {
     inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, white 18%),
     0 10px 30px color-mix(in oklab, var(--foreground) 10%, transparent);
   backdrop-filter: blur(26px) saturate(1.5);
-  -webkit-backdrop-filter: blur(26px) saturate(1.5);
 }
 
 .hotkeys-chord-waiting {
@@ -689,12 +780,17 @@ html[data-season="pride"] .logo-mark-pride {
   background:
     radial-gradient(
       circle at calc(18% + var(--nav-scroll-progress) * 54%) 0%,
-      rgba(255, 255, 255, 0.08),
-      transparent 34%
+      rgba(255, 255, 255, 0.1),
+      transparent 36%
     ),
-    linear-gradient(135deg, rgba(30, 31, 31, 0.62), rgba(16, 17, 17, 0.36)),
-    color-mix(in oklab, #101111 46%, transparent);
-  box-shadow: 0 15px 38px rgba(0, 0, 0, 0.24);
+    linear-gradient(135deg, rgba(30, 31, 31, 0.52), rgba(16, 17, 17, 0.2) 55%, rgba(30, 31, 31, 0.36)),
+    color-mix(in oklab, #101111 32%, transparent);
+  box-shadow:
+    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.28),
+    inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.18),
+    inset -1.5px -2px 7px -3px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 1px -0.5px rgba(0, 0, 0, 0.55),
+    0 15px 38px rgba(0, 0, 0, 0.3);
 }
 
 @media (max-width: 639px) {
@@ -702,25 +798,33 @@ html[data-season="pride"] .logo-mark-pride {
     background:
       radial-gradient(
         circle at calc(18% + var(--nav-scroll-progress) * 54%) 0%,
-        rgba(255, 255, 255, 0.6),
+        rgba(255, 255, 255, 0.56),
         transparent 36%
       ),
-      linear-gradient(135deg, rgba(255, 250, 241, 0.54), rgba(255, 250, 241, 0.22)),
-      color-mix(in oklab, #fffaf1 34%, transparent);
-    box-shadow: 0 13px 30px rgba(24, 24, 27, 0.095);
-    backdrop-filter: blur(24px) saturate(1.34);
-    -webkit-backdrop-filter: blur(24px) saturate(1.34);
+      linear-gradient(135deg, rgba(255, 250, 241, 0.48), rgba(255, 250, 241, 0.18) 55%, rgba(255, 250, 241, 0.3)),
+      color-mix(in oklab, #fffaf1 30%, transparent);
+    box-shadow:
+      inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
+      inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.8),
+      inset 0 -1px 1px -0.5px rgba(24, 24, 27, 0.07),
+      0 13px 30px rgba(24, 24, 27, 0.095);
+    backdrop-filter: blur(22px) saturate(1.8);
   }
 
   .dark .site-nav-glass {
     background:
       radial-gradient(
         circle at calc(18% + var(--nav-scroll-progress) * 54%) 0%,
-        rgba(255, 255, 255, 0.08),
+        rgba(255, 255, 255, 0.1),
         transparent 36%
       ),
-      linear-gradient(135deg, rgba(30, 31, 31, 0.54), rgba(16, 17, 17, 0.28)),
-      color-mix(in oklab, #101111 38%, transparent);
+      linear-gradient(135deg, rgba(30, 31, 31, 0.5), rgba(16, 17, 17, 0.24) 55%, rgba(30, 31, 31, 0.34)),
+      color-mix(in oklab, #101111 34%, transparent);
+    box-shadow:
+      inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.26),
+      inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.16),
+      inset 0 -1px 1px -0.5px rgba(0, 0, 0, 0.5),
+      0 13px 30px rgba(0, 0, 0, 0.26);
   }
 }
 
@@ -764,7 +868,131 @@ html[data-season="pride"] .logo-mark-pride {
 
 .magnetic-icon {
   transition: transform 220ms var(--ease-weight);
-  will-change: transform;
+}
+
+/*
+ * Hero ECG trace — "Software with a pulse", literally. The path uses
+ * pathLength=100 so the draw-in is a plain dashoffset sweep. The base state
+ * is fully drawn (visible without JS/animation); the draw-in only runs when
+ * motion is allowed and entry animations aren't suppressed by a route
+ * transition.
+ */
+.pulse-trace {
+  display: inline-block;
+  width: 1.5em;
+  height: 0.5em;
+  margin-left: 0.12em;
+  overflow: visible;
+  vertical-align: -0.02em;
+}
+
+.pulse-trace-path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 100.5;
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pulse-trace-path {
+    stroke-dashoffset: 100.5;
+    animation: pulse-draw 1.25s var(--ease-in-out) 640ms both;
+  }
+
+  html:active-view-transition-type(nav-forward) .pulse-trace-path,
+  html:active-view-transition-type(nav-back) .pulse-trace-path,
+  html[data-view-transition-navigated="true"] .pulse-trace-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+.pulse-trace-glow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: blur(5px);
+  stroke-dasharray: 100.5;
+  stroke-dashoffset: 0;
+  opacity: 0.2;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The glow draws in with the trace, then beats twice — finite on purpose,
+     so nothing loops off-screen. */
+  .pulse-trace-glow {
+    stroke-dashoffset: 100.5;
+    animation:
+      pulse-draw 1.25s var(--ease-in-out) 640ms both,
+      pulse-beat 1.7s var(--ease-in-out) 2.1s 2;
+  }
+
+  html:active-view-transition-type(nav-forward) .pulse-trace-glow,
+  html:active-view-transition-type(nav-back) .pulse-trace-glow,
+  html[data-view-transition-navigated="true"] .pulse-trace-glow {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse-beat {
+  0%,
+  64%,
+  100% {
+    opacity: 0.2;
+  }
+
+  10% {
+    opacity: 0.52;
+  }
+
+  26% {
+    opacity: 0.24;
+  }
+
+  38% {
+    opacity: 0.44;
+  }
+}
+
+/*
+ * Scroll-driven reveals: below-the-fold blocks drift up and fade in as they
+ * enter the viewport. Pure CSS view-timeline — engines without support (or
+ * reduced-motion users) simply see the content in place. Compositor props
+ * only; each element is driven by its own visibility, so reveals sequence
+ * naturally with scroll and reverse when scrolling back up.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-rise {
+      animation: scroll-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 12% entry 56%;
+    }
+  }
+}
+
+@keyframes scroll-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.3rem, 0) scale(0.994);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
 @keyframes motion-rise {
@@ -897,16 +1125,6 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
-@keyframes view-slide-y {
-  from {
-    transform: translateY(var(--slide-y-offset, 10px));
-  }
-
-  to {
-    transform: translateY(0);
-  }
-}
-
 @keyframes theme-sweep {
   from {
     clip-path: circle(0 at var(--theme-transition-x) var(--theme-transition-y));
@@ -966,26 +1184,6 @@ html[data-season="pride"] .logo-mark-pride {
  * On touch / small screens the snapshot resolves instantly (see below).
  */
 @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  ::view-transition-old(.fade-out) {
-    animation: var(--duration-exit) var(--ease-out) view-fade reverse;
-  }
-
-  ::view-transition-new(.fade-in) {
-    animation: var(--duration-enter) var(--ease-out) both view-fade;
-  }
-
-  ::view-transition-old(.slide-down) {
-    animation:
-      var(--duration-exit) var(--ease-out) both view-fade reverse,
-      var(--duration-exit) var(--ease-out) both view-slide-y reverse;
-  }
-
-  ::view-transition-new(.slide-up) {
-    animation:
-      var(--duration-enter) var(--ease-out) both view-fade,
-      var(--duration-move) var(--ease-snap) both view-slide-y;
-  }
-
   ::view-transition-group(.page-enter),
   ::view-transition-group(.page-exit) {
     z-index: 1;

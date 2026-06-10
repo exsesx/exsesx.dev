@@ -3,7 +3,7 @@
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { startTransition, useCallback, useEffect } from "react";
+import { startTransition, useEffect, useEffectEvent } from "react";
 import { getPreviousRoute, queueScrollRestore } from "@/lib/navigation-history";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "./ui/button-variants";
@@ -26,7 +26,7 @@ function isEditableTarget(target: EventTarget | null) {
 export default function ProjectBackButton({ fallbackHref, fallbackTransitionTypes }: ProjectBackButtonProps) {
   const router = useRouter();
 
-  const navigateBack = useCallback(() => {
+  function navigateBack() {
     const previousRoute = getPreviousRoute();
     document.documentElement.dataset.viewTransitionNavigated = "true";
 
@@ -45,27 +45,31 @@ export default function ProjectBackButton({ fallbackHref, fallbackTransitionType
     startTransition(() => {
       router.push(fallbackHref, { transitionTypes: fallbackTransitionTypes });
     });
-  }, [fallbackHref, fallbackTransitionTypes, router]);
+  }
+
+  const handleEscapeKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (
+      event.defaultPrevented ||
+      event.key !== "Escape" ||
+      isEditableTarget(event.target) ||
+      document.querySelector(".hotkeys-panel")
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    navigateBack();
+  });
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (
-        event.defaultPrevented ||
-        event.key !== "Escape" ||
-        isEditableTarget(event.target) ||
-        document.querySelector(".hotkeys-panel")
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-      navigateBack();
+      handleEscapeKeyDown(event);
     }
 
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [navigateBack]);
+  }, []);
 
   return (
     <button

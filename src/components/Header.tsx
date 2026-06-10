@@ -8,7 +8,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
@@ -91,15 +91,23 @@ export default function Header() {
     "--nav-scroll-progress": navScrollProgress,
   } as MotionStyle;
   const isProjectRoute = pathname === "/projects" || pathname.startsWith("/project/");
-  const projectIndexTransitionTypes = pathname.startsWith("/project/") ? ["nav-back"] : undefined;
+  // Detail → index is hierarchical (slide back); every other tab hop is
+  // lateral, so it cross-fades instead of implying depth.
+  const projectIndexTransitionTypes = pathname.startsWith("/project/") ? ["nav-back"] : ["nav-fade"];
   const activeNavHref = getActiveNavHref(pathname);
+  // selectedNavHref is optimistic (set on pointer-down so the pill moves
+  // instantly); reconcile it with the real route during render instead of in
+  // an effect — https://react.dev/learn/you-might-not-need-an-effect
   const [selectedNavHref, setSelectedNavHref] = useState<Route>(activeNavHref);
+  const [prevActiveNavHref, setPrevActiveNavHref] = useState<Route>(activeNavHref);
+
+  if (prevActiveNavHref !== activeNavHref) {
+    setPrevActiveNavHref(activeNavHref);
+    setSelectedNavHref(activeNavHref);
+  }
+
   const navActionPillTransform =
     selectedNavHref === "/projects" ? navActionPillProjectsTransform : navActionPillHomeTransform;
-
-  useEffect(() => {
-    setSelectedNavHref(activeNavHref);
-  }, [activeNavHref]);
 
   function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, href: Route) {
     setSelectedNavHref(href);
@@ -120,6 +128,8 @@ export default function Header() {
           >
             <Link
               href="/"
+              transitionTypes={["nav-fade"]}
+              data-suppress-entry-motion=""
               className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
               aria-label="Oleh Vanin home"
               onClick={event => handleNavLinkClick(event, "/")}
@@ -154,8 +164,8 @@ export default function Header() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    transitionTypes={isProjectDetailToIndex ? projectIndexTransitionTypes : undefined}
-                    data-suppress-entry-motion={isProjectDetailToIndex ? "" : undefined}
+                    transitionTypes={isProjectDetailToIndex ? projectIndexTransitionTypes : ["nav-fade"]}
+                    data-suppress-entry-motion=""
                     aria-label={item.label}
                     className={cn(
                       navActionBaseClassName,

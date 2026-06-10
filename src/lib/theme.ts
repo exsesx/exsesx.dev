@@ -1,5 +1,5 @@
-export const THEME_CHANGE_EVENT = "exsesx:theme-change";
-export const THEME_STORAGE_KEY = "exsesx:color-scheme";
+const THEME_CHANGE_EVENT = "exsesx:theme-change";
+const THEME_STORAGE_KEY = "exsesx:color-scheme";
 // Source of truth for the page + Safari 26 chrome colors. The no-flash script
 // applies these inline to <html>/<body> so the WebKit live observer retints the
 // browser chrome in real time. Keep in sync with --background in globals.css.
@@ -15,7 +15,7 @@ export function isThemeMode(value: unknown): value is ThemeMode {
   return value === "light" || value === "dark" || value === "system";
 }
 
-export function getStoredThemeMode(): ThemeMode {
+function getStoredThemeMode(): ThemeMode {
   if (typeof window === "undefined") {
     return "system";
   }
@@ -49,7 +49,7 @@ export function getStoredThemeMode(): ThemeMode {
   return "system";
 }
 
-export function getSystemTheme(): ResolvedTheme {
+function getSystemTheme(): ResolvedTheme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 

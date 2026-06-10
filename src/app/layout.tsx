@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Bricolage_Grotesque, Inter } from "next/font/google";
 import Header from "../components/Header";
 import Hotkeys from "../components/Hotkeys";
 import KineticBackdrop from "../components/KineticBackdrop";
+import LiquidGlassLens from "../components/LiquidGlassLens";
 import RouteMotionGuard from "../components/RouteMotionGuard";
 import VersionTag from "../components/VersionTag";
 import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
@@ -10,6 +12,18 @@ import "../styles/globals.css";
 
 const siteDescription =
   "Oleh Vanin is a senior full-stack engineer and AI engineer building scalable product systems with React, Next.js, Node.js, Go, cloud infrastructure, and LLM workflows.";
+
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-bricolage",
+  display: "swap",
+});
 
 const faviconVersion = "v=2";
 const faviconAsset = (path: string) => `${path}?${faviconVersion}`;
@@ -116,6 +130,15 @@ const noFlashScript = String.raw`
   }
 
   applyTheme();
+
+  // Chromium is the only engine that renders SVG filter references inside
+  // backdrop-filter; everywhere else the whole backdrop-filter would be
+  // dropped. navigator.userAgentData exists only in Chromium, so gate the
+  // liquid-lens refraction behind it and let Safari/Firefox keep frosted glass.
+  if (navigator.userAgentData) {
+    element.classList.add("glass-lens");
+  }
+
   setSeason();
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
@@ -211,12 +234,18 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${bricolage.variable}`}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static theme bootstrap must run before Safari samples document chrome. */}
         <script id="noflash" dangerouslySetInnerHTML={{ __html: noFlashScript }} />
       </head>
       <body>
+        <LiquidGlassLens />
         <RouteMotionGuard />
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />

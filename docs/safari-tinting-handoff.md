@@ -30,16 +30,21 @@ viewport edges (live WebKit observer). Two sample sources:
 - `--safari-chrome-color` defined on `:root` (light) and `.dark` (dark), mirrors `--background`.
 - `.site-header`:
   - `--safari-sample-band: 0px` by default → **desktop**: header collapses, nav at the
-    original `0.75rem` gap. No 44px bar on desktop.
+    original `0.75rem` gap. No sample bar on desktop.
   - Under `@supports (-webkit-touch-callout: none)` + `@media (hover: none) and (pointer:
     coarse)` → **iOS-touch only**: `--safari-sample-band: max(env(safe-area-inset-top),
-    44px)`. (env underreports in this context, so 44px floors it to cover the status-bar
-    zone — proven required on device.)
+    11px)`. (env underreports in this context, so the floor guarantees sampling. 11px is
+    the empirical minimum — 10px breaks tinting; found on device 2026-06-10. The original
+    44px floor also worked but visibly blocked content scrolling under the status bar;
+    the 11px sliver hides behind the status bar itself, so content scrolls beneath
+    Safari's own chrome glass and no feathering is needed.)
   - `height: var(--safari-sample-band)`, `background-color: var(--safari-chrome-color)`,
     `transition: none` (the live observer needs an instant jump).
 - `.site-header-nav-frame`: `position: absolute; top: calc(env(safe-area-inset-top) +
-  0.75rem)`. **Decoupled from the 44px band** — it tracks the *real* status bar so the nav
-  isn't pushed too low. (Reusing the floored band here caused the "nav too low" bug.)
+  0.75rem)` on desktop; the iOS-touch block widens the gap to `1.4rem` so the nav stays
+  clear of the 11px sample sliver. **Decoupled from the floored band** — it tracks the
+  *real* status bar so the nav sits right. (Reusing the floored band here caused the
+  "nav too low" bug in the 44px era.)
 - `.site-header::before`: fade inset to `var(--safari-sample-band)` so it starts below the bar.
 
 ### `src/components/Header.tsx`
@@ -70,9 +75,10 @@ viewport edges (live WebKit observer). Two sample sources:
 
 ## Non-obvious invariants (don't regress these)
 
-1. The sampled element must **fill the status-bar zone** — a thin strip sits below it and
-   Safari samples the page above. `env(safe-area-inset-top)` underreports here → keep the
-   44px floor on the iOS bar.
+1. The sampled element must be tall enough to qualify: **≥11px** (10px breaks tinting —
+   found empirically on device, 2026-06-10). `env(safe-area-inset-top)` underreports here
+   → keep the 11px floor on the iOS bar. Don't raise it back toward 44px: anything taller
+   than the status bar visibly blocks content scrolling beneath it.
 2. Safari samples **solid `background-color`**, not `background-image` gradients.
 3. z-index does **not** influence Safari's sampler — don't try to out-stack the header.
 4. The sample bar's color must === the page background so the opaque band stays invisible.
@@ -93,5 +99,5 @@ viewport edges (live WebKit observer). Two sample sources:
 
 - Many commits are **unsigned** (remote session, 1Password locked). Re-sign before/at merge
   if signature history matters. Squash-merge collapses the diagnostic commits.
-- The 44px floor / `0.75rem` gap are tuned to the test device; adjust if another device
-  shows the nav off.
+- The 11px floor / `1.4rem` iOS nav gap are tuned to the test device; adjust if another
+  device shows the nav off or loses tinting.

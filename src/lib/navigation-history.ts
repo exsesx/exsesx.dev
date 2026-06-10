@@ -1,4 +1,4 @@
-export const PREVIOUS_ROUTE_STORAGE_KEY = "exsesx.previousRoute";
+const PREVIOUS_ROUTE_STORAGE_KEY = "exsesx.previousRoute";
 const PENDING_SCROLL_RESTORE_STORAGE_KEY = "exsesx.pendingScrollRestore";
 
 type StoredRoute = {

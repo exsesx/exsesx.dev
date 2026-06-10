@@ -8,7 +8,7 @@ const previewDeploymentUrl = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL
 const socialImageOrigin =
   process.env.VERCEL_ENV === "preview" && previewDeploymentUrl ? `https://${previewDeploymentUrl}` : siteUrl;
 
-export function createSocialImage(path: string, alt: string) {
+function createSocialImage(path: string, alt: string) {
   return {
     url: `${socialImageOrigin}${path}`,
     width: 1200,
@@ -43,7 +43,7 @@ type SocialImage = {
   type?: string;
 };
 
-export function getCanonicalUrl(path = "/") {
+function getCanonicalUrl(path = "/") {
   return path === "/" ? siteUrl : `${siteUrl}${path}`;
 }
 
