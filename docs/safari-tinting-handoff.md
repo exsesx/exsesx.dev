@@ -41,9 +41,10 @@ viewport edges (live WebKit observer). Two sample sources:
   - `height: var(--safari-sample-band)`, `background-color: var(--safari-chrome-color)`,
     `transition: none` (the live observer needs an instant jump).
 - `.site-header-nav-frame`: `position: absolute; top: calc(env(safe-area-inset-top) +
-  0.75rem)`. **Decoupled from the floored band** — it tracks the *real* status bar so the
-  nav sits right. (Reusing the floored band here caused the "nav too low" bug in the
-  44px era.)
+  0.75rem)` on desktop; the iOS-touch block widens the gap to `1.4rem` so the nav stays
+  clear of the 11px sample sliver. **Decoupled from the floored band** — it tracks the
+  *real* status bar so the nav sits right. (Reusing the floored band here caused the
+  "nav too low" bug in the 44px era.)
 - `.site-header::before`: fade inset to `var(--safari-sample-band)` so it starts below the bar.
 
 ### `src/components/Header.tsx`
@@ -98,5 +99,5 @@ viewport edges (live WebKit observer). Two sample sources:
 
 - Many commits are **unsigned** (remote session, 1Password locked). Re-sign before/at merge
   if signature history matters. Squash-merge collapses the diagnostic commits.
-- The 11px floor / `0.75rem` gap are tuned to the test device; adjust if another device
-  shows the nav off or loses tinting.
+- The 11px floor / `1.4rem` iOS nav gap are tuned to the test device; adjust if another
+  device shows the nav off or loses tinting.

@@ -472,6 +472,12 @@ html[data-season="pride"] .logo-mark-pride {
     .site-header {
       --safari-sample-band: max(env(safe-area-inset-top), 11px);
     }
+
+    /* Wider gap than the desktop 0.75rem so the nav stays clear of the
+       11px sample sliver. */
+    .site-header-nav-frame {
+      top: calc(env(safe-area-inset-top) + 1.4rem);
+    }
   }
 }
 
