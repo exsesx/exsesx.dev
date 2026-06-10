@@ -34,18 +34,6 @@ export function getHotkeySequenceKey(action: string, key: string, index: number)
   return `${action}-${index}-${key}`;
 }
 
-export function getHotkeySequenceOptions<TAction extends string>(
-  shortcuts: readonly HotkeyShortcut<TAction>[],
-  prefix: readonly string[],
-) {
-  return shortcuts
-    .filter(shortcut => prefix.length < shortcut.sequence.length && isSequencePrefix(shortcut.sequence, prefix))
-    .map(shortcut => ({
-      key: shortcut.sequence[prefix.length],
-      action: shortcut.action,
-    }));
-}
-
 export function createHotkeySequencer<TAction extends string>(shortcuts: readonly HotkeyShortcut<TAction>[]) {
   let buffer: string[] = [];
 
@@ -83,5 +71,9 @@ function isSameSequence(sequence: readonly string[], buffer: readonly string[]) 
 }
 
 function isSequencePrefix(sequence: readonly string[], buffer: readonly string[]) {
+  if (buffer.length > sequence.length) {
+    return false;
+  }
+
   return buffer.every((key, index) => sequence[index] === key);
 }

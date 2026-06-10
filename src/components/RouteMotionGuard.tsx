@@ -19,13 +19,13 @@ function getRouteChangingAnchor(event: MouseEvent) {
     event.shiftKey ||
     event.altKey
   ) {
-    return false;
+    return null;
   }
 
   const target = event.target;
 
   if (!(target instanceof Element)) {
-    return false;
+    return null;
   }
 
   const anchor = target.closest<HTMLAnchorElement>("a[href]");
