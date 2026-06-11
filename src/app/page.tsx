@@ -136,7 +136,7 @@ export default function HomePage() {
           </div>
 
           <aside className="motion-rise motion-delay-2 liquid-glass relative min-w-0 overflow-hidden rounded-[1.55rem] p-3 sm:rounded-[2rem] sm:p-5">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/70 to-transparent dark:via-amber-200/70" />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/70 to-transparent" />
             <UiCard className="snapshot-inner-card liquid-glass min-w-0 gap-0 rounded-[1.25rem] py-0 shadow-none ring-0 sm:rounded-[1.45rem] sm:ring-1">
               <CardHeader className="flex flex-col gap-3 px-2 pt-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-5 sm:pt-5">
                 <div className="min-w-0 flex-1">

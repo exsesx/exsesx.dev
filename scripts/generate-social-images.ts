@@ -11,15 +11,15 @@ const homeOut = path.join(process.cwd(), "public/images/social-preview.png");
 const logoPath = "M84 84 168 96 256 334 344 96 428 84 298 430c-4 10-12 16-23 16h-38c-11 0-19-6-23-16Z";
 
 const colors = {
-  ink: "#18181b",
-  night: "#101111",
-  cream: "#f8f1e7",
-  creamSoft: "#fff7e8",
-  card: "#fffaf1",
-  muted: "#71717a",
-  cyan: "#0e7490",
-  cyanBright: "#0891b2",
-  amber: "#fde68a",
+  ink: "#0b1423",
+  night: "#0a101c",
+  arctic: "#eef2f8",
+  frost: "#f3f7fd",
+  card: "#fbfdff",
+  muted: "#51607a",
+  ultramarine: "#2440ff",
+  ultramarineBright: "#3d5afe",
+  ice: "#5ce1ff",
   white: "#ffffff",
 };
 
@@ -127,23 +127,23 @@ function baseSvg(inner: string) {
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="${colors.creamSoft}"/>
-      <stop offset="0.55" stop-color="${colors.cream}"/>
-      <stop offset="1" stop-color="#eee1d1"/>
+      <stop offset="0" stop-color="${colors.frost}"/>
+      <stop offset="0.55" stop-color="${colors.arctic}"/>
+      <stop offset="1" stop-color="#dce4f0"/>
     </linearGradient>
     <linearGradient id="dark-panel" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#202223"/>
+      <stop offset="0" stop-color="#141d30"/>
       <stop offset="1" stop-color="${colors.night}"/>
     </linearGradient>
     <linearGradient id="glass" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#fffaf1" stop-opacity="0.92"/>
-      <stop offset="1" stop-color="#fffaf1" stop-opacity="0.58"/>
+      <stop offset="0" stop-color="${colors.card}" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="${colors.card}" stop-opacity="0.58"/>
     </linearGradient>
     <filter id="shadow" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="150%">
-      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#18181b" flood-opacity="0.14"/>
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="${colors.ink}" flood-opacity="0.14"/>
     </filter>
     <filter id="soft-shadow" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="150%">
-      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#18181b" flood-opacity="0.10"/>
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="${colors.ink}" flood-opacity="0.10"/>
     </filter>
     <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
       <path d="M44 0H0V44" fill="none" stroke="${colors.ink}" stroke-opacity="0.075" stroke-width="1"/>
@@ -151,12 +151,12 @@ function baseSvg(inner: string) {
   </defs>
   <style>
     .brand { font: 900 30px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: ${colors.ink}; letter-spacing: -0.4px; }
-    .eyebrow { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 800; font-size: 18px; fill: ${colors.cyan}; letter-spacing: 2.2px; text-transform: uppercase; }
+    .eyebrow { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 800; font-size: 18px; fill: ${colors.ultramarine}; letter-spacing: 2.2px; text-transform: uppercase; }
     .headline { font: 950 86px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -3.8px; }
     .headline-small { font: 950 62px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -2.2px; }
     .project-title { font: 950 58px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; letter-spacing: -2px; }
     .body { font: 700 28px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.3px; }
-    .body-dark { font: 700 22px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.creamSoft}; opacity: 0.88; }
+    .body-dark { font: 700 22px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.frost}; opacity: 0.88; }
     .label { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 850; font-size: 18px; fill: ${colors.ink}; letter-spacing: -0.2px; }
     .snapshot-value { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 950; fill: ${colors.ink}; letter-spacing: -2.4px; }
     .stat-label { font: 800 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; letter-spacing: -0.1px; }
@@ -165,7 +165,7 @@ function baseSvg(inner: string) {
   </style>
   <rect width="${width}" height="${height}" fill="url(#paper)"/>
   <rect width="${width}" height="${height}" fill="url(#grid)" opacity="0.62"/>
-  <circle cx="220" cy="120" r="210" fill="${colors.cyanBright}" opacity="0.085"/>
+  <circle cx="220" cy="120" r="210" fill="${colors.ultramarineBright}" opacity="0.085"/>
   <circle cx="1030" cy="96" r="180" fill="${colors.ink}" opacity="0.045"/>
   ${inner}
 </svg>`;
@@ -206,9 +206,9 @@ function pulseWave(x: number, y: number, w: number) {
   return `<g>
     <path d="M${x} ${y} C${x + u * 0.6} ${y - 34} ${x + u * 1.2} ${y + 30} ${x + u * 1.9} ${y - 4}
       S${x + u * 3} ${y - 40} ${x + w} ${y - 18}"
-      fill="none" stroke="${colors.amber}" stroke-width="7" stroke-linecap="round"/>
-    <circle cx="${x + u * 1.18}" cy="${y + 12}" r="9" fill="${colors.cyanBright}"/>
-    <circle cx="${x + u * 2.62}" cy="${y - 24}" r="9" fill="${colors.amber}"/>
+      fill="none" stroke="${colors.ultramarine}" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="${x + u * 1.18}" cy="${y + 12}" r="9" fill="${colors.ultramarineBright}"/>
+    <circle cx="${x + u * 2.62}" cy="${y - 24}" r="9" fill="${colors.ice}"/>
   </g>`;
 }
 
@@ -226,7 +226,7 @@ function homeStatsPanel(x: number, y: number, w: number, h: number) {
 
   return `<g filter="url(#shadow)">
     <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="40" fill="url(#glass)" stroke="${colors.ink}" stroke-opacity="0.1"/>
-    <circle cx="${x + 30}" cy="${y + 44}" r="6" fill="${colors.cyan}"/>
+    <circle cx="${x + 30}" cy="${y + 44}" r="6" fill="${colors.ultramarine}"/>
     <text x="${x + 48}" y="${y + 50}" class="eyebrow" font-size="16">Professional snapshot</text>
     ${pulseWave(x + 30, y + 96, w - 60)}
     ${snapshotTile(x + 28, rowY, colW, stats[0][0], stats[0][1])}
@@ -306,18 +306,18 @@ function projectSvg(project: Project) {
     <rect x="54" y="50" width="1092" height="530" rx="46" fill="${colors.night}"/>
     <circle cx="1020" cy="90" r="240" fill="${accent.main}" opacity="0.18"/>
     <circle cx="760" cy="560" r="260" fill="${accent.soft}" opacity="0.10"/>
-    <rect x="84" y="80" width="1032" height="470" rx="36" fill="${colors.creamSoft}" opacity="0.98"/>
+    <rect x="84" y="80" width="1032" height="470" rx="36" fill="${colors.frost}" opacity="0.98"/>
     ${logo(112, 112, 68, colors.ink)}
     <text x="194" y="154" class="brand">Oleh Vanin</text>
     <text x="194" y="184" class="tiny">exsesx.dev/project/${escapeXml(project.slug)}</text>
     <rect x="112" y="232" width="438" height="238" rx="34" fill="${colors.night}"/>
     <circle cx="492" cy="284" r="118" fill="${accent.main}" opacity="0.22"/>
     <path d="M158 392 C220 316 296 438 364 356 S470 326 510 390" fill="none" stroke="${accent.soft}" stroke-width="7" stroke-linecap="round" opacity="0.92"/>
-    <path d="M158 428 H498" stroke="${colors.creamSoft}" stroke-width="2" opacity="0.18"/>
-    <path d="M158 330 H438" stroke="${colors.creamSoft}" stroke-width="2" opacity="0.14"/>
+    <path d="M158 428 H498" stroke="${colors.frost}" stroke-width="2" opacity="0.18"/>
+    <path d="M158 330 H438" stroke="${colors.frost}" stroke-width="2" opacity="0.14"/>
     <circle cx="224" cy="344" r="9" fill="${accent.main}"/>
     <circle cx="360" cy="374" r="9" fill="${accent.soft}"/>
-    <circle cx="454" cy="336" r="9" fill="${colors.cyanBright}"/>
+    <circle cx="454" cy="336" r="9" fill="${colors.ultramarineBright}"/>
     <text x="600" y="250" class="eyebrow" fill="${accent.text}">${escapeXml(project.role)}</text>
     ${projectTitleLines
       .map((line, index) => `<text x="600" y="${334 + index * 62}" class="project-title">${escapeXml(line)}</text>`)
