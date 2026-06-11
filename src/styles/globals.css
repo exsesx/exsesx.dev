@@ -54,60 +54,66 @@
   --glass-rim-spec: rgba(255, 255, 255, 0.9);
   --glass-rim-soft: rgba(255, 255, 255, 0.7);
   --glass-rim-faint: rgba(255, 255, 255, 0.38);
-  --glass-rim-shade: rgba(24, 24, 27, 0.08);
-  --background: #f8f1e7;
+  --glass-rim-shade: rgba(11, 20, 35, 0.1);
+  /* Polar palette: arctic porcelain field, polar ink, electric ultramarine
+     signal that turns ice cyan at night. Winner of the 2026-06 palette lab
+     (vs indigo/periwinkle and the cross-pairs) — picked for boldness.
+     Cold axis throughout; the dark theme is the same world after sundown. */
+  --background: #eef2f8;
   /* Solid color Safari 26 samples for chrome tint; mirrors --background, painted
      inline by the no-flash script so the live observer retints the bars. */
-  --safari-chrome-color: #f8f1e7;
-  --foreground: #18181b;
-  --card: color-mix(in oklab, #fffaf1 82%, transparent);
-  --card-foreground: #18181b;
-  --primary: #18181b;
-  --primary-foreground: #fff7e8;
-  --secondary: color-mix(in oklab, #fffaf1 74%, white);
-  --secondary-foreground: #27272a;
+  --safari-chrome-color: #eef2f8;
+  --foreground: #0b1423;
+  --card: color-mix(in oklab, #fbfdff 82%, transparent);
+  --card-foreground: #0b1423;
+  --primary: #0b1423;
+  --primary-foreground: #f3f7fd;
+  --secondary: color-mix(in oklab, #fbfdff 74%, white);
+  --secondary-foreground: #1c2638;
   --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
-  --muted: color-mix(in oklab, #fffaf1 66%, #e4e4e7);
-  --muted-foreground: #71717a;
-  --accent: #0e7490;
-  --accent-foreground: #fff7e8;
+  --muted: color-mix(in oklab, #fbfdff 66%, #dbe3ee);
+  --muted-foreground: #51607a;
+  --accent: #2440ff;
+  --accent-foreground: #f3f7fd;
   --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--ring) 18%);
-  --destructive: #b91c1c;
-  --border: color-mix(in oklab, #18181b 12%, transparent);
-  --input: color-mix(in oklab, #18181b 10%, transparent);
-  --ring: #0891b2;
-  --menu-shadow: 0 22px 70px rgba(24, 24, 27, 0.16);
-  --panel-shadow: 0 24px 70px rgba(24, 24, 27, 0.1);
-  --project-card-shadow: 0 28px 80px rgba(24, 24, 27, 0.1);
-  --project-cta-shadow: 0 28px 80px rgba(24, 24, 27, 0.18);
+  --destructive: #be123c;
+  --border: color-mix(in oklab, #0b1423 12%, transparent);
+  --input: color-mix(in oklab, #0b1423 10%, transparent);
+  --ring: #3d5afe;
+  --menu-shadow: 0 22px 70px rgba(11, 20, 35, 0.16);
+  --panel-shadow: 0 24px 70px rgba(11, 20, 35, 0.1);
+  --project-card-shadow: 0 28px 80px rgba(11, 20, 35, 0.1);
+  --project-cta-shadow: 0 28px 80px rgba(11, 20, 35, 0.18);
 }
 
 .dark {
   --glass-saturate: 1.55;
   --glass-brightness: 1.12;
-  --glass-rim-spec: rgba(255, 255, 255, 0.24);
-  --glass-rim-soft: rgba(255, 255, 255, 0.14);
-  --glass-rim-faint: rgba(255, 255, 255, 0.06);
+  /* Specular rims pick up a faint ice tint at night so the glass reads as
+     frozen, not neutral plastic. */
+  --glass-rim-spec: rgba(205, 233, 255, 0.26);
+  --glass-rim-soft: rgba(205, 233, 255, 0.15);
+  --glass-rim-faint: rgba(205, 233, 255, 0.07);
   --glass-rim-shade: rgba(0, 0, 0, 0.5);
-  --background: #101111;
-  --safari-chrome-color: #101111;
-  --foreground: #fff7e8;
-  --card: color-mix(in oklab, #18181b 76%, transparent);
-  --card-foreground: #fff7e8;
-  --primary: #fff7e8;
-  --primary-foreground: #18181b;
+  --background: #0a101c;
+  --safari-chrome-color: #0a101c;
+  --foreground: #eaf2fc;
+  --card: color-mix(in oklab, #111a2c 76%, transparent);
+  --card-foreground: #eaf2fc;
+  --primary: #eaf2fc;
+  --primary-foreground: #0b1423;
   --secondary: color-mix(in oklab, #ffffff 8%, transparent);
-  --secondary-foreground: #f4f4f5;
+  --secondary-foreground: #e8eef8;
   --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
   --muted: color-mix(in oklab, #ffffff 7%, transparent);
-  --muted-foreground: #a1a1aa;
-  --accent: #fde68a;
-  --accent-foreground: #18181b;
+  --muted-foreground: #94a3b8;
+  --accent: #5ce1ff;
+  --accent-foreground: #0a101c;
   --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--ring) 18%);
-  --destructive: #f87171;
+  --destructive: #fb7185;
   --border: color-mix(in oklab, #ffffff 12%, transparent);
   --input: color-mix(in oklab, #ffffff 14%, transparent);
-  --ring: #fde68a;
+  --ring: #5ce1ff;
   --menu-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
   --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
   --project-card-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
@@ -247,44 +253,38 @@ select {
   opacity: 0.34;
 }
 
-.circuit-traces {
-  background-image:
-    repeating-linear-gradient(
-      135deg,
-      transparent 0 188px,
-      color-mix(in oklab, var(--foreground) 10%, transparent) 188px 190px,
-      transparent 190px 376px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 438px,
-      color-mix(in oklab, var(--accent) 16%, transparent) 438px 440px,
-      transparent 440px 760px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 316px,
-      color-mix(in oklab, var(--accent) 12%, transparent) 316px 318px,
-      transparent 318px 620px
-    );
-  background-position:
-    0 0,
-    16vw 0,
-    0 10svh;
-  background-size: auto, auto, auto;
-  background-repeat: repeat;
-  opacity: 0.26;
-  mask-image: linear-gradient(to bottom, transparent, black 12%, black 70%, transparent 96%);
+/*
+ * Background ECG rows — long flatlines that occasionally spike into a
+ * heartbeat, echoing the hero pulse trace. The SVG strokes currentColor so the
+ * accent token drives the tint in both themes; the mask fades the rows out
+ * toward the top chrome and the footer.
+ */
+.signal-traces {
+  color: var(--accent);
+  opacity: 0.2;
+  mask-image: linear-gradient(to bottom, transparent, black 14%, black 72%, transparent 96%);
 }
 
-.dark .circuit-traces {
-  opacity: 0.22;
+.dark .signal-traces {
+  opacity: 0.24;
 }
 
 .background-vignette {
   background:
+    radial-gradient(ellipse 80% 36% at 68% -8%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 62%),
     radial-gradient(circle at 22% 20%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 28%),
     radial-gradient(circle at 78% 8%, color-mix(in oklab, var(--foreground) 5%, transparent), transparent 22%),
+    linear-gradient(to bottom, transparent 0 68%, color-mix(in oklab, var(--background) 58%, transparent) 100%);
+}
+
+/* After dark the top wash becomes an aurora: two soft accent-tinted ellipses
+   bleeding down from the sky edge. Plain painted gradients — no blur, no
+   animation. */
+.dark .background-vignette {
+  background:
+    radial-gradient(ellipse 72% 34% at 26% -10%, color-mix(in oklab, var(--accent) 13%, transparent), transparent 64%),
+    radial-gradient(ellipse 54% 26% at 76% -6%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 60%),
+    radial-gradient(circle at 78% 8%, color-mix(in oklab, var(--foreground) 4%, transparent), transparent 22%),
     linear-gradient(to bottom, transparent 0 68%, color-mix(in oklab, var(--background) 58%, transparent) 100%);
 }
 
@@ -308,14 +308,14 @@ html[data-season="pride"] .logo-mark-pride {
 .liquid-glass {
   border: 1px solid color-mix(in oklab, currentColor 10%, transparent);
   background:
-    linear-gradient(135deg, rgba(255, 250, 241, 0.55), rgba(255, 250, 241, 0.2) 58%, rgba(255, 250, 241, 0.34)),
-    color-mix(in oklab, #fffaf1 38%, transparent);
+    linear-gradient(135deg, rgba(251, 253, 255, 0.55), rgba(251, 253, 255, 0.2) 58%, rgba(251, 253, 255, 0.34)),
+    color-mix(in oklab, #fbfdff 38%, transparent);
   box-shadow:
     inset 0 1px 1px -0.5px var(--glass-rim-spec),
     inset 1.5px 3px 6px -3px var(--glass-rim-soft),
     inset -1.5px -2px 6px -3px var(--glass-rim-faint),
     inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 18px 50px rgba(24, 24, 27, 0.08);
+    0 18px 50px rgba(11, 20, 35, 0.09);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
   transition:
     border-color 180ms var(--ease-weight),
@@ -326,8 +326,8 @@ html[data-season="pride"] .logo-mark-pride {
 
 .dark .liquid-glass {
   background:
-    linear-gradient(135deg, rgba(30, 31, 31, 0.6), rgba(16, 17, 17, 0.26) 58%, rgba(30, 31, 31, 0.42)),
-    color-mix(in oklab, #101111 40%, transparent);
+    linear-gradient(135deg, rgba(20, 29, 48, 0.6), rgba(10, 16, 28, 0.26) 58%, rgba(20, 29, 48, 0.42)),
+    color-mix(in oklab, #0a101c 40%, transparent);
   box-shadow:
     inset 0 1px 1px -0.5px var(--glass-rim-spec),
     inset 1.5px 3px 6px -3px var(--glass-rim-soft),
@@ -351,7 +351,7 @@ html[data-season="pride"] .logo-mark-pride {
     inset 1.5px 3px 6px -3px var(--glass-rim-soft),
     inset -1.5px -2px 6px -3px var(--glass-rim-faint),
     inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 22px 70px rgba(24, 24, 27, 0.16);
+    0 22px 70px rgba(11, 20, 35, 0.16);
 }
 
 .dark .dropdown-menu.liquid-glass {
@@ -462,25 +462,6 @@ html[data-season="pride"] .logo-mark-pride {
   transition: none;
 }
 
-/* iOS-touch only: the header becomes the solid status-bar sample bar. env(safe-
-   area-inset-top) underreports in this context, so floor it to 11px — the
-   empirical minimum Safari still samples (10px breaks tinting; found on device
-   2026-06-10). The sliver hides behind the status bar itself, so content
-   scrolls visibly beneath Safari's own chrome glass — no feathering needed. */
-@supports (-webkit-touch-callout: none) {
-  @media (hover: none) and (pointer: coarse) {
-    .site-header {
-      --safari-sample-band: max(env(safe-area-inset-top), 11px);
-    }
-
-    /* Wider gap than the desktop 0.75rem so the nav stays clear of the
-       11px sample sliver. */
-    .site-header-nav-frame {
-      top: calc(env(safe-area-inset-top) + 1.4rem);
-    }
-  }
-}
-
 /*
   The floating glass nav sits just below the real status bar — the original
   position: env(safe-area-inset-top) + 0.75rem. It is decoupled from
@@ -499,6 +480,27 @@ html[data-season="pride"] .logo-mark-pride {
   .site-header-nav-frame {
     right: 1.5rem;
     left: 1.5rem;
+  }
+}
+
+/* iOS-touch only: the header becomes the solid status-bar sample bar. env(safe-
+   area-inset-top) underreports in this context, so floor it to 11px — the
+   empirical minimum Safari still samples (10px breaks tinting; found on device
+   2026-06-10). The sliver hides behind the status bar itself, so content
+   scrolls visibly beneath Safari's own chrome glass — no feathering needed.
+   This block MUST come after the base .site-header-nav-frame rule: the at-rules
+   add no specificity, so the nav-frame override only wins by source order. */
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+    .site-header {
+      --safari-sample-band: max(env(safe-area-inset-top), 11px);
+    }
+
+    /* Wider gap than the desktop 0.75rem so the nav stays clear of the
+       11px sample sliver. */
+    .site-header-nav-frame {
+      top: calc(env(safe-area-inset-top) + 1.4rem);
+    }
   }
 }
 
@@ -540,14 +542,14 @@ html[data-season="pride"] .logo-mark-pride {
       rgba(255, 255, 255, 0.52),
       transparent 36%
     ),
-    linear-gradient(135deg, rgba(255, 250, 241, 0.46), rgba(255, 250, 241, 0.14) 55%, rgba(255, 250, 241, 0.3)),
-    color-mix(in oklab, #fffaf1 27%, transparent);
+    linear-gradient(135deg, rgba(251, 253, 255, 0.46), rgba(251, 253, 255, 0.14) 55%, rgba(251, 253, 255, 0.3)),
+    color-mix(in oklab, #fbfdff 27%, transparent);
   box-shadow:
     inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
     inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.85),
     inset -1.5px -2px 7px -3px rgba(255, 255, 255, 0.4),
-    inset 0 -1px 1px -0.5px rgba(24, 24, 27, 0.07),
-    0 15px 36px rgba(24, 24, 27, 0.1);
+    inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.07),
+    0 15px 36px rgba(11, 20, 35, 0.1);
   transform: translate3d(0, calc(var(--nav-scroll-progress) * -0.24rem), 0)
     scale(calc(1 - var(--nav-scroll-progress) * 0.01));
   transform-origin: top center;
@@ -623,7 +625,7 @@ html[data-season="pride"] .logo-mark-pride {
   box-shadow:
     inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
     inset 1px 2px 4px -2px rgba(255, 255, 255, 0.7),
-    inset 0 -1px 1px -0.5px rgba(24, 24, 27, 0.08),
+    inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.08),
     0 7px 18px color-mix(in oklab, var(--foreground) 11%, transparent);
   backdrop-filter: blur(18px) saturate(1.5);
   pointer-events: none;
@@ -783,8 +785,8 @@ html[data-season="pride"] .logo-mark-pride {
       rgba(255, 255, 255, 0.1),
       transparent 36%
     ),
-    linear-gradient(135deg, rgba(30, 31, 31, 0.52), rgba(16, 17, 17, 0.2) 55%, rgba(30, 31, 31, 0.36)),
-    color-mix(in oklab, #101111 32%, transparent);
+    linear-gradient(135deg, rgba(20, 29, 48, 0.52), rgba(10, 16, 28, 0.2) 55%, rgba(20, 29, 48, 0.36)),
+    color-mix(in oklab, #0a101c 32%, transparent);
   box-shadow:
     inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.28),
     inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.18),
@@ -801,13 +803,13 @@ html[data-season="pride"] .logo-mark-pride {
         rgba(255, 255, 255, 0.56),
         transparent 36%
       ),
-      linear-gradient(135deg, rgba(255, 250, 241, 0.48), rgba(255, 250, 241, 0.18) 55%, rgba(255, 250, 241, 0.3)),
-      color-mix(in oklab, #fffaf1 30%, transparent);
+      linear-gradient(135deg, rgba(251, 253, 255, 0.48), rgba(251, 253, 255, 0.18) 55%, rgba(251, 253, 255, 0.3)),
+      color-mix(in oklab, #fbfdff 30%, transparent);
     box-shadow:
       inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
       inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.8),
-      inset 0 -1px 1px -0.5px rgba(24, 24, 27, 0.07),
-      0 13px 30px rgba(24, 24, 27, 0.095);
+      inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.07),
+      0 13px 30px rgba(11, 20, 35, 0.095);
     backdrop-filter: blur(22px) saturate(1.8);
   }
 
@@ -818,8 +820,8 @@ html[data-season="pride"] .logo-mark-pride {
         rgba(255, 255, 255, 0.1),
         transparent 36%
       ),
-      linear-gradient(135deg, rgba(30, 31, 31, 0.5), rgba(16, 17, 17, 0.24) 55%, rgba(30, 31, 31, 0.34)),
-      color-mix(in oklab, #101111 34%, transparent);
+      linear-gradient(135deg, rgba(20, 29, 48, 0.5), rgba(10, 16, 28, 0.24) 55%, rgba(20, 29, 48, 0.34)),
+      color-mix(in oklab, #0a101c 34%, transparent);
     box-shadow:
       inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.26),
       inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.16),
@@ -854,7 +856,7 @@ html[data-season="pride"] .logo-mark-pride {
 
 .project-media-frame {
   overflow: hidden;
-  background: #09090b;
+  background: #060a14;
   contain: paint;
   isolation: isolate;
   transform: translateZ(0);
@@ -1298,8 +1300,12 @@ html[data-season="pride"] .logo-mark-pride {
       160px 160px;
   }
 
-  .circuit-traces {
-    opacity: 0.22;
+  .signal-traces {
+    opacity: 0.16;
+  }
+
+  .dark .signal-traces {
+    opacity: 0.2;
   }
 }
 

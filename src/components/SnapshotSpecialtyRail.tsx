@@ -43,7 +43,7 @@ export default function SnapshotSpecialtyRail({ specialties }: SnapshotSpecialty
     <section
       ref={railRef}
       data-visible={isVisible}
-      className="snapshot-specialty-rail -mx-2 mt-5 min-w-0 overflow-hidden px-2 pb-1 sm:mx-0 sm:mt-7 sm:overflow-visible sm:px-0 sm:pb-0"
+      className="snapshot-specialty-rail -mx-2 mt-5 min-w-0 overflow-hidden px-2 pb-1 sm:mx-0 sm:mt-7 sm:flex sm:flex-wrap sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0"
       aria-label="Specialties"
     >
       <div className="snapshot-specialty-track flex w-max gap-0 sm:contents">

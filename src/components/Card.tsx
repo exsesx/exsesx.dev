@@ -17,7 +17,7 @@ const accentClasses: Record<Project["accent"], string> = {
   controlup: "from-[rgba(56,135,232,0.5)] via-[rgba(16,60,120,0.22)] to-[rgba(251,176,59,0.1)]",
   cyan: "from-cyan-400/45 via-sky-950/20 to-transparent",
   mint: "from-[rgba(58,128,224,0.5)] via-[rgba(12,46,96,0.22)] to-transparent",
-  neutral: "from-zinc-950/90 via-zinc-950/45 to-transparent",
+  neutral: "from-slate-950/90 via-slate-950/45 to-transparent",
   quicklizard: "from-[rgba(64,168,196,0.5)] via-[rgba(28,92,112,0.2)] to-[rgba(255,140,40,0.1)]",
   rose: "from-[rgba(232,80,104,0.5)] via-[rgba(176,24,40,0.2)] to-[rgba(235,120,70,0.1)]",
   steel: "from-[rgba(96,150,196,0.42)] via-[rgba(52,80,116,0.2)] to-transparent",
@@ -146,7 +146,7 @@ export default function ProjectCard({
       ) : null}
       <div
         className={cn(
-          "relative overflow-hidden bg-zinc-950",
+          "relative overflow-hidden bg-slate-950",
           isCompact ? "h-36 sm:h-40" : featured ? "h-64 sm:h-72 lg:h-auto lg:min-h-72" : "h-52 sm:h-56",
         )}
         style={{
@@ -200,12 +200,12 @@ export default function ProjectCard({
                 {media.label}
               </video>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/65 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
           </div>
         </ProjectMediaFrame>
         <div
           className={cn(
-            "absolute rounded-full border border-white/15 bg-zinc-950/45 text-xs font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-xl",
+            "absolute rounded-full border border-white/15 bg-slate-950/45 text-xs font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-xl",
             isCompact ? "left-3 top-3 px-2.5 py-1" : "left-4 top-4 px-3 py-1",
           )}
         >
