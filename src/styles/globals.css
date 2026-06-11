@@ -442,19 +442,16 @@ html[data-season="pride"] .logo-mark-pride {
 
 /*
   Safari 26 samples .site-header for the TOP chrome bar (proven by diagnostic) and
-  reliably samples a solid background-color (not gradients). So the header IS a thin
-  solid bar pinned to the very top edge: tall enough to qualify (≥11px — 10px stops
-  being sampled), carrying var(--safari-chrome-color) which the no-flash script paints inline
-  so the live observer retints the top bar in real time. The visible glass nav is an
-  absolutely-positioned child (.site-header-nav-frame) floated BELOW this bar, so the
-  solid color is invisible in the status-bar zone and the frosted glass is untouched.
+  reliably samples a solid background-color (not gradients) at least 11px tall —
+  10px stops being sampled (found on device 2026-06-10). The chrome then KEEPS
+  the sampled color after the sampled element disappears (found on device
+  2026-06-11), so the solid band only needs to exist around first paint and
+  theme changes: the no-flash script sets html[data-chrome-sample] for ~1s on
+  each repaint and drops it again. The rest of the time the header is a
+  zero-height shell and every platform shares the exact same layout — no
+  permanent bar, no iOS-only rules.
 */
 .site-header {
-  /*
-    --safari-sample-band is the solid status-bar tint zone for Safari 26 (see the
-    iOS-only block below). It defaults to 0 so DESKTOP keeps the original layout
-    (no sample bar, nav at the normal 0.75rem gap). Only iOS-touch gets the real bar.
-  */
   --safari-sample-band: 0px;
   height: var(--safari-sample-band);
   isolation: isolate;
@@ -462,13 +459,14 @@ html[data-season="pride"] .logo-mark-pride {
   transition: none;
 }
 
-/*
-  The floating glass nav sits just below the real status bar — the original
-  position: env(safe-area-inset-top) + 0.75rem. It is decoupled from
-  --safari-sample-band: that band is floored to 11px ONLY so Safari samples the
-  bar and no longer tracks the real inset, so reusing it here would misplace the
-  nav. On desktop both terms are 0 → 0.75rem, the original gap.
-*/
+html[data-chrome-sample] .site-header {
+  /* env(safe-area-inset-top) underreports in this context, hence the 11px floor.
+     The band hides behind the status bar itself, so flashing it is invisible. */
+  --safari-sample-band: max(env(safe-area-inset-top), 11px);
+}
+
+/* The floating glass nav clears the real status bar by the same 0.75rem gap on
+   every platform; on desktop the inset is 0 → the original 0.75rem. */
 .site-header-nav-frame {
   position: absolute;
   top: calc(env(safe-area-inset-top) + 0.75rem);
@@ -483,31 +481,10 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
-/* iOS-touch only: the header becomes the solid status-bar sample bar. env(safe-
-   area-inset-top) underreports in this context, so floor it to 11px — the
-   empirical minimum Safari still samples (10px breaks tinting; found on device
-   2026-06-10). The sliver hides behind the status bar itself, so content
-   scrolls visibly beneath Safari's own chrome glass — no feathering needed.
-   This block MUST come after the base .site-header-nav-frame rule: the at-rules
-   add no specificity, so the nav-frame override only wins by source order. */
-@supports (-webkit-touch-callout: none) {
-  @media (hover: none) and (pointer: coarse) {
-    .site-header {
-      --safari-sample-band: max(env(safe-area-inset-top), 11px);
-    }
-
-    /* Wider gap than the desktop 0.75rem so the nav stays clear of the
-       11px sample sliver. */
-    .site-header-nav-frame {
-      top: calc(env(safe-area-inset-top) + 1.4rem);
-    }
-  }
-}
-
 .site-header::before {
   position: absolute;
-  /* Soft fade behind the nav, below the solid sample bar. */
-  inset: var(--safari-sample-band) 0 -1.8rem;
+  /* Soft fade behind the nav; the flashed sample band paints over its top. */
+  inset: 0 0 -1.8rem;
   z-index: -1;
   pointer-events: none;
   content: "";

@@ -41,6 +41,20 @@ const noFlashScript = String.raw`
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
   var themeColorMeta = null;
+  var sampleBandTimer = 0;
+
+  // Safari 26 keeps a sampled chrome color after the sampled element disappears
+  // (found on device 2026-06-11), so the solid band in .site-header only needs
+  // to exist around repaints: flash html[data-chrome-sample] for ~1s on first
+  // paint and every theme change, then drop it so the page layout stays
+  // identical to desktop. See html[data-chrome-sample] in globals.css.
+  function flashChromeSampleBand() {
+    window.clearTimeout(sampleBandTimer);
+    element.dataset.chromeSample = "";
+    sampleBandTimer = window.setTimeout(function () {
+      delete element.dataset.chromeSample;
+    }, 1000);
+  }
 
   // Own the theme-color meta instead of touching React's: React hoists head
   // metas and mutating one it tracks breaks its deletion pass on navigation.
@@ -74,6 +88,7 @@ const noFlashScript = String.raw`
     element.style.backgroundColor = color;
     element.style.colorScheme = scheme;
     syncThemeColorMeta();
+    flashChromeSampleBand();
   }
 
   function getStoredMode() {
@@ -143,6 +158,9 @@ const noFlashScript = String.raw`
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
+  // The head-run flash above can expire before a slow first paint, and bfcache
+  // restores reset the chrome — pageshow covers both.
+  window.addEventListener("pageshow", flashChromeSampleBand);
 
   if (mql.addEventListener) {
     mql.addEventListener("change", applyTheme);
