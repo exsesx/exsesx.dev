@@ -1,5 +1,9 @@
 # Repo notes
 
+## Commits
+
+All commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Format: `<type>: <description>`, e.g. `feat: add dark mode`, `fix: correct typo`, `chore: update deps`. Common types: `feat`, `fix`, `chore`, `refactor`, `ci`, `docs`, `style`, `test`.
+
 ## Pull requests
 
 When creating a PR, after `gh pr create`:
