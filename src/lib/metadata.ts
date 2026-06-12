@@ -4,13 +4,16 @@ export const siteUrl = "https://exsesx.dev";
 export const siteName = "exsesx.dev";
 
 const socialPreviewPath = "/images/social-preview.png";
+// Bump to force social platforms (Telegram, X, LinkedIn, Slack) to re-scrape
+// cached previews — they cache og:image by URL.
+const socialImageVersion = "2";
 const previewDeploymentUrl = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
 const socialImageOrigin =
   process.env.VERCEL_ENV === "preview" && previewDeploymentUrl ? `https://${previewDeploymentUrl}` : siteUrl;
 
 function createSocialImage(path: string, alt: string) {
   return {
-    url: `${socialImageOrigin}${path}`,
+    url: `${socialImageOrigin}${path}?v=${socialImageVersion}`,
     width: 1200,
     height: 630,
     alt,
