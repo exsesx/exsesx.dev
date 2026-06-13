@@ -811,8 +811,8 @@ html[data-chrome-sample] .site-header {
  * Version tag — the deploy's commit SHA, carved into the page foot like an
  * engraving rather than a floating pill. The glyphs are filled near the surface
  * tone and given a dark upper lip + light lower lip so they read as cut INTO the
- * page; an accent "commit node" sits on a hairline that fades out symmetrically
- * to both sides (echoing the hero pulse/signal motif) so the mark stays centered.
+ * page, flanked by a hairline that fades out symmetrically to both sides so the
+ * mark stays centered.
  */
 .version-tag {
   display: inline-flex;
@@ -851,26 +851,9 @@ html[data-chrome-sample] .site-header {
   background: linear-gradient(to left, transparent, color-mix(in oklab, var(--foreground) 20%, transparent));
 }
 
-.version-tag-node {
-  position: relative;
-  flex: none;
-  width: 0.34rem;
-  height: 0.34rem;
-  background: color-mix(in oklab, var(--accent) 88%, var(--foreground));
-  border-radius: 999px;
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--background) 55%, transparent);
-  transition: box-shadow 240ms var(--ease-weight);
-}
-
 @media (hover: hover) and (pointer: fine) {
   .version-tag:hover {
     color: color-mix(in oklab, var(--background) 30%, var(--foreground) 60%);
-  }
-
-  .version-tag:hover .version-tag-node {
-    box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--background) 55%, transparent),
-      0 0 9px color-mix(in oklab, var(--accent) 60%, transparent);
   }
 }
 
