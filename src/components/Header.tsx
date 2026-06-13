@@ -90,7 +90,6 @@ export default function Header() {
   const navStyle = {
     "--nav-scroll-progress": navScrollProgress,
   } as MotionStyle;
-  const isProjectRoute = pathname === "/projects" || pathname.startsWith("/project/");
   // Detail → index is hierarchical (slide back); every other tab hop is
   // lateral, so it cross-fades instead of implying depth.
   const projectIndexTransitionTypes = pathname.startsWith("/project/") ? ["nav-back"] : ["nav-fade"];
