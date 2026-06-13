@@ -12,6 +12,7 @@ import SnapshotSpecialtyRail from "../components/SnapshotSpecialtyRail";
 import { buttonVariants } from "../components/ui/button-variants";
 import { CardContent, CardHeader, CardTitle, Card as UiCard } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
+import VersionTag from "../components/VersionTag";
 import { createPageMetadata } from "../lib/metadata";
 import { projects, specialties } from "../lib/projects";
 import { cn } from "../lib/utils";
@@ -289,6 +290,10 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+
+        <footer className="mt-14 flex justify-end pb-4">
+          <VersionTag />
+        </footer>
       </main>
     </RouteFadeTransition>
   );

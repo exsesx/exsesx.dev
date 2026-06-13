@@ -5,7 +5,6 @@ import Hotkeys from "../components/Hotkeys";
 import KineticBackdrop from "../components/KineticBackdrop";
 import LiquidGlassLens from "../components/LiquidGlassLens";
 import RouteMotionGuard from "../components/RouteMotionGuard";
-import VersionTag from "../components/VersionTag";
 import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
 import { createNoFlashScript } from "../lib/no-flash-script";
 import { THEME_CHROME_COLORS } from "../lib/theme";
@@ -131,7 +130,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Header />
           <Hotkeys />
           {children}
-          <VersionTag />
         </div>
       </body>
     </html>
