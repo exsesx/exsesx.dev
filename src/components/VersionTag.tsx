@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "../lib/utils";
 
 const tagClassName =
   "flex items-center gap-2 font-mono text-[0.6875rem] font-semibold tracking-[0.18em] text-muted-foreground/55 transition-colors duration-200 hover:text-muted-foreground/80";
@@ -30,7 +31,7 @@ export default function VersionTag() {
           target="_blank"
           rel="noreferrer"
           title={commitHash}
-          className={`${tagClassName} rounded-full`}
+          className={cn(tagClassName, "rounded-full")}
         >
           {content}
         </a>
