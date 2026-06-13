@@ -808,11 +808,11 @@ html[data-chrome-sample] .site-header {
 }
 
 /*
- * Version tag — the deploy's commit SHA, carved into the page foot like a
- * letterpress mark rather than a floating pill. A faint hairline runs into an
- * accent "commit node" (echoing the hero pulse/signal motif), then the engraved
- * mono hash. Subtle at rest; on hover the node lights up and the text lifts
- * toward the foreground, all on the shared --ease-weight curve.
+ * Version tag — the deploy's commit SHA, carved into the page foot like an
+ * engraving rather than a floating pill. The glyphs are filled near the surface
+ * tone and given a dark upper lip + light lower lip so they read as cut INTO the
+ * page; an accent "commit node" sits on a hairline that fades out symmetrically
+ * to both sides (echoing the hero pulse/signal motif) so the mark stays centered.
  */
 .version-tag {
   display: inline-flex;
@@ -822,21 +822,33 @@ html[data-chrome-sample] .site-header {
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.18em;
-  color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
-  text-shadow: 0 1px 0 color-mix(in oklab, white 78%, transparent);
+  color: color-mix(in oklab, var(--background) 56%, var(--foreground) 40%);
+  text-shadow:
+    0 -1px 1px color-mix(in oklab, var(--foreground) 16%, transparent),
+    0 1px 0.5px color-mix(in oklab, white 92%, transparent);
   transition: color 240ms var(--ease-weight);
 }
 
 .dark .version-tag {
-  color: color-mix(in oklab, var(--muted-foreground) 62%, transparent);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55);
+  color: color-mix(in oklab, var(--background) 38%, var(--foreground) 30%);
+  text-shadow:
+    0 -1px 1px rgba(0, 0, 0, 0.7),
+    0 1px 1px color-mix(in oklab, white 8%, transparent);
 }
 
-.version-tag::before {
+.version-tag::before,
+.version-tag::after {
   width: 1.75rem;
   height: 1px;
   content: "";
+}
+
+.version-tag::before {
   background: linear-gradient(to right, transparent, color-mix(in oklab, var(--foreground) 20%, transparent));
+}
+
+.version-tag::after {
+  background: linear-gradient(to left, transparent, color-mix(in oklab, var(--foreground) 20%, transparent));
 }
 
 .version-tag-node {
@@ -852,7 +864,7 @@ html[data-chrome-sample] .site-header {
 
 @media (hover: hover) and (pointer: fine) {
   .version-tag:hover {
-    color: color-mix(in oklab, var(--foreground) 82%, transparent);
+    color: color-mix(in oklab, var(--background) 30%, var(--foreground) 60%);
   }
 
   .version-tag:hover .version-tag-node {
