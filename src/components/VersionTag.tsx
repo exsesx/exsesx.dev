@@ -4,11 +4,10 @@ export default function VersionTag() {
   const commitHash = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
 
   return commitHash ? (
-    <div
-      title={commitHash}
-      className="fixed bottom-4 right-4 rounded-full border border-border bg-card/70 px-3 py-1 font-mono text-xs font-bold text-muted-foreground opacity-70 shadow-sm backdrop-blur-xl"
-    >
-      {commitHash.substring(0, 7)}
+    <div className="flex w-full justify-center px-4 py-6">
+      <span title={commitHash} className="font-mono text-xs text-muted-foreground opacity-40">
+        {commitHash.substring(0, 7)}
+      </span>
     </div>
   ) : (
     <React.Fragment />
