@@ -25,7 +25,7 @@ export default function VersionTag({ className }: { className?: string }) {
     <div
       title={commitHash}
       className={cn(
-        "version-tag liquid-glass inline-flex h-9 items-center rounded-full px-3 font-mono text-xs font-black text-muted-foreground",
+        "version-tag liquid-glass relative inline-flex h-8 items-center overflow-hidden rounded-full px-3 font-mono text-[0.72rem] font-black text-muted-foreground",
         className,
       )}
     >

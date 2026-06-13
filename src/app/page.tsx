@@ -79,7 +79,7 @@ export default function HomePage() {
 
   return (
     <RouteFadeTransition>
-      <main className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-20 pt-28 sm:px-6 lg:pt-32">
+      <main className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-12 pt-28 sm:px-6 lg:pb-14 lg:pt-32">
         <section className="hero-viewport grid min-w-0 items-center gap-10 py-8 lg:grid-cols-[1.04fr_0.96fr] lg:py-12">
           <div className="min-w-0 max-w-4xl">
             <div className="motion-rise liquid-glass mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground">
@@ -291,7 +291,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <footer className="mt-14 flex justify-end pb-4">
+        <footer className="mt-8 flex justify-center">
           <VersionTag />
         </footer>
       </main>
