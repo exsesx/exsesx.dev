@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
+import Script from "next/script";
 import Header from "../components/Header";
 import Hotkeys from "../components/Hotkeys";
 import KineticBackdrop from "../components/KineticBackdrop";
@@ -30,6 +31,8 @@ const faviconVersion = "v=3";
 const faviconAsset = (path: string) => `${path}?${faviconVersion}`;
 
 const noFlashScript = createNoFlashScript(THEME_CHROME_COLORS.dark, THEME_CHROME_COLORS.light);
+const shouldLoadAnalytics = process.env.VERCEL_ENV === "production";
+const umamiWebsiteId = "75a63c31-71fb-4712-9345-9b2e5a93445c";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -134,6 +137,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <VersionTag />
         </div>
       </body>
+      {shouldLoadAnalytics ? (
+        <Script
+          data-website-id={umamiWebsiteId}
+          id="umami-analytics"
+          src="https://cloud.umami.is/script.js"
+          strategy="lazyOnload"
+        />
+      ) : null}
     </html>
   );
 }
