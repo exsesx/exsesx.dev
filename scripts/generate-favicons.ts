@@ -6,6 +6,7 @@ import sharp from "sharp";
 // The PNG set uses the light-circle variant (favicon-dark.svg), matching the
 // original assets; favicon.ico embeds 16px + 32px PNGs.
 const faviconDir = path.join(process.cwd(), "public/favicon");
+const publicDir = path.join(process.cwd(), "public");
 const sourceSvg = path.join(faviconDir, "favicon-dark.svg");
 
 const pngTargets: Array<[string, number]> = [
@@ -59,7 +60,9 @@ async function main() {
     })),
   );
 
-  await writeFile(path.join(faviconDir, "favicon.ico"), buildIco(icoImages));
+  const ico = buildIco(icoImages);
+  await writeFile(path.join(faviconDir, "favicon.ico"), ico);
+  await writeFile(path.join(publicDir, "favicon.ico"), ico);
 }
 
 await main();
