@@ -27,7 +27,7 @@ const bricolage = Bricolage_Grotesque({
   display: "swap",
 });
 
-const faviconVersion = "v=3";
+const faviconVersion = "v=4";
 const faviconAsset = (path: string) => `${path}?${faviconVersion}`;
 
 const noFlashScript = createNoFlashScript(THEME_CHROME_COLORS.dark, THEME_CHROME_COLORS.light);
@@ -96,7 +96,7 @@ export const metadata: Metadata = {
       { url: faviconAsset("/favicon/favicon-32x32.png"), sizes: "32x32", type: "image/png" },
       { url: faviconAsset("/favicon/favicon-16x16.png"), sizes: "16x16", type: "image/png" },
     ],
-    shortcut: faviconAsset("/favicon/favicon.ico"),
+    shortcut: faviconAsset("/favicon.ico"),
     apple: [{ url: faviconAsset("/favicon/apple-touch-icon.png"), sizes: "180x180" }],
     other: [{ rel: "mask-icon", url: faviconAsset("/favicon/safari-pinned-tab.svg"), color: "#0b1423" }],
   },
