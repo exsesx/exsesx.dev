@@ -14,6 +14,7 @@ import { CardContent, CardHeader, CardTitle, Card as UiCard } from "../component
 import { Separator } from "../components/ui/separator";
 import { createPageMetadata } from "../lib/metadata";
 import { projects, specialties } from "../lib/projects";
+import { buildHomeStructuredData, serializeStructuredData } from "../lib/structured-data";
 import { cn } from "../lib/utils";
 
 export const metadata: Metadata = createPageMetadata({
@@ -75,9 +76,15 @@ const workingPrinciples = [
 
 export default function HomePage() {
   const featuredProjects = projects.slice(0, 3);
+  const structuredData = buildHomeStructuredData();
 
   return (
     <RouteFadeTransition>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static site data.
+        dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
+      />
       <main className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-20 pt-28 sm:px-6 lg:pt-32">
         <section className="hero-viewport grid min-w-0 items-center gap-10 py-8 lg:grid-cols-[1.04fr_0.96fr] lg:py-12">
           <div className="min-w-0 max-w-4xl">
