@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Inter } from "next/font/google";
 import Script from "next/script";
 import Header from "../components/Header";
 import Hotkeys from "../components/Hotkeys";
@@ -10,22 +9,14 @@ import VersionTag from "../components/VersionTag";
 import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
 import { createNoFlashScript } from "../lib/no-flash-script";
 import { THEME_CHROME_COLORS } from "../lib/theme";
+// MonoLisa webfonts: official per-unicode-range subsets (variable weight 1–900,
+// normal + italic) so the browser only fetches the glyph ranges a page actually
+// renders. Family names "MonoLisaText" / "MonoLisaCode" are used in globals.css.
+import "../styles/monolisa.css";
 import "../styles/globals.css";
 
 const siteDescription =
   "Oleh Vanin is a senior full-stack engineer and AI engineer building scalable product systems with React, Next.js, Node.js, Go, cloud infrastructure, and LLM workflows.";
-
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-bricolage",
-  display: "swap",
-});
 
 const faviconVersion = "v=4";
 const faviconAsset = (path: string) => `${path}?${faviconVersion}`;
@@ -116,12 +107,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${bricolage.variable}`}
-      data-scroll-behavior="smooth"
-      suppressHydrationWarning
-    >
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static theme bootstrap must run before Safari samples document chrome. */}
         <script id="noflash" dangerouslySetInnerHTML={{ __html: noFlashScript }} />
