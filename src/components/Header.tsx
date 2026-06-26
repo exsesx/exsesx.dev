@@ -6,9 +6,8 @@ import { domAnimation, LazyMotion, useReducedMotion, useScroll, useSpring, useTr
 import * as m from "motion/react-m";
 import type { Route } from "next";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { MouseEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
@@ -69,8 +68,12 @@ function scrollToPageTop() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function getBrowserPathname() {
+  return window.location.pathname;
+}
+
 export default function Header() {
-  const pathname = usePathname();
+  const [pathname, setPathname] = useState("/");
   const prefersReducedMotion = useReducedMotion();
   const { scrollY } = useScroll();
   const rawScrollProgress = useTransform(scrollY, scrollYValue =>
@@ -104,6 +107,38 @@ export default function Header() {
     setPrevActiveNavHref(activeNavHref);
     setSelectedNavHref(activeNavHref);
   }
+
+  useEffect(() => {
+    function syncPathname() {
+      setPathname(getBrowserPathname());
+    }
+
+    function schedulePathnameSync() {
+      window.requestAnimationFrame(syncPathname);
+    }
+
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+
+    syncPathname();
+    window.history.pushState = function pushStateWithPathnameSync(...args) {
+      const result = originalPushState.apply(this, args);
+      schedulePathnameSync();
+      return result;
+    };
+    window.history.replaceState = function replaceStateWithPathnameSync(...args) {
+      const result = originalReplaceState.apply(this, args);
+      schedulePathnameSync();
+      return result;
+    };
+    window.addEventListener("popstate", syncPathname);
+
+    return () => {
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
+      window.removeEventListener("popstate", syncPathname);
+    };
+  }, []);
 
   const navActionPillTransform =
     selectedNavHref === "/projects" ? navActionPillProjectsTransform : navActionPillHomeTransform;

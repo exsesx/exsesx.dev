@@ -5,10 +5,8 @@ const MAX_RESUME_PDF_BYTES = 10 * 1024 * 1024;
 const RESUME_PDF_FETCH_TIMEOUT_MS = 10_000;
 const RESUME_PDF_BROWSER_CACHE_SECONDS = 60 * 60;
 const RESUME_PDF_STALE_SECONDS = 60 * 60 * 24;
-export const runtime = "nodejs";
-export const revalidate = 21600;
 
-const RESUME_PDF_REVALIDATE_SECONDS = revalidate;
+const RESUME_PDF_REVALIDATE_SECONDS = 21_600;
 const RESUME_PDF_CACHE_CONTROL = [
   "public",
   `max-age=${RESUME_PDF_BROWSER_CACHE_SECONDS}`,
