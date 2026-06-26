@@ -211,7 +211,7 @@ async function ProjectPageContent({ params }: ProjectPageProps) {
               ))}
             </div>
 
-            <UiCard className="liquid-glass gap-0 rounded-[1.85rem] py-0 shadow-none">
+            <UiCard className="surface-panel gap-0 rounded-[1.85rem] py-0 shadow-none">
               <CardHeader className="gap-3 px-7 pb-5 pt-7 sm:px-10 sm:pb-6 sm:pt-10">
                 <CardTitle className="text-2xl font-black tracking-tight text-foreground">Project signal</CardTitle>
                 <CardDescription className="max-w-3xl text-lg leading-8">{project.description}</CardDescription>
@@ -280,7 +280,7 @@ async function ProjectPageContent({ params }: ProjectPageProps) {
           </div>
 
           <div className="grid gap-6">
-            <UiCard className="liquid-glass gap-0 rounded-[1.85rem] py-0 shadow-none">
+            <UiCard className="surface-panel gap-0 rounded-[1.85rem] py-0 shadow-none">
               <CardHeader className="px-7 pb-4 pt-7 sm:px-10 sm:pb-5 sm:pt-10">
                 <CardTitle className="text-2xl font-black tracking-tight text-foreground">Context</CardTitle>
               </CardHeader>
@@ -289,7 +289,7 @@ async function ProjectPageContent({ params }: ProjectPageProps) {
               </CardContent>
             </UiCard>
 
-            <UiCard className="liquid-glass gap-0 rounded-[1.85rem] py-0 shadow-none">
+            <UiCard className="surface-panel gap-0 rounded-[1.85rem] py-0 shadow-none">
               <CardHeader className="px-7 pb-4 pt-7 sm:px-10 sm:pb-5 sm:pt-10">
                 <CardTitle className="text-2xl font-black tracking-tight text-foreground">Contribution</CardTitle>
               </CardHeader>
@@ -310,7 +310,7 @@ async function ProjectPageContent({ params }: ProjectPageProps) {
               </CardContent>
             </UiCard>
 
-            <UiCard className="liquid-glass gap-0 rounded-[1.85rem] py-0 shadow-none">
+            <UiCard className="surface-panel gap-0 rounded-[1.85rem] py-0 shadow-none">
               <CardHeader className="px-7 pb-4 pt-7 sm:px-10 sm:pb-5 sm:pt-10">
                 <CardTitle className="text-2xl font-black tracking-tight text-foreground">Outcome</CardTitle>
               </CardHeader>
