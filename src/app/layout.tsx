@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
 import Header from "../components/Header";
 import Hotkeys from "../components/Hotkeys";
 import KineticBackdrop from "../components/KineticBackdrop";
@@ -128,10 +129,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body>
         <LiquidGlassLens />
-        <RouteMotionGuard />
+        <Suspense>
+          <RouteMotionGuard />
+        </Suspense>
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />
-          <Header />
+          <Suspense>
+            <Header />
+          </Suspense>
           <Hotkeys />
           {children}
           <VersionTag />

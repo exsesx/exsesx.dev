@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect } from "react";
 import {
   consumeScrollRestore,
@@ -47,19 +46,26 @@ function getRouteChangingAnchor(event: MouseEvent) {
   return anchor;
 }
 
+function restoreQueuedScrollForCurrentRoute() {
+  const scrollY = consumeScrollRestore(getCurrentRoutePath());
+
+  if (scrollY === null) {
+    return;
+  }
+
+  window.scrollTo(0, scrollY);
+}
+
+function scheduleScrollRestore() {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(restoreQueuedScrollForCurrentRoute);
+  });
+}
+
 export default function RouteMotionGuard() {
-  const pathname = usePathname();
-
   useLayoutEffect(() => {
-    const currentPath = `${pathname}${window.location.search}${window.location.hash}`;
-    const scrollY = consumeScrollRestore(currentPath);
-
-    if (scrollY === null) {
-      return;
-    }
-
-    window.scrollTo(0, scrollY);
-  }, [pathname]);
+    restoreQueuedScrollForCurrentRoute();
+  }, []);
 
   useEffect(() => {
     function markRouteNavigation(event: MouseEvent) {
@@ -76,6 +82,8 @@ export default function RouteMotionGuard() {
       } else {
         delete document.documentElement.dataset.viewTransitionNavigated;
       }
+
+      scheduleScrollRestore();
     }
 
     document.addEventListener("click", markRouteNavigation, { capture: true });
@@ -89,6 +97,7 @@ export default function RouteMotionGuard() {
 
       if (previousRoute?.path === getCurrentRoutePath()) {
         queueScrollRestore(previousRoute);
+        scheduleScrollRestore();
       }
     }
 

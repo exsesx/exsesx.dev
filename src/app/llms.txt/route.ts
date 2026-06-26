@@ -1,8 +1,6 @@
 import { siteUrl } from "@/lib/metadata";
 import { getProjectPath, projects, specialties } from "@/lib/projects";
 
-export const dynamic = "force-static";
-
 export function GET() {
   const projectLinks = projects.map(
     project => `- [${project.name}](${siteUrl}${getProjectPath(project)}): ${project.description}`,

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ViewTransition } from "react";
+import { Suspense, ViewTransition } from "react";
 import ProjectCard from "../../../components/Card";
 import ProjectBackButton from "../../../components/ProjectBackButton";
 import RouteFadeTransition from "../../../components/RouteFadeTransition";
@@ -65,8 +65,6 @@ const accentTopLightClasses: Record<Project["accent"], string> = {
   steel: "bg-[linear-gradient(180deg,rgba(96,150,196,0.18),rgba(52,80,116,0.05)_48%,rgba(24,24,27,0))]",
   violet: "bg-[linear-gradient(180deg,rgba(150,96,214,0.20),rgba(190,110,210,0.05)_55%,rgba(24,24,27,0))]",
 };
-
-export const dynamicParams = false;
 
 export function generateStaticParams() {
   return projects.map(project => ({
@@ -137,7 +135,44 @@ function ProjectMedia({ project, priority = false }: { project: Project; priorit
   );
 }
 
-export default async function ProjectPage({ params }: ProjectPageProps) {
+function ProjectPageFallback() {
+  return (
+    <RouteFadeTransition>
+      <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:pt-28">
+        <section className="grid gap-8 lg:grid-cols-[0.48fr_0.52fr] lg:items-stretch">
+          <div className="motion-rise flex flex-col gap-6">
+            <ProjectBackButton fallbackHref="/projects" fallbackTransitionTypes={["nav-back"]} />
+
+            <div>
+              <p className="h-3 w-44 rounded-full bg-accent/30" />
+              <div className="mt-4 h-20 w-full max-w-xl rounded-[1.5rem] bg-muted/45 sm:h-28" />
+              <div className="mt-6 h-8 w-full max-w-lg rounded-full bg-muted/35" />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <span className="h-7 w-24 rounded-full bg-secondary/75" />
+              <span className="h-7 w-32 rounded-full bg-secondary/75" />
+              <span className="h-7 w-28 rounded-full bg-secondary/75" />
+            </div>
+
+            <UiCard className="liquid-glass gap-0 rounded-[1.85rem] py-0 shadow-none">
+              <CardHeader className="gap-3 px-7 pb-5 pt-7 sm:px-10 sm:pb-6 sm:pt-10">
+                <div className="h-7 w-40 rounded-full bg-muted/45" />
+                <div className="h-20 max-w-3xl rounded-[1rem] bg-muted/30" />
+              </CardHeader>
+            </UiCard>
+          </div>
+
+          <aside className="motion-rise motion-delay-1 liquid-glass relative min-h-[22rem] overflow-hidden rounded-[2rem] p-3 sm:min-h-[34rem]">
+            <div className="h-full min-h-[20rem] rounded-[1.75rem] bg-muted/35 sm:min-h-[32rem]" />
+          </aside>
+        </section>
+      </main>
+    </RouteFadeTransition>
+  );
+}
+
+async function ProjectPageContent({ params }: ProjectPageProps) {
   const { slug } = await params;
   const project = getProjectBySlug(slug);
 
@@ -337,5 +372,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </section>
       </main>
     </RouteFadeTransition>
+  );
+}
+
+export default function ProjectPage({ params }: ProjectPageProps) {
+  return (
+    <Suspense fallback={<ProjectPageFallback />}>
+      <ProjectPageContent params={params} />
+    </Suspense>
   );
 }

@@ -28,3 +28,11 @@ When a user asks for the latest Vercel deployment link, use the Vercel MCP:
 2. Filter by `meta.githubCommitRef` when a branch-specific deployment is needed.
 3. Return `inspectorUrl` for the dashboard deployment link.
 4. Return `https://${url}` only when the user asks for the public preview URL.
+
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+
+**Keep this block, including in commits.** It is part of the project's agent setup, maintained by `next dev` for every agent that works here. If it appears as an uncommitted change, that is intentional — commit it as-is. Do not remove it to clean up a diff; it will be regenerated.
+<!-- END:nextjs-agent-rules -->
