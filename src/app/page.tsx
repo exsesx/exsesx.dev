@@ -225,7 +225,7 @@ export default function HomePage() {
             {experienceHighlights.map(item => (
               <UiCard
                 key={item.company}
-                className="scroll-rise liquid-glass gap-0 rounded-[1.35rem] px-5 py-4 shadow-none sm:grid sm:grid-cols-[0.34fr_0.66fr] sm:gap-6 sm:px-6"
+                className="scroll-rise surface-panel gap-0 rounded-[1.35rem] px-5 py-4 shadow-none sm:grid sm:grid-cols-[0.34fr_0.66fr] sm:gap-6 sm:px-6"
               >
                 <div>
                   <h3 className="text-xl font-black text-foreground">{item.company}</h3>
@@ -257,7 +257,7 @@ export default function HomePage() {
               const Icon = item.icon;
 
               return (
-                <UiCard key={item.title} className="scroll-rise liquid-glass gap-0 rounded-[1.35rem] p-5 shadow-none">
+                <UiCard key={item.title} className="scroll-rise surface-panel gap-0 rounded-[1.35rem] p-5 shadow-none">
                   <span className="grid size-11 place-items-center rounded-full bg-primary text-primary-foreground">
                     <Icon size={19} strokeWidth={2.4} />
                   </span>
