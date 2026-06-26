@@ -109,6 +109,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
+        <link
+          rel="preload"
+          href="/fonts/monolisa-text/woff2/0-MonoLisaText-normal.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static theme bootstrap must run before Safari samples document chrome. */}
         <script id="noflash" dangerouslySetInnerHTML={{ __html: noFlashScript }} />
       </head>
