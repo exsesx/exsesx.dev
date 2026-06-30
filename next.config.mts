@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
     turbopackFileSystemCacheForBuild: true,
+    webVitalsAttribution: ["CLS", "LCP"],
     viewTransition: true,
   },
   turbopack: {

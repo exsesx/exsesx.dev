@@ -121,7 +121,7 @@ function ProjectMedia({ project, priority = false }: { project: Project; priorit
             className="shared-project-media h-full min-h-[18rem] w-full object-cover opacity-95 saturate-[0.94] sm:min-h-[28rem] lg:min-h-[34rem]"
             poster={media.poster}
             autoPlay
-            preload="auto"
+            preload="metadata"
             muted
             loop
             playsInline
