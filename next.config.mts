@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   poweredByHeader: false,
   experimental: {
+    turbopackFileSystemCacheForBuild: true,
     viewTransition: true,
   },
   turbopack: {
