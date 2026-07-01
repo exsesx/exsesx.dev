@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type ReactNode, ViewTransition } from "react";
 import { cn } from "@/lib/utils";
 import { getProjectPath, getProjectTransitionType, type Project } from "../lib/projects";
+import AutoPauseVideo from "./AutoPauseVideo";
 import { InteractiveCardShell } from "./InteractiveCardShell";
 import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button-variants";
@@ -127,7 +128,7 @@ export default function ProjectCard({
   return (
     <InteractiveCardShell
       className={cn(
-        "interactive-card group relative isolate overflow-hidden border-border bg-card/75 py-0 shadow-project-card backdrop-blur-xl hover:border-ring/30",
+        "interactive-card group relative isolate overflow-hidden border-border bg-card/85 py-0 shadow-project-card hover:border-ring/30",
         accentSurfaceClasses[project.accent],
         isCompact ? "h-full rounded-[1.25rem]" : "h-full rounded-[1.75rem]",
         featured && !isCompact ? "lg:grid lg:grid-cols-[1.05fr_0.95fr]" : "",
@@ -186,7 +187,7 @@ export default function ProjectCard({
                 className="shared-project-media object-cover opacity-95 saturate-[0.94]"
               />
             ) : (
-              <video
+              <AutoPauseVideo
                 className="shared-project-media h-full w-full object-cover opacity-95 saturate-[0.94]"
                 poster={media.poster}
                 autoPlay
@@ -198,7 +199,7 @@ export default function ProjectCard({
               >
                 <source src={media.src} type="video/mp4" />
                 {media.label}
-              </video>
+              </AutoPauseVideo>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
           </div>

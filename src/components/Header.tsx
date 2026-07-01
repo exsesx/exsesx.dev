@@ -5,7 +5,8 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent, PointerEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { attachNavCondense } from "@/lib/nav-condense";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
@@ -41,10 +42,21 @@ export default function Header() {
   const pathname = usePathname();
   const activeNavHref = getActiveNavHref(pathname);
   const [visualActiveNavHref, setVisualActiveNavHref] = useState<Route>(activeNavHref);
+  const navFrameRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setVisualActiveNavHref(activeNavHref);
   }, [activeNavHref]);
+
+  useEffect(() => {
+    const frame = navFrameRef.current;
+
+    if (!frame) {
+      return;
+    }
+
+    return attachNavCondense(frame);
+  }, []);
 
   function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, href: Route) {
     if (shouldPreviewNavChange(event)) {
@@ -59,7 +71,8 @@ export default function Header() {
 
   return (
     <header className="site-header fixed inset-x-0 top-0 z-50" data-safari-chrome-sample>
-      <div className="site-header-nav-frame" style={{ viewTransitionName: "persistent-nav" }}>
+      <div aria-hidden="true" className="site-header-fade" style={{ viewTransitionName: "persistent-nav-fade" }} />
+      <div ref={navFrameRef} className="site-header-nav-frame" style={{ viewTransitionName: "persistent-nav" }}>
         <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-full px-3 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between">
           <Link
             href="/"

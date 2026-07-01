@@ -250,7 +250,7 @@ function HotkeyHint({ isSequenceRendered, onToggle }: { isSequenceRendered: bool
       aria-label="Toggle keyboard shortcuts"
       aria-hidden={isSequenceRendered}
       className={cn(
-        "hotkeys-corner-hint liquid-glass fixed bottom-4 left-4 z-[80] hidden h-11 items-center rounded-full px-1.5 text-foreground shadow-menu active:scale-[0.97] md:inline-flex",
+        "hotkeys-corner-hint liquid-glass fixed bottom-4 left-4 z-[80] hidden h-11 items-center rounded-full px-1.5 text-foreground shadow-menu transition-opacity duration-150 ease-[var(--ease-out)] active:scale-[0.97] md:inline-flex",
         isSequenceRendered && "pointer-events-none opacity-0",
       )}
       tabIndex={isSequenceRendered ? -1 : undefined}
