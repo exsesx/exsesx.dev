@@ -17,7 +17,6 @@ export type NavbarHotkeyDirection = "left" | "right";
 export type HotkeyRouteAction = "home" | "projects";
 
 const NAVBAR_HOTKEY_ROUTES = ["/", "/projects"] as const;
-const HOTKEY_ROUTE_TRANSITION_TYPES = ["nav-fade"];
 
 export function shouldEnableHotkeys(capabilities: HotkeyInputCapabilities) {
   return capabilities.hasHover || !capabilities.hasCoarsePointer;
@@ -38,7 +37,7 @@ export function getHotkeyNavigationIntent(action: HotkeyRouteAction): {
 } {
   return {
     route: action === "home" ? "/" : "/projects",
-    transitionTypes: [...HOTKEY_ROUTE_TRANSITION_TYPES],
+    transitionTypes: [],
   };
 }
 

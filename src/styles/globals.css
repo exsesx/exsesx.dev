@@ -561,7 +561,6 @@ html[data-chrome-sample] .site-header {
     inset -1.5px -2px 7px -3px rgba(255, 255, 255, 0.4),
     inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.07),
     0 15px 36px rgba(11, 20, 35, 0.1);
-  transform-origin: top center;
   backdrop-filter: blur(22px) saturate(1.9);
   contain: paint;
 }
@@ -636,7 +635,12 @@ html[data-chrome-sample] .site-header {
   backdrop-filter: blur(18px) saturate(1.5);
   pointer-events: none;
   transform: translate3d(0, 0, 0);
-  transition: transform 200ms var(--ease-out);
+  transition: transform 220ms var(--ease-snap);
+  will-change: transform;
+}
+
+.site-nav-active-pill[data-active-nav="projects"] {
+  transform: translate3d(calc(100% + 0.25rem), 0, 0);
 }
 
 .dark .site-nav-active-pill {
@@ -659,6 +663,14 @@ html[data-chrome-sample] .site-header {
 @media (max-width: 639px) {
   .site-nav-active-pill {
     width: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-active-pill {
+    transform: none;
+    transition-duration: 0ms;
+    will-change: auto;
   }
 }
 
@@ -823,26 +835,33 @@ html[data-chrome-sample] .site-header {
 }
 
 .interactive-card {
-  --pointer-x: 50%;
-  --pointer-y: 50%;
+  --pointer-x: 0px;
+  --pointer-y: 0px;
   transition:
     transform 260ms var(--ease-weight),
     border-color 180ms var(--ease-weight),
     box-shadow 280ms var(--ease-weight);
 }
 
+/*
+ * Pointer spotlight. The glow is a fixed 34rem circle painted once and moved to
+ * the pointer via translate — so tracking it is compositor-only (transform), not
+ * a per-frame repaint of a gradient whose coordinates change. The card is
+ * overflow-clipped, so the oversized circle only shows through the card box.
+ */
 .interactive-card::after {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   z-index: -1;
+  width: 34rem;
+  height: 34rem;
+  margin: -17rem 0 0 -17rem;
   pointer-events: none;
   content: "";
-  background: radial-gradient(
-    540px circle at var(--pointer-x) var(--pointer-y),
-    color-mix(in oklab, var(--ring) 16%, transparent),
-    transparent 42%
-  );
+  background: radial-gradient(circle, color-mix(in oklab, var(--ring) 16%, transparent), transparent 60%);
   opacity: 0;
+  transform: translate3d(var(--pointer-x), var(--pointer-y), 0);
   transition: opacity 220ms var(--ease-weight);
 }
 
@@ -1169,6 +1188,13 @@ html[data-chrome-sample] .site-header {
   animation: none;
 }
 
+html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-old(root),
+html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-new(root),
+html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-group(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 /*
  * Page navigation transitions (route fade/slide, directional nav, shared-element
  * morph). The <ViewTransition> boundaries always render so React can pair
@@ -1176,24 +1202,6 @@ html[data-chrome-sample] .site-header {
  * On touch / small screens the snapshot resolves instantly (see below).
  */
 @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  ::view-transition-group(.page-enter),
-  ::view-transition-group(.page-exit) {
-    z-index: 1;
-  }
-
-  ::view-transition-old(.page-exit),
-  ::view-transition-new(.page-enter) {
-    mix-blend-mode: normal;
-  }
-
-  ::view-transition-old(.page-exit) {
-    animation: var(--duration-exit) var(--ease-out) both view-fade reverse;
-  }
-
-  ::view-transition-new(.page-enter) {
-    animation: var(--duration-enter) var(--ease-out) 35ms both view-fade;
-  }
-
   ::view-transition-old(.nav-forward) {
     --slide-offset: -18px;
     animation:
@@ -1269,6 +1277,7 @@ html[data-chrome-sample] .site-header {
 
   .interactive-card:hover::after {
     opacity: 1;
+    will-change: transform;
   }
 
   .interactive-card:hover .magnetic-icon {
@@ -1341,5 +1350,13 @@ html[data-chrome-sample] .site-header {
   .magnetic-icon,
   .interactive-card:hover .magnetic-icon {
     transform: none !important;
+  }
+
+  /* No pointer tracking under reduced motion — pin the spotlight to card center. */
+  .interactive-card::after {
+    top: 50%;
+    left: 50%;
+    transform: none !important;
+    will-change: auto;
   }
 }

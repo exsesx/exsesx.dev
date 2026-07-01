@@ -24,14 +24,14 @@ describe("getNavbarHotkeyRoute", () => {
 });
 
 describe("getHotkeyNavigationIntent", () => {
-  test("uses lateral route transitions for keyboard navigation", () => {
+  test("keeps lateral keyboard navigation instant", () => {
     expect(getHotkeyNavigationIntent("home")).toEqual({
       route: "/",
-      transitionTypes: ["nav-fade"],
+      transitionTypes: [],
     });
     expect(getHotkeyNavigationIntent("projects")).toEqual({
       route: "/projects",
-      transitionTypes: ["nav-fade"],
+      transitionTypes: [],
     });
   });
 });

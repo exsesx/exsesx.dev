@@ -4,8 +4,8 @@ import { BriefcaseBusiness, Home } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { MouseEvent } from "react";
-import { useState } from "react";
+import type { MouseEvent, PointerEvent } from "react";
+import { useEffect, useState } from "react";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
@@ -20,11 +20,11 @@ const navigation: Array<{ href: Route; label: string; icon: typeof Home }> = [
 
 const navActionBaseClassName =
   "relative z-10 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-0 text-sm font-bold whitespace-nowrap text-foreground outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97] sm:px-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
-const navActionPillHomeTransform = "translate3d(0, 0, 0) scaleX(1) scaleY(1)";
-const navActionPillProjectsTransform = "translate3d(calc(100% + 0.25rem), 0, 0) scaleX(1) scaleY(1)";
 
 function getActiveNavHref(pathname: string): Route {
-  return pathname === "/projects" || pathname.startsWith("/project/") ? "/projects" : "/";
+  return pathname === "/projects" || pathname.startsWith("/projects/") || pathname.startsWith("/project/")
+    ? "/projects"
+    : "/";
 }
 
 function scrollToPageTop() {
@@ -33,28 +33,23 @@ function scrollToPageTop() {
   window.scrollTo({ behavior, top: 0 });
 }
 
+function shouldPreviewNavChange(event: MouseEvent<HTMLAnchorElement> | PointerEvent<HTMLAnchorElement>) {
+  return event.button === 0 && !(event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
+}
+
 export default function Header() {
   const pathname = usePathname();
-  // Detail → index is hierarchical (slide back); every other tab hop is
-  // lateral, so it cross-fades instead of implying depth.
-  const projectIndexTransitionTypes = pathname.startsWith("/project/") ? ["nav-back"] : ["nav-fade"];
   const activeNavHref = getActiveNavHref(pathname);
-  // selectedNavHref is optimistic (set on pointer-down so the pill moves
-  // instantly); reconcile it with the real route during render instead of in
-  // an effect — https://react.dev/learn/you-might-not-need-an-effect
-  const [selectedNavHref, setSelectedNavHref] = useState<Route>(activeNavHref);
-  const [prevActiveNavHref, setPrevActiveNavHref] = useState<Route>(activeNavHref);
+  const [visualActiveNavHref, setVisualActiveNavHref] = useState<Route>(activeNavHref);
 
-  if (prevActiveNavHref !== activeNavHref) {
-    setPrevActiveNavHref(activeNavHref);
-    setSelectedNavHref(activeNavHref);
-  }
-
-  const navActionPillTransform =
-    selectedNavHref === "/projects" ? navActionPillProjectsTransform : navActionPillHomeTransform;
+  useEffect(() => {
+    setVisualActiveNavHref(activeNavHref);
+  }, [activeNavHref]);
 
   function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, href: Route) {
-    setSelectedNavHref(href);
+    if (shouldPreviewNavChange(event)) {
+      setVisualActiveNavHref(href);
+    }
 
     if (shouldScrollToTopForNavClick({ pathname, href, scrollY: window.scrollY })) {
       event.preventDefault();
@@ -68,7 +63,6 @@ export default function Header() {
         <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-full px-3 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between">
           <Link
             href="/"
-            transitionTypes={["nav-fade"]}
             data-suppress-entry-motion=""
             className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
             aria-label="Oleh Vanin home"
@@ -83,26 +77,32 @@ export default function Header() {
             </span>
           </Link>
 
-          <div className="relative grid grid-cols-[3rem_3rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-2">
+          <div
+            className="site-nav-switcher relative grid grid-cols-[3rem_3rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-2"
+            data-active-nav={visualActiveNavHref === "/projects" ? "projects" : "home"}
+          >
             <span
               aria-hidden="true"
               className="site-nav-active-pill absolute inset-y-1 left-1 z-0 rounded-full"
-              style={{ transform: navActionPillTransform }}
+              data-active-nav={visualActiveNavHref === "/projects" ? "projects" : "home"}
             />
             {navigation.map(item => {
               const Icon = item.icon;
-              const isProjectDetailToIndex = item.href === "/projects" && pathname.startsWith("/project/");
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  transitionTypes={isProjectDetailToIndex ? projectIndexTransitionTypes : ["nav-fade"]}
                   data-suppress-entry-motion=""
                   aria-label={item.label}
+                  aria-current={activeNavHref === item.href ? "page" : undefined}
                   className={navActionBaseClassName}
                   onClick={event => handleNavLinkClick(event, item.href)}
-                  onPointerDown={() => setSelectedNavHref(item.href)}
+                  onPointerDown={event => {
+                    if (shouldPreviewNavChange(event)) {
+                      setVisualActiveNavHref(item.href);
+                    }
+                  }}
                 >
                   <Icon data-icon="inline-start" strokeWidth={2.3} />
                   <span className="hidden sm:inline">{item.label}</span>

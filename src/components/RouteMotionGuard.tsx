@@ -80,7 +80,9 @@ export default function RouteMotionGuard() {
 
     document.addEventListener("click", markRouteNavigation, { capture: true });
 
-    return () => document.removeEventListener("click", markRouteNavigation, { capture: true });
+    return () => {
+      document.removeEventListener("click", markRouteNavigation, { capture: true });
+    };
   }, []);
 
   useEffect(() => {
