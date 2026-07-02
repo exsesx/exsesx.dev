@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
+import AutoPauseVideo from "../../../components/AutoPauseVideo";
 import ProjectCard from "../../../components/Card";
 import ProjectBackButton from "../../../components/ProjectBackButton";
 import RouteFadeTransition from "../../../components/RouteFadeTransition";
@@ -117,11 +118,11 @@ function ProjectMedia({ project, priority = false }: { project: Project; priorit
             className="shared-project-media object-cover opacity-95 saturate-[0.94]"
           />
         ) : (
-          <video
+          <AutoPauseVideo
             className="shared-project-media h-full min-h-[18rem] w-full object-cover opacity-95 saturate-[0.94] sm:min-h-[28rem] lg:min-h-[34rem]"
             poster={media.poster}
             autoPlay
-            preload="auto"
+            preload="metadata"
             muted
             loop
             playsInline
@@ -129,7 +130,7 @@ function ProjectMedia({ project, priority = false }: { project: Project; priorit
           >
             <source src={media.src} type="video/mp4" />
             {media.label}
-          </video>
+          </AutoPauseVideo>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
       </div>

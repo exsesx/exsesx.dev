@@ -156,7 +156,6 @@ export default function HomePage() {
                         fill
                         sizes="56px"
                         className="object-cover object-[50%_34%]"
-                        priority
                       />
                     </span>
                   </div>

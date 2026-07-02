@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import Header from "../components/Header";
-import Hotkeys from "../components/Hotkeys";
+import HotkeysLoader from "../components/HotkeysLoader";
 import KineticBackdrop from "../components/KineticBackdrop";
 import LiquidGlassLens from "../components/LiquidGlassLens";
 import RouteMotionGuard from "../components/RouteMotionGuard";
 import VersionTag from "../components/VersionTag";
+import WebVitals from "../components/WebVitals";
 import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
 import { createNoFlashScript } from "../lib/no-flash-script";
 import { THEME_CHROME_COLORS } from "../lib/theme";
@@ -125,7 +126,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <div className="relative isolate min-h-full w-full overflow-x-hidden text-foreground transition-colors duration-300">
           <KineticBackdrop />
           <Header />
-          <Hotkeys />
+          <HotkeysLoader />
+          <WebVitals />
           {children}
           <VersionTag />
         </div>

@@ -1,4 +1,3 @@
-import React from "react";
 import { cn } from "../lib/utils";
 
 const tagClassName =
@@ -8,7 +7,7 @@ export default function VersionTag() {
   const commitHash = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
 
   if (!commitHash) {
-    return <React.Fragment />;
+    return null;
   }
 
   const owner = process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_OWNER;
@@ -16,11 +15,11 @@ export default function VersionTag() {
   const short = commitHash.substring(0, 7);
 
   const content = (
-    <React.Fragment>
+    <>
       <span aria-hidden="true" className="h-px w-7 bg-linear-to-r from-transparent to-foreground/20" />
       {short}
       <span aria-hidden="true" className="h-px w-7 bg-linear-to-l from-transparent to-foreground/20" />
-    </React.Fragment>
+    </>
   );
 
   return (

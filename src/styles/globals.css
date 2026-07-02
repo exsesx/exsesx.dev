@@ -58,6 +58,34 @@
   --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* underdamped spring (ω₀²=420, ζ=0.62, ~8.4% overshoot) sampled for 380ms */
+  --ease-spring: linear(
+    0,
+    0.046 4.2%,
+    0.158 8.3%,
+    0.306 12.5%,
+    0.465 16.7%,
+    0.616 20.8%,
+    0.751 25%,
+    0.862 29.2%,
+    0.949 33.3%,
+    1.011 37.5%,
+    1.051 41.7%,
+    1.074 45.8%,
+    1.083 50%,
+    1.082 54.2%,
+    1.074 58.3%,
+    1.062 62.5%,
+    1.049 66.7%,
+    1.036 70.8%,
+    1.024 75%,
+    1.014 79.2%,
+    1.007 83.3%,
+    1.001 87.5%,
+    0.997 91.7%,
+    0.994 95.8%,
+    1
+  );
   --duration-exit: 90ms;
   --duration-enter: 140ms;
   --duration-move: 280ms;
@@ -425,12 +453,16 @@ html[data-season="pride"] .logo-mark-pride {
   background: var(--primary);
 }
 
+/* nested inside the hero aside's glass — skip the redundant second blur pass */
+.snapshot-inner-card.liquid-glass {
+  backdrop-filter: none;
+}
+
 @media (max-width: 639px) {
   .snapshot-inner-card.liquid-glass {
     border-color: transparent;
     background: transparent;
     box-shadow: none;
-    backdrop-filter: none;
   }
 
   .snapshot-stat-card {
@@ -511,6 +543,20 @@ html[data-chrome-sample] .site-header {
   top: calc(env(safe-area-inset-top) + 0.75rem);
   right: 1rem;
   left: 1rem;
+  transform-origin: top center;
+  transition: transform 220ms var(--ease-snap);
+}
+
+/* attribute flipped by nav-condense.ts; scale/translate only, never layout */
+.site-header-nav-frame[data-condensed="true"] {
+  transform: translate3d(0, -2px, 0) scale(0.955);
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  .site-header-nav-frame {
+    transition-duration: 380ms;
+    transition-timing-function: var(--ease-spring);
+  }
 }
 
 @media (min-width: 640px) {
@@ -520,13 +566,14 @@ html[data-chrome-sample] .site-header {
   }
 }
 
-.site-header::before {
+/* real element (not ::before) so it can carry its own view-transition-name;
+   inside the root snapshot it would pop above the page after transitions */
+.site-header-fade {
   position: absolute;
   /* Soft fade behind the nav; the flashed sample band paints over its top. */
   inset: 0 0 -1.8rem;
   z-index: -1;
   pointer-events: none;
-  content: "";
   background: linear-gradient(
     to bottom,
     color-mix(in oklab, var(--background) 86%, transparent),
@@ -536,7 +583,7 @@ html[data-chrome-sample] .site-header {
   mask-image: linear-gradient(to bottom, black 0 42%, transparent 100%);
 }
 
-.dark .site-header::before {
+.dark .site-header-fade {
   background: linear-gradient(
     to bottom,
     color-mix(in oklab, var(--background) 84%, transparent),
@@ -546,31 +593,22 @@ html[data-chrome-sample] .site-header {
 }
 
 .site-nav-glass {
-  --nav-scroll-progress: 0;
   position: relative;
   isolation: isolate;
-  width: calc(100% - var(--nav-scroll-progress) * clamp(2rem, 10vw, 12rem));
-  max-width: calc(80rem - var(--nav-scroll-progress) * 12rem);
+  width: 100%;
+  max-width: 80rem;
   border-color: color-mix(in oklab, currentColor 8%, transparent);
   background:
-    radial-gradient(
-      circle at calc(18% + var(--nav-scroll-progress) * 54%) 0%,
-      rgba(255, 255, 255, 0.52),
-      transparent 36%
-    ),
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.38), transparent 36%),
     linear-gradient(135deg, rgba(251, 253, 255, 0.46), rgba(251, 253, 255, 0.14) 55%, rgba(251, 253, 255, 0.3)),
-    color-mix(in oklab, #fbfdff 27%, transparent);
+    color-mix(in oklab, #fbfdff 36%, transparent);
   box-shadow:
-    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
-    inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.85),
-    inset -1.5px -2px 7px -3px rgba(255, 255, 255, 0.4),
+    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.85),
+    inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.68),
+    inset -1.5px -2px 7px -3px rgba(255, 255, 255, 0.32),
     inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.07),
     0 15px 36px rgba(11, 20, 35, 0.1);
-  transform: translate3d(0, calc(var(--nav-scroll-progress) * -0.24rem), 0)
-    scale(calc(1 - var(--nav-scroll-progress) * 0.01));
-  transform-origin: top center;
-  backdrop-filter: blur(22px) saturate(1.9);
-  will-change: transform;
+  backdrop-filter: blur(14px) saturate(1.5);
   contain: paint;
 }
 
@@ -581,9 +619,7 @@ html[data-chrome-sample] .site-header {
   content: "";
   border-radius: inherit;
   background: linear-gradient(112deg, transparent 4%, color-mix(in oklab, white 22%, transparent) 34%, transparent 64%);
-  opacity: calc(0.12 + var(--nav-scroll-progress) * 0.12);
-  transform: translate3d(calc((var(--nav-scroll-progress) - 0.5) * 1rem), 0, 0);
-  will-change: transform, opacity;
+  opacity: 0.12;
 }
 
 .site-nav-glass > * {
@@ -600,7 +636,7 @@ html[data-chrome-sample] .site-header {
  */
 @media (min-width: 768px) and (hover: hover) and (pointer: fine) {
   html.glass-lens .site-nav-glass {
-    backdrop-filter: blur(22px) saturate(1.9) url("#liquid-lens");
+    backdrop-filter: blur(14px) saturate(1.5) url("#liquid-lens");
   }
 
   html.glass-lens .dropdown-menu.liquid-glass {
@@ -624,7 +660,7 @@ html[data-chrome-sample] .site-header {
 }
 
 .site-nav-brand-link {
-  gap: calc(0.5rem + var(--nav-scroll-progress) * 0.28rem);
+  gap: 0.5rem;
 }
 
 .site-nav-active-pill {
@@ -643,10 +679,15 @@ html[data-chrome-sample] .site-header {
     inset 1px 2px 4px -2px rgba(255, 255, 255, 0.7),
     inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.08),
     0 7px 18px color-mix(in oklab, var(--foreground) 11%, transparent);
-  backdrop-filter: blur(18px) saturate(1.5);
+  /* no backdrop-filter: the nav's glass already blurs everything behind the pill */
   pointer-events: none;
   transform: translate3d(0, 0, 0);
+  transition: transform 220ms var(--ease-snap);
   will-change: transform;
+}
+
+.site-nav-active-pill[data-active-nav="projects"] {
+  transform: translate3d(calc(100% + 0.25rem), 0, 0);
 }
 
 .dark .site-nav-active-pill {
@@ -672,10 +713,16 @@ html[data-chrome-sample] .site-header {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-active-pill {
+    transform: none;
+    transition-duration: 0ms;
+    will-change: auto;
+  }
+}
+
 .site-nav-brand-copy {
   flex-shrink: 0;
-  opacity: calc(1 - var(--nav-scroll-progress) * 0.08);
-  will-change: opacity;
 }
 
 .hotkeys-panel {
@@ -796,13 +843,9 @@ html[data-chrome-sample] .site-header {
 
 .dark .site-nav-glass {
   background:
-    radial-gradient(
-      circle at calc(18% + var(--nav-scroll-progress) * 54%) 0%,
-      rgba(255, 255, 255, 0.1),
-      transparent 36%
-    ),
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.07), transparent 36%),
     linear-gradient(135deg, rgba(20, 29, 48, 0.52), rgba(10, 16, 28, 0.2) 55%, rgba(20, 29, 48, 0.36)),
-    color-mix(in oklab, #0a101c 32%, transparent);
+    color-mix(in oklab, #0a101c 40%, transparent);
   box-shadow:
     inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.28),
     inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.18),
@@ -814,30 +857,22 @@ html[data-chrome-sample] .site-header {
 @media (max-width: 639px) {
   .site-nav-glass {
     background:
-      radial-gradient(
-        circle at calc(18% + var(--nav-scroll-progress) * 54%) 0%,
-        rgba(255, 255, 255, 0.56),
-        transparent 36%
-      ),
+      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.4), transparent 36%),
       linear-gradient(135deg, rgba(251, 253, 255, 0.48), rgba(251, 253, 255, 0.18) 55%, rgba(251, 253, 255, 0.3)),
-      color-mix(in oklab, #fbfdff 30%, transparent);
+      color-mix(in oklab, #fbfdff 38%, transparent);
     box-shadow:
-      inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
-      inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.8),
+      inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.85),
+      inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.64),
       inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.07),
       0 13px 30px rgba(11, 20, 35, 0.095);
-    backdrop-filter: blur(22px) saturate(1.8);
+    backdrop-filter: blur(14px) saturate(1.45);
   }
 
   .dark .site-nav-glass {
     background:
-      radial-gradient(
-        circle at calc(18% + var(--nav-scroll-progress) * 54%) 0%,
-        rgba(255, 255, 255, 0.1),
-        transparent 36%
-      ),
+      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.07), transparent 36%),
       linear-gradient(135deg, rgba(20, 29, 48, 0.5), rgba(10, 16, 28, 0.24) 55%, rgba(20, 29, 48, 0.34)),
-      color-mix(in oklab, #0a101c 34%, transparent);
+      color-mix(in oklab, #0a101c 42%, transparent);
     box-shadow:
       inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.26),
       inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.16),
@@ -847,26 +882,33 @@ html[data-chrome-sample] .site-header {
 }
 
 .interactive-card {
-  --pointer-x: 50%;
-  --pointer-y: 50%;
+  --pointer-x: 0px;
+  --pointer-y: 0px;
   transition:
     transform 260ms var(--ease-weight),
     border-color 180ms var(--ease-weight),
     box-shadow 280ms var(--ease-weight);
 }
 
+/*
+ * Pointer spotlight. The glow is a fixed 34rem circle painted once and moved to
+ * the pointer via translate — so tracking it is compositor-only (transform), not
+ * a per-frame repaint of a gradient whose coordinates change. The card is
+ * overflow-clipped, so the oversized circle only shows through the card box.
+ */
 .interactive-card::after {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   z-index: -1;
+  width: 34rem;
+  height: 34rem;
+  margin: -17rem 0 0 -17rem;
   pointer-events: none;
   content: "";
-  background: radial-gradient(
-    540px circle at var(--pointer-x) var(--pointer-y),
-    color-mix(in oklab, var(--ring) 16%, transparent),
-    transparent 42%
-  );
+  background: radial-gradient(circle, color-mix(in oklab, var(--ring) 16%, transparent), transparent 60%);
   opacity: 0;
+  transform: translate3d(var(--pointer-x), var(--pointer-y), 0);
   transition: opacity 220ms var(--ease-weight);
 }
 
@@ -1068,18 +1110,41 @@ html[data-chrome-sample] .site-header {
   .dropdown-menu-item:nth-child(3) {
     animation-delay: 56ms;
   }
+
+  /* hotkeys overlay entries; exits stay instant on purpose */
+  .hotkeys-modal-backdrop {
+    animation: view-fade 150ms var(--ease-out) both;
+  }
+
+  .hotkeys-panel {
+    animation: menu-enter 170ms var(--ease-snap) both;
+  }
+
+  .hotkeys-panel > * {
+    animation: menu-item-enter 180ms var(--ease-weight) both;
+  }
+
+  .hotkeys-panel > *:nth-child(2) {
+    animation-delay: 40ms;
+  }
+
+  .hotkeys-panel > *:nth-child(3) {
+    animation-delay: 80ms;
+  }
+
+  .hotkeys-chord-panel {
+    animation: chord-enter 130ms var(--ease-out) both;
+  }
 }
 
 @keyframes menu-enter {
   from {
     opacity: 0;
-    filter: blur(2px);
     transform: translate3d(0, -6px, 0) scale(0.965);
   }
 
   to {
     opacity: 1;
-    filter: blur(0);
     transform: translate3d(0, 0, 0) scale(1);
   }
 }
@@ -1093,6 +1158,18 @@ html[data-chrome-sample] .site-header {
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes chord-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
@@ -1182,17 +1259,41 @@ html[data-chrome-sample] .site-header {
   }
 }
 
+/* keep the live page clickable while a transition plays */
+::view-transition {
+  pointer-events: none;
+}
+
 /*
  * Persistent header isolation. Kept ungated so the fixed header never slides or
  * cross-fades with the page snapshot, on every device and every navigation.
  */
-::view-transition-old(persistent-nav) {
+::view-transition-old(persistent-nav),
+::view-transition-old(persistent-nav-fade) {
   display: none;
 }
 
 ::view-transition-new(persistent-nav),
-::view-transition-group(persistent-nav) {
+::view-transition-new(persistent-nav-fade) {
   animation: none;
+}
+
+::view-transition-group(persistent-nav),
+::view-transition-group(persistent-nav-fade) {
+  animation: none;
+  /* above the sliding pages and the morph so the chrome stays on top */
+  z-index: 30;
+}
+
+::view-transition-group(persistent-nav-fade) {
+  z-index: 29;
+}
+
+html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-old(root),
+html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-new(root),
+html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-group(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
 /*
@@ -1202,24 +1303,6 @@ html[data-chrome-sample] .site-header {
  * On touch / small screens the snapshot resolves instantly (see below).
  */
 @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  ::view-transition-group(.page-enter),
-  ::view-transition-group(.page-exit) {
-    z-index: 1;
-  }
-
-  ::view-transition-old(.page-exit),
-  ::view-transition-new(.page-enter) {
-    mix-blend-mode: normal;
-  }
-
-  ::view-transition-old(.page-exit) {
-    animation: var(--duration-exit) var(--ease-out) both view-fade reverse;
-  }
-
-  ::view-transition-new(.page-enter) {
-    animation: var(--duration-enter) var(--ease-out) 35ms both view-fade;
-  }
-
   ::view-transition-old(.nav-forward) {
     --slide-offset: -18px;
     animation:
@@ -1252,6 +1335,7 @@ html[data-chrome-sample] .site-header {
     animation-duration: var(--duration-move);
     animation-timing-function: var(--ease-in-out);
     overflow: hidden;
+    /* above the incoming page snapshot, below the chrome (30) */
     z-index: 20;
   }
 
@@ -1295,6 +1379,7 @@ html[data-chrome-sample] .site-header {
 
   .interactive-card:hover::after {
     opacity: 1;
+    will-change: transform;
   }
 
   .interactive-card:hover .magnetic-icon {
@@ -1367,5 +1452,13 @@ html[data-chrome-sample] .site-header {
   .magnetic-icon,
   .interactive-card:hover .magnetic-icon {
     transform: none !important;
+  }
+
+  /* No pointer tracking under reduced motion — pin the spotlight to card center. */
+  .interactive-card::after {
+    top: 50%;
+    left: 50%;
+    transform: none !important;
+    will-change: auto;
   }
 }
