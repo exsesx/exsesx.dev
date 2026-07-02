@@ -49,7 +49,9 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   poweredByHeader: false,
   experimental: {
-    turbopackFileSystemCacheForBuild: true,
+    // Turbopack's persistent build cache is intentionally off: on Vercel it
+    // reused a stale compiled globals.css, deploying new markup with the old
+    // stylesheet (nav pill broke in production, 2026-07-02).
     webVitalsAttribution: ["CLS", "LCP"],
     viewTransition: true,
   },
