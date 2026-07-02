@@ -1281,12 +1281,12 @@ html[data-chrome-sample] .site-header {
 ::view-transition-group(persistent-nav),
 ::view-transition-group(persistent-nav-fade) {
   animation: none;
-  /* above the sliding pages, below the morph (20) so media flies over the chrome */
-  z-index: 10;
+  /* above the sliding pages and the morph so the chrome stays on top */
+  z-index: 30;
 }
 
 ::view-transition-group(persistent-nav-fade) {
-  z-index: 9;
+  z-index: 29;
 }
 
 html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-old(root),
@@ -1335,6 +1335,7 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
     animation-duration: var(--duration-move);
     animation-timing-function: var(--ease-in-out);
     overflow: hidden;
+    /* above the incoming page snapshot, below the chrome (30) */
     z-index: 20;
   }
 
