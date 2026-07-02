@@ -714,8 +714,9 @@ html[data-chrome-sample] .site-header {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* kill the slide but never the transform: the translate is what parks the
+     pill on the active tab, not a decoration */
   .site-nav-active-pill {
-    transform: none;
     transition-duration: 0ms;
     will-change: auto;
   }
@@ -723,6 +724,38 @@ html[data-chrome-sample] .site-header {
 
 .site-nav-brand-copy {
   flex-shrink: 0;
+}
+
+/* Contextual back chip at the nav's left edge: Header flips data-active on
+   project detail routes and the chip folds open beside the brand tile. The
+   fold-in is delayed so it lands after the route transition settles. */
+.nav-back-button {
+  /* no margin: the brand link's own px-2 padding is the visual gap */
+  max-width: 2.5rem;
+  overflow: hidden;
+  transition:
+    max-width 240ms var(--ease-snap) 120ms,
+    transform 240ms var(--ease-snap) 120ms,
+    opacity 180ms var(--ease-out) 180ms,
+    background-color 200ms var(--ease-out),
+    border-color 200ms var(--ease-out),
+    color 200ms var(--ease-out),
+    box-shadow 200ms var(--ease-out);
+}
+
+.nav-back-button[data-active="false"] {
+  max-width: 0;
+  border-width: 0;
+  opacity: 0;
+  transform: scale(0.7);
+  transition-delay: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-back-button {
+    transition-duration: 0ms;
+    transition-delay: 0ms;
+  }
 }
 
 .hotkeys-panel {
@@ -1095,8 +1128,14 @@ html[data-chrome-sample] .site-header {
     animation-delay: 210ms;
   }
 
-  .dropdown-menu {
+  .dropdown-menu[data-open] {
     animation: menu-enter 170ms var(--ease-snap) both;
+  }
+
+  /* Base UI keeps [data-closed] mounted until this finishes; faster than the
+     enter so dismissal feels instant while still dissolving, not popping */
+  .dropdown-menu[data-closed] {
+    animation: menu-exit 150ms var(--ease-out) both;
   }
 
   .dropdown-menu-item {
@@ -1146,6 +1185,18 @@ html[data-chrome-sample] .site-header {
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes menu-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, -4px, 0) scale(0.97);
   }
 }
 

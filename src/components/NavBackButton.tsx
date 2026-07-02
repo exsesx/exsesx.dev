@@ -8,9 +8,10 @@ import { getPreviousRoute, queueScrollRestore } from "@/lib/navigation-history";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "./ui/button-variants";
 
-type ProjectBackButtonProps = {
-  fallbackHref: Route;
-  fallbackTransitionTypes: string[];
+const FALLBACK_HREF: Route = "/projects";
+
+type NavBackButtonProps = {
+  active: boolean;
 };
 
 function shouldRestoreSharedProjectMedia(path: string) {
@@ -23,10 +24,22 @@ function isEditableTarget(target: EventTarget | null) {
   );
 }
 
-export default function ProjectBackButton({ fallbackHref, fallbackTransitionTypes }: ProjectBackButtonProps) {
+/* The project page owns its shared-media morph type and publishes it on
+   <main>; reading it at click time keeps the projects data out of the nav
+   bundle, which loads on every route. */
+function getFallbackTransitionTypes() {
+  const transitionType = document
+    .querySelector("main[data-back-transition-type]")
+    ?.getAttribute("data-back-transition-type");
+
+  return transitionType ? ["nav-back", transitionType] : ["nav-back"];
+}
+
+export default function NavBackButton({ active }: NavBackButtonProps) {
   const router = useRouter();
 
   function navigateBack() {
+    const fallbackTransitionTypes = getFallbackTransitionTypes();
     const previousRoute = getPreviousRoute();
     document.documentElement.dataset.viewTransitionNavigated = "true";
 
@@ -43,7 +56,7 @@ export default function ProjectBackButton({ fallbackHref, fallbackTransitionType
     }
 
     startTransition(() => {
-      router.push(fallbackHref, { transitionTypes: fallbackTransitionTypes });
+      router.push(FALLBACK_HREF, { transitionTypes: fallbackTransitionTypes });
     });
   }
 
@@ -62,6 +75,10 @@ export default function ProjectBackButton({ fallbackHref, fallbackTransitionType
   });
 
   useEffect(() => {
+    if (!active) {
+      return;
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
       handleEscapeKeyDown(event);
     }
@@ -69,16 +86,19 @@ export default function ProjectBackButton({ fallbackHref, fallbackTransitionType
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [active]);
 
   return (
     <button
       type="button"
-      className={cn(buttonVariants({ variant: "glass", size: "sm" }), "w-fit cursor-pointer")}
+      aria-label="Back"
+      aria-hidden={active ? undefined : "true"}
+      disabled={!active}
+      data-active={active ? "true" : "false"}
+      className={cn(buttonVariants({ variant: "glass", size: "icon" }), "nav-back-button cursor-pointer")}
       onClick={navigateBack}
     >
-      <ArrowLeft data-icon="inline-start" strokeWidth={2.4} />
-      Back
+      <ArrowLeft strokeWidth={2.4} />
     </button>
   );
 }

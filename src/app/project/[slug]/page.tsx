@@ -6,7 +6,6 @@ import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
 import AutoPauseVideo from "../../../components/AutoPauseVideo";
 import ProjectCard from "../../../components/Card";
-import ProjectBackButton from "../../../components/ProjectBackButton";
 import RouteFadeTransition from "../../../components/RouteFadeTransition";
 import { Badge } from "../../../components/ui/badge";
 import { buttonVariants } from "../../../components/ui/button-variants";
@@ -154,11 +153,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   return (
     <RouteFadeTransition>
-      <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:pt-28">
+      {/* data-back-transition-type feeds the nav's back chip (NavBackButton) */}
+      <main
+        className="mx-auto w-full max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:pt-28"
+        data-back-transition-type={projectTransitionType}
+      >
         <section className="grid gap-8 lg:grid-cols-[0.48fr_0.52fr] lg:items-stretch">
           <div className="motion-rise flex flex-col gap-6">
-            <ProjectBackButton fallbackHref="/projects" fallbackTransitionTypes={["nav-back", projectTransitionType]} />
-
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">{project.role}</p>
               <h1 className="mt-3 max-w-4xl text-balance text-[clamp(2.75rem,6vw,5.75rem)] font-black leading-[0.9] tracking-tight text-foreground">
