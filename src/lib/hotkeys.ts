@@ -14,6 +14,7 @@ export interface HotkeyInputCapabilities {
 }
 
 export type NavbarHotkeyDirection = "left" | "right";
+export type HotkeyRouteAction = "home" | "projects";
 
 const NAVBAR_HOTKEY_ROUTES = ["/", "/projects"] as const;
 
@@ -28,6 +29,16 @@ export function getNavbarHotkeyRoute(pathname: string, direction: NavbarHotkeyDi
   const nextIndex = (activeIndex + offset + NAVBAR_HOTKEY_ROUTES.length) % NAVBAR_HOTKEY_ROUTES.length;
 
   return NAVBAR_HOTKEY_ROUTES[nextIndex];
+}
+
+export function getHotkeyNavigationIntent(action: HotkeyRouteAction): {
+  route: "/" | "/projects";
+  transitionTypes: string[];
+} {
+  return {
+    route: action === "home" ? "/" : "/projects",
+    transitionTypes: [],
+  };
 }
 
 export function getHotkeySequenceKey(action: string, key: string, index: number) {

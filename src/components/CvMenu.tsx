@@ -70,7 +70,6 @@ function CvMenu() {
 
       if (!response.ok) {
         openResumePdf();
-        setIsSharing(false);
         return;
       }
 
@@ -79,7 +78,6 @@ function CvMenu() {
 
       if (navigator.canShare?.({ files: [file] }) === false) {
         openResumePdf();
-        setIsSharing(false);
         return;
       }
 
@@ -91,9 +89,9 @@ function CvMenu() {
       if (!(error instanceof DOMException && error.name === "AbortError")) {
         openResumePdf();
       }
+    } finally {
+      setIsSharing(false);
     }
-
-    setIsSharing(false);
   }
 
   return (
