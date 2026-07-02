@@ -58,7 +58,8 @@ export default function RouteMotionGuard() {
       return;
     }
 
-    window.scrollTo(0, scrollY);
+    // html has scroll-behavior: smooth; an animated restore would misalign the morph snapshot
+    window.scrollTo({ behavior: "instant", left: 0, top: scrollY });
   }, [pathname]);
 
   useEffect(() => {
@@ -80,7 +81,9 @@ export default function RouteMotionGuard() {
 
     document.addEventListener("click", markRouteNavigation, { capture: true });
 
-    return () => document.removeEventListener("click", markRouteNavigation, { capture: true });
+    return () => {
+      document.removeEventListener("click", markRouteNavigation, { capture: true });
+    };
   }, []);
 
   useEffect(() => {

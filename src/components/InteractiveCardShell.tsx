@@ -42,8 +42,7 @@ export function InteractiveCardShell({ onPointerLeave, onPointerMove, ...props }
       frameRef.current = null;
     }
 
-    event.currentTarget.style.setProperty("--pointer-x", "50%");
-    event.currentTarget.style.setProperty("--pointer-y", "50%");
+    // Let the spotlight fade out in place; the next enter repositions it on move.
     onPointerLeave?.(event);
   }
 

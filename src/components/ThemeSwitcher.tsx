@@ -44,6 +44,7 @@ const themeOptions: Array<{
     icon: Monitor,
   },
 ];
+const systemThemeOption = themeOptions.find(option => option.mode === "system") ?? themeOptions[0];
 
 type NativeViewTransition = {
   finished: Promise<void>;
@@ -171,7 +172,7 @@ export default function ThemeSwitcher() {
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { mode, resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const isDark = resolvedTheme === "dark";
-  const activeOption = themeOptions.find(option => option.mode === mode) ?? themeOptions[2];
+  const activeOption = themeOptions.find(option => option.mode === mode) ?? systemThemeOption;
   const ActiveIcon = activeOption.icon;
 
   function selectThemeMode(nextMode: ThemeMode) {
