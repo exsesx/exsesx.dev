@@ -11,6 +11,7 @@ import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
 import LogoMark from "./LogoMark";
+import NavBackButton from "./NavBackButton";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { buttonVariants } from "./ui/button-variants";
 
@@ -74,21 +75,24 @@ export default function Header() {
       <div aria-hidden="true" className="site-header-fade" style={{ viewTransitionName: "persistent-nav-fade" }} />
       <div ref={navFrameRef} className="site-header-nav-frame" style={{ viewTransitionName: "persistent-nav" }}>
         <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-full px-3 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between">
-          <Link
-            href="/"
-            data-suppress-entry-motion=""
-            className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
-            aria-label="Oleh Vanin home"
-            onClick={event => handleNavLinkClick(event, "/")}
-          >
-            <span className="logo-tile grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-150 ease-[var(--ease-out)] group-active:scale-[0.96]">
-              <LogoMark className="size-8" />
-            </span>
-            <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
-              <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
-              <span className="mt-1 text-[11px] font-bold tracking-normal text-muted-foreground">exsesx.dev</span>
-            </span>
-          </Link>
+          <div className="flex min-w-0 items-center">
+            <NavBackButton active={pathname.startsWith("/project/")} />
+            <Link
+              href="/"
+              data-suppress-entry-motion=""
+              className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
+              aria-label="Oleh Vanin home"
+              onClick={event => handleNavLinkClick(event, "/")}
+            >
+              <span className="logo-tile grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-150 ease-[var(--ease-out)] group-active:scale-[0.96]">
+                <LogoMark className="size-8" />
+              </span>
+              <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
+                <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
+                <span className="mt-1 text-[11px] font-bold tracking-normal text-muted-foreground">exsesx.dev</span>
+              </span>
+            </Link>
+          </div>
 
           <div
             className="site-nav-switcher relative grid grid-cols-[3rem_3rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-2"
