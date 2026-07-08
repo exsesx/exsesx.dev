@@ -4,14 +4,13 @@ import { ArrowLeft, ArrowRight, BriefcaseBusiness, Command, Home, Monitor, SunMo
 import { useRouter } from "next/navigation";
 import { type ElementType, startTransition, useEffect, useEffectEvent, useRef, useState } from "react";
 import {
-  createHotkeySequencer,
-  getHotkeyNavigationIntent,
+  getHotkeyDecision,
   getHotkeySequenceKey,
-  getNavbarHotkeyRoute,
   type HotkeyRouteAction,
-  type NavbarHotkeyDirection,
+  type HotkeyState,
   shouldEnableHotkeys,
 } from "@/lib/hotkeys";
+import { prepareHotkeyRouteNavigation } from "@/lib/route-intent";
 import { getThemeSnapshot, parseThemeSnapshot, persistThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
@@ -64,43 +63,41 @@ const repeatableHotkeyActions = new Set<HotkeyAction>(
   HOTKEYS.flatMap(shortcut => (shortcut.external || shortcut.opensNewTab ? [] : [shortcut.action])),
 );
 
+function createInitialHotkeyState(): HotkeyState<HotkeyAction> {
+  return {
+    isModalOpen: false,
+    lastRepeatableAction: null,
+    pendingSequence: [],
+  };
+}
+
 function Hotkeys() {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [pendingSequence, setPendingSequence] = useState<string[]>([]);
-  const isModalOpenRef = useRef(false);
-  const lastRepeatableActionRef = useRef<HotkeyAction | null>(null);
-  const pendingSequenceRef = useRef<string[]>([]);
-  const [sequencer] = useState(() => createHotkeySequencer(HOTKEYS));
+  const [hotkeyState, setHotkeyState] = useState<HotkeyState<HotkeyAction>>(createInitialHotkeyState);
+  const hotkeyStateRef = useRef(hotkeyState);
+  const isModalOpen = hotkeyState.isModalOpen;
+  const pendingSequence = hotkeyState.pendingSequence;
   const isSequenceRendered = pendingSequence.length > 0;
 
-  function commitModalOpen(nextIsOpen: boolean) {
-    isModalOpenRef.current = nextIsOpen;
-    setIsModalOpen(current => (current === nextIsOpen ? current : nextIsOpen));
-  }
-
-  function commitPendingSequence(nextSequence: string[]) {
-    pendingSequenceRef.current = nextSequence;
-    setPendingSequence(current =>
-      current.length === nextSequence.length && current.every((key, index) => key === nextSequence[index])
-        ? current
-        : nextSequence,
-    );
-  }
-
-  function clearPendingSequence() {
-    commitPendingSequence([]);
+  function commitHotkeyState(nextState: HotkeyState<HotkeyAction>) {
+    hotkeyStateRef.current = nextState;
+    setHotkeyState(current => (areHotkeyStatesEqual(current, nextState) ? current : nextState));
   }
 
   function toggleHotkeyModal() {
-    sequencer.reset();
-    clearPendingSequence();
-    commitModalOpen(!isModalOpenRef.current);
+    commitHotkeyState({
+      ...hotkeyStateRef.current,
+      isModalOpen: !hotkeyStateRef.current.isModalOpen,
+      pendingSequence: [],
+    });
   }
 
   function closeHotkeyModal() {
-    commitModalOpen(false);
+    commitHotkeyState({
+      ...hotkeyStateRef.current,
+      isModalOpen: false,
+    });
   }
 
   const syncEnabledState = useEffectEvent((hasHover: boolean, hasCoarsePointer: boolean) => {
@@ -109,9 +106,7 @@ function Hotkeys() {
     setIsEnabled(nextIsEnabled);
 
     if (!nextIsEnabled) {
-      commitModalOpen(false);
-      clearPendingSequence();
-      sequencer.reset();
+      commitHotkeyState(createInitialHotkeyState());
     }
   });
 
@@ -134,83 +129,30 @@ function Hotkeys() {
   }, []);
 
   const handleHotkeyKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if (isEditableTarget(event.target)) {
-      return;
-    }
+    const decision = getHotkeyDecision({
+      input: {
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        defaultPrevented: event.defaultPrevented,
+        isEditableTarget: isEditableTarget(event.target),
+        key: event.key,
+        metaKey: event.metaKey,
+        pathname: window.location.pathname,
+        shiftKey: event.shiftKey,
+      },
+      repeatableActions: repeatableHotkeyActions,
+      shortcuts: HOTKEYS,
+      state: hotkeyStateRef.current,
+    });
 
-    if (event.key === "Escape" && (isModalOpenRef.current || pendingSequenceRef.current.length > 0)) {
+    if (decision.preventDefault) {
       event.preventDefault();
-      sequencer.reset();
-      closeHotkeyModal();
-      clearPendingSequence();
-      return;
     }
 
-    if (isHelpShortcut(event)) {
-      event.preventDefault();
-      sequencer.reset();
-      clearPendingSequence();
-      commitModalOpen(!isModalOpenRef.current);
-      return;
-    }
+    commitHotkeyState(decision.nextState);
 
-    if (event.metaKey || event.ctrlKey || event.altKey) {
-      return;
-    }
-
-    if (event.shiftKey) {
-      const navbarDirection = getNavbarHotkeyDirection(event.key);
-
-      if (navbarDirection) {
-        event.preventDefault();
-        sequencer.reset();
-        clearPendingSequence();
-        commitModalOpen(false);
-        runHotkeyAction(getNavbarHotkeyAction(window.location.pathname, navbarDirection), router);
-        return;
-      }
-    }
-
-    const normalizedKey = normalizeSequenceKey(event.key);
-
-    if (!normalizedKey) {
-      return;
-    }
-
-    if (normalizedKey === "." && pendingSequenceRef.current.length === 0) {
-      if (lastRepeatableActionRef.current === null) {
-        return;
-      }
-
-      event.preventDefault();
-      sequencer.reset();
-      clearPendingSequence();
-      commitModalOpen(false);
-      runHotkeyAction(lastRepeatableActionRef.current, router);
-      return;
-    }
-
-    const result = sequencer.press(normalizedKey);
-
-    if (result.state === "idle") {
-      clearPendingSequence();
-      return;
-    }
-
-    event.preventDefault();
-
-    if (result.state === "pending") {
-      commitPendingSequence([normalizedKey]);
-    }
-
-    if (result.state === "matched") {
-      if (repeatableHotkeyActions.has(result.action)) {
-        lastRepeatableActionRef.current = result.action;
-      }
-
-      clearPendingSequence();
-      commitModalOpen(false);
-      runHotkeyAction(result.action, router);
+    if (decision.action) {
+      runHotkeyAction(decision.action, router);
     }
   });
 
@@ -223,9 +165,9 @@ function Hotkeys() {
       handleHotkeyKeyDown(event);
     }
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
   }, [isEnabled]);
 
   if (!isEnabled) {
@@ -371,32 +313,6 @@ function HotkeyModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function normalizeSequenceKey(key: string) {
-  return key.length === 1 ? key : undefined;
-}
-
-function getNavbarHotkeyDirection(key: string): NavbarHotkeyDirection | null {
-  const normalizedKey = key.toLowerCase();
-
-  if (normalizedKey === "h") {
-    return "left";
-  }
-
-  if (normalizedKey === "l") {
-    return "right";
-  }
-
-  return null;
-}
-
-function getNavbarHotkeyAction(pathname: string, direction: NavbarHotkeyDirection): HotkeyAction {
-  return getNavbarHotkeyRoute(pathname, direction) === "/" ? "home" : "projects";
-}
-
-function isHelpShortcut(event: KeyboardEvent) {
-  return event.metaKey && (event.key === "." || event.key === "?" || (event.key === "/" && event.shiftKey));
-}
-
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return false;
@@ -424,12 +340,20 @@ function runHotkeyAction(action: HotkeyAction, router: ReturnType<typeof useRout
     return;
   }
 
-  const { route, transitionTypes } = getHotkeyNavigationIntent(action);
+  const { href, transitionTypes } = prepareHotkeyRouteNavigation(action);
 
-  document.documentElement.dataset.viewTransitionNavigated = "true";
   startTransition(() => {
-    router.push(route, { transitionTypes });
+    router.push(href, { transitionTypes });
   });
+}
+
+function areHotkeyStatesEqual(left: HotkeyState<HotkeyAction>, right: HotkeyState<HotkeyAction>) {
+  return (
+    left.isModalOpen === right.isModalOpen &&
+    left.lastRepeatableAction === right.lastRepeatableAction &&
+    left.pendingSequence.length === right.pendingSequence.length &&
+    left.pendingSequence.every((key, index) => key === right.pendingSequence[index])
+  );
 }
 
 function toggleThemeMode() {

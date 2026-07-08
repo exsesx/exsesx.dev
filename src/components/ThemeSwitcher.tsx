@@ -2,6 +2,7 @@
 
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { MOTION_DATASET_KEYS } from "@/lib/motion-contract";
 import {
   getServerThemeSnapshot,
   getThemeSnapshot,
@@ -144,10 +145,10 @@ function persistThemeModeWithTransition(mode: ThemeMode, originElement: HTMLElem
   root.style.setProperty("--theme-transition-x", `${x}px`);
   root.style.setProperty("--theme-transition-y", `${y}px`);
   root.style.setProperty("--theme-transition-radius", `${radius}px`);
-  root.dataset.themeTransition = "active";
+  root.dataset[MOTION_DATASET_KEYS.themeTransition] = "active";
 
   const cleanup = () => {
-    delete root.dataset.themeTransition;
+    delete root.dataset[MOTION_DATASET_KEYS.themeTransition];
     root.style.removeProperty("--theme-transition-x");
     root.style.removeProperty("--theme-transition-y");
     root.style.removeProperty("--theme-transition-radius");

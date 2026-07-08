@@ -4,6 +4,7 @@ import Link from "next/link";
 import RouteFadeTransition from "../components/RouteFadeTransition";
 import { buttonVariants } from "../components/ui/button-variants";
 import { siteName } from "../lib/metadata";
+import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "../lib/motion-contract";
 
 export const metadata: Metadata = {
   title: `Page not found - ${siteName}`,
@@ -53,8 +54,8 @@ export default function NotFound() {
             </Link>
             <Link
               href="/projects"
-              transitionTypes={["nav-forward"]}
-              data-suppress-entry-motion
+              transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
+              {...suppressEntryMotionProps}
               className={buttonVariants({ variant: "glass", size: "lg" })}
             >
               See the work
