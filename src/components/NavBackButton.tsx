@@ -4,19 +4,14 @@ import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useEffectEvent } from "react";
-import { getPreviousRoute, queueScrollRestore } from "@/lib/navigation-history";
+import { MOTION_ATTRIBUTES } from "@/lib/motion-contract";
+import { getBackNavigationIntent } from "@/lib/route-intent";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "./ui/button-variants";
-
-const FALLBACK_HREF: Route = "/projects";
 
 type NavBackButtonProps = {
   active: boolean;
 };
-
-function shouldRestoreSharedProjectMedia(path: string) {
-  return path === "/projects" || path.startsWith("/projects?") || path.startsWith("/projects#");
-}
 
 function isEditableTarget(target: EventTarget | null) {
   return (
@@ -24,49 +19,22 @@ function isEditableTarget(target: EventTarget | null) {
   );
 }
 
-/* The project page owns its shared-media morph type and publishes it on
-   <main>; reading it at click time keeps the projects data out of the nav
-   bundle, which loads on every route. */
-function getFallbackTransitionTypes() {
-  const transitionType = document
-    .querySelector("main[data-back-transition-type]")
-    ?.getAttribute("data-back-transition-type");
-
-  return transitionType ? ["nav-back", transitionType] : ["nav-back"];
-}
-
 export default function NavBackButton({ active }: NavBackButtonProps) {
   const router = useRouter();
 
   function navigateBack() {
-    const fallbackTransitionTypes = getFallbackTransitionTypes();
-    const previousRoute = getPreviousRoute();
-    document.documentElement.dataset.viewTransitionNavigated = "true";
-
-    if (previousRoute) {
-      queueScrollRestore(previousRoute);
-
-      startTransition(() => {
-        router.push(previousRoute.path as Route, {
-          scroll: false,
-          transitionTypes: shouldRestoreSharedProjectMedia(previousRoute.path) ? fallbackTransitionTypes : ["nav-back"],
-        });
-      });
-      return;
-    }
+    const intent = getBackNavigationIntent();
 
     startTransition(() => {
-      router.push(FALLBACK_HREF, { transitionTypes: fallbackTransitionTypes });
+      router.push(intent.href as Route, {
+        scroll: intent.scroll,
+        transitionTypes: intent.transitionTypes,
+      });
     });
   }
 
   const handleEscapeKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if (
-      event.defaultPrevented ||
-      event.key !== "Escape" ||
-      isEditableTarget(event.target) ||
-      document.querySelector(".hotkeys-panel")
-    ) {
+    if (event.defaultPrevented || event.key !== "Escape" || isEditableTarget(event.target)) {
       return;
     }
 
@@ -94,7 +62,7 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
       aria-label="Back"
       aria-hidden={active ? undefined : "true"}
       disabled={!active}
-      data-active={active ? "true" : "false"}
+      {...{ [MOTION_ATTRIBUTES.activeBackButton]: active ? "true" : "false" }}
       className={cn(buttonVariants({ variant: "glass", size: "icon" }), "nav-back-button cursor-pointer")}
       onClick={navigateBack}
     >

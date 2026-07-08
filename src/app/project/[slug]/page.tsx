@@ -13,6 +13,13 @@ import { CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } f
 import { Separator } from "../../../components/ui/separator";
 import { createPageMetadata, createProjectSocialImage } from "../../../lib/metadata";
 import {
+  getBackTransitionTypeProps,
+  getProjectRouteTransitionTypes,
+  ROUTE_TRANSITION_TYPES,
+  suppressEntryMotionProps,
+} from "../../../lib/motion-contract";
+import { getProjectAccentClasses } from "../../../lib/project-accents";
+import {
   getAdjacentProjects,
   getProjectBySlug,
   getProjectPath,
@@ -26,44 +33,6 @@ type ProjectPageProps = {
   params: Promise<{
     slug: string;
   }>;
-};
-
-// Brand accents, mirroring src/components/Card.tsx for the detail hero.
-const accentClasses: Record<Project["accent"], string> = {
-  amber: "from-[rgba(132,92,246,0.5)] via-[rgba(74,28,170,0.2)] to-transparent",
-  controlup: "from-[rgba(56,135,232,0.5)] via-[rgba(16,60,120,0.22)] to-[rgba(251,176,59,0.1)]",
-  cyan: "from-cyan-400/45 via-sky-950/20 to-transparent",
-  mint: "from-[rgba(58,128,224,0.5)] via-[rgba(12,46,96,0.22)] to-transparent",
-  neutral: "from-slate-950/90 via-slate-950/45 to-transparent",
-  quicklizard: "from-[rgba(64,168,196,0.5)] via-[rgba(28,92,112,0.2)] to-[rgba(255,140,40,0.1)]",
-  rose: "from-[rgba(232,80,104,0.5)] via-[rgba(176,24,40,0.2)] to-[rgba(235,120,70,0.1)]",
-  steel: "from-[rgba(96,150,196,0.42)] via-[rgba(52,80,116,0.2)] to-transparent",
-  violet: "from-[rgba(150,96,214,0.5)] via-[rgba(84,42,150,0.2)] to-[rgba(190,110,210,0.1)]",
-};
-
-const accentSurfaceClasses: Record<Project["accent"], string> = {
-  amber: "border-[rgba(132,92,246,0.18)] shadow-[0_0_0_1px_rgba(132,92,246,0.10),0_30px_90px_rgba(112,42,236,0.18)]",
-  controlup: "border-[rgba(56,135,232,0.18)] shadow-[0_0_0_1px_rgba(56,135,232,0.10),0_30px_90px_rgba(7,31,61,0.24)]",
-  cyan: "border-cyan-200/15 shadow-[0_0_0_1px_rgba(165,243,252,0.07),0_30px_90px_rgba(14,165,233,0.08)]",
-  mint: "border-[rgba(58,128,224,0.18)] shadow-[0_0_0_1px_rgba(58,128,224,0.10),0_30px_90px_rgba(9,30,57,0.24)]",
-  neutral: "",
-  quicklizard:
-    "border-[rgba(64,168,196,0.18)] shadow-[0_0_0_1px_rgba(64,168,196,0.10),0_30px_90px_rgba(64,121,140,0.18)]",
-  rose: "border-[rgba(232,80,104,0.18)] shadow-[0_0_0_1px_rgba(232,80,104,0.10),0_30px_90px_rgba(235,31,40,0.16)]",
-  steel: "border-[rgba(96,150,196,0.16)] shadow-[0_0_0_1px_rgba(96,150,196,0.08),0_30px_90px_rgba(52,80,116,0.16)]",
-  violet: "border-[rgba(150,96,214,0.18)] shadow-[0_0_0_1px_rgba(150,96,214,0.10),0_30px_90px_rgba(114,65,195,0.22)]",
-};
-
-const accentTopLightClasses: Record<Project["accent"], string> = {
-  amber: "bg-[linear-gradient(180deg,rgba(132,92,246,0.22),rgba(112,42,236,0.05)_48%,rgba(24,24,27,0))]",
-  controlup: "bg-[linear-gradient(180deg,rgba(56,135,232,0.22),rgba(251,176,59,0.06)_48%,rgba(24,24,27,0))]",
-  cyan: "bg-[linear-gradient(180deg,rgba(6,182,212,0.20),rgba(59,130,246,0.05)_48%,rgba(24,24,27,0))]",
-  mint: "bg-[linear-gradient(180deg,rgba(58,128,224,0.22),rgba(12,46,96,0.05)_48%,rgba(24,24,27,0))]",
-  neutral: "",
-  quicklizard: "bg-[linear-gradient(180deg,rgba(64,168,196,0.22),rgba(255,140,40,0.06)_48%,rgba(24,24,27,0))]",
-  rose: "bg-[linear-gradient(180deg,rgba(232,80,104,0.22),rgba(235,120,70,0.06)_48%,rgba(24,24,27,0))]",
-  steel: "bg-[linear-gradient(180deg,rgba(96,150,196,0.18),rgba(52,80,116,0.05)_48%,rgba(24,24,27,0))]",
-  violet: "bg-[linear-gradient(180deg,rgba(150,96,214,0.20),rgba(190,110,210,0.05)_55%,rgba(24,24,27,0))]",
 };
 
 export const dynamicParams = false;
@@ -100,7 +69,7 @@ function ProjectMedia({ project, priority = false }: { project: Project; priorit
   return (
     <ViewTransition
       name={`project-media-${project.id}`}
-      share={{ [projectTransitionType]: "morph", default: "none" }}
+      share={{ [projectTransitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
       default="none"
     >
       <div
@@ -147,16 +116,16 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   const { previousProject, nextProject } = getAdjacentProjects(project);
   const projectTransitionType = getProjectTransitionType(project);
+  const accentClasses = getProjectAccentClasses(project.accent);
   const adjacentProjects = [previousProject, nextProject].filter(
     (projectItem): projectItem is Project => projectItem !== undefined && projectItem.id !== project.id,
   );
 
   return (
     <RouteFadeTransition>
-      {/* data-back-transition-type feeds the nav's back chip (NavBackButton) */}
       <main
         className="mx-auto w-full max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:pt-28"
-        data-back-transition-type={projectTransitionType}
+        {...getBackTransitionTypeProps(projectTransitionType)}
       >
         <section className="grid gap-8 lg:grid-cols-[0.48fr_0.52fr] lg:items-stretch">
           <div className="motion-rise flex flex-col gap-6">
@@ -213,19 +182,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           <aside
             className={cn(
               "motion-rise motion-delay-1 liquid-glass relative overflow-hidden rounded-[2rem] p-3",
-              accentSurfaceClasses[project.accent],
+              accentClasses.detailHero.surface,
             )}
           >
-            <div
-              className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClasses[project.accent]}`}
-            />
-            {accentTopLightClasses[project.accent] ? (
-              <div
-                className={cn(
-                  "pointer-events-none absolute inset-x-0 top-0 h-52",
-                  accentTopLightClasses[project.accent],
-                )}
-              />
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClasses.gradient}`} />
+            {accentClasses.topLight ? (
+              <div className={cn("pointer-events-none absolute inset-x-0 top-0 h-52", accentClasses.topLight)} />
             ) : null}
             <div className="relative h-full">
               <ProjectMedia project={project} priority />
@@ -309,8 +271,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               {previousProject ? (
                 <Link
                   href={getProjectPath(previousProject)}
-                  transitionTypes={["nav-back", getProjectTransitionType(previousProject)]}
-                  data-suppress-entry-motion
+                  transitionTypes={getProjectRouteTransitionTypes(
+                    ROUTE_TRANSITION_TYPES.navBack,
+                    getProjectTransitionType(previousProject),
+                  )}
+                  {...suppressEntryMotionProps}
                   className={buttonVariants({ variant: "glass", size: "default" })}
                 >
                   <ArrowLeft data-icon="inline-start" strokeWidth={2.4} />
@@ -320,8 +285,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               {nextProject ? (
                 <Link
                   href={getProjectPath(nextProject)}
-                  transitionTypes={["nav-forward", getProjectTransitionType(nextProject)]}
-                  data-suppress-entry-motion
+                  transitionTypes={getProjectRouteTransitionTypes(
+                    ROUTE_TRANSITION_TYPES.navForward,
+                    getProjectTransitionType(nextProject),
+                  )}
+                  {...suppressEntryMotionProps}
                   className={buttonVariants({ variant: "default", size: "default" })}
                 >
                   Next

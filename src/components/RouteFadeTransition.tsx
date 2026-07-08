@@ -1,4 +1,5 @@
 import { type ReactNode, ViewTransition } from "react";
+import { ROUTE_TRANSITION_TYPES } from "@/lib/motion-contract";
 
 /*
  * Page-level transition boundary. Directional types (nav-forward/nav-back)
@@ -8,8 +9,16 @@ import { type ReactNode, ViewTransition } from "react";
 export default function RouteFadeTransition({ children }: { children: ReactNode }) {
   return (
     <ViewTransition
-      enter={{ "nav-forward": "nav-forward", "nav-back": "nav-back", default: "none" }}
-      exit={{ "nav-forward": "nav-forward", "nav-back": "nav-back", default: "none" }}
+      enter={{
+        [ROUTE_TRANSITION_TYPES.navForward]: ROUTE_TRANSITION_TYPES.navForward,
+        [ROUTE_TRANSITION_TYPES.navBack]: ROUTE_TRANSITION_TYPES.navBack,
+        default: "none",
+      }}
+      exit={{
+        [ROUTE_TRANSITION_TYPES.navForward]: ROUTE_TRANSITION_TYPES.navForward,
+        [ROUTE_TRANSITION_TYPES.navBack]: ROUTE_TRANSITION_TYPES.navBack,
+        default: "none",
+      }}
       default="none"
     >
       {children}

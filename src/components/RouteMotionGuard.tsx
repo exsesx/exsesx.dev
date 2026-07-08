@@ -3,12 +3,10 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect } from "react";
 import {
-  consumeScrollRestore,
-  getCurrentRoutePath,
-  getPreviousRoute,
-  queueScrollRestore,
-  recordPreviousRoute,
-} from "@/lib/navigation-history";
+  captureAnchorRouteIntent,
+  consumeQueuedScrollRestore,
+  queueBrowserBackScrollRestore,
+} from "@/lib/route-intent";
 
 function getRouteChangingAnchor(event: MouseEvent) {
   if (
@@ -52,7 +50,7 @@ export default function RouteMotionGuard() {
 
   useLayoutEffect(() => {
     const currentPath = `${pathname}${window.location.search}${window.location.hash}`;
-    const scrollY = consumeScrollRestore(currentPath);
+    const scrollY = consumeQueuedScrollRestore(currentPath);
 
     if (scrollY === null) {
       return;
@@ -70,13 +68,7 @@ export default function RouteMotionGuard() {
         return;
       }
 
-      recordPreviousRoute();
-
-      if (anchor.hasAttribute("data-suppress-entry-motion")) {
-        document.documentElement.dataset.viewTransitionNavigated = "true";
-      } else {
-        delete document.documentElement.dataset.viewTransitionNavigated;
-      }
+      captureAnchorRouteIntent(anchor);
     }
 
     document.addEventListener("click", markRouteNavigation, { capture: true });
@@ -87,14 +79,6 @@ export default function RouteMotionGuard() {
   }, []);
 
   useEffect(() => {
-    function queueBrowserBackScrollRestore() {
-      const previousRoute = getPreviousRoute();
-
-      if (previousRoute?.path === getCurrentRoutePath()) {
-        queueScrollRestore(previousRoute);
-      }
-    }
-
     window.addEventListener("popstate", queueBrowserBackScrollRestore);
 
     return () => window.removeEventListener("popstate", queueBrowserBackScrollRestore);
