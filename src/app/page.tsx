@@ -13,6 +13,7 @@ import { buttonVariants } from "../components/ui/button-variants";
 import { CardContent, CardHeader, CardTitle, Card as UiCard } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
 import { createPageMetadata } from "../lib/metadata";
+import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "../lib/motion-contract";
 import { projects, specialties } from "../lib/projects";
 import { buildHomeStructuredData, serializeStructuredData } from "../lib/structured-data";
 import { cn } from "../lib/utils";
@@ -109,8 +110,8 @@ export default function HomePage() {
             <div className="motion-rise motion-delay-3 mt-8 flex flex-wrap gap-3">
               <Link
                 href="/projects"
-                transitionTypes={["nav-forward"]}
-                data-suppress-entry-motion
+                transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
+                {...suppressEntryMotionProps}
                 className={buttonVariants({ variant: "default", size: "lg" })}
               >
                 See the work
@@ -279,8 +280,8 @@ export default function HomePage() {
             </div>
             <Link
               href="/projects"
-              transitionTypes={["nav-forward"]}
-              data-suppress-entry-motion
+              transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
+              {...suppressEntryMotionProps}
               className={buttonVariants({ variant: "glass", size: "default" })}
             >
               Featured projects

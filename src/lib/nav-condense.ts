@@ -1,3 +1,5 @@
+import { MOTION_DATASET_KEYS } from "./motion-contract";
+
 export const NAV_CONDENSE_AFTER = 72;
 export const NAV_EXPAND_BELOW = 32;
 
@@ -8,14 +10,14 @@ export function resolveNavCondensed(scrollY: number, wasCondensed: boolean): boo
 export function attachNavCondense(element: HTMLElement): () => void {
   let condensed = resolveNavCondensed(window.scrollY, false);
 
-  element.dataset.condensed = String(condensed);
+  element.dataset[MOTION_DATASET_KEYS.condensedHeader] = String(condensed);
 
   function handleScroll() {
     const next = resolveNavCondensed(window.scrollY, condensed);
 
     if (next !== condensed) {
       condensed = next;
-      element.dataset.condensed = String(next);
+      element.dataset[MOTION_DATASET_KEYS.condensedHeader] = String(next);
     }
   }
 
@@ -23,6 +25,6 @@ export function attachNavCondense(element: HTMLElement): () => void {
 
   return () => {
     window.removeEventListener("scroll", handleScroll);
-    delete element.dataset.condensed;
+    delete element.dataset[MOTION_DATASET_KEYS.condensedHeader];
   };
 }

@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { getBackTransitionTypeProps, MOTION_ATTRIBUTES, ROUTE_TRANSITION_TYPES } from "./motion-contract";
 
 const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const rootLayoutUrl = new URL("../app/layout.tsx", import.meta.url);
 const nextConfigUrl = new URL("../../next.config.mts", import.meta.url);
-const projectPageUrl = new URL("../app/project/[slug]/page.tsx", import.meta.url);
-const navBackButtonUrl = new URL("../components/NavBackButton.tsx", import.meta.url);
 
 async function readGlobalsCss() {
   return Bun.file(globalsCssUrl).text();
@@ -39,19 +38,24 @@ describe("mobile navigation styles", () => {
 
   test("fully collapses the nav back chip on non-project routes", async () => {
     const css = await readGlobalsCss();
-    const foldedChipRule = getRuleBody(css, '.nav-back-button[data-active="false"]');
+    const foldedChipRule = getRuleBody(css, `.nav-back-button[${MOTION_ATTRIBUTES.activeBackButton}="false"]`);
 
     expect(foldedChipRule).toMatch(/max-width:\s*0/);
     expect(foldedChipRule).toMatch(/opacity:\s*0/);
   });
 
-  test("wires the back chip's morph transition type from the project page through the DOM", async () => {
-    const projectPage = await Bun.file(projectPageUrl).text();
-    const navBackButton = await Bun.file(navBackButtonUrl).text();
+  test("names the back chip's morph transition attribute for TS writers", () => {
+    expect(getBackTransitionTypeProps("project-transition-project-quicklizard")).toEqual({
+      [MOTION_ATTRIBUTES.backTransitionType]: "project-transition-project-quicklizard",
+    });
+  });
 
-    // page publishes it, chip reads it; both sides of the contract must agree
-    expect(projectPage).toContain("data-back-transition-type={projectTransitionType}");
-    expect(navBackButton).toContain('querySelector("main[data-back-transition-type]")');
+  test("names the route navigation transition contracts used by CSS", async () => {
+    const css = await readGlobalsCss();
+
+    expect(css).toContain(`html[${MOTION_ATTRIBUTES.viewTransitionNavigated}="true"]`);
+    expect(css).toContain(`:active-view-transition-type(${ROUTE_TRANSITION_TYPES.navForward})`);
+    expect(css).toContain(`:active-view-transition-type(${ROUTE_TRANSITION_TYPES.navBack})`);
   });
 
   test("does not put the app shell in an overflow container that disables sticky descendants", async () => {

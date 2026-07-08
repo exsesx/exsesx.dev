@@ -6,8 +6,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent, PointerEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { MOTION_ATTRIBUTES, suppressEntryMotionProps } from "@/lib/motion-contract";
 import { attachNavCondense } from "@/lib/nav-condense";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
+import { getPrimaryNavHref } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "./icons/lucide-github";
 import LogoMark from "./LogoMark";
@@ -23,12 +25,6 @@ const navigation: Array<{ href: Route; label: string; icon: typeof Home }> = [
 const navActionBaseClassName =
   "relative z-10 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-0 text-sm font-bold whitespace-nowrap text-foreground outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97] sm:px-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
-function getActiveNavHref(pathname: string): Route {
-  return pathname === "/projects" || pathname.startsWith("/projects/") || pathname.startsWith("/project/")
-    ? "/projects"
-    : "/";
-}
-
 function scrollToPageTop() {
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
@@ -41,9 +37,10 @@ function shouldPreviewNavChange(event: MouseEvent<HTMLAnchorElement> | PointerEv
 
 export default function Header() {
   const pathname = usePathname();
-  const activeNavHref = getActiveNavHref(pathname);
+  const activeNavHref = getPrimaryNavHref(pathname);
   const [visualActiveNavHref, setVisualActiveNavHref] = useState<Route>(activeNavHref);
   const navFrameRef = useRef<HTMLDivElement | null>(null);
+  const visualActiveNav = visualActiveNavHref === "/projects" ? "projects" : "home";
 
   useEffect(() => {
     setVisualActiveNavHref(activeNavHref);
@@ -79,7 +76,7 @@ export default function Header() {
             <NavBackButton active={pathname.startsWith("/project/")} />
             <Link
               href="/"
-              data-suppress-entry-motion=""
+              {...suppressEntryMotionProps}
               className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
               aria-label="Oleh Vanin home"
               onClick={event => handleNavLinkClick(event, "/")}
@@ -96,12 +93,12 @@ export default function Header() {
 
           <div
             className="site-nav-switcher relative grid grid-cols-[3rem_3rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-2"
-            data-active-nav={visualActiveNavHref === "/projects" ? "projects" : "home"}
+            {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
           >
             <span
               aria-hidden="true"
               className="site-nav-active-pill absolute inset-y-1 left-1 z-0 rounded-full"
-              data-active-nav={visualActiveNavHref === "/projects" ? "projects" : "home"}
+              {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
             />
             {navigation.map(item => {
               const Icon = item.icon;
@@ -110,7 +107,7 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  data-suppress-entry-motion=""
+                  {...suppressEntryMotionProps}
                   aria-label={item.label}
                   aria-current={activeNavHref === item.href ? "page" : undefined}
                   className={navActionBaseClassName}
