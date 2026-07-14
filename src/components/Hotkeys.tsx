@@ -2,13 +2,13 @@
 
 import { ArrowLeft, ArrowRight, BriefcaseBusiness, Command, Home, Monitor, SunMoon, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type ElementType, startTransition, useEffect, useEffectEvent, useRef, useState } from "react";
+import { type ElementType, useEffect, useEffectEvent, useRef, useState } from "react";
 import {
+  getHotkeyContinuationKeys,
   getHotkeyDecision,
   getHotkeySequenceKey,
   type HotkeyRouteAction,
   type HotkeyState,
-  shouldEnableHotkeys,
 } from "@/lib/hotkeys";
 import { prepareHotkeyRouteNavigation } from "@/lib/route-intent";
 import { getThemeSnapshot, parseThemeSnapshot, persistThemeMode } from "@/lib/theme";
@@ -73,7 +73,6 @@ function createInitialHotkeyState(): HotkeyState<HotkeyAction> {
 
 function Hotkeys() {
   const router = useRouter();
-  const [isEnabled, setIsEnabled] = useState(false);
   const [hotkeyState, setHotkeyState] = useState<HotkeyState<HotkeyAction>>(createInitialHotkeyState);
   const hotkeyStateRef = useRef(hotkeyState);
   const isModalOpen = hotkeyState.isModalOpen;
@@ -99,34 +98,6 @@ function Hotkeys() {
       isModalOpen: false,
     });
   }
-
-  const syncEnabledState = useEffectEvent((hasHover: boolean, hasCoarsePointer: boolean) => {
-    const nextIsEnabled = shouldEnableHotkeys({ hasHover, hasCoarsePointer });
-
-    setIsEnabled(nextIsEnabled);
-
-    if (!nextIsEnabled) {
-      commitHotkeyState(createInitialHotkeyState());
-    }
-  });
-
-  useEffect(() => {
-    const hoverQuery = window.matchMedia("(hover: hover)");
-    const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
-
-    function handleChange() {
-      syncEnabledState(hoverQuery.matches, coarsePointerQuery.matches);
-    }
-
-    handleChange();
-    hoverQuery.addEventListener("change", handleChange);
-    coarsePointerQuery.addEventListener("change", handleChange);
-
-    return () => {
-      hoverQuery.removeEventListener("change", handleChange);
-      coarsePointerQuery.removeEventListener("change", handleChange);
-    };
-  }, []);
 
   const handleHotkeyKeyDown = useEffectEvent((event: KeyboardEvent) => {
     const decision = getHotkeyDecision({
@@ -157,10 +128,6 @@ function Hotkeys() {
   });
 
   useEffect(() => {
-    if (!isEnabled) {
-      return;
-    }
-
     function handleKeyDown(event: KeyboardEvent) {
       handleHotkeyKeyDown(event);
     }
@@ -168,11 +135,7 @@ function Hotkeys() {
     window.addEventListener("keydown", handleKeyDown, { capture: true });
 
     return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
-  }, [isEnabled]);
-
-  if (!isEnabled) {
-    return null;
-  }
+  }, []);
 
   return (
     <>
@@ -192,7 +155,7 @@ function HotkeyHint({ isSequenceRendered, onToggle }: { isSequenceRendered: bool
       aria-label="Toggle keyboard shortcuts"
       aria-hidden={isSequenceRendered}
       className={cn(
-        "hotkeys-corner-hint liquid-glass fixed bottom-4 left-4 z-[80] hidden h-11 items-center rounded-full px-1.5 text-foreground shadow-menu transition-opacity duration-150 ease-[var(--ease-out)] active:scale-[0.97] md:inline-flex",
+        "hotkeys-corner-hint glass-frost fixed bottom-4 left-4 z-[80] hidden h-11 items-center rounded-full px-1.5 text-foreground shadow-menu transition-opacity duration-150 ease-[var(--ease-out)] active:scale-[0.97] md:inline-flex",
         isSequenceRendered && "pointer-events-none opacity-0",
       )}
       tabIndex={isSequenceRendered ? -1 : undefined}
@@ -202,35 +165,30 @@ function HotkeyHint({ isSequenceRendered, onToggle }: { isSequenceRendered: bool
         <Command aria-hidden="true" size={13} strokeWidth={2.5} />
         <span aria-hidden="true" className="hotkeys-command-period" />
       </kbd>
-      <span aria-hidden="true" className="hotkeys-trigger-dots opacity-0">
-        <span />
-        <span />
-        <span />
-      </span>
     </button>
   );
 }
 
 function PendingSequence({ sequence }: { sequence: string[] }) {
+  const continuationKeys = getHotkeyContinuationKeys(HOTKEYS, sequence);
+
   return (
     <aside
       aria-live="polite"
-      aria-label={`${sequence.join(" ")} pressed; awaiting next shortcut key`}
-      className="hotkeys-chord-panel hotkeys-chord-waiting liquid-glass fixed bottom-4 left-4 z-[65] hidden h-11 items-center gap-1.5 rounded-full px-1.5 text-foreground shadow-menu md:flex"
+      aria-label={`${sequence.join(" ")} pressed; available next keys: ${continuationKeys.join(" ")}`}
+      className="hotkeys-chord-panel hotkeys-chord-waiting glass-frost fixed bottom-4 left-4 z-[65] hidden h-11 items-center gap-1.5 rounded-full px-1.5 text-foreground shadow-menu md:flex"
     >
       <span className="hotkeys-wait-sequence">
         {sequence.map((key, index) => (
-          <span key={getHotkeySequenceKey("pending", key, index)} className="hotkeys-trigger-key hotkeys-wait-key">
+          <span key={getHotkeySequenceKey("pending", key, index)} className="hotkeys-trigger-key">
             <kbd className="relative z-10 font-mono text-xs font-black leading-none">{key}</kbd>
           </span>
         ))}
       </span>
-      <span className="hotkeys-wait-body">
-        <span aria-hidden="true" className="hotkeys-trigger-dots hotkeys-wait-dots">
-          <span />
-          <span />
-          <span />
-        </span>
+      <span aria-hidden="true" className="hotkeys-continuation-keys">
+        {continuationKeys.map((key, index) => (
+          <kbd key={getHotkeySequenceKey("continuation", key, index)}>{key}</kbd>
+        ))}
       </span>
     </aside>
   );
@@ -247,7 +205,7 @@ function HotkeyModal({ onClose }: { onClose: () => void }) {
       />
       <section
         aria-label="Keyboard shortcuts"
-        className="hotkeys-panel liquid-glass relative w-full max-w-lg rounded-[1.75rem] p-3 text-foreground shadow-menu sm:p-4"
+        className="hotkeys-panel glass-frost relative w-full max-w-lg rounded-[1.75rem] p-3 text-foreground shadow-menu sm:p-4"
       >
         <div className="flex items-center justify-between gap-4 px-2.5 pt-0 pb-2 sm:px-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -342,9 +300,7 @@ function runHotkeyAction(action: HotkeyAction, router: ReturnType<typeof useRout
 
   const { href, transitionTypes } = prepareHotkeyRouteNavigation(action);
 
-  startTransition(() => {
-    router.push(href, { transitionTypes });
-  });
+  router.push(href, { transitionTypes });
 }
 
 function areHotkeyStatesEqual(left: HotkeyState<HotkeyAction>, right: HotkeyState<HotkeyAction>) {

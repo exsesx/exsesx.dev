@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import * as hotkeys from "./hotkeys";
 import { getHotkeyDecision, getNavbarHotkeyRoute, type HotkeyDecisionInput, type HotkeyState } from "./hotkeys";
 
 type TestAction = "home" | "projects" | "theme-toggle" | "github";
@@ -58,6 +59,59 @@ describe("getNavbarHotkeyRoute", () => {
 
   test("treats nested projects pages as the projects nav item", () => {
     expect(getNavbarHotkeyRoute("/projects/archive", "left")).toBe("/");
+  });
+});
+
+describe("getHotkeyContinuationKeys", () => {
+  const continuationShortcuts = [
+    { sequence: ["g", "h"], action: "home" },
+    { sequence: ["g", "p"], action: "projects" },
+    { sequence: ["g", "t"], action: "theme-toggle" },
+    { sequence: ["g", "d"], action: "theme-device" },
+    { sequence: ["g", "g"], action: "github" },
+  ] as const;
+
+  function continuationKeys(shortcutList: readonly hotkeys.HotkeyShortcut[], prefix: readonly string[]) {
+    const helper = (
+      hotkeys as typeof hotkeys & {
+        getHotkeyContinuationKeys?: (
+          shortcuts: readonly hotkeys.HotkeyShortcut[],
+          pendingSequence: readonly string[],
+        ) => string[];
+      }
+    ).getHotkeyContinuationKeys;
+
+    expect(helper).toBeFunction();
+    return helper?.(shortcutList, prefix) ?? [];
+  }
+
+  test("preserves declaration order for the g chord preview without mutating inputs", () => {
+    const pending = ["g"];
+    const shortcutsBefore = structuredClone(continuationShortcuts);
+
+    expect(continuationKeys(continuationShortcuts, pending)).toEqual(["h", "p", "t", "d", "g"]);
+    expect(pending).toEqual(["g"]);
+    expect(continuationShortcuts).toEqual(shortcutsBefore);
+  });
+
+  test("returns no keys for unknown and completed prefixes", () => {
+    expect(continuationKeys(continuationShortcuts, ["x"])).toEqual([]);
+    expect(continuationKeys(continuationShortcuts, ["g", "h"])).toEqual([]);
+  });
+
+  test("returns no keys when the pending sequence is an exact shortcut with longer overlapping shortcuts", () => {
+    const overlappingShortcuts = [
+      { sequence: ["g", "h"], action: "home" },
+      { sequence: ["g", "h", "p"], action: "nested-projects" },
+    ] as const;
+
+    expect(continuationKeys(overlappingShortcuts, ["g", "h"])).toEqual([]);
+  });
+
+  test("deduplicates continuation keys in declaration order", () => {
+    const duplicates = [...continuationShortcuts, { sequence: ["g", "h", "x"], action: "duplicate" }] as const;
+
+    expect(continuationKeys(duplicates, ["g"])).toEqual(["h", "p", "t", "d", "g"]);
   });
 });
 

@@ -58,34 +58,10 @@
   --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  /* underdamped spring (ω₀²=420, ζ=0.62, ~8.4% overshoot) sampled for 380ms */
-  --ease-spring: linear(
-    0,
-    0.046 4.2%,
-    0.158 8.3%,
-    0.306 12.5%,
-    0.465 16.7%,
-    0.616 20.8%,
-    0.751 25%,
-    0.862 29.2%,
-    0.949 33.3%,
-    1.011 37.5%,
-    1.051 41.7%,
-    1.074 45.8%,
-    1.083 50%,
-    1.082 54.2%,
-    1.074 58.3%,
-    1.062 62.5%,
-    1.049 66.7%,
-    1.036 70.8%,
-    1.024 75%,
-    1.014 79.2%,
-    1.007 83.3%,
-    1.001 87.5%,
-    0.997 91.7%,
-    0.994 95.8%,
-    1
-  );
+  --duration-press: 150ms;
+  --duration-ui: 200ms;
+  --duration-popover-enter: 170ms;
+  --duration-popover-exit: 150ms;
   --duration-exit: 90ms;
   --duration-enter: 140ms;
   --duration-move: 280ms;
@@ -379,6 +355,36 @@ html[data-season="pride"] .logo-mark-pride {
     0 18px 50px rgba(0, 0, 0, 0.26);
 }
 
+.glass-frost {
+  border: 1px solid color-mix(in oklab, currentColor 9%, transparent);
+  background:
+    linear-gradient(135deg, rgba(251, 253, 255, 0.46), rgba(251, 253, 255, 0.2)),
+    color-mix(in oklab, var(--background) 46%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 58%, transparent),
+    0 10px 30px color-mix(in oklab, var(--foreground) 9%, transparent);
+  backdrop-filter: blur(7px) saturate(1.25);
+}
+
+.dark .glass-frost {
+  background:
+    linear-gradient(135deg, rgba(20, 29, 48, 0.48), rgba(10, 16, 28, 0.24)),
+    color-mix(in oklab, var(--background) 52%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 14%, transparent),
+    0 10px 30px rgba(0, 0, 0, 0.24);
+}
+
+.project-period-badge {
+  background: rgba(2, 6, 23, 0.72);
+  color: #fff;
+}
+
+.dark .project-period-badge {
+  background: rgba(2, 6, 23, 0.82);
+  color: #fff;
+}
+
 .surface-panel {
   border: 1px solid color-mix(in oklab, var(--foreground) 9%, transparent);
   background:
@@ -401,6 +407,17 @@ html[data-season="pride"] .logo-mark-pride {
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent),
     0 18px 48px rgba(0, 0, 0, 0.24);
+}
+
+.hero-surface-panel {
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in oklab, var(--card) 94%, transparent), var(--card));
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--foreground) 7%, transparent),
+    inset 0 0 0 1px color-mix(in oklab, var(--accent) 3%, transparent),
+    0 22px 58px color-mix(in oklab, var(--foreground) 8%, transparent);
+  backdrop-filter: none;
 }
 
 .dropdown-menu.liquid-glass {
@@ -453,13 +470,13 @@ html[data-season="pride"] .logo-mark-pride {
   background: var(--primary);
 }
 
-/* nested inside the hero aside's glass — skip the redundant second blur pass */
-.snapshot-inner-card.liquid-glass {
+/* Nested snapshot content keeps the surface hierarchy without a blur pass. */
+.snapshot-inner-card {
   backdrop-filter: none;
 }
 
 @media (max-width: 639px) {
-  .snapshot-inner-card.liquid-glass {
+  .snapshot-inner-card {
     border-color: transparent;
     background: transparent;
     box-shadow: none;
@@ -504,11 +521,6 @@ html[data-season="pride"] .logo-mark-pride {
     animation: none;
     transform: none;
   }
-
-  .hotkeys-wait-key::before,
-  .hotkeys-wait-dots span {
-    animation: none;
-  }
 }
 
 /*
@@ -544,19 +556,12 @@ html[data-chrome-sample] .site-header {
   right: 1rem;
   left: 1rem;
   transform-origin: top center;
-  transition: transform 220ms var(--ease-snap);
+  transition: transform var(--duration-ui) var(--ease-in-out);
 }
 
 /* attribute flipped by nav-condense.ts; scale/translate only, never layout */
 .site-header-nav-frame[data-condensed="true"] {
   transform: translate3d(0, -2px, 0) scale(0.955);
-}
-
-@supports (transition-timing-function: linear(0, 1)) {
-  .site-header-nav-frame {
-    transition-duration: 380ms;
-    transition-timing-function: var(--ease-spring);
-  }
 }
 
 @media (min-width: 640px) {
@@ -649,6 +654,8 @@ html[data-chrome-sample] .site-header {
    surface to a near-solid panel and drop the expensive blur entirely. */
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass,
+  .glass-frost,
+  .hero-surface-panel,
   .site-nav-glass,
   .site-nav-active-pill,
   .dropdown-menu.liquid-glass,
@@ -657,10 +664,26 @@ html[data-chrome-sample] .site-header {
     background: color-mix(in oklab, var(--background) 94%, var(--foreground) 4%);
     backdrop-filter: none;
   }
+
+  .project-period-badge,
+  .dark .project-period-badge {
+    background: #020617;
+    color: #fff;
+    backdrop-filter: none;
+  }
 }
 
 .site-nav-brand-link {
   gap: 0.5rem;
+}
+
+.button-motion {
+  transition:
+    transform var(--duration-press) var(--ease-out),
+    background-color var(--duration-ui) ease,
+    border-color var(--duration-ui) ease,
+    color var(--duration-ui) ease,
+    box-shadow var(--duration-ui) ease;
 }
 
 .site-nav-active-pill {
@@ -682,7 +705,7 @@ html[data-chrome-sample] .site-header {
   /* no backdrop-filter: the nav's glass already blurs everything behind the pill */
   pointer-events: none;
   transform: translate3d(0, 0, 0);
-  transition: transform 220ms var(--ease-snap);
+  transition: transform var(--duration-ui) var(--ease-in-out);
   will-change: transform;
 }
 
@@ -717,7 +740,7 @@ html[data-chrome-sample] .site-header {
   /* kill the slide but never the transform: the translate is what parks the
      pill on the active tab, not a decoration */
   .site-nav-active-pill {
-    transition-duration: 0ms;
+    transition: none;
     will-change: auto;
   }
 }
@@ -726,17 +749,16 @@ html[data-chrome-sample] .site-header {
   flex-shrink: 0;
 }
 
-/* Contextual back chip at the nav's left edge: Header flips data-active on
-   project detail routes and the chip folds open beside the brand tile. The
-   fold-in is delayed so it lands after the route transition settles. */
+/* Contextual back chip at the nav's left edge. Its fixed slot keeps the brand
+   and center switcher stable while visibility changes stay on the compositor. */
 .nav-back-button {
   /* no margin: the brand link's own px-2 padding is the visual gap */
-  max-width: 2.5rem;
+  inline-size: 2.5rem;
+  flex: 0 0 2.5rem;
   overflow: hidden;
   transition:
-    max-width 240ms var(--ease-snap) 120ms,
-    transform 240ms var(--ease-snap) 120ms,
-    opacity 180ms var(--ease-out) 180ms,
+    transform 140ms var(--ease-snap),
+    opacity 120ms var(--ease-out),
     background-color 200ms var(--ease-out),
     border-color 200ms var(--ease-out),
     color 200ms var(--ease-out),
@@ -744,11 +766,9 @@ html[data-chrome-sample] .site-header {
 }
 
 .nav-back-button[data-active="false"] {
-  max-width: 0;
-  border-width: 0;
   opacity: 0;
-  transform: scale(0.7);
-  transition-delay: 0ms;
+  pointer-events: none;
+  transform: translate3d(-0.2rem, 0, 0) scale(0.96);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -777,10 +797,10 @@ html[data-chrome-sample] .site-header {
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, white 18%),
     0 10px 30px color-mix(in oklab, var(--foreground) 10%, transparent);
-  backdrop-filter: blur(26px) saturate(1.5);
 }
 
 .hotkeys-chord-waiting {
+  width: auto;
   min-width: 4.75rem;
 }
 
@@ -811,10 +831,6 @@ html[data-chrome-sample] .site-header {
   overflow: hidden;
 }
 
-.hotkeys-wait-key {
-  animation-delay: 0ms;
-}
-
 .hotkeys-command-key svg {
   transform: translate3d(0, 0, 0);
 }
@@ -830,48 +846,25 @@ html[data-chrome-sample] .site-header {
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 38%, transparent);
 }
 
-.hotkeys-wait-key::before {
-  position: absolute;
-  inset: -0.18rem;
-  z-index: -1;
-  content: "";
-  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 32%, transparent), transparent 68%);
-  border-radius: inherit;
-  opacity: 0.34;
-  animation: hotkeys-wait-ring 1.35s var(--ease-out) infinite;
-  animation-delay: inherit;
-}
-
-.hotkeys-trigger-dots {
+.hotkeys-continuation-keys {
   display: inline-flex;
-  gap: 0.25rem;
+  gap: 0.2rem;
   align-items: center;
 }
 
-.hotkeys-wait-body {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 0.25rem 0 0;
-}
-
-.hotkeys-trigger-dots span {
-  width: 0.34rem;
-  height: 0.34rem;
-  background: color-mix(in oklab, var(--accent) 92%, var(--foreground));
-  border-radius: 999px;
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--background) 40%, transparent);
-}
-
-.hotkeys-wait-dots span {
-  animation: hotkeys-wait-dot 1.05s var(--ease-in-out) infinite;
-}
-
-.hotkeys-wait-dots span:nth-child(2) {
-  animation-delay: 120ms;
-}
-
-.hotkeys-wait-dots span:nth-child(3) {
-  animation-delay: 240ms;
+.hotkeys-continuation-keys kbd {
+  display: grid;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 800;
+  line-height: 1;
+  background: color-mix(in oklab, var(--background) 72%, transparent);
+  border-radius: 0.4rem;
 }
 
 .dark .site-nav-glass {
@@ -915,33 +908,21 @@ html[data-chrome-sample] .site-header {
 }
 
 .interactive-card {
-  --pointer-x: 0px;
-  --pointer-y: 0px;
   transition:
     transform 260ms var(--ease-weight),
     border-color 180ms var(--ease-weight),
     box-shadow 280ms var(--ease-weight);
 }
 
-/*
- * Pointer spotlight. The glow is a fixed 34rem circle painted once and moved to
- * the pointer via translate — so tracking it is compositor-only (transform), not
- * a per-frame repaint of a gradient whose coordinates change. The card is
- * overflow-clipped, so the oversized circle only shows through the card box.
- */
+/* Static card glow: CSS-only so project cards stay server-rendered. */
 .interactive-card::after {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   z-index: -1;
-  width: 34rem;
-  height: 34rem;
-  margin: -17rem 0 0 -17rem;
   pointer-events: none;
   content: "";
-  background: radial-gradient(circle, color-mix(in oklab, var(--ring) 16%, transparent), transparent 60%);
+  background: radial-gradient(circle at 50% 42%, color-mix(in oklab, var(--ring) 16%, transparent), transparent 64%);
   opacity: 0;
-  transform: translate3d(var(--pointer-x), var(--pointer-y), 0);
   transition: opacity 220ms var(--ease-weight);
 }
 
@@ -1128,16 +1109,6 @@ html[data-chrome-sample] .site-header {
     animation-delay: 210ms;
   }
 
-  .dropdown-menu[data-open] {
-    animation: menu-enter 170ms var(--ease-snap) both;
-  }
-
-  /* Base UI keeps [data-closed] mounted until this finishes; faster than the
-     enter so dismissal feels instant while still dissolving, not popping */
-  .dropdown-menu[data-closed] {
-    animation: menu-exit 150ms var(--ease-out) both;
-  }
-
   .dropdown-menu-item {
     animation: menu-item-enter 180ms var(--ease-weight) both;
   }
@@ -1149,55 +1120,26 @@ html[data-chrome-sample] .site-header {
   .dropdown-menu-item:nth-child(3) {
     animation-delay: 56ms;
   }
-
-  /* hotkeys overlay entries; exits stay instant on purpose */
-  .hotkeys-modal-backdrop {
-    animation: view-fade 150ms var(--ease-out) both;
-  }
-
-  .hotkeys-panel {
-    animation: menu-enter 170ms var(--ease-snap) both;
-  }
-
-  .hotkeys-panel > * {
-    animation: menu-item-enter 180ms var(--ease-weight) both;
-  }
-
-  .hotkeys-panel > *:nth-child(2) {
-    animation-delay: 40ms;
-  }
-
-  .hotkeys-panel > *:nth-child(3) {
-    animation-delay: 80ms;
-  }
-
-  .hotkeys-chord-panel {
-    animation: chord-enter 130ms var(--ease-out) both;
-  }
 }
 
-@keyframes menu-enter {
-  from {
-    opacity: 0;
-    transform: translate3d(0, -6px, 0) scale(0.965);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
+.dropdown-menu {
+  transform-origin: var(--transform-origin);
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    opacity var(--duration-popover-enter) var(--ease-out),
+    transform var(--duration-popover-enter) var(--ease-out);
 }
 
-@keyframes menu-exit {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
+.dropdown-menu[data-starting-style] {
+  opacity: 0;
+  transform: translate3d(0, -6px, 0) scale(0.965);
+}
 
-  to {
-    opacity: 0;
-    transform: translate3d(0, -4px, 0) scale(0.97);
-  }
+.dropdown-menu[data-ending-style] {
+  opacity: 0;
+  transform: translate3d(0, -4px, 0) scale(0.97);
+  transition-duration: var(--duration-popover-exit);
 }
 
 @keyframes menu-item-enter {
@@ -1209,65 +1151,6 @@ html[data-chrome-sample] .site-header {
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes chord-enter {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 4px, 0) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes hotkeys-wait-ring {
-  0% {
-    opacity: 0.38;
-    transform: scale(0.96);
-  }
-
-  72%,
-  100% {
-    opacity: 0;
-    transform: scale(1.18);
-  }
-}
-
-@keyframes hotkeys-wait-dot {
-  0%,
-  78%,
-  100% {
-    opacity: 0.34;
-    transform: translate3d(0, 0, 0) scale(0.82);
-  }
-
-  32% {
-    opacity: 0.86;
-    transform: translate3d(0, -0.08rem, 0) scale(1);
-  }
-}
-
-@keyframes view-fade {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes view-slide {
-  from {
-    translate: var(--slide-offset);
-  }
-
-  to {
-    translate: 0;
   }
 }
 
@@ -1348,40 +1231,12 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
 }
 
 /*
- * Page navigation transitions (route fade/slide, directional nav, shared-element
- * morph). The <ViewTransition> boundaries always render so React can pair
- * shared elements old<->new; the animation is gated to pointer-precise desktop.
- * On touch / small screens the snapshot resolves instantly (see below).
+ * Project media shared-element morphs. Their named <ViewTransition> boundaries
+ * always render so React can pair old<->new; animation is gated to
+ * pointer-precise desktop. On touch / small screens the snapshot resolves
+ * instantly (see below).
  */
 @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  ::view-transition-old(.nav-forward) {
-    --slide-offset: -18px;
-    animation:
-      var(--duration-exit) var(--ease-out) both view-fade reverse,
-      var(--duration-move) var(--ease-snap) both view-slide reverse;
-  }
-
-  ::view-transition-new(.nav-forward) {
-    --slide-offset: 22px;
-    animation:
-      var(--duration-enter) var(--ease-out) 35ms both view-fade,
-      var(--duration-move) var(--ease-snap) both view-slide;
-  }
-
-  ::view-transition-old(.nav-back) {
-    --slide-offset: 18px;
-    animation:
-      var(--duration-exit) var(--ease-out) both view-fade reverse,
-      var(--duration-move) var(--ease-snap) both view-slide reverse;
-  }
-
-  ::view-transition-new(.nav-back) {
-    --slide-offset: -22px;
-    animation:
-      var(--duration-enter) var(--ease-out) 35ms both view-fade,
-      var(--duration-move) var(--ease-snap) both view-slide;
-  }
-
   ::view-transition-group(.morph) {
     animation-duration: var(--duration-move);
     animation-timing-function: var(--ease-in-out);
@@ -1404,10 +1259,10 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
 }
 
 /*
- * Touch / small screens: the <ViewTransition> boundaries still produce a
- * snapshot, but no page animation should play. Collapse every page transition
- * to an instant swap so navigation feels native instead of flashing the
- * browser's default cross-fade. (Header isolation above still applies.)
+ * Touch / small screens: shared-media boundaries may still produce a snapshot,
+ * but no transition animation should play. Collapse every transition to an
+ * instant swap so navigation feels native. (Header isolation above still
+ * applies.)
  */
 @media not all and (min-width: 768px) and (hover: hover) and (pointer: fine) {
   ::view-transition-old(*),
@@ -1422,6 +1277,10 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
   transform: scale(0.995) translateZ(0);
 }
 
+.interactive-card:focus-within::after {
+  opacity: 1;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .interactive-card:hover {
     transform: translateY(-5px) scale(1.006) translateZ(0);
@@ -1430,7 +1289,6 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
 
   .interactive-card:hover::after {
     opacity: 1;
-    will-change: transform;
   }
 
   .interactive-card:hover .magnetic-icon {
@@ -1492,9 +1350,39 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  }
+
+  .site-header-nav-frame,
+  .site-nav-active-pill,
+  .nav-back-button {
+    transition: none;
+  }
+
+  .dropdown-menu {
+    transform: none;
+    transition: opacity var(--duration-popover-exit) var(--ease-out);
+  }
+
+  .dropdown-menu[data-starting-style],
+  .dropdown-menu[data-ending-style] {
+    transform: none;
+  }
+
+  .button-motion {
+    transition:
+      background-color var(--duration-ui) ease,
+      border-color var(--duration-ui) ease,
+      color var(--duration-ui) ease,
+      box-shadow var(--duration-ui) ease;
+  }
+
+  .button-motion.nav-back-button {
+    transition: none;
+  }
+
+  .button-motion:active,
+  .dropdown-menu-item:active {
+    transform: none !important;
   }
 
   .interactive-card,
@@ -1503,13 +1391,5 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
   .magnetic-icon,
   .interactive-card:hover .magnetic-icon {
     transform: none !important;
-  }
-
-  /* No pointer tracking under reduced motion — pin the spotlight to card center. */
-  .interactive-card::after {
-    top: 50%;
-    left: 50%;
-    transform: none !important;
-    will-change: auto;
   }
 }

@@ -7,7 +7,6 @@ import CvMenu from "../components/CvMenu";
 import { GithubIcon } from "../components/icons/lucide-github";
 import { LinkedinIcon } from "../components/icons/lucide-linkedin";
 import PulseTrace from "../components/PulseTrace";
-import RouteFadeTransition from "../components/RouteFadeTransition";
 import SnapshotSpecialtyRail from "../components/SnapshotSpecialtyRail";
 import { buttonVariants } from "../components/ui/button-variants";
 import { CardContent, CardHeader, CardTitle, Card as UiCard } from "../components/ui/card";
@@ -80,7 +79,7 @@ export default function HomePage() {
   const structuredData = buildHomeStructuredData();
 
   return (
-    <RouteFadeTransition>
+    <>
       <script
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static site data.
@@ -89,7 +88,7 @@ export default function HomePage() {
       <main className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-20 pt-28 sm:px-6 lg:pt-32">
         <section className="hero-viewport grid min-w-0 items-center gap-10 pb-8 lg:grid-cols-[1.04fr_0.96fr] lg:pb-12">
           <div className="min-w-0 max-w-4xl">
-            <div className="motion-rise liquid-glass mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground">
+            <div className="motion-rise glass-frost mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground">
               <Sparkles size={15} strokeWidth={2.4} className="text-accent" />
               Senior Full Stack Engineer / AI Engineer
             </div>
@@ -143,9 +142,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <aside className="motion-rise motion-delay-2 liquid-glass relative min-w-0 overflow-hidden rounded-[1.55rem] p-3 sm:rounded-[2rem] sm:p-5">
+          <aside className="motion-rise motion-delay-2 surface-panel hero-surface-panel relative min-w-0 overflow-hidden rounded-[1.55rem] p-3 sm:rounded-[2rem] sm:p-5">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/70 to-transparent" />
-            <UiCard className="snapshot-inner-card liquid-glass min-w-0 gap-0 rounded-[1.25rem] py-0 shadow-none ring-0 sm:rounded-[1.45rem] sm:ring-1">
+            <UiCard className="snapshot-inner-card surface-panel min-w-0 gap-0 rounded-[1.25rem] py-0 shadow-none ring-0 sm:rounded-[1.45rem] sm:ring-1">
               <CardHeader className="flex flex-col gap-3 px-2 pt-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-5 sm:pt-5">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3 sm:block">
@@ -225,7 +224,7 @@ export default function HomePage() {
             {experienceHighlights.map(item => (
               <UiCard
                 key={item.company}
-                className="scroll-rise surface-panel gap-0 rounded-[1.35rem] px-5 py-4 shadow-none sm:grid sm:grid-cols-[0.34fr_0.66fr] sm:gap-6 sm:px-6"
+                className="surface-panel gap-0 rounded-[1.35rem] px-5 py-4 shadow-none sm:grid sm:grid-cols-[0.34fr_0.66fr] sm:gap-6 sm:px-6"
               >
                 <div>
                   <h3 className="text-xl font-black text-foreground">{item.company}</h3>
@@ -257,7 +256,7 @@ export default function HomePage() {
               const Icon = item.icon;
 
               return (
-                <UiCard key={item.title} className="scroll-rise surface-panel gap-0 rounded-[1.35rem] p-5 shadow-none">
+                <UiCard key={item.title} className="surface-panel gap-0 rounded-[1.35rem] p-5 shadow-none">
                   <span className="grid size-11 place-items-center rounded-full bg-primary text-primary-foreground">
                     <Icon size={19} strokeWidth={2.4} />
                   </span>
@@ -290,13 +289,13 @@ export default function HomePage() {
           </div>
           <div className="grid items-stretch gap-6 lg:grid-cols-3">
             {featuredProjects.map((project, index) => (
-              <div key={project.id} className="scroll-rise h-full">
+              <div key={project.id} className="h-full">
                 <ProjectCard project={project} enableMediaTransition mediaLoading={index === 0 ? "eager" : "lazy"} />
               </div>
             ))}
           </div>
         </section>
       </main>
-    </RouteFadeTransition>
+    </>
   );
 }

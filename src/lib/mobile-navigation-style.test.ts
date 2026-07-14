@@ -24,6 +24,14 @@ function getReducedMotionActivePillRule(css: string) {
   return rule?.groups?.body ?? "";
 }
 
+function getReducedMotionBackButtonRule(css: string) {
+  const rule = css.match(
+    /@media \(prefers-reduced-motion: reduce\) \{\s*\.nav-back-button\s*\{(?<body>[\s\S]*?)\n\s*\}/,
+  );
+
+  return rule?.groups?.body ?? "";
+}
+
 describe("mobile navigation styles", () => {
   test("keeps the active nav pill positioned when reduced motion removes animation", async () => {
     const css = await readGlobalsCss();
@@ -33,15 +41,35 @@ describe("mobile navigation styles", () => {
     // the translate parks the pill on the active tab; reduced motion may only
     // remove the slide, never the transform itself
     expect(activePillRule).not.toMatch(/transform:/);
-    expect(activePillRule).toMatch(/transition-duration:\s*0ms/);
+    expect(activePillRule).toMatch(/transition:\s*none/);
   });
 
-  test("fully collapses the nav back chip on non-project routes", async () => {
+  test("reserves back-chip space and animates compositor properties only", async () => {
     const css = await readGlobalsCss();
-    const foldedChipRule = getRuleBody(css, `.nav-back-button[${MOTION_ATTRIBUTES.activeBackButton}="false"]`);
+    const baseRule = getRuleBody(css, ".nav-back-button");
+    const inactiveRule = getRuleBody(css, `.nav-back-button[${MOTION_ATTRIBUTES.activeBackButton}="false"]`);
+    const reducedMotionRule = getReducedMotionBackButtonRule(css);
+    const transition = baseRule.match(/transition:\s*(?<value>[\s\S]*?);/)?.groups?.value ?? "";
+    const layoutProperties =
+      /(?:max-width|min-width|width|inline-size|margin|padding|border-width|flex-basis|grid-template|left|right)/;
 
-    expect(foldedChipRule).toMatch(/max-width:\s*0/);
-    expect(foldedChipRule).toMatch(/opacity:\s*0/);
+    expect(baseRule).toMatch(/(?:inline-size:\s*2\.5rem|width:\s*2\.5rem|flex:\s*0\s+0\s+2\.5rem)/);
+    expect(transition).toMatch(/opacity/);
+    expect(transition).toMatch(/transform/);
+    expect(transition).not.toMatch(layoutProperties);
+    expect(transition.split(",").every(segment => (segment.match(/\b\d+(?:\.\d+)?m?s\b/g) ?? []).length <= 1)).toBe(
+      true,
+    );
+    expect(baseRule).not.toMatch(/transition-delay/);
+
+    expect(inactiveRule).not.toMatch(layoutProperties);
+    expect(inactiveRule).toMatch(/opacity:\s*0/);
+    expect(inactiveRule).toMatch(/transform:\s*translate3d\([^)]*\)\s+scale\(0\.9[5-9]\)/);
+    expect(inactiveRule).toMatch(/pointer-events:\s*none/);
+    expect(inactiveRule).not.toMatch(/transition-delay/);
+
+    expect(reducedMotionRule).toMatch(/transition-duration:\s*0ms/);
+    expect(reducedMotionRule).toMatch(/transition-delay:\s*0ms/);
   });
 
   test("names the back chip's morph transition attribute for TS writers", () => {

@@ -13,7 +13,11 @@ import {
   THEME_CHROME_COLORS,
   type ThemeMode,
 } from "@/lib/theme";
-import { canUseDesktopViewTransitions } from "@/lib/view-transitions";
+import {
+  canUseDesktopViewTransitions,
+  type NativeViewTransitionDocument,
+  startDocumentViewTransition,
+} from "@/lib/view-transitions";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -46,14 +50,6 @@ const themeOptions: Array<{
   },
 ];
 const systemThemeOption = themeOptions.find(option => option.mode === "system") ?? themeOptions[0];
-
-type NativeViewTransition = {
-  finished: Promise<void>;
-};
-
-type DocumentWithNativeViewTransition = Document & {
-  startViewTransition?: (updateCallback: () => void) => NativeViewTransition;
-};
 
 function setMetaContent(name: string, content: string) {
   let metas = Array.from(document.querySelectorAll<HTMLMetaElement>(`meta[name="${name}"]`));
@@ -125,16 +121,14 @@ function getThemeTransitionOrigin(element: HTMLElement | null) {
 function shouldUseThemeViewTransition() {
   return (
     typeof document !== "undefined" &&
-    typeof (document as DocumentWithNativeViewTransition).startViewTransition === "function" &&
+    typeof (document as NativeViewTransitionDocument).startViewTransition === "function" &&
     canUseDesktopViewTransitions() &&
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 }
 
 function persistThemeModeWithTransition(mode: ThemeMode, originElement: HTMLElement | null) {
-  const startViewTransition = (document as DocumentWithNativeViewTransition).startViewTransition;
-
-  if (!shouldUseThemeViewTransition() || !startViewTransition) {
+  if (!shouldUseThemeViewTransition()) {
     persistThemeMode(mode);
     return;
   }
@@ -153,16 +147,29 @@ function persistThemeModeWithTransition(mode: ThemeMode, originElement: HTMLElem
     root.style.removeProperty("--theme-transition-y");
     root.style.removeProperty("--theme-transition-radius");
   };
+  let didPersistThemeMode = false;
+  const persistThemeModeOnce = () => {
+    if (didPersistThemeMode) {
+      return;
+    }
+
+    didPersistThemeMode = true;
+    persistThemeMode(mode);
+  };
 
   try {
-    const transition = startViewTransition(() => {
-      persistThemeMode(mode);
-    });
+    const transition = startDocumentViewTransition(document as NativeViewTransitionDocument, persistThemeModeOnce);
+
+    if (!transition) {
+      cleanup();
+      persistThemeModeOnce();
+      return;
+    }
 
     void transition.finished.then(cleanup, cleanup);
   } catch {
     cleanup();
-    persistThemeMode(mode);
+    persistThemeModeOnce();
   }
 }
 
@@ -228,7 +235,7 @@ export default function ThemeSwitcher() {
         <ActiveIcon strokeWidth={2.2} />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" aria-label="Choose color theme" className="w-44 origin-top-right">
+      <DropdownMenuContent align="end" aria-label="Choose color theme" className="w-44">
         <DropdownMenuRadioGroup
           value={mode}
           onValueChange={value => {
