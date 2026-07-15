@@ -160,33 +160,6 @@ export function getHotkeySequenceKey(action: string, key: string, index: number)
   return `${action}-${index}-${key}`;
 }
 
-export function getHotkeyContinuationKeys<TAction extends string>(
-  shortcuts: readonly HotkeyShortcut<TAction>[],
-  pendingSequence: readonly string[],
-) {
-  if (shortcuts.some(shortcut => isSameSequence(shortcut.sequence, pendingSequence))) {
-    return [];
-  }
-
-  const continuationKeys: string[] = [];
-  const seenKeys = new Set<string>();
-
-  for (const shortcut of shortcuts) {
-    if (!isSequencePrefix(shortcut.sequence, pendingSequence) || shortcut.sequence.length <= pendingSequence.length) {
-      continue;
-    }
-
-    const nextKey = shortcut.sequence[pendingSequence.length];
-
-    if (nextKey !== undefined && !seenKeys.has(nextKey)) {
-      seenKeys.add(nextKey);
-      continuationKeys.push(nextKey);
-    }
-  }
-
-  return continuationKeys;
-}
-
 export function createHotkeySequencer<TAction extends string>(shortcuts: readonly HotkeyShortcut<TAction>[]) {
   let buffer: string[] = [];
 

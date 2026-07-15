@@ -3,13 +3,7 @@
 import { ArrowLeft, ArrowRight, BriefcaseBusiness, Command, Home, Monitor, SunMoon, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ElementType, useEffect, useEffectEvent, useRef, useState } from "react";
-import {
-  getHotkeyContinuationKeys,
-  getHotkeyDecision,
-  getHotkeySequenceKey,
-  type HotkeyRouteAction,
-  type HotkeyState,
-} from "@/lib/hotkeys";
+import { getHotkeyDecision, getHotkeySequenceKey, type HotkeyRouteAction, type HotkeyState } from "@/lib/hotkeys";
 import { prepareHotkeyRouteNavigation } from "@/lib/route-intent";
 import { getThemeSnapshot, parseThemeSnapshot, persistThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -155,7 +149,7 @@ function HotkeyHint({ isSequenceRendered, onToggle }: { isSequenceRendered: bool
       aria-label="Toggle keyboard shortcuts"
       aria-hidden={isSequenceRendered}
       className={cn(
-        "hotkeys-corner-hint glass-frost fixed bottom-4 left-4 z-[80] hidden h-11 items-center rounded-full px-1.5 text-foreground shadow-menu transition-opacity duration-150 ease-[var(--ease-out)] active:scale-[0.97] md:inline-flex",
+        "hotkeys-corner-hint glass-frost fixed bottom-4 left-4 z-[80] hidden h-11 items-center gap-2 rounded-full px-1.5 text-foreground shadow-menu transition-opacity duration-150 ease-[var(--ease-out)] active:scale-[0.97] md:inline-flex",
         isSequenceRendered && "pointer-events-none opacity-0",
       )}
       tabIndex={isSequenceRendered ? -1 : undefined}
@@ -165,18 +159,17 @@ function HotkeyHint({ isSequenceRendered, onToggle }: { isSequenceRendered: bool
         <Command aria-hidden="true" size={13} strokeWidth={2.5} />
         <span aria-hidden="true" className="hotkeys-command-period" />
       </kbd>
+      <span className="hotkeys-state-label">Shortcuts</span>
     </button>
   );
 }
 
 function PendingSequence({ sequence }: { sequence: string[] }) {
-  const continuationKeys = getHotkeyContinuationKeys(HOTKEYS, sequence);
-
   return (
     <aside
       aria-live="polite"
-      aria-label={`${sequence.join(" ")} pressed; available next keys: ${continuationKeys.join(" ")}`}
-      className="hotkeys-chord-panel hotkeys-chord-waiting glass-frost fixed bottom-4 left-4 z-[65] hidden h-11 items-center gap-1.5 rounded-full px-1.5 text-foreground shadow-menu md:flex"
+      aria-label={`${sequence.join(" ")} pressed; awaiting next shortcut key`}
+      className="hotkeys-chord-panel hotkeys-chord-waiting glass-frost fixed bottom-4 left-4 z-[65] hidden h-11 items-center gap-2 rounded-full px-1.5 text-foreground shadow-menu md:flex"
     >
       <span className="hotkeys-wait-sequence">
         {sequence.map((key, index) => (
@@ -185,11 +178,7 @@ function PendingSequence({ sequence }: { sequence: string[] }) {
           </span>
         ))}
       </span>
-      <span aria-hidden="true" className="hotkeys-continuation-keys">
-        {continuationKeys.map((key, index) => (
-          <kbd key={getHotkeySequenceKey("continuation", key, index)}>{key}</kbd>
-        ))}
-      </span>
+      <span className="hotkeys-state-label">Pending…</span>
     </aside>
   );
 }
@@ -212,7 +201,7 @@ function HotkeyModal({ onClose }: { onClose: () => void }) {
             <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
               <Command size={24} strokeWidth={2.35} />
             </span>
-            <h2 className="truncate text-lg font-black tracking-normal">Hotkeys</h2>
+            <h2 className="truncate text-lg font-black tracking-normal">Keyboard shortcuts</h2>
           </div>
           <button
             type="button"

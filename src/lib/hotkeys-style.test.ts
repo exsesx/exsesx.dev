@@ -24,15 +24,17 @@ describe("hotkey loading and motion contracts", () => {
     expect(loader).toMatch(/return <Hotkeys \/>/);
   });
 
-  test("keeps capability detection out of the implementation and derives the pending preview", async () => {
+  test("keeps capability detection out of the implementation and exposes descriptive shortcut UI", async () => {
     const source = await Bun.file(hotkeysUrl).text();
 
     expect(source).not.toMatch(/matchMedia|shouldEnableHotkeys|isEnabled|setIsEnabled|syncEnabledState/);
-    expect(source).toContain("getHotkeyContinuationKeys");
-    expect(source).toMatch(/const continuationKeys = getHotkeyContinuationKeys\(HOTKEYS, sequence\)/);
-    expect(source).toMatch(/continuationKeys\.map/);
+    expect(source).not.toContain("getHotkeyContinuationKeys");
+    expect(source).not.toMatch(/continuationKeys\.map|available next keys/);
+    expect(source).toMatch(/>\s*Shortcuts\s*</);
+    expect(source).toMatch(/>\s*Pending…\s*</);
+    expect(source).toMatch(/<h2[^>]*>Keyboard shortcuts<\/h2>/);
     expect(source).toMatch(/aria-live="polite"/);
-    expect(source).toMatch(/available next keys/);
+    expect(source).toMatch(/awaiting next shortcut key/);
   });
 
   test("removes keyboard-driven loops, dots, entrances, and child staggering", async () => {
