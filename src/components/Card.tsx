@@ -11,10 +11,9 @@ import { getProjectAccentClasses } from "@/lib/project-accents";
 import { getProjectPath, getProjectTransitionType, type Project } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 import AutoPauseVideo from "./AutoPauseVideo";
-import { InteractiveCardShell } from "./InteractiveCardShell";
 import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button-variants";
-import { CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { CardAction, CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "./ui/card";
 
 interface Props {
   project: Project;
@@ -80,7 +79,7 @@ export default function ProjectCard({
       : "(min-width: 1024px) 33vw, 100vw";
 
   return (
-    <InteractiveCardShell
+    <UiCard
       className={cn(
         "interactive-card group relative isolate overflow-hidden border-border bg-card/85 py-0 shadow-project-card hover:border-ring/30",
         accentClasses.card.surface,
@@ -155,7 +154,7 @@ export default function ProjectCard({
         </ProjectMediaFrame>
         <div
           className={cn(
-            "absolute rounded-full border border-white/15 bg-slate-950/45 text-xs font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-xl",
+            "absolute glass-frost project-period-badge rounded-full border border-white/15 text-xs font-bold uppercase tracking-[0.18em] text-white",
             isCompact ? "left-3 top-3 px-2.5 py-1" : "left-4 top-4 px-3 py-1",
           )}
         >
@@ -244,6 +243,6 @@ export default function ProjectCard({
           </div>
         </CardContent>
       </div>
-    </InteractiveCardShell>
+    </UiCard>
   );
 }

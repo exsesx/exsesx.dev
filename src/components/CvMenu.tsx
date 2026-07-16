@@ -133,7 +133,7 @@ function CvMenu() {
               />
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] origin-top-right sm:w-52">
+            <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] sm:w-52">
               <DropdownMenuGroup>
                 <DropdownMenuLinkItem href={RESUME_PDF_URL} rel="noopener noreferrer" target="_blank">
                   <FileText size={16} strokeWidth={2.3} />

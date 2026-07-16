@@ -1,47 +1,5 @@
 import type { NextConfig } from "next";
-
-function buildContentSecurityPolicy() {
-  const isVercelPreview = process.env.VERCEL_ENV === "preview";
-  const isVercelDeployment = Boolean(process.env.VERCEL_ENV);
-  const isProductionBuild = process.env.NODE_ENV === "production";
-  const imgSrc = ["'self'", "data:", "blob:"];
-  const connectSrc = ["'self'"];
-  const scriptSrc = ["'self'", "'unsafe-inline'"];
-  const styleSrc = ["'self'", "'unsafe-inline'"];
-  const frameSrc: string[] = [];
-
-  if (isVercelPreview) {
-    imgSrc.push("https://vercel.live", "https://vercel.com");
-    connectSrc.push("https://vercel.live", "wss://ws-us3.pusher.com");
-    scriptSrc.push("https://vercel.live");
-    styleSrc.push("https://vercel.live");
-    frameSrc.push("https://vercel.live");
-  }
-
-  if (!isProductionBuild) {
-    scriptSrc.push("'unsafe-eval'");
-  }
-
-  const directives = [
-    "default-src 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    frameSrc.length > 0 ? `frame-src ${frameSrc.join(" ")}` : null,
-    "object-src 'none'",
-    `img-src ${imgSrc.join(" ")}`,
-    "media-src 'self'",
-    "font-src 'self'",
-    `connect-src ${connectSrc.join(" ")}`,
-    `script-src ${scriptSrc.join(" ")}`,
-    `style-src ${styleSrc.join(" ")}`,
-    "manifest-src 'self'",
-    "worker-src 'self' blob:",
-    isVercelDeployment ? "upgrade-insecure-requests" : null,
-  ];
-
-  return directives.filter(Boolean).join("; ");
-}
+import { buildContentSecurityPolicy } from "./src/lib/content-security-policy.mts";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -52,6 +10,7 @@ const nextConfig: NextConfig = {
     // Turbopack's persistent build cache is intentionally off: on Vercel it
     // reused a stale compiled globals.css, deploying new markup with the old
     // stylesheet (nav pill broke in production, 2026-07-02).
+    useTypeScriptCli: true,
     webVitalsAttribution: ["CLS", "LCP"],
     viewTransition: true,
   },
@@ -69,7 +28,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: buildContentSecurityPolicy(),
+            value: buildContentSecurityPolicy(process.env),
           },
         ],
       },

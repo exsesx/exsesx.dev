@@ -3,7 +3,7 @@
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { startTransition, useEffect, useEffectEvent } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { MOTION_ATTRIBUTES } from "@/lib/motion-contract";
 import { getBackNavigationIntent } from "@/lib/route-intent";
 import { cn } from "@/lib/utils";
@@ -25,11 +25,9 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
   function navigateBack() {
     const intent = getBackNavigationIntent();
 
-    startTransition(() => {
-      router.push(intent.href as Route, {
-        scroll: intent.scroll,
-        transitionTypes: intent.transitionTypes,
-      });
+    router.push(intent.href as Route, {
+      scroll: intent.scroll,
+      transitionTypes: intent.transitionTypes,
     });
   }
 

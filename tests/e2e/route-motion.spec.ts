@@ -1,0 +1,558 @@
+import { expect, type Page, type TestInfo, test } from "@playwright/test";
+
+type ProbeAnimation = {
+  animationName: string;
+  computedDuration: number;
+  pseudoElement: string | null;
+};
+
+type ProbeCall = {
+  animations: ProbeAnimation[];
+  finished?: number;
+  ready?: number;
+  sourceProjectMediaNames: string[];
+  start: number;
+  types: string[];
+};
+
+type ProbeSnapshot = {
+  calls: ProbeCall[];
+};
+
+type RuntimeErrors = {
+  console: string[];
+  page: string[];
+};
+
+const projectTypePrefix = "project-transition-";
+const runtimeErrorsByPage = new WeakMap<Page, RuntimeErrors>();
+
+if (!("Bun" in globalThis)) {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      const probe = {
+        calls: [] as ProbeCall[],
+        pending: [] as Promise<void>[],
+      };
+
+      Object.defineProperty(window, "__routeMotionProbe", {
+        configurable: true,
+        value: probe,
+      });
+
+      const original = document.startViewTransition;
+
+      if (!original) {
+        return;
+      }
+
+      document.startViewTransition = function (...args: Parameters<Document["startViewTransition"]>) {
+        const call: ProbeCall = {
+          animations: [],
+          sourceProjectMediaNames: Array.from(document.querySelectorAll(".project-media-frame"))
+            .map(element => getComputedStyle(element).viewTransitionName)
+            .filter(name => name !== "none"),
+          start: performance.now(),
+          types: [],
+        };
+        probe.calls.push(call);
+
+        const transition = original.apply(this, args);
+        const ready = transition.ready.then(() => {
+          call.ready = performance.now();
+          call.types = Array.from(transition.types ?? []);
+          call.animations = document.getAnimations().flatMap(animation => {
+            const effect = animation.effect;
+
+            if (!(effect instanceof KeyframeEffect) || !effect.pseudoElement?.startsWith("::view-transition-")) {
+              return [];
+            }
+
+            const computedDuration = effect.getComputedTiming().duration;
+            return [
+              {
+                animationName: animation instanceof CSSAnimation ? animation.animationName : "",
+                computedDuration: typeof computedDuration === "number" ? computedDuration : 0,
+                pseudoElement: effect.pseudoElement,
+              },
+            ];
+          });
+        });
+        const finished = transition.finished.then(() => {
+          call.finished = performance.now();
+        });
+
+        probe.pending.push(Promise.allSettled([ready, finished]).then(() => undefined));
+        return transition;
+      };
+    });
+  });
+
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status === testInfo.expectedStatus) {
+      return;
+    }
+
+    const errors = runtimeErrorsByPage.get(page) ?? { console: [], page: [] };
+    const probe = await readProbe(page).catch(() => ({ calls: [] }));
+    await testInfo.attach("route-motion-probe", {
+      body: Buffer.from(JSON.stringify({ errors, probe }, null, 2)),
+      contentType: "application/json",
+    });
+  });
+
+  test.describe("route motion contract", () => {
+    test("desktop project card morphs without a directional page slide", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop contract");
+      const errors = collectRuntimeErrors(page);
+
+      await page.goto("/projects");
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      const href = await card.getAttribute("href");
+      expect(href).toMatch(/^\/project\//);
+      await expect(page.locator(".project-media-frame").first()).toBeVisible();
+      const expectedName = `project-media-project-${href?.split("/").at(-1)}`;
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(`**${href}`), card.click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      expect(probe.calls).toHaveLength(1);
+      expect(probe.calls[0]?.types.filter(type => type.startsWith(projectTypePrefix))).toHaveLength(1);
+      expect(probe.calls[0]?.types).toContain("nav-forward");
+      await expect(page.locator(".project-media-frame").first()).toBeVisible();
+      expect(morphAnimations(probe).some(animation => animation.pseudoElement?.includes(expectedName))).toBe(true);
+      expect(animationNames(probe)).not.toContain("view-slide");
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+
+    test("desktop back restores projects intent and preserves header isolation", async ({
+      page,
+      isMobile,
+    }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop contract");
+      const errors = collectRuntimeErrors(page);
+
+      await page.goto("/projects");
+      await page.evaluate(() => window.scrollTo(0, 520));
+      const expectedScroll = await page.evaluate(() => window.scrollY);
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(2);
+      const href = await card.getAttribute("href");
+      expect(href).toMatch(/^\/project\//);
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL("**/projects"), page.getByRole("button", { name: "Back" }).click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      expect(probe.calls[0]?.sourceProjectMediaNames).toHaveLength(1);
+      const expectedName = probe.calls[0]?.sourceProjectMediaNames[0];
+      expect(expectedName).toMatch(/^project-media-project-/);
+      expect(probe.calls[0]?.types).toContain("nav-back");
+      expect(probe.calls[0]?.types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
+      expect(morphAnimationPseudoNames(probe)).toContain(expectedName);
+      expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
+      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
+      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+
+    test("persistent header navigation is lateral", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop contract");
+      const errors = collectRuntimeErrors(page);
+
+      await page.goto("/");
+      await resetProbe(page);
+      await Promise.all([
+        page.waitForURL("**/projects"),
+        page.getByRole("link", { name: "Projects", exact: true }).click(),
+      ]);
+      await waitForProbe(page);
+      const projectsProbe = await readProbe(page);
+
+      expect(projectsProbe.calls.flatMap(call => call.types)).toEqual([]);
+      expect(animationNames(projectsProbe)).not.toContain("view-slide");
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(/\/$/), page.getByRole("link", { name: "Home", exact: true }).click()]);
+      await waitForProbe(page);
+      const homeProbe = await readProbe(page);
+
+      expect(homeProbe.calls.flatMap(call => call.types)).toEqual([]);
+      expect(animationNames(homeProbe)).not.toContain("view-slide");
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, { calls: [...projectsProbe.calls, ...homeProbe.calls] }, errors);
+    });
+
+    test("mobile project navigation has no animated view-transition pseudos", async ({ page, isMobile }, testInfo) => {
+      test.skip(!isMobile, "mobile contract");
+      const errors = collectRuntimeErrors(page);
+
+      await page.goto("/projects");
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      expect(nonZeroAnimations(probe)).toEqual([]);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+
+    test("reduced-motion project navigation has no animated view-transition pseudos", async ({
+      page,
+      isMobile,
+    }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop reduced-motion contract");
+      const errors = collectRuntimeErrors(page);
+
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/projects");
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      expect(nonZeroAnimations(probe)).toEqual([]);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+  });
+
+  test.describe("adjacent project navigation", () => {
+    test("Previous carries direction without project identity", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop shared-media contract");
+      const errors = collectRuntimeErrors(page);
+      await openDetailWithBothControls(page);
+      const link = page.getByRole("link", { name: "Previous", exact: true });
+      const href = await link.getAttribute("href");
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(`**${href}`), link.click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      expect(probe.calls).toEqual([]);
+      expect(morphAnimations(probe)).toEqual([]);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+
+    test("Next carries direction without project identity", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop shared-media contract");
+      const errors = collectRuntimeErrors(page);
+      await openDetailWithBothControls(page);
+      const link = page.getByRole("link", { name: "Next", exact: true });
+      const href = await link.getAttribute("href");
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(`**${href}`), link.click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      expect(probe.calls).toEqual([]);
+      expect(morphAnimations(probe)).toEqual([]);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+
+    test("an adjacent project card keeps its shared-media identity", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop shared-media contract");
+      const errors = collectRuntimeErrors(page);
+      await openDetailWithBothControls(page);
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      const href = await card.getAttribute("href");
+      const expectedName = `project-media-project-${href?.split("/").at(-1)}`;
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(`**${href}`), card.click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      const types = probe.calls.flatMap(call => call.types);
+      expect(types).toContain("nav-forward");
+      expect(types.filter(type => type.startsWith(projectTypePrefix))).toHaveLength(1);
+      expect(morphAnimations(probe).some(animation => animation.pseudoElement?.includes(expectedName))).toBe(true);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+  });
+
+  test.describe("route intent seams", () => {
+    test("404 Back home publishes suppression intent", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop route-intent contract");
+      const errors = collectRuntimeErrors(page);
+      await page.goto("/missing-route-for-motion-contract");
+      errors.console.length = 0;
+
+      await Promise.all([page.waitForURL(/\/$/), page.getByRole("link", { name: "Back home", exact: true }).click()]);
+
+      expect(await page.locator("html").getAttribute("data-view-transition-navigated")).toBe("true");
+      expect(
+        await page
+          .locator(".motion-rise")
+          .first()
+          .evaluate(
+            element =>
+              element
+                .getAnimations()
+                .filter(animation => animation.playState === "running" && animation.currentTime !== null).length,
+          ),
+      ).toBe(0);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, await readProbe(page), errors);
+    });
+
+    test("Back button applies prepared scroll and transition intent", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop route-intent contract");
+      const errors = collectRuntimeErrors(page);
+      await page.goto("/projects");
+      await page.evaluate(() => window.scrollTo(0, 520));
+      const expectedScroll = await page.evaluate(() => window.scrollY);
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(2);
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL("**/projects"), page.getByRole("button", { name: "Back" }).click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      const types = probe.calls.flatMap(call => call.types);
+      expect(types).toContain("nav-back");
+      expect(types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
+      expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+
+    test("g h performs lateral hotkey navigation without transition types", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop hotkeys contract");
+      const errors = collectRuntimeErrors(page);
+      await page.goto("/projects");
+      await expect(page.getByRole("button", { name: "Toggle keyboard shortcuts" })).toBeVisible();
+      await resetProbe(page);
+
+      await page.keyboard.press("g");
+      await Promise.all([page.waitForURL(/\/$/), page.keyboard.press("h")]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      expect(probe.calls.flatMap(call => call.types)).toEqual([]);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+  });
+
+  test.describe("back chip geometry", () => {
+    test("reserves stable header geometry with normal and reduced motion", async ({ page }, testInfo) => {
+      const errors = collectRuntimeErrors(page);
+      await page.goto("/projects");
+      const backButton = page.getByRole("button", { name: "Back", includeHidden: true });
+      const initial = await measureHeaderGeometry(page);
+
+      await expect(backButton).toBeDisabled();
+      await expect(backButton).toHaveAttribute("aria-hidden", "true");
+      await expect(backButton).toHaveCSS("opacity", "0");
+      await expect(backButton).toHaveCSS("pointer-events", "none");
+      expect(initial.back.layoutWidth).toBeGreaterThanOrEqual(40);
+      expect(
+        await backButton.evaluate(element => {
+          const box = element.getBoundingClientRect();
+          const target = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+          return target === element || (target !== null && element.contains(target));
+        }),
+      ).toBe(false);
+
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
+      await expect(backButton).toBeEnabled();
+      await expect(backButton).toHaveCSS("opacity", "1");
+      expect(await backButton.getAttribute("aria-hidden")).toBeNull();
+      const active = await measureHeaderGeometry(page);
+
+      expect(Math.abs(active.switcher.centerX - initial.switcher.centerX)).toBeLessThanOrEqual(1);
+      expect(Math.abs(active.brand.x - initial.brand.x)).toBeLessThanOrEqual(1);
+      expect(active.back.width).toBeGreaterThanOrEqual(40);
+      expect(active.back.height).toBeGreaterThanOrEqual(40);
+      await expect(page.locator("header[data-safari-chrome-sample]")).toHaveAttribute(
+        "data-safari-chrome-sample",
+        "true",
+      );
+      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
+      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
+
+      await Promise.all([page.waitForURL("**/projects"), backButton.click()]);
+      await expect(backButton).toBeDisabled();
+      await expect(backButton).toHaveAttribute("aria-hidden", "true");
+      await expect(backButton).toHaveCSS("opacity", "0");
+      expect((await measureHeaderGeometry(page)).back.layoutWidth).toBeGreaterThanOrEqual(40);
+
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/projects");
+      const reducedInitial = await measureHeaderGeometry(page);
+      const reducedCard = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      await Promise.all([page.waitForURL(/\/project\//), reducedCard.click()]);
+      await waitForProbe(page);
+      const reducedActive = await measureHeaderGeometry(page);
+
+      expect(Math.abs(reducedActive.switcher.centerX - reducedInitial.switcher.centerX)).toBeLessThanOrEqual(1);
+      expect(Math.abs(reducedActive.brand.x - reducedInitial.brand.x)).toBeLessThanOrEqual(1);
+      await expect(backButton).toBeEnabled();
+      expect(await backButton.getAttribute("aria-hidden")).toBeNull();
+      await expect(backButton).toHaveCSS("opacity", "1");
+      expect(reducedActive.back.layoutWidth).toBeGreaterThanOrEqual(40);
+      await expect(page.locator("header[data-safari-chrome-sample]")).toHaveAttribute(
+        "data-safari-chrome-sample",
+        "true",
+      );
+      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
+      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
+      const reducedDurations = await backButton.evaluate(element =>
+        getComputedStyle(element).transitionDuration.split(","),
+      );
+      expect(reducedDurations.every(duration => Number.parseFloat(duration) <= 0.00001)).toBe(true);
+      expect(
+        await backButton.evaluate(
+          element => element.getAnimations().filter(animation => animation.playState === "running").length,
+        ),
+      ).toBe(0);
+
+      await Promise.all([page.waitForURL("**/projects"), backButton.click()]);
+      await expect(backButton).toBeDisabled();
+      await expect(backButton).toHaveAttribute("aria-hidden", "true");
+      await expect(backButton).toHaveCSS("opacity", "0");
+      await expect(backButton).toHaveCSS("pointer-events", "none");
+      const reducedRestored = await measureHeaderGeometry(page);
+      expect(reducedRestored.back.layoutWidth).toBeGreaterThanOrEqual(40);
+      expect(Math.abs(reducedRestored.switcher.centerX - reducedInitial.switcher.centerX)).toBeLessThanOrEqual(1);
+      expect(Math.abs(reducedRestored.brand.x - reducedInitial.brand.x)).toBeLessThanOrEqual(1);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, await readProbe(page), errors);
+    });
+  });
+}
+
+function collectRuntimeErrors(page: Page): RuntimeErrors {
+  const errors: RuntimeErrors = { console: [], page: [] };
+  runtimeErrorsByPage.set(page, errors);
+  page.on("console", message => {
+    if (message.type() === "error") {
+      errors.console.push(message.text());
+    }
+  });
+  page.on("pageerror", error => errors.page.push(error.message));
+  return errors;
+}
+
+function expectRuntimeClean(errors: RuntimeErrors) {
+  expect(errors.console, "console errors, including hydration and duplicate ViewTransition names").toEqual([]);
+  expect(errors.page, "uncaught page errors").toEqual([]);
+}
+
+async function resetProbe(page: Page) {
+  await page.evaluate(() => {
+    const probe = window.__routeMotionProbe;
+    probe.calls.length = 0;
+    probe.pending.length = 0;
+  });
+}
+
+async function waitForProbe(page: Page) {
+  await page.evaluate(async () => {
+    const probe = window.__routeMotionProbe;
+    await Promise.all(probe.pending);
+  });
+}
+
+async function readProbe(page: Page): Promise<ProbeSnapshot> {
+  return page.evaluate(() => ({ calls: window.__routeMotionProbe.calls }));
+}
+
+async function viewTransitionName(locator: ReturnType<Page["locator"]>) {
+  return locator.evaluate(element => getComputedStyle(element).viewTransitionName);
+}
+
+async function openDetailWithBothControls(page: Page) {
+  await page.goto("/projects");
+  const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(1);
+  await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+  await waitForProbe(page);
+  await expect(page.getByRole("link", { name: "Previous", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Next", exact: true })).toBeVisible();
+}
+
+async function measureHeaderGeometry(page: Page) {
+  return page.evaluate(() => {
+    const rect = (selector: string) => {
+      const element = document.querySelector<HTMLElement>(selector);
+      const box = element?.getBoundingClientRect();
+
+      if (!element || !box) {
+        throw new Error(`Missing geometry target: ${selector}`);
+      }
+
+      return {
+        centerX: box.x + box.width / 2,
+        height: box.height,
+        layoutWidth: element.offsetWidth,
+        width: box.width,
+        x: box.x,
+      };
+    };
+
+    return {
+      back: rect(".nav-back-button"),
+      brand: rect(".site-nav-brand-link"),
+      switcher: rect(".site-nav-switcher"),
+    };
+  });
+}
+
+function nonZeroAnimations(probe: ProbeSnapshot) {
+  return probe.calls.flatMap(call => call.animations).filter(animation => animation.computedDuration > 0);
+}
+
+function morphAnimations(probe: ProbeSnapshot) {
+  return nonZeroAnimations(probe).filter(animation => animation.pseudoElement?.includes("project-media-"));
+}
+
+function morphAnimationPseudoNames(probe: ProbeSnapshot) {
+  return nonZeroAnimations(probe)
+    .map(
+      animation => animation.pseudoElement?.match(/^::view-transition-(?:group|image-pair|old|new)\(([^)]+)\)$/)?.[1],
+    )
+    .filter((name): name is string => name?.startsWith("project-media-") === true);
+}
+
+function animationNames(probe: ProbeSnapshot) {
+  return probe.calls.flatMap(call => call.animations.map(animation => animation.animationName));
+}
+
+async function attachFailureDiagnostics(testInfo: TestInfo, probe: ProbeSnapshot, errors: RuntimeErrors) {
+  if (testInfo.status === testInfo.expectedStatus) {
+    return;
+  }
+
+  await testInfo.attach("route-motion-probe", {
+    body: Buffer.from(JSON.stringify({ errors, probe }, null, 2)),
+    contentType: "application/json",
+  });
+}
+
+declare global {
+  interface Window {
+    __routeMotionProbe: {
+      calls: ProbeCall[];
+      pending: Promise<void>[];
+    };
+  }
+}

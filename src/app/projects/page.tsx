@@ -1,7 +1,6 @@
 import { Layers3 } from "lucide-react";
 import type { Metadata } from "next";
 import Card from "../../components/Card";
-import RouteFadeTransition from "../../components/RouteFadeTransition";
 import { CardContent, Card as UiCard } from "../../components/ui/card";
 import { createPageMetadata, projectsSocialImage } from "../../lib/metadata";
 import { projects } from "../../lib/projects";
@@ -19,7 +18,7 @@ export default function Projects() {
   const structuredData = buildProjectsStructuredData();
 
   return (
-    <RouteFadeTransition>
+    <>
       <script
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static site data.
@@ -34,7 +33,7 @@ export default function Projects() {
             </h1>
           </div>
 
-          <UiCard className="motion-rise motion-delay-1 w-full max-w-sm justify-self-start rounded-xl border-border/70 bg-card/45 py-0 shadow-none backdrop-blur-xl lg:justify-self-end">
+          <UiCard className="motion-rise motion-delay-1 glass-frost w-full max-w-sm justify-self-start rounded-xl border-border/70 bg-card/45 py-0 shadow-none lg:justify-self-end">
             <CardContent className="flex items-center gap-3 px-4 py-3">
               <span
                 aria-hidden="true"
@@ -52,7 +51,7 @@ export default function Projects() {
 
         <section className="mt-8 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
           {projects.map((project, index) => (
-            <div key={project.id} className="motion-rise h-full">
+            <div key={project.id} className="h-full">
               <Card
                 project={project}
                 density="compact"
@@ -64,6 +63,6 @@ export default function Projects() {
           ))}
         </section>
       </main>
-    </RouteFadeTransition>
+    </>
   );
 }
