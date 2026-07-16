@@ -270,9 +270,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 href={getProjectPath(previousProject)}
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navBack]}
                 {...suppressEntryMotionProps}
-                className={buttonVariants({ variant: "glass", size: "default" })}
+                className={cn(
+                  buttonVariants({ variant: "glass", size: "default" }),
+                  "project-adjacent-link project-adjacent-link-previous",
+                )}
               >
-                <ArrowLeft data-icon="inline-start" strokeWidth={2.4} />
+                <ArrowLeft className="project-adjacent-arrow" data-icon="inline-start" strokeWidth={2.4} />
                 Previous
               </Link>
             ) : null}
@@ -281,10 +284,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 href={getProjectPath(nextProject)}
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                 {...suppressEntryMotionProps}
-                className={buttonVariants({ variant: "default", size: "default" })}
+                className={cn(
+                  buttonVariants({ variant: "default", size: "default" }),
+                  "project-adjacent-link project-adjacent-link-next",
+                )}
               >
                 Next
-                <ArrowRight data-icon="inline-end" strokeWidth={2.4} />
+                <ArrowRight className="project-adjacent-arrow" data-icon="inline-end" strokeWidth={2.4} />
               </Link>
             ) : null}
           </div>
