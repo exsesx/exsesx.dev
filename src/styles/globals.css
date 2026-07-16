@@ -470,6 +470,27 @@ html[data-season="pride"] .logo-mark-pride {
   background: var(--primary);
 }
 
+.cv-share-state-layer {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity var(--duration-enter) var(--ease-out),
+    transform var(--duration-enter) var(--ease-out);
+}
+
+.cv-share-state-layer[data-visible="false"] {
+  opacity: 0;
+  transition-duration: var(--duration-exit);
+}
+
+.cv-share-state-layer[data-state="idle"][data-visible="false"] {
+  transform: translate3d(0, -2px, 0);
+}
+
+.cv-share-state-layer[data-state="preparing"][data-visible="false"] {
+  transform: translate3d(0, 2px, 0);
+}
+
 /* Nested snapshot content keeps the surface hierarchy without a blur pass. */
 .snapshot-inner-card {
   backdrop-filter: none;
@@ -749,16 +770,24 @@ html[data-chrome-sample] .site-header {
   flex-shrink: 0;
 }
 
-/* Contextual back chip at the nav's left edge. Its fixed slot keeps the brand
-   and center switcher stable while visibility changes stay on the compositor. */
+/* Contextual back chip at the nav's left edge. The slot folds on the live
+   element (inline-size + flex-basis transition) so the brand glides with the
+   layout instead of jumping into the chip's place. This deliberately animates
+   layout: the reflow is confined to the header's flex row, and every
+   snapshot-based alternative left a frozen chip parked over the logo, because
+   ::view-transition-new(persistent-nav) shows live content while the old
+   snapshot is display: none (the header never slides or cross-fades). */
 .nav-back-button {
   /* no margin: the brand link's own px-2 padding is the visual gap */
   inline-size: 2.5rem;
   flex: 0 0 2.5rem;
   overflow: hidden;
   transition:
+    inline-size 200ms var(--ease-snap),
+    flex-basis 200ms var(--ease-snap),
+    border-width 200ms var(--ease-snap),
+    opacity 140ms var(--ease-out),
     transform 140ms var(--ease-snap),
-    opacity 120ms var(--ease-out),
     background-color 200ms var(--ease-out),
     border-color 200ms var(--ease-out),
     color 200ms var(--ease-out),
@@ -766,9 +795,11 @@ html[data-chrome-sample] .site-header {
 }
 
 .nav-back-button[data-active="false"] {
+  inline-size: 0;
+  flex-basis: 0;
+  border-width: 0;
   opacity: 0;
   pointer-events: none;
-  transform: translate3d(-0.2rem, 0, 0) scale(0.96);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -783,8 +814,37 @@ html[data-chrome-sample] .site-header {
   transform-origin: top center;
 }
 
-.hotkeys-corner-hint,
-.hotkeys-chord-waiting {
+.hotkeys-pointer-control {
+  transition:
+    background-color var(--duration-press) ease,
+    color var(--duration-press) ease,
+    opacity var(--duration-press) var(--ease-out),
+    transform var(--duration-press) var(--ease-out);
+}
+
+.hotkeys-pointer-control:active {
+  transform: scale(0.97);
+}
+
+.hotkeys-corner-state {
+  opacity: 1;
+  transition: opacity var(--duration-press) var(--ease-out);
+}
+
+.hotkeys-corner-state[data-visible="false"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hotkeys-pointer-control.hotkeys-corner-state {
+  transition:
+    background-color var(--duration-press) ease,
+    color var(--duration-press) ease,
+    opacity var(--duration-press) var(--ease-out),
+    transform var(--duration-press) var(--ease-out);
+}
+
+.hotkeys-corner-hint {
   width: auto;
   min-width: 4.75rem;
   border-color: transparent;
@@ -1264,7 +1324,21 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
   opacity: 1;
 }
 
+.project-adjacent-arrow {
+  transition:
+    opacity var(--duration-press) var(--ease-out),
+    transform var(--duration-press) var(--ease-out);
+}
+
 @media (hover: hover) and (pointer: fine) {
+  .project-adjacent-link-previous:hover .project-adjacent-arrow {
+    transform: translate3d(-2px, 0, 0);
+  }
+
+  .project-adjacent-link-next:hover .project-adjacent-arrow {
+    transform: translate3d(2px, 0, 0);
+  }
+
   .interactive-card:hover {
     transform: translateY(-5px) scale(1.006) translateZ(0);
     will-change: transform;
@@ -1299,6 +1373,16 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
 
   .dark .signal-traces {
     opacity: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) and (hover: hover) and (pointer: fine) {
+  .project-adjacent-arrow {
+    opacity: 0.85;
+  }
+
+  .project-adjacent-link:hover .project-adjacent-arrow {
+    opacity: 1;
   }
 }
 
@@ -1366,6 +1450,29 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
   .button-motion:active,
   .dropdown-menu-item:active {
     transform: none !important;
+  }
+
+  .cv-share-state-layer,
+  .cv-share-state-layer[data-state="idle"][data-visible="false"],
+  .cv-share-state-layer[data-state="preparing"][data-visible="false"] {
+    transform: none;
+  }
+
+  .hotkeys-pointer-control {
+    transform: none !important;
+    transition:
+      background-color var(--duration-press) ease,
+      color var(--duration-press) ease,
+      opacity var(--duration-press) var(--ease-out);
+  }
+
+  .hotkeys-pointer-control:active {
+    opacity: 0.8;
+  }
+
+  .project-adjacent-arrow {
+    transform: none !important;
+    transition: opacity var(--duration-press) var(--ease-out);
   }
 
   .interactive-card,

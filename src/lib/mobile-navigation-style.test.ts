@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { getBackTransitionTypeProps, MOTION_ATTRIBUTES, ROUTE_TRANSITION_TYPES } from "./motion-contract";
 
 const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
+const navBackButtonUrl = new URL("../components/NavBackButton.tsx", import.meta.url);
 const rootLayoutUrl = new URL("../app/layout.tsx", import.meta.url);
 const nextConfigUrl = new URL("../../next.config.mts", import.meta.url);
 
@@ -44,27 +45,32 @@ describe("mobile navigation styles", () => {
     expect(activePillRule).toMatch(/transition:\s*none/);
   });
 
-  test("reserves back-chip space and animates compositor properties only", async () => {
+  test("folds the back-chip slot on the live element so the brand glides with it", async () => {
     const css = await readGlobalsCss();
     const baseRule = getRuleBody(css, ".nav-back-button");
     const inactiveRule = getRuleBody(css, `.nav-back-button[${MOTION_ATTRIBUTES.activeBackButton}="false"]`);
     const reducedMotionRule = getReducedMotionBackButtonRule(css);
     const transition = baseRule.match(/transition:\s*(?<value>[\s\S]*?);/)?.groups?.value ?? "";
-    const layoutProperties =
-      /(?:max-width|min-width|width|inline-size|margin|padding|border-width|flex-basis|grid-template|left|right)/;
 
     expect(baseRule).toMatch(/(?:inline-size:\s*2\.5rem|width:\s*2\.5rem|flex:\s*0\s+0\s+2\.5rem)/);
+    // The fold IS a layout transition, by design: the slot width animates on
+    // the live element so the brand link moves with the layout instead of
+    // jumping into the chip's place at the start of a route transition.
+    expect(transition).toMatch(/inline-size/);
+    expect(transition).toMatch(/flex-basis/);
     expect(transition).toMatch(/opacity/);
     expect(transition).toMatch(/transform/);
-    expect(transition).not.toMatch(layoutProperties);
     expect(transition.split(",").every(segment => (segment.match(/\b\d+(?:\.\d+)?m?s\b/g) ?? []).length <= 1)).toBe(
       true,
     );
     expect(baseRule).not.toMatch(/transition-delay/);
+    expect(baseRule).toMatch(/overflow:\s*hidden/);
 
-    expect(inactiveRule).not.toMatch(layoutProperties);
+    expect(inactiveRule).toMatch(/inline-size:\s*0/);
+    expect(inactiveRule).toMatch(/flex(?:-basis)?:\s*(?:0\s+0\s+)?0/);
+    expect(inactiveRule).toMatch(/border-width:\s*0/);
     expect(inactiveRule).toMatch(/opacity:\s*0/);
-    expect(inactiveRule).toMatch(/transform:\s*translate3d\([^)]*\)\s+scale\(0\.9[5-9]\)/);
+    expect(inactiveRule).not.toMatch(/transform|scale\(/);
     expect(inactiveRule).toMatch(/pointer-events:\s*none/);
     expect(inactiveRule).not.toMatch(/transition-delay/);
 
@@ -76,6 +82,20 @@ describe("mobile navigation styles", () => {
     expect(getBackTransitionTypeProps("project-transition-project-quicklizard")).toEqual({
       [MOTION_ATTRIBUTES.backTransitionType]: "project-transition-project-quicklizard",
     });
+  });
+
+  test("keeps the back chip out of view-transition snapshot layers", async () => {
+    const [css, source] = await Promise.all([readGlobalsCss(), Bun.file(navBackButtonUrl).text()]);
+
+    // Regression guard: a named chip snapshot lives above the frozen
+    // persistent-nav group, whose old image is display: none — so the brand
+    // jumps into the chip's place at frame 0 and any chip snapshot overlaps
+    // it (or, if its animation never matches, freezes over the logo for the
+    // whole transition). The chip must stay inside the live nav and fold via
+    // the CSS transition above instead.
+    expect(source).not.toContain("viewTransitionName");
+    expect(css).not.toMatch(/::view-transition-[a-z-]*\(nav-back-button\)/);
+    expect(css).not.toMatch(/@keyframes nav-back-button-/);
   });
 
   test("names the route navigation transition contracts used by CSS", async () => {
