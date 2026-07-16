@@ -69,11 +69,17 @@ function Hotkeys() {
   const router = useRouter();
   const [hotkeyState, setHotkeyState] = useState<HotkeyState<HotkeyAction>>(createInitialHotkeyState);
   const hotkeyStateRef = useRef(hotkeyState);
+  const lastPendingSequenceRef = useRef<string[]>([]);
   const isModalOpen = hotkeyState.isModalOpen;
   const pendingSequence = hotkeyState.pendingSequence;
   const isSequenceRendered = pendingSequence.length > 0;
+  const displayedPendingSequence = isSequenceRendered ? pendingSequence : lastPendingSequenceRef.current;
 
   function commitHotkeyState(nextState: HotkeyState<HotkeyAction>) {
+    if (nextState.pendingSequence.length > 0) {
+      lastPendingSequenceRef.current = nextState.pendingSequence;
+    }
+
     hotkeyStateRef.current = nextState;
     setHotkeyState(current => (areHotkeyStatesEqual(current, nextState) ? current : nextState));
   }
@@ -133,8 +139,11 @@ function Hotkeys() {
 
   return (
     <>
-      <HotkeyHint isSequenceRendered={isSequenceRendered} onToggle={toggleHotkeyModal} />
-      {isSequenceRendered ? <PendingSequence sequence={pendingSequence} /> : null}
+      <HotkeyHint
+        isSequenceRendered={isSequenceRendered}
+        onToggle={toggleHotkeyModal}
+        sequence={displayedPendingSequence}
+      />
       {isModalOpen ? <HotkeyModal onClose={closeHotkeyModal} /> : null}
     </>
   );
@@ -142,44 +151,53 @@ function Hotkeys() {
 
 export default Hotkeys;
 
-function HotkeyHint({ isSequenceRendered, onToggle }: { isSequenceRendered: boolean; onToggle: () => void }) {
+function HotkeyHint({
+  isSequenceRendered,
+  onToggle,
+  sequence,
+}: {
+  isSequenceRendered: boolean;
+  onToggle: () => void;
+  sequence: string[];
+}) {
   return (
-    <button
-      type="button"
-      aria-label="Toggle keyboard shortcuts"
-      aria-hidden={isSequenceRendered}
-      className={cn(
-        "hotkeys-corner-hint glass-frost fixed bottom-4 left-4 z-[80] hidden h-11 items-center gap-2 rounded-full px-1.5 text-foreground shadow-menu transition-opacity duration-150 ease-[var(--ease-out)] active:scale-[0.97] md:inline-flex",
-        isSequenceRendered && "pointer-events-none opacity-0",
-      )}
-      tabIndex={isSequenceRendered ? -1 : undefined}
-      onClick={onToggle}
+    <div
+      className="hotkeys-corner-hint glass-frost fixed bottom-4 left-4 z-[80] hidden h-11 grid-cols-1 grid-rows-1 rounded-full text-foreground shadow-menu md:grid"
+      data-pending={isSequenceRendered ? "true" : "false"}
     >
-      <kbd aria-label="Command period" className="hotkeys-trigger-key hotkeys-command-key">
-        <Command aria-hidden="true" size={13} strokeWidth={2.5} />
-        <span aria-hidden="true" className="hotkeys-command-period" />
-      </kbd>
-      <span className="hotkeys-state-label">Shortcuts</span>
-    </button>
-  );
-}
+      <button
+        type="button"
+        aria-label="Toggle keyboard shortcuts"
+        aria-hidden={isSequenceRendered}
+        className="hotkeys-corner-state hotkeys-pointer-control col-start-1 row-start-1 flex h-11 items-center gap-2 rounded-full px-1.5"
+        data-visible={isSequenceRendered ? "false" : "true"}
+        tabIndex={isSequenceRendered ? -1 : undefined}
+        onClick={onToggle}
+      >
+        <kbd aria-label="Command period" className="hotkeys-trigger-key hotkeys-command-key">
+          <Command aria-hidden="true" size={13} strokeWidth={2.5} />
+          <span aria-hidden="true" className="hotkeys-command-period" />
+        </kbd>
+        <span className="hotkeys-state-label">Shortcuts</span>
+      </button>
 
-function PendingSequence({ sequence }: { sequence: string[] }) {
-  return (
-    <aside
-      aria-live="polite"
-      aria-label={`${sequence.join(" ")} pressed; awaiting next shortcut key`}
-      className="hotkeys-chord-panel hotkeys-chord-waiting glass-frost fixed bottom-4 left-4 z-[65] hidden h-11 items-center gap-2 rounded-full px-1.5 text-foreground shadow-menu md:flex"
-    >
-      <span className="hotkeys-wait-sequence">
-        {sequence.map((key, index) => (
-          <span key={getHotkeySequenceKey("pending", key, index)} className="hotkeys-trigger-key">
-            <kbd className="relative z-10 font-mono text-xs font-black leading-none">{key}</kbd>
-          </span>
-        ))}
-      </span>
-      <span className="hotkeys-state-label">Pending…</span>
-    </aside>
+      <aside
+        aria-hidden={isSequenceRendered ? undefined : "true"}
+        aria-label={isSequenceRendered ? `${sequence.join(" ")} pressed; awaiting next shortcut key` : undefined}
+        aria-live="polite"
+        className="hotkeys-chord-panel hotkeys-chord-waiting hotkeys-corner-state col-start-1 row-start-1 flex h-11 items-center gap-2 rounded-full px-1.5"
+        data-visible={isSequenceRendered ? "true" : "false"}
+      >
+        <span className="hotkeys-wait-sequence">
+          {sequence.map((key, index) => (
+            <span key={getHotkeySequenceKey("pending", key, index)} className="hotkeys-trigger-key">
+              <kbd className="relative z-10 font-mono text-xs font-black leading-none">{key}</kbd>
+            </span>
+          ))}
+        </span>
+        <span className="hotkeys-state-label">Pending…</span>
+      </aside>
+    </div>
   );
 }
 
@@ -206,7 +224,7 @@ function HotkeyModal({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             aria-label="Close keyboard shortcuts"
-            className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+            className="hotkeys-pointer-control grid size-10 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
             onClick={onClose}
           >
             <X aria-hidden="true" size={24} strokeWidth={2.5} />

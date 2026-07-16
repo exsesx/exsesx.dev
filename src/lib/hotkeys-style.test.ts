@@ -51,4 +51,31 @@ describe("hotkey loading and motion contracts", () => {
     expect(source.match(/aria-label="Close keyboard shortcuts"/g)).toHaveLength(2);
     expect(source).toMatch(/<section[\s\S]*?aria-label="Keyboard shortcuts"/);
   });
+
+  test("keeps one corner surface mounted while its status crossfades", async () => {
+    const source = await Bun.file(hotkeysUrl).text();
+    const css = await Bun.file(globalsUrl).text();
+    const state = getRuleBody(css, ".hotkeys-corner-state");
+    const hiddenState = getRuleBody(css, '.hotkeys-corner-state[data-visible="false"]');
+
+    expect(source).not.toMatch(/isSequenceRendered\s*\?\s*<PendingSequence/);
+    expect(source.match(/className="hotkeys-corner-hint/g)).toHaveLength(1);
+    expect(source.match(/hotkeys-corner-state/g)).toHaveLength(2);
+    expect(state).toMatch(/transition:\s*opacity/);
+    expect(hiddenState).toMatch(/opacity:\s*0/);
+    expect(hiddenState).toMatch(/pointer-events:\s*none/);
+  });
+
+  test("limits tactile motion to pointer controls", async () => {
+    const source = await Bun.file(hotkeysUrl).text();
+    const css = await Bun.file(globalsUrl).text();
+    const pointerControl = getRuleBody(css, ".hotkeys-pointer-control");
+
+    expect(source.match(/hotkeys-pointer-control/g)).toHaveLength(2);
+    expect(pointerControl).toContain("transform var(--duration-press) var(--ease-out)");
+    expect(pointerControl).toContain("opacity var(--duration-press) var(--ease-out)");
+    expect(getRuleBody(css, ".hotkeys-pointer-control:active")).toContain("transform: scale(0.97)");
+    expect(getRuleBody(css, ".hotkeys-modal-backdrop")).not.toMatch(/transition|animation/);
+    expect(getRuleBody(css, ".hotkeys-panel")).not.toMatch(/transition|animation/);
+  });
 });

@@ -58,8 +58,14 @@ function CvMenu() {
   );
   const hasSecondaryAction = secondaryAction !== "none";
 
+  function closeMenuAndOpenResumePdf() {
+    setIsOpen(false);
+    openResumePdf();
+  }
+
   async function handleShareCv() {
     if (typeof navigator.share !== "function" || typeof File === "undefined") {
+      closeMenuAndOpenResumePdf();
       return;
     }
 
@@ -69,7 +75,7 @@ function CvMenu() {
       const response = await fetch(RESUME_PDF_URL);
 
       if (!response.ok) {
-        openResumePdf();
+        closeMenuAndOpenResumePdf();
         return;
       }
 
@@ -77,17 +83,18 @@ function CvMenu() {
       const file = new File([blob], RESUME_PDF_FILENAME, { type: blob.type || "application/pdf" });
 
       if (navigator.canShare?.({ files: [file] }) === false) {
-        openResumePdf();
+        closeMenuAndOpenResumePdf();
         return;
       }
 
+      setIsOpen(false);
       await navigator.share({
         files: [file],
         title: "Oleh Vanin CV",
       });
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) {
-        openResumePdf();
+        closeMenuAndOpenResumePdf();
       }
     } finally {
       setIsSharing(false);
@@ -140,9 +147,28 @@ function CvMenu() {
                   Open CV
                 </DropdownMenuLinkItem>
                 {secondaryAction === "share" ? (
-                  <DropdownMenuItem disabled={isSharing} onClick={handleShareCv}>
-                    <Share2 size={16} strokeWidth={2.3} />
-                    {isSharing ? "Preparing CV" : "Share CV"}
+                  <DropdownMenuItem closeOnClick={false} disabled={isSharing} onClick={handleShareCv}>
+                    <span className="cv-share-state relative grid min-w-0 flex-1" aria-live="polite">
+                      <span
+                        aria-hidden="true"
+                        className="cv-share-state-layer col-start-1 row-start-1 flex items-center gap-2"
+                        data-state="idle"
+                        data-visible={!isSharing}
+                      >
+                        <Share2 size={16} strokeWidth={2.3} />
+                        Share CV
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="cv-share-state-layer col-start-1 row-start-1 flex items-center gap-2"
+                        data-state="preparing"
+                        data-visible={isSharing}
+                      >
+                        <Share2 size={16} strokeWidth={2.3} />
+                        Preparing CV
+                      </span>
+                      <span className="sr-only">{isSharing ? "Preparing CV" : "Share CV"}</span>
+                    </span>
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuLinkItem href={RESUME_PDF_DOWNLOAD_URL}>

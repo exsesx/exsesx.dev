@@ -6,6 +6,7 @@ const cvMenuUrl = new URL("../components/CvMenu.tsx", import.meta.url);
 const themeSwitcherUrl = new URL("../components/ThemeSwitcher.tsx", import.meta.url);
 const homePageUrl = new URL("../app/page.tsx", import.meta.url);
 const projectsPageUrl = new URL("../app/projects/page.tsx", import.meta.url);
+const projectDetailUrl = new URL("../app/project/[slug]/page.tsx", import.meta.url);
 
 async function readGlobalsCss() {
   return Bun.file(globalsUrl).text();
@@ -64,6 +65,41 @@ describe("semantic animation styles", () => {
     expect(buttonVariants).toContain("button-motion");
     expect(buttonVariants).not.toContain("transition-[background-color,border-color,color,box-shadow,transform]");
     expect(buttonVariants).toContain("active:scale-[0.97]");
+  });
+
+  test("keeps CV preparation visible and transitions only its local state", async () => {
+    const [css, cvMenu] = await Promise.all([readGlobalsCss(), readSource(cvMenuUrl)]);
+    const stateLayer = ruleBody(css, ".cv-share-state-layer");
+
+    expect(cvMenu).toMatch(/<DropdownMenuItem\s+closeOnClick=\{false\}\s+disabled=\{isSharing\}/);
+    expect(cvMenu).toMatch(
+      /if \(typeof navigator\.share !== "function" \|\| typeof File === "undefined"\) \{\s*closeMenuAndOpenResumePdf\(\);/,
+    );
+    expect(cvMenu).toMatch(/setIsOpen\(false\);\s*await navigator\.share/);
+    expect(cvMenu).toContain('data-state="idle"');
+    expect(cvMenu).toContain('data-state="preparing"');
+    expect(stateLayer).toContain("opacity var(--duration-enter) var(--ease-out)");
+    expect(stateLayer).toContain("transform var(--duration-enter) var(--ease-out)");
+    expect(css).toMatch(
+      /\.cv-share-state-layer\[data-visible="false"\][\s\S]*?transition-duration:\s*var\(--duration-exit\)/,
+    );
+  });
+
+  test("previews adjacent project direction without moving the controls", async () => {
+    const [css, projectDetail] = await Promise.all([readGlobalsCss(), readSource(projectDetailUrl)]);
+    const arrowRule = ruleBody(css, ".project-adjacent-arrow");
+
+    expect(projectDetail).toContain("project-adjacent-link-previous");
+    expect(projectDetail).toContain("project-adjacent-link-next");
+    expect(projectDetail.match(/project-adjacent-arrow/g)).toHaveLength(2);
+    expect(arrowRule).toContain("transform var(--duration-press) var(--ease-out)");
+    expect(arrowRule).toContain("opacity var(--duration-press) var(--ease-out)");
+    expect(css).toMatch(
+      /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?\.project-adjacent-link-previous:hover \.project-adjacent-arrow[\s\S]*?translate3d\(-2px, 0, 0\)/,
+    );
+    expect(css).toMatch(
+      /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?\.project-adjacent-link-next:hover \.project-adjacent-arrow[\s\S]*?translate3d\(2px, 0, 0\)/,
+    );
   });
 
   test("uses calm on-screen movement for persistent navigation", async () => {

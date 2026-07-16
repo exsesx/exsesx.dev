@@ -77,11 +77,16 @@ export default function Header() {
             <Link
               href="/"
               {...suppressEntryMotionProps}
-              className="site-nav-brand-link group flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-[color,transform] duration-200 ease-[var(--ease-out)] hover:text-accent active:scale-[0.98]"
+              className="site-nav-brand-link flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
               aria-label="Oleh Vanin home"
               onClick={event => handleNavLinkClick(event, "/")}
+              onPointerDown={event => {
+                if (shouldPreviewNavChange(event)) {
+                  setVisualActiveNavHref("/");
+                }
+              }}
             >
-              <span className="logo-tile grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15 transition-transform duration-150 ease-[var(--ease-out)] group-active:scale-[0.96]">
+              <span className="logo-tile grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15">
                 <LogoMark className="size-8" />
               </span>
               <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">

@@ -63,7 +63,9 @@ describe("glass tier contracts", () => {
     expect(projects).toMatch(/motion-rise motion-delay-1[^"]*glass-frost/);
     expect(card).toMatch(/absolute glass-frost[^"\n]*rounded-full/);
     expect(card).not.toContain("backdrop-blur-xl");
-    expect(hotkeys.match(/glass-frost/g)).toHaveLength(3);
+    expect(hotkeys.match(/glass-frost/g)).toHaveLength(2);
+    expect(hotkeys).toMatch(/hotkeys-corner-hint glass-frost/);
+    expect(hotkeys).toMatch(/hotkeys-panel glass-frost/);
     expect(`${home}\n${detail}`).not.toMatch(/hero-surface-panel[^"\n]*(?:liquid-glass|backdrop-blur)/);
   });
 

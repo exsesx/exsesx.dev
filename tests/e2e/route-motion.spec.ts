@@ -1,4 +1,5 @@
 import { expect, type Page, type TestInfo, test } from "@playwright/test";
+import sharp from "sharp";
 
 type ProbeAnimation = {
   animationName: string;
@@ -189,6 +190,61 @@ if (!("Bun" in globalThis)) {
       await attachFailureDiagnostics(testInfo, { calls: [...projectsProbe.calls, ...homeProbe.calls] }, errors);
     });
 
+    test("brand navigation keeps the logo circular while the active pill moves Home", async ({
+      page,
+      isMobile,
+    }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop header interaction contract");
+      const errors = collectRuntimeErrors(page);
+      await page.goto("/projects");
+      const brand = page.getByRole("link", { name: "Oleh Vanin home" });
+      const logo = page.locator(".logo-tile");
+      const brandBox = await brand.boundingBox();
+      const logoBox = await logo.boundingBox();
+
+      expect(brandBox).not.toBeNull();
+      expect(logoBox).not.toBeNull();
+      await resetProbe(page);
+
+      if (!brandBox) {
+        return;
+      }
+
+      await page.mouse.move(brandBox.x + brandBox.width / 2, brandBox.y + brandBox.height / 2);
+      await page.mouse.down();
+
+      const transitionFrame = await page.screenshot({
+        clip: logoBox ?? { height: 40, width: 40, x: 0, y: 0 },
+      });
+      const edgeContrast = await logoCornerToTopContrast(transitionFrame);
+      const navigation = page.waitForURL(/\/$/);
+
+      await page.mouse.up();
+      await navigation;
+
+      const pillFrames = await page.locator(".site-nav-active-pill").evaluate(async element => {
+        const frames: Array<{ running: boolean; transform: string }> = [];
+
+        for (let frame = 0; frame < 6; frame += 1) {
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+          frames.push({
+            running: element.getAnimations().some(animation => animation.playState === "running"),
+            transform: getComputedStyle(element).transform,
+          });
+        }
+
+        return frames;
+      });
+
+      await waitForProbe(page);
+
+      expect(edgeContrast).toBeGreaterThan(36);
+      expect(pillFrames.some(frame => frame.transform !== "matrix(1, 0, 0, 1, 0, 0)")).toBe(true);
+      expect(pillFrames.some(frame => frame.running)).toBe(true);
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, await readProbe(page), errors);
+    });
+
     test("mobile project navigation has no animated view-transition pseudos", async ({ page, isMobile }, testInfo) => {
       test.skip(!isMobile, "mobile contract");
       const errors = collectRuntimeErrors(page);
@@ -351,8 +407,130 @@ if (!("Bun" in globalThis)) {
     });
   });
 
+  test.describe("hotkey hint continuity", () => {
+    test("keeps a visible corner surface while Escape cancels a pending chord", async ({ page, isMobile }) => {
+      test.skip(Boolean(isMobile), "desktop hotkeys contract");
+      await page.goto("/");
+      await expect(page.getByRole("button", { name: "Toggle keyboard shortcuts" })).toBeVisible();
+      const cornerHint = page.locator(".hotkeys-corner-hint");
+      const idleWidth = await cornerHint.evaluate(element => element.getBoundingClientRect().width);
+
+      await page.keyboard.press("g");
+      await expect(page.getByLabel("g pressed; awaiting next shortcut key")).toBeVisible();
+      const pendingWidth = await cornerHint.evaluate(element => element.getBoundingClientRect().width);
+      expect(Math.abs(pendingWidth - idleWidth)).toBeLessThanOrEqual(1);
+      await expect(page.locator('.hotkeys-corner-state[aria-label="Toggle keyboard shortcuts"]')).toHaveCSS(
+        "opacity",
+        "0",
+      );
+
+      const frameSamples = await page.evaluate(async () => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }));
+
+        const samples: Array<{ pendingKeyCount: number; pendingOpacity: number; surfaceOpacity: number }> = [];
+
+        for (let frame = 0; frame < 8; frame += 1) {
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+          const opacities = Array.from(
+            document.querySelectorAll<HTMLElement>(".hotkeys-corner-hint, .hotkeys-chord-waiting"),
+          ).map(element => Number.parseFloat(getComputedStyle(element).opacity));
+          const pendingLayer = document.querySelector<HTMLElement>(".hotkeys-chord-waiting");
+
+          samples.push({
+            pendingKeyCount: pendingLayer?.querySelectorAll(".hotkeys-trigger-key").length ?? 0,
+            pendingOpacity: pendingLayer ? Number.parseFloat(getComputedStyle(pendingLayer).opacity) : 0,
+            surfaceOpacity: Math.max(0, ...opacities),
+          });
+        }
+
+        return samples;
+      });
+
+      expect(Math.min(...frameSamples.map(sample => sample.surfaceOpacity))).toBeGreaterThanOrEqual(0.95);
+      expect(
+        frameSamples.filter(sample => sample.pendingOpacity > 0.01).every(sample => sample.pendingKeyCount > 0),
+      ).toBe(true);
+
+      const interruptedSamples = await page.evaluate(async () => {
+        const samples: Array<{ contentOpacity: number; pendingKeyCount: number; pendingOpacity: number }> = [];
+
+        function sampleContent() {
+          const idleLayer = document.querySelector<HTMLElement>(
+            '.hotkeys-corner-state[aria-label="Toggle keyboard shortcuts"]',
+          );
+          const pendingLayer = document.querySelector<HTMLElement>(".hotkeys-chord-waiting");
+          const idleOpacity = idleLayer ? Number.parseFloat(getComputedStyle(idleLayer).opacity) : 0;
+          const pendingOpacity = pendingLayer ? Number.parseFloat(getComputedStyle(pendingLayer).opacity) : 0;
+
+          samples.push({
+            contentOpacity: idleOpacity + pendingOpacity,
+            pendingKeyCount: pendingLayer?.querySelectorAll(".hotkeys-trigger-key").length ?? 0,
+            pendingOpacity,
+          });
+        }
+
+        for (let cycle = 0; cycle < 6; cycle += 1) {
+          window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "g" }));
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+          sampleContent();
+          window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }));
+
+          for (let frame = 0; frame < 2; frame += 1) {
+            await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+            sampleContent();
+          }
+        }
+
+        return samples;
+      });
+
+      expect(Math.min(...interruptedSamples.map(sample => sample.contentOpacity))).toBeGreaterThanOrEqual(0.95);
+      expect(Math.max(...interruptedSamples.map(sample => sample.contentOpacity))).toBeLessThanOrEqual(1.05);
+      expect(
+        interruptedSamples.filter(sample => sample.pendingOpacity > 0.01).every(sample => sample.pendingKeyCount > 0),
+      ).toBe(true);
+    });
+  });
+
   test.describe("back chip geometry", () => {
-    test("reserves stable header geometry with normal and reduced motion", async ({ page }, testInfo) => {
+    test("folds the back arrow in and out on the live element without snapshot layers", async ({ page, isMobile }) => {
+      test.skip(Boolean(isMobile), "desktop back-arrow motion contract");
+      await page.goto("/projects");
+      expect((await measureHeaderGeometry(page)).back.layoutWidth).toBeLessThanOrEqual(1);
+      await resetProbe(page);
+
+      await startBackChipFoldSampler(page);
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
+      await expect.poll(async () => (await readBackChipFoldSamples(page)).finalWidth).toBeGreaterThanOrEqual(39);
+
+      const unfold = await readBackChipFoldSamples(page);
+      expect(unfold.sawFoldTransition || unfold.sawIntermediateWidth).toBe(true);
+      // the chip must never become its own snapshot: it sits above the frozen
+      // persistent-nav group and ends up overlapping the brand logo there
+      expect(
+        nonZeroAnimations(await readProbe(page)).filter(animation =>
+          animation.pseudoElement?.includes("nav-back-button"),
+        ),
+      ).toHaveLength(0);
+
+      await resetProbe(page);
+      await startBackChipFoldSampler(page);
+      await Promise.all([page.waitForURL("**/projects"), page.keyboard.press("Escape")]);
+      await waitForProbe(page);
+      await expect.poll(async () => (await readBackChipFoldSamples(page)).finalWidth).toBeLessThanOrEqual(1);
+
+      const fold = await readBackChipFoldSamples(page);
+      expect(fold.sawFoldTransition || fold.sawIntermediateWidth).toBe(true);
+      expect(
+        nonZeroAnimations(await readProbe(page)).filter(animation =>
+          animation.pseudoElement?.includes("nav-back-button"),
+        ),
+      ).toHaveLength(0);
+    });
+
+    test("collapses the inactive slot and restores it on detail routes", async ({ page }, testInfo) => {
       const errors = collectRuntimeErrors(page);
       await page.goto("/projects");
       const backButton = page.getByRole("button", { name: "Back", includeHidden: true });
@@ -362,7 +540,7 @@ if (!("Bun" in globalThis)) {
       await expect(backButton).toHaveAttribute("aria-hidden", "true");
       await expect(backButton).toHaveCSS("opacity", "0");
       await expect(backButton).toHaveCSS("pointer-events", "none");
-      expect(initial.back.layoutWidth).toBeGreaterThanOrEqual(40);
+      expect(initial.back.layoutWidth).toBeLessThanOrEqual(1);
       expect(
         await backButton.evaluate(element => {
           const box = element.getBoundingClientRect();
@@ -377,11 +555,10 @@ if (!("Bun" in globalThis)) {
       await expect(backButton).toBeEnabled();
       await expect(backButton).toHaveCSS("opacity", "1");
       expect(await backButton.getAttribute("aria-hidden")).toBeNull();
+      await expect.poll(async () => (await measureHeaderGeometry(page)).back.width).toBeGreaterThanOrEqual(39.9);
       const active = await measureHeaderGeometry(page);
 
-      expect(Math.abs(active.switcher.centerX - initial.switcher.centerX)).toBeLessThanOrEqual(1);
-      expect(Math.abs(active.brand.x - initial.brand.x)).toBeLessThanOrEqual(1);
-      expect(active.back.width).toBeGreaterThanOrEqual(40);
+      expect(active.back.width).toBeGreaterThanOrEqual(39.9);
       expect(active.back.height).toBeGreaterThanOrEqual(40);
       await expect(page.locator("header[data-safari-chrome-sample]")).toHaveAttribute(
         "data-safari-chrome-sample",
@@ -394,7 +571,11 @@ if (!("Bun" in globalThis)) {
       await expect(backButton).toBeDisabled();
       await expect(backButton).toHaveAttribute("aria-hidden", "true");
       await expect(backButton).toHaveCSS("opacity", "0");
-      expect((await measureHeaderGeometry(page)).back.layoutWidth).toBeGreaterThanOrEqual(40);
+      await expect.poll(async () => (await measureHeaderGeometry(page)).back.layoutWidth).toBeLessThanOrEqual(1);
+      const restored = await measureHeaderGeometry(page);
+      expect(restored.back.layoutWidth).toBeLessThanOrEqual(1);
+      expect(Math.abs(restored.switcher.centerX - initial.switcher.centerX)).toBeLessThanOrEqual(1);
+      expect(Math.abs(restored.brand.x - initial.brand.x)).toBeLessThanOrEqual(1);
 
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.goto("/projects");
@@ -404,8 +585,6 @@ if (!("Bun" in globalThis)) {
       await waitForProbe(page);
       const reducedActive = await measureHeaderGeometry(page);
 
-      expect(Math.abs(reducedActive.switcher.centerX - reducedInitial.switcher.centerX)).toBeLessThanOrEqual(1);
-      expect(Math.abs(reducedActive.brand.x - reducedInitial.brand.x)).toBeLessThanOrEqual(1);
       await expect(backButton).toBeEnabled();
       expect(await backButton.getAttribute("aria-hidden")).toBeNull();
       await expect(backButton).toHaveCSS("opacity", "1");
@@ -432,7 +611,7 @@ if (!("Bun" in globalThis)) {
       await expect(backButton).toHaveCSS("opacity", "0");
       await expect(backButton).toHaveCSS("pointer-events", "none");
       const reducedRestored = await measureHeaderGeometry(page);
-      expect(reducedRestored.back.layoutWidth).toBeGreaterThanOrEqual(40);
+      expect(reducedRestored.back.layoutWidth).toBeLessThanOrEqual(1);
       expect(Math.abs(reducedRestored.switcher.centerX - reducedInitial.switcher.centerX)).toBeLessThanOrEqual(1);
       expect(Math.abs(reducedRestored.brand.x - reducedInitial.brand.x)).toBeLessThanOrEqual(1);
       expectRuntimeClean(errors);
@@ -473,8 +652,81 @@ async function waitForProbe(page: Page) {
   });
 }
 
+async function logoCornerToTopContrast(image: Buffer) {
+  const { data, info } = await sharp(image).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const sample = (centerX: number, centerY: number) => {
+    const radius = 2;
+    const totals = [0, 0, 0];
+    let count = 0;
+
+    for (let y = Math.max(0, centerY - radius); y <= Math.min(info.height - 1, centerY + radius); y += 1) {
+      for (let x = Math.max(0, centerX - radius); x <= Math.min(info.width - 1, centerX + radius); x += 1) {
+        const offset = (y * info.width + x) * info.channels;
+        totals[0] += data[offset] ?? 0;
+        totals[1] += data[offset + 1] ?? 0;
+        totals[2] += data[offset + 2] ?? 0;
+        count += 1;
+      }
+    }
+
+    return totals.map(total => total / count);
+  };
+  const corner = sample(3, 3);
+  const top = sample(Math.floor(info.width / 2), 4);
+
+  return Math.sqrt(corner.reduce((sum, channel, index) => sum + (channel - (top[index] ?? 0)) ** 2, 0));
+}
+
 async function readProbe(page: Page): Promise<ProbeSnapshot> {
   return page.evaluate(() => ({ calls: window.__routeMotionProbe.calls }));
+}
+
+/* The fold happens on the live element (a width transition inside the frozen
+   persistent-nav snapshot), so the view-transition probe can't see it; sample
+   the chip across frames instead, starting before the navigation fires. */
+async function startBackChipFoldSampler(page: Page) {
+  await page.evaluate(() => {
+    const chip = document.querySelector<HTMLElement>(".nav-back-button");
+
+    if (!chip) {
+      throw new Error("Missing fold sampler target: .nav-back-button");
+    }
+
+    const samples: BackChipFoldSample[] = [];
+    window.__backChipFoldSamples = samples;
+
+    function sample() {
+      const folding = chip
+        ? chip.getAnimations().some(animation => {
+            if (!(animation instanceof CSSTransition) || animation.playState !== "running") {
+              return false;
+            }
+
+            return ["flex-basis", "inline-size", "width"].includes(animation.transitionProperty);
+          })
+        : false;
+
+      samples.push({ folding, width: chip?.getBoundingClientRect().width ?? 0 });
+
+      if (samples.length < 300) {
+        requestAnimationFrame(sample);
+      }
+    }
+
+    requestAnimationFrame(sample);
+  });
+}
+
+async function readBackChipFoldSamples(page: Page) {
+  return page.evaluate(() => {
+    const samples = window.__backChipFoldSamples ?? [];
+
+    return {
+      finalWidth: samples.at(-1)?.width ?? -1,
+      sawFoldTransition: samples.some(sample => sample.folding),
+      sawIntermediateWidth: samples.some(sample => sample.width > 2 && sample.width < 38),
+    };
+  });
 }
 
 async function viewTransitionName(locator: ReturnType<Page["locator"]>) {
@@ -548,8 +800,14 @@ async function attachFailureDiagnostics(testInfo: TestInfo, probe: ProbeSnapshot
   });
 }
 
+type BackChipFoldSample = {
+  folding: boolean;
+  width: number;
+};
+
 declare global {
   interface Window {
+    __backChipFoldSamples?: BackChipFoldSample[];
     __routeMotionProbe: {
       calls: ProbeCall[];
       pending: Promise<void>[];
