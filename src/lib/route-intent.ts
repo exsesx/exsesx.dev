@@ -72,7 +72,7 @@ export function queueBrowserBackScrollRestore() {
 }
 
 export function consumeQueuedScrollRestore(path: string) {
-  const storedValue = window.sessionStorage.getItem(PENDING_SCROLL_RESTORE_STORAGE_KEY);
+  const storedValue = getSessionStorageItem(PENDING_SCROLL_RESTORE_STORAGE_KEY);
 
   if (!storedValue) {
     return null;
@@ -85,11 +85,11 @@ export function consumeQueuedScrollRestore(path: string) {
       return null;
     }
 
-    window.sessionStorage.removeItem(PENDING_SCROLL_RESTORE_STORAGE_KEY);
+    removeSessionStorageItem(PENDING_SCROLL_RESTORE_STORAGE_KEY);
 
     return pendingRestore.scrollY;
   } catch {
-    window.sessionStorage.removeItem(PENDING_SCROLL_RESTORE_STORAGE_KEY);
+    removeSessionStorageItem(PENDING_SCROLL_RESTORE_STORAGE_KEY);
     return null;
   }
 }
@@ -100,11 +100,11 @@ function recordCurrentRoute() {
     scrollY: window.scrollY,
   };
 
-  window.sessionStorage.setItem(PREVIOUS_ROUTE_STORAGE_KEY, JSON.stringify(previousRoute));
+  setSessionStorageItem(PREVIOUS_ROUTE_STORAGE_KEY, JSON.stringify(previousRoute));
 }
 
 function readPreviousRoute({ allowCurrent }: { allowCurrent: boolean }) {
-  const storedValue = window.sessionStorage.getItem(PREVIOUS_ROUTE_STORAGE_KEY);
+  const storedValue = getSessionStorageItem(PREVIOUS_ROUTE_STORAGE_KEY);
 
   if (!storedValue) {
     return null;
@@ -130,7 +130,31 @@ function normalizePreviousRoute(route: StoredRoute, allowCurrent: boolean) {
 }
 
 function queueScrollRestore(route: StoredRoute) {
-  window.sessionStorage.setItem(PENDING_SCROLL_RESTORE_STORAGE_KEY, JSON.stringify(route));
+  setSessionStorageItem(PENDING_SCROLL_RESTORE_STORAGE_KEY, JSON.stringify(route));
+}
+
+function getSessionStorageItem(key: string) {
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function setSessionStorageItem(key: string, value: string) {
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // Navigation still works when storage is blocked; only history polish degrades.
+  }
+}
+
+function removeSessionStorageItem(key: string) {
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch {
+    // Treat a blocked store as already empty.
+  }
 }
 
 function getBackTransitionTypes(): string[] {

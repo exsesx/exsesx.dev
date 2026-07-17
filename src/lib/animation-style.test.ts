@@ -67,15 +67,17 @@ describe("semantic animation styles", () => {
     expect(buttonVariants).toContain("active:scale-[0.97]");
   });
 
-  test("keeps CV preparation visible and transitions only its local state", async () => {
+  test("prepares the CV before a directly user-activated share and transitions only local state", async () => {
     const [css, cvMenu] = await Promise.all([readGlobalsCss(), readSource(cvMenuUrl)]);
     const stateLayer = ruleBody(css, ".cv-share-state-layer");
+    const shareCallIndex = cvMenu.indexOf("sharePromise = navigator.share");
+    const closeMenuIndex = cvMenu.indexOf("setIsOpen(false)", shareCallIndex);
 
-    expect(cvMenu).toMatch(/<DropdownMenuItem\s+closeOnClick=\{false\}\s+disabled=\{isSharing\}/);
-    expect(cvMenu).toMatch(
-      /if \(typeof navigator\.share !== "function" \|\| typeof File === "undefined"\) \{\s*closeMenuAndOpenResumePdf\(\);/,
-    );
-    expect(cvMenu).toMatch(/setIsOpen\(false\);\s*await navigator\.share/);
+    expect(cvMenu).toMatch(/<DropdownMenuItem\s+closeOnClick=\{false\}\s+disabled=\{isShareBusy\}/);
+    expect(cvMenu).toContain("const preparation = prepareResumeFile()");
+    expect(cvMenu).not.toMatch(/async function handleShareCv|window\.open|closeMenuAndOpenResumePdf/);
+    expect(shareCallIndex).toBeGreaterThan(-1);
+    expect(closeMenuIndex).toBeGreaterThan(shareCallIndex);
     expect(cvMenu).toContain('data-state="idle"');
     expect(cvMenu).toContain('data-state="preparing"');
     expect(stateLayer).toContain("opacity var(--duration-enter) var(--ease-out)");
