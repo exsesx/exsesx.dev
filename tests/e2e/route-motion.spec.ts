@@ -199,11 +199,13 @@ if (!("Bun" in globalThis)) {
       await page.goto("/projects");
       const brand = page.getByRole("link", { name: "Oleh Vanin home" });
       const logo = page.locator(".logo-tile");
+      const activePill = page.locator(".site-nav-active-pill");
       const brandBox = await brand.boundingBox();
       const logoBox = await logo.boundingBox();
 
       expect(brandBox).not.toBeNull();
       expect(logoBox).not.toBeNull();
+      await expect(activePill).toHaveAttribute("data-active-nav", "projects");
       await resetProbe(page);
 
       if (!brandBox) {
@@ -213,6 +215,26 @@ if (!("Bun" in globalThis)) {
       await page.mouse.move(brandBox.x + brandBox.width / 2, brandBox.y + brandBox.height / 2);
       await page.mouse.down();
 
+      const pillFrames = await activePill.evaluate(async element => {
+        const frames: Array<{ activeNav: string | undefined; running: boolean; transform: string }> = [];
+        const sample = () => {
+          frames.push({
+            activeNav: element.getAttribute("data-active-nav") ?? undefined,
+            running: element.getAnimations().some(animation => animation.playState === "running"),
+            transform: getComputedStyle(element).transform,
+          });
+        };
+
+        sample();
+
+        for (let frame = 0; frame < 6; frame += 1) {
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+          sample();
+        }
+
+        return frames;
+      });
+
       const transitionFrame = await page.screenshot({
         clip: logoBox ?? { height: 40, width: 40, x: 0, y: 0 },
       });
@@ -221,25 +243,16 @@ if (!("Bun" in globalThis)) {
 
       await page.mouse.up();
       await navigation;
-
-      const pillFrames = await page.locator(".site-nav-active-pill").evaluate(async element => {
-        const frames: Array<{ running: boolean; transform: string }> = [];
-
-        for (let frame = 0; frame < 6; frame += 1) {
-          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-          frames.push({
-            running: element.getAnimations().some(animation => animation.playState === "running"),
-            transform: getComputedStyle(element).transform,
-          });
-        }
-
-        return frames;
-      });
+      await expect(activePill).toHaveAttribute("data-active-nav", "home");
+      await expect
+        .poll(() => activePill.evaluate(element => getComputedStyle(element).transform))
+        .toBe("matrix(1, 0, 0, 1, 0, 0)");
 
       await waitForProbe(page);
 
       expect(edgeContrast).toBeGreaterThan(36);
-      expect(pillFrames.some(frame => frame.transform !== "matrix(1, 0, 0, 1, 0, 0)")).toBe(true);
+      expect(pillFrames.some(frame => frame.activeNav === "home")).toBe(true);
+      expect(new Set(pillFrames.map(frame => frame.transform)).size).toBeGreaterThan(1);
       expect(pillFrames.some(frame => frame.running)).toBe(true);
       expectRuntimeClean(errors);
       await attachFailureDiagnostics(testInfo, await readProbe(page), errors);
