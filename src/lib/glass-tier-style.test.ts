@@ -6,7 +6,7 @@ const dropdownUrl = new URL("../components/ui/dropdown-menu.tsx", import.meta.ur
 const homeUrl = new URL("../app/page.tsx", import.meta.url);
 const projectsUrl = new URL("../app/projects/page.tsx", import.meta.url);
 const detailUrl = new URL("../app/project/[slug]/page.tsx", import.meta.url);
-const cardUrl = new URL("../components/Card.tsx", import.meta.url);
+const cardUrl = new URL("../components/ProjectCard.tsx", import.meta.url);
 const hotkeysUrl = new URL("../components/Hotkeys.tsx", import.meta.url);
 
 function getRuleBody(css: string, selector: string) {

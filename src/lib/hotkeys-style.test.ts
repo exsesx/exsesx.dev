@@ -32,7 +32,7 @@ describe("hotkey loading and motion contracts", () => {
     expect(source).not.toMatch(/continuationKeys\.map|available next keys/);
     expect(source).toMatch(/>\s*Shortcuts\s*</);
     expect(source).toMatch(/>\s*Pending…\s*</);
-    expect(source).toMatch(/<h2[^>]*>Keyboard shortcuts<\/h2>/);
+    expect(source).toMatch(/<DialogTitle[^>]*>[\s\S]*?Keyboard shortcuts\s*<\/DialogTitle>/);
     expect(source).toMatch(/aria-live="polite"/);
     expect(source).toMatch(/awaiting next shortcut key/);
   });
@@ -44,12 +44,15 @@ describe("hotkey loading and motion contracts", () => {
 
     expect(combined).not.toMatch(/hotkeys-trigger-dots|hotkeys-wait-dots|hotkeys-wait-(?:ring|dot)/);
     expect(css).not.toMatch(/\.hotkeys-panel\s*>\s*\*/);
-    expect(getRuleBody(css, ".hotkeys-modal-backdrop")).not.toMatch(/animation:/);
+    expect(getRuleBody(css, ".dialog-backdrop")).not.toMatch(/animation:/);
     expect(getRuleBody(css, ".hotkeys-panel")).not.toMatch(/animation:/);
     expect(getRuleBody(css, ".hotkeys-chord-panel")).not.toMatch(/animation:/);
     expect(source).toMatch(/type="button"[\s\S]*?aria-label="Toggle keyboard shortcuts"/);
-    expect(source.match(/aria-label="Close keyboard shortcuts"/g)).toHaveLength(2);
-    expect(source).toMatch(/<section[\s\S]*?aria-label="Keyboard shortcuts"/);
+    expect(source.match(/aria-label="Close keyboard shortcuts"/g)).toHaveLength(1);
+    expect(source).toContain('from "./ui/dialog"');
+    expect(source).toMatch(/<DialogContent[\s\S]*?initialFocus=\{closeButtonRef\}/);
+    expect(source).toMatch(/<DialogClose[\s\S]*?aria-label="Close keyboard shortcuts"/);
+    expect(source).not.toContain("dialog.showModal()");
   });
 
   test("keeps one corner surface mounted while its status crossfades", async () => {
@@ -75,7 +78,7 @@ describe("hotkey loading and motion contracts", () => {
     expect(pointerControl).toContain("transform var(--duration-press) var(--ease-out)");
     expect(pointerControl).toContain("opacity var(--duration-press) var(--ease-out)");
     expect(getRuleBody(css, ".hotkeys-pointer-control:active")).toContain("transform: scale(0.97)");
-    expect(getRuleBody(css, ".hotkeys-modal-backdrop")).not.toMatch(/transition|animation/);
+    expect(getRuleBody(css, ".dialog-backdrop")).not.toMatch(/transition|animation/);
     expect(getRuleBody(css, ".hotkeys-panel")).not.toMatch(/transition|animation/);
   });
 });

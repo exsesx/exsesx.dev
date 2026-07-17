@@ -6,29 +6,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground",
-        outline:
-          "border-border bg-background/65 text-foreground backdrop-blur-xl hover:border-ring/50 hover:bg-muted hover:text-accent dark:hover:text-accent",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary-hover aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         glass:
           "border-border bg-secondary text-secondary-foreground shadow-foreground/5 backdrop-blur-xl hover:border-ring/50 hover:bg-muted hover:text-accent",
-        inverse:
-          "bg-primary-foreground text-primary hover:bg-inverse-hover dark:border-border dark:bg-secondary dark:text-secondary-foreground dark:shadow-foreground/5 dark:backdrop-blur-xl dark:hover:border-ring/50 dark:hover:bg-muted dark:hover:text-accent",
-        ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
-        destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 gap-2 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
-        xs: "h-7 gap-1 rounded-full px-2 text-xs has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-9 gap-1.5 rounded-full px-3 text-[0.8rem] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-12 gap-2 px-5 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
         icon: "size-10",
-        "icon-xs": "size-7 rounded-full [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-9 rounded-full",
-        "icon-lg": "size-12 rounded-full",
       },
     },
     defaultVariants: {

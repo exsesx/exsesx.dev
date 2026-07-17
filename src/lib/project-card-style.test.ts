@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-const cardUrl = new URL("../components/Card.tsx", import.meta.url);
+const cardUrl = new URL("../components/ProjectCard.tsx", import.meta.url);
 const wrapperUrl = new URL("../components/InteractiveCardShell.tsx", import.meta.url);
 const globalsUrl = new URL("../styles/globals.css", import.meta.url);
 

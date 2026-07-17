@@ -10,7 +10,7 @@ import { MOTION_ATTRIBUTES, suppressEntryMotionProps } from "@/lib/motion-contra
 import { attachNavCondense } from "@/lib/nav-condense";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { getPrimaryNavHref } from "@/lib/routes";
-import { cn } from "@/lib/utils";
+import { SITE_PROFILE } from "@/lib/site-profile";
 import { GithubIcon } from "./icons/lucide-github";
 import LogoMark from "./LogoMark";
 import NavBackButton from "./NavBackButton";
@@ -132,8 +132,8 @@ export default function Header() {
 
           <div className="flex items-center justify-end gap-2">
             <a
-              href="https://github.com/exsesx"
-              className={cn(buttonVariants({ variant: "glass", size: "default" }), "hidden md:inline-flex")}
+              href={SITE_PROFILE.links.github}
+              className={`${buttonVariants({ variant: "glass", size: "default" })} hidden md:inline-flex`}
             >
               <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
               GitHub

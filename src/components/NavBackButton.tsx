@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent } from "react";
 import { MOTION_ATTRIBUTES } from "@/lib/motion-contract";
 import { getBackNavigationIntent } from "@/lib/route-intent";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "./ui/button-variants";
+import { Button } from "./ui/button";
 
 type NavBackButtonProps = {
   active: boolean;
@@ -55,16 +54,18 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
   }, [active]);
 
   return (
-    <button
+    <Button
       type="button"
+      variant="glass"
+      size="icon"
       aria-label="Back"
       aria-hidden={active ? undefined : "true"}
       disabled={!active}
       {...{ [MOTION_ATTRIBUTES.activeBackButton]: active ? "true" : "false" }}
-      className={cn(buttonVariants({ variant: "glass", size: "icon" }), "nav-back-button cursor-pointer")}
+      className="nav-back-button cursor-pointer"
       onClick={navigateBack}
     >
       <ArrowLeft strokeWidth={2.4} />
-    </button>
+    </Button>
   );
 }

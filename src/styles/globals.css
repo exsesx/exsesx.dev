@@ -324,6 +324,20 @@ html[data-season="pride"] .logo-mark-pride {
   filter: saturate(1.08) drop-shadow(0 0 0.18rem color-mix(in oklab, var(--accent) 24%, transparent));
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html[data-season="pride"] .logo-mark-pride-stripes {
+    animation: logo-pride-stripes 6.4s linear infinite;
+    transform-box: view-box;
+    transform-origin: 0 0;
+  }
+}
+
+@keyframes logo-pride-stripes {
+  to {
+    transform: translateY(-100%);
+  }
+}
+
 .liquid-glass {
   border: 1px solid color-mix(in oklab, currentColor 10%, transparent);
   background:
@@ -812,6 +826,11 @@ html[data-chrome-sample] .site-header {
 .hotkeys-panel {
   border-color: color-mix(in oklab, var(--foreground) 6%, transparent);
   transform-origin: top center;
+}
+
+.dialog-backdrop {
+  background: color-mix(in oklab, var(--background) 42%, transparent);
+  backdrop-filter: blur(2px);
 }
 
 .hotkeys-pointer-control {
@@ -1394,10 +1413,6 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
     animation-duration: 0s !important;
   }
 
-  html[data-season="pride"] .logo-mark-pride {
-    animation: none;
-  }
-
   .site-nav-glass,
   .site-nav-glass::before,
   .site-nav-brand-copy {
@@ -1481,5 +1496,26 @@ html[data-view-transition-navigated="true"]:not([data-theme-transition="active"]
   .magnetic-icon,
   .interactive-card:hover .magnetic-icon {
     transform: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: #344156;
+    --border: color-mix(in oklab, #0b1423 24%, transparent);
+  }
+
+  .dark {
+    --muted-foreground: #c2cfdf;
+    --border: color-mix(in oklab, #ffffff 26%, transparent);
+  }
+
+  .liquid-glass,
+  .glass-frost,
+  .surface-panel,
+  .dropdown-menu.liquid-glass {
+    border-color: color-mix(in oklab, var(--foreground) 30%, transparent);
+    background: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
+    backdrop-filter: none;
   }
 }

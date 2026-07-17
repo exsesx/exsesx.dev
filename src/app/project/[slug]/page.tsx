@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
 import AutoPauseVideo from "../../../components/AutoPauseVideo";
-import ProjectCard from "../../../components/Card";
+import ProjectCard from "../../../components/ProjectCard";
 import { Badge } from "../../../components/ui/badge";
 import { buttonVariants } from "../../../components/ui/button-variants";
 import { CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "../../../components/ui/card";
@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   });
 }
 
-function ProjectMedia({ project, priority = false }: { project: Project; priority?: boolean }) {
+function ProjectMedia({ project, preload = false }: { project: Project; preload?: boolean }) {
   const media = project.media;
   const projectTransitionType = getProjectTransitionType(project);
 
@@ -80,25 +80,24 @@ function ProjectMedia({ project, priority = false }: { project: Project; priorit
             alt={media.alt}
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
-            priority={priority}
+            preload={preload}
             className="shared-project-media object-cover opacity-95 saturate-[0.94]"
           />
         ) : (
           <AutoPauseVideo
             className="shared-project-media h-full min-h-[18rem] w-full object-cover opacity-95 saturate-[0.94] sm:min-h-[28rem] lg:min-h-[34rem]"
             poster={media.poster}
-            autoPlay
             preload="metadata"
             muted
             loop
             playsInline
-            aria-label={media.label}
+            label={media.label}
           >
             <source src={media.src} type="video/mp4" />
             {media.label}
           </AutoPauseVideo>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
       </div>
     </ViewTransition>
   );
@@ -187,7 +186,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <div className={cn("pointer-events-none absolute inset-x-0 top-0 h-52", accentClasses.topLight)} />
           ) : null}
           <div className="relative h-full">
-            <ProjectMedia project={project} priority />
+            <ProjectMedia project={project} preload />
           </div>
         </aside>
       </section>
@@ -298,7 +297,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
         <div className="grid items-stretch gap-5 md:grid-cols-2">
           {adjacentProjects.map(projectItem => (
-            <ProjectCard key={projectItem.id} project={projectItem} density="compact" enableMediaTransition />
+            <ProjectCard key={projectItem.id} project={projectItem} density="compact" />
           ))}
         </div>
       </section>

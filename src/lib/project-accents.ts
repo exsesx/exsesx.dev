@@ -41,18 +41,6 @@ export const PROJECT_ACCENT_CLASSES: Record<ProjectAccent, ProjectAccentClasses>
       surface: "border-[rgba(56,135,232,0.18)] shadow-[0_0_0_1px_rgba(56,135,232,0.10),0_30px_90px_rgba(7,31,61,0.24)]",
     },
   },
-  cyan: {
-    gradient: "from-cyan-400/45 via-sky-950/20 to-transparent",
-    topLight: "bg-[linear-gradient(180deg,rgba(6,182,212,0.20),rgba(59,130,246,0.05)_48%,rgba(24,24,27,0))]",
-    card: {
-      surface:
-        "border-cyan-200/15 shadow-[0_0_0_1px_rgba(165,243,252,0.07),0_28px_80px_rgba(14,165,233,0.08)] hover:border-cyan-200/25",
-      mediaShadow: "shadow-[0_0_0_1px_rgba(165,243,252,0.13),0_0_34px_rgba(14,165,233,0.11)]",
-    },
-    detailHero: {
-      surface: "border-cyan-200/15 shadow-[0_0_0_1px_rgba(165,243,252,0.07),0_30px_90px_rgba(14,165,233,0.08)]",
-    },
-  },
   mint: {
     gradient: "from-[rgba(58,128,224,0.5)] via-[rgba(12,46,96,0.22)] to-transparent",
     topLight: "bg-[linear-gradient(180deg,rgba(58,128,224,0.22),rgba(12,46,96,0.05)_48%,rgba(24,24,27,0))]",
@@ -63,17 +51,6 @@ export const PROJECT_ACCENT_CLASSES: Record<ProjectAccent, ProjectAccentClasses>
     },
     detailHero: {
       surface: "border-[rgba(58,128,224,0.18)] shadow-[0_0_0_1px_rgba(58,128,224,0.10),0_30px_90px_rgba(9,30,57,0.24)]",
-    },
-  },
-  neutral: {
-    gradient: "from-slate-950/90 via-slate-950/45 to-transparent",
-    topLight: "",
-    card: {
-      surface: "",
-      mediaShadow: "",
-    },
-    detailHero: {
-      surface: "",
     },
   },
   quicklizard: {

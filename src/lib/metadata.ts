@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { SITE_PROFILE } from "./site-profile";
 
-export const siteUrl = "https://exsesx.dev";
-export const siteName = "exsesx.dev";
+export const siteUrl = SITE_PROFILE.url;
+export const siteName = SITE_PROFILE.domain;
 
 const socialPreviewPath = "/images/social-preview.png";
 // Bump to force social platforms (Telegram, X, LinkedIn, Slack) to re-scrape
 // cached previews — they cache og:image by URL.
-const socialImageVersion = "3";
+const socialImageVersion = "4";
 const previewDeploymentUrl = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
 const socialImageOrigin =
   process.env.VERCEL_ENV === "preview" && previewDeploymentUrl ? `https://${previewDeploymentUrl}` : siteUrl;

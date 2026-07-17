@@ -5,11 +5,6 @@ export interface HotkeyShortcut<TAction extends string = string> {
   action: TAction;
 }
 
-export type HotkeyPressResult<TAction extends string = string> =
-  | { state: "idle" }
-  | { state: "pending" }
-  | { state: "matched"; action: TAction };
-
 export interface HotkeyInputCapabilities {
   hasHover: boolean;
   hasCoarsePointer: boolean;
@@ -158,38 +153,6 @@ export function getHotkeyDecision<TAction extends string>({
 
 export function getHotkeySequenceKey(action: string, key: string, index: number) {
   return `${action}-${index}-${key}`;
-}
-
-export function createHotkeySequencer<TAction extends string>(shortcuts: readonly HotkeyShortcut<TAction>[]) {
-  let buffer: string[] = [];
-
-  function reset(): HotkeyPressResult<TAction> {
-    buffer = [];
-    return { state: "idle" };
-  }
-
-  return {
-    press(key: string): HotkeyPressResult<TAction> {
-      buffer = [...buffer, key];
-
-      const match = shortcuts.find(shortcut => isSameSequence(shortcut.sequence, buffer));
-
-      if (match) {
-        buffer = [];
-        return { state: "matched", action: match.action };
-      }
-
-      const hasPotentialMatch = shortcuts.some(shortcut => isSequencePrefix(shortcut.sequence, buffer));
-
-      if (hasPotentialMatch) {
-        return { state: "pending" };
-      }
-
-      return reset();
-    },
-
-    reset,
-  };
 }
 
 function keepState<TAction extends string>(state: HotkeyState<TAction>): HotkeyDecision<TAction> {
