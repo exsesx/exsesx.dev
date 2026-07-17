@@ -1,7 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { type ReactNode, ViewTransition } from "react";
+import { ViewTransition } from "react";
 import {
   getProjectRouteTransitionTypes,
   ROUTE_TRANSITION_TYPES,
@@ -10,73 +10,27 @@ import {
 import { getProjectAccentClasses } from "@/lib/project-accents";
 import { getProjectPath, getProjectTransitionType, type Project } from "@/lib/projects";
 import { cn } from "@/lib/utils";
-import AutoPauseVideo from "./AutoPauseVideo";
 import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button-variants";
 import { CardAction, CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "./ui/card";
 
-interface Props {
+interface ProjectCardProps {
   project: Project;
-  featured?: boolean;
   density?: "default" | "compact";
-  enableMediaTransition?: boolean;
-  mediaLoading?: "eager" | "lazy";
-  mediaPlayback?: "poster" | "autoplay";
-  mediaPriority?: boolean;
+  preloadMedia?: boolean;
 }
 
-function ProjectMediaFrame({
-  children,
-  enableMediaTransition,
-  projectId,
-  transitionType,
-}: {
-  children: ReactNode;
-  enableMediaTransition: boolean;
-  projectId: string;
-  transitionType: string;
-}) {
-  if (!enableMediaTransition) {
-    return children;
-  }
-
-  return (
-    <ViewTransition
-      name={`project-media-${projectId}`}
-      share={{
-        [transitionType]: ROUTE_TRANSITION_TYPES.morph,
-        default: "none",
-      }}
-      default="none"
-    >
-      {children}
-    </ViewTransition>
-  );
-}
-
-export default function ProjectCard({
-  project,
-  featured = false,
-  density = "default",
-  enableMediaTransition = false,
-  mediaLoading,
-  mediaPlayback = "poster",
-  mediaPriority = false,
-}: Props) {
+export default function ProjectCard({ project, density = "default", preloadMedia = false }: ProjectCardProps) {
   const media = project.media;
   const accentClasses = getProjectAccentClasses(project.accent);
   const isCompact = density === "compact";
   const projectPath = getProjectPath(project);
   const projectTransitionType = getProjectTransitionType(project);
   const visibleTags = isCompact ? project.tags.slice(0, 3) : project.tags;
-  const mediaMinHeight = isCompact ? 144 : featured ? 288 : 220;
-  const imageLoading = mediaLoading ?? (featured ? "eager" : "lazy");
-  const shouldRenderVideo = media.type === "video" && mediaPlayback === "autoplay";
+  const mediaMinHeight = isCompact ? 144 : 220;
   const mediaSizes = isCompact
     ? "(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-    : featured
-      ? "(min-width: 1024px) 48vw, 100vw"
-      : "(min-width: 1024px) 33vw, 100vw";
+    : "(min-width: 1024px) 33vw, 100vw";
 
   return (
     <UiCard
@@ -84,7 +38,6 @@ export default function ProjectCard({
         "interactive-card group relative isolate overflow-hidden border-border bg-card/85 py-0 shadow-project-card hover:border-ring/30",
         accentClasses.card.surface,
         isCompact ? "h-full rounded-[1.25rem]" : "h-full rounded-[1.75rem]",
-        featured && !isCompact ? "lg:grid lg:grid-cols-[1.05fr_0.95fr]" : "",
       )}
     >
       <div
@@ -94,10 +47,7 @@ export default function ProjectCard({
         <div className={cn("pointer-events-none absolute inset-x-0 top-0 -z-10 h-44", accentClasses.topLight)} />
       ) : null}
       <div
-        className={cn(
-          "relative overflow-hidden bg-slate-950",
-          isCompact ? "h-36 sm:h-40" : featured ? "h-64 sm:h-72 lg:h-auto lg:min-h-72" : "h-52 sm:h-56",
-        )}
+        className={cn("relative overflow-hidden bg-slate-950", isCompact ? "h-36 sm:h-40" : "h-52 sm:h-56")}
         style={{
           minHeight: mediaMinHeight,
           ...(media.type === "image" && media.backgroundColor ? { backgroundColor: media.backgroundColor } : {}),
@@ -111,10 +61,13 @@ export default function ProjectCard({
           aria-label={`View ${project.name} project details`}
           className="absolute inset-0 z-10"
         />
-        <ProjectMediaFrame
-          enableMediaTransition={enableMediaTransition}
-          projectId={project.id}
-          transitionType={projectTransitionType}
+        <ViewTransition
+          name={`project-media-${project.id}`}
+          share={{
+            [projectTransitionType]: ROUTE_TRANSITION_TYPES.morph,
+            default: "none",
+          }}
+          default="none"
         >
           <div
             className={cn(
@@ -124,34 +77,17 @@ export default function ProjectCard({
             )}
             style={media.type === "image" && media.backgroundColor ? { backgroundColor: media.backgroundColor } : {}}
           >
-            {media.type === "image" || !shouldRenderVideo ? (
-              <Image
-                src={media.type === "image" ? media.src : media.poster}
-                alt={media.type === "image" ? media.alt : media.label}
-                fill
-                sizes={mediaSizes}
-                priority={mediaPriority}
-                loading={mediaPriority ? undefined : imageLoading}
-                className="shared-project-media object-cover opacity-95 saturate-[0.94]"
-              />
-            ) : (
-              <AutoPauseVideo
-                className="shared-project-media h-full w-full object-cover opacity-95 saturate-[0.94]"
-                poster={media.poster}
-                autoPlay
-                preload="metadata"
-                muted
-                loop
-                playsInline
-                aria-label={media.label}
-              >
-                <source src={media.src} type="video/mp4" />
-                {media.label}
-              </AutoPauseVideo>
-            )}
+            <Image
+              src={media.type === "image" ? media.src : media.poster}
+              alt={media.type === "image" ? media.alt : media.label}
+              fill
+              sizes={mediaSizes}
+              preload={preloadMedia}
+              className="shared-project-media object-cover opacity-95 saturate-[0.94]"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
           </div>
-        </ProjectMediaFrame>
+        </ViewTransition>
         <div
           className={cn(
             "absolute glass-frost project-period-badge rounded-full border border-white/15 text-xs font-bold uppercase tracking-[0.18em] text-white",

@@ -19,7 +19,7 @@ export interface Project {
     outcome: string;
     scope: string[];
   };
-  accent: "amber" | "controlup" | "cyan" | "mint" | "neutral" | "quicklizard" | "rose" | "steel" | "violet";
+  accent: "amber" | "controlup" | "mint" | "quicklizard" | "rose" | "steel" | "violet";
   media:
     | {
         type: "image";

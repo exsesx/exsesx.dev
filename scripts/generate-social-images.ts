@@ -2,6 +2,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { type Project, projects } from "../src/lib/projects";
+import { PROFILE_SNAPSHOT_STATS } from "../src/lib/site-profile";
 
 const width = 1200;
 const height = 630;
@@ -19,16 +20,12 @@ const colors = {
   muted: "#51607a",
   ultramarine: "#2440ff",
   ultramarineBright: "#3d5afe",
-  ice: "#5ce1ff",
-  white: "#ffffff",
 };
 
 const accentColors: Record<Project["accent"], { main: string; soft: string; text: string }> = {
   amber: { main: "#845cf6", soft: "#f4d06f", text: "#3b1d82" },
   controlup: { main: "#3887e8", soft: "#fbb03b", text: "#0f3d78" },
-  cyan: { main: "#0e7490", soft: "#67e8f9", text: "#155e75" },
   mint: { main: "#3a80e0", soft: "#94f5d0", text: "#115e59" },
-  neutral: { main: "#52525b", soft: "#d4d4d8", text: "#27272a" },
   quicklizard: { main: "#40a8c4", soft: "#ff8c28", text: "#155e75" },
   rose: { main: "#e85068", soft: "#eb7846", text: "#881337" },
   steel: { main: "#6096c4", soft: "#cbd5e1", text: "#334155" },
@@ -303,12 +300,7 @@ function pulseTrace(
 }
 
 function homeStatsPanel(x: number, y: number, w: number, h: number) {
-  const stats: Array<[string, string]> = [
-    ["9+", "years building web products"],
-    ["17+", "projects led as lead engineer"],
-    ["AI", "assistant systems, MCP, LLM"],
-    ["Full-stack", "React, Next, Node, Go, cloud"],
-  ];
+  const stats = PROFILE_SNAPSHOT_STATS.map(({ value, socialLabel }) => [value, socialLabel] as const);
   const gap = 22;
   const colW = (w - 56 - gap) / 2;
   const rowY = y + 144;
