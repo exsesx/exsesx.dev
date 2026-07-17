@@ -11,6 +11,8 @@ export const THEME_CHROME_COLORS = {
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
+let volatileThemeMode: ThemeMode | null = null;
+
 export function isThemeMode(value: unknown): value is ThemeMode {
   return value === "light" || value === "dark" || value === "system";
 }
@@ -20,7 +22,13 @@ function getStoredThemeMode(): ThemeMode {
     return "system";
   }
 
-  const storedValue = window.localStorage.getItem(THEME_STORAGE_KEY);
+  let storedValue: string | null;
+
+  try {
+    storedValue = window.localStorage.getItem(THEME_STORAGE_KEY);
+  } catch {
+    return volatileThemeMode ?? "system";
+  }
 
   if (storedValue === null) {
     return "system";
@@ -79,7 +87,14 @@ export function subscribeToTheme(callback: () => void) {
 }
 
 export function persistThemeMode(mode: ThemeMode) {
-  window.localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(mode));
+  volatileThemeMode = mode;
+
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(mode));
+  } catch {
+    // Restricted storage should not make the global theme control unusable.
+  }
+
   // The no-flash script listens for this and repaints the Safari chrome inline,
   // which the WebKit live observer picks up in real time — no refresh needed.
   window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
