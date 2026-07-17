@@ -19,7 +19,13 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Format & lint
         run: bun run check
+      - name: Typecheck
+        run: bun run typecheck
       - name: Tests
         run: bun run test
       - name: Build
         run: bun run build
+      - name: Install browser
+        run: bunx playwright install --with-deps chromium
+      - name: Browser tests
+        run: bun run test:e2e

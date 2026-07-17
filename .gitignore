@@ -9,6 +9,7 @@
 # next.js
 /.next/
 /out/
+/next-env.d.ts
 tsconfig.tsbuildinfo
 
 # production
@@ -49,6 +50,5 @@ yarn-error.log*
 # graphify
 /graphify-out/
 
-# claude: ignore everything local, track only the skills symlink
+# claude local state
 /.claude/*
-!/.claude/skills
