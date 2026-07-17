@@ -1,6 +1,7 @@
+import { SITE_PROFILE } from "@/lib/site-profile";
+
 const DEFAULT_RXRESUME_BASE_URL = "https://rxresu.me";
 const DEFAULT_RESUME_ID = "019befbe-521d-71d8-ad3b-f1610eda247a";
-const PDF_FILENAME = "Oleh Vanin CV.pdf";
 const MAX_RESUME_PDF_BYTES = 10 * 1024 * 1024;
 const RESUME_PDF_FETCH_TIMEOUT_MS = 10_000;
 const RESUME_PDF_BROWSER_CACHE_SECONDS = 60 * 60;
@@ -63,6 +64,7 @@ async function readPdfBody(upstreamResponse: Response) {
     const byteLength = Number.parseInt(declaredLength, 10);
 
     if (Number.isFinite(byteLength) && byteLength > MAX_RESUME_PDF_BYTES) {
+      await cancelUpstreamBody(upstreamResponse);
       throw new Error("RXResume PDF is too large");
     }
   }
@@ -117,6 +119,10 @@ async function readPdfBody(upstreamResponse: Response) {
   return pdf.buffer;
 }
 
+async function cancelUpstreamBody(upstreamResponse: Response) {
+  await upstreamResponse.body?.cancel().catch(() => {});
+}
+
 export async function GET(request: Request) {
   const apiKey = process.env.RXRESUME_API_KEY;
 
@@ -152,6 +158,7 @@ export async function GET(request: Request) {
   }
 
   if (!upstreamResponse.ok) {
+    await cancelUpstreamBody(upstreamResponse);
     return createUpstreamErrorResponse();
   }
 
@@ -175,7 +182,7 @@ export async function GET(request: Request) {
       "Cache-Control": RESUME_PDF_CACHE_CONTROL,
       "Content-Type": "application/pdf",
       "Content-Length": String(pdf.byteLength),
-      "Content-Disposition": `${shouldDownload ? "attachment" : "inline"}; filename="${PDF_FILENAME}"`,
+      "Content-Disposition": `${shouldDownload ? "attachment" : "inline"}; filename="${SITE_PROFILE.resume.filename}"`,
     },
   });
 }

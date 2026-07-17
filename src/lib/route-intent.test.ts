@@ -172,4 +172,31 @@ describe("route intent", () => {
     });
     expect(runtime.dataset[MOTION_DATASET_KEYS.viewTransitionNavigated]).toBe("true");
   });
+
+  test("falls back cleanly when session storage is unavailable", () => {
+    const runtime = installRouteRuntime();
+
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      value: {
+        getItem() {
+          throw new DOMException("Blocked", "SecurityError");
+        },
+        setItem() {
+          throw new DOMException("Blocked", "SecurityError");
+        },
+        removeItem() {
+          throw new DOMException("Blocked", "SecurityError");
+        },
+      },
+    });
+
+    expect(() => captureAnchorRouteIntent(routeAnchor(true))).not.toThrow();
+    expect(getBackNavigationIntent()).toEqual({
+      href: "/projects",
+      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack, "project-transition-project-quicklizard"],
+    });
+    expect(consumeQueuedScrollRestore("/projects")).toBeNull();
+    expect(runtime.dataset[MOTION_DATASET_KEYS.viewTransitionNavigated]).toBe("true");
+  });
 });
