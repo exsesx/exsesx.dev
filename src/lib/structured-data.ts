@@ -1,5 +1,6 @@
 import { defaultSocialImage, siteName, siteUrl } from "./metadata";
 import { getProjectPath, projects, specialties } from "./projects";
+import { SITE_PROFILE } from "./site-profile";
 
 type JsonObject = Record<string, unknown>;
 
@@ -23,28 +24,27 @@ export function buildHomeStructuredData() {
         "@id": `${siteUrl}/#profile`,
         url: siteUrl,
         name: "Oleh Vanin - Software Engineer",
-        description:
-          "Oleh Vanin is a Ukrainian Senior Full Stack Engineer / AI Engineer based in Poland, building practical AI systems, full-stack products, MCP servers, LLM workflows, and developer tools.",
+        description: SITE_PROFILE.description,
         isPartOf: { "@id": websiteId },
         mainEntity: { "@id": personId },
       },
       {
         "@type": "Person",
         "@id": personId,
-        name: "Oleh Vanin",
+        name: SITE_PROFILE.name,
         url: siteUrl,
         image: absoluteUrl("/images/me/oleh_portrait.jpg"),
-        jobTitle: "Senior Full Stack Engineer / AI Engineer",
+        jobTitle: SITE_PROFILE.role,
         nationality: {
           "@type": "Country",
-          name: "Ukraine",
+          name: SITE_PROFILE.nationality,
         },
         homeLocation: {
           "@type": "Country",
-          name: "Poland",
+          name: SITE_PROFILE.location,
         },
         knowsAbout: specialties,
-        sameAs: ["https://github.com/exsesx", "https://www.linkedin.com/in/exsesx/"],
+        sameAs: [SITE_PROFILE.links.github, SITE_PROFILE.links.linkedin],
       },
       {
         "@type": "WebSite",

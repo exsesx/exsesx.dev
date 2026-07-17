@@ -1,6 +1,6 @@
 import { Layers3 } from "lucide-react";
 import type { Metadata } from "next";
-import Card from "../../components/Card";
+import ProjectCard from "../../components/ProjectCard";
 import { CardContent, Card as UiCard } from "../../components/ui/card";
 import { createPageMetadata, projectsSocialImage } from "../../lib/metadata";
 import { projects } from "../../lib/projects";
@@ -51,15 +51,7 @@ export default function Projects() {
 
         <section className="mt-8 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
           {projects.map((project, index) => (
-            <div key={project.id} className="h-full">
-              <Card
-                project={project}
-                density="compact"
-                enableMediaTransition
-                mediaLoading={index === 0 ? "eager" : "lazy"}
-                mediaPriority={index === 0}
-              />
-            </div>
+            <ProjectCard key={project.id} project={project} density="compact" preloadMedia={index === 0} />
           ))}
         </section>
       </main>

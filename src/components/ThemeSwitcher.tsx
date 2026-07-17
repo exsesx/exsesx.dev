@@ -235,7 +235,7 @@ export default function ThemeSwitcher() {
         <ActiveIcon strokeWidth={2.2} />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" aria-label="Choose color theme" className="w-44">
+      <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuRadioGroup
           value={mode}
           onValueChange={value => {

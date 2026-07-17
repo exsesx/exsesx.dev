@@ -1,5 +1,6 @@
 import { siteUrl } from "@/lib/metadata";
 import { getProjectPath, projects, specialties } from "@/lib/projects";
+import { SITE_PROFILE } from "@/lib/site-profile";
 
 export const dynamic = "force-static";
 
@@ -26,9 +27,9 @@ export function GET() {
     "",
     "## Contact",
     "",
-    "- [GitHub](https://github.com/exsesx)",
-    "- [LinkedIn](https://www.linkedin.com/in/exsesx/)",
-    "- [Book a call](https://cal.com/exsesx/meet): Cal.com scheduling link",
+    `- [GitHub](${SITE_PROFILE.links.github})`,
+    `- [LinkedIn](${SITE_PROFILE.links.linkedin})`,
+    `- [Book a call](${SITE_PROFILE.links.booking}): Cal.com scheduling link`,
     "",
   ].join("\n");
 

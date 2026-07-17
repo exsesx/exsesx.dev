@@ -6,18 +6,15 @@ import KineticBackdrop from "../components/KineticBackdrop";
 import LiquidGlassLens from "../components/LiquidGlassLens";
 import RouteMotionGuard from "../components/RouteMotionGuard";
 import VersionTag from "../components/VersionTag";
-import WebVitals from "../components/WebVitals";
 import { defaultSocialImage, siteName, siteUrl } from "../lib/metadata";
 import { createNoFlashScript } from "../lib/no-flash-script";
+import { SITE_PROFILE } from "../lib/site-profile";
 import { THEME_CHROME_COLORS } from "../lib/theme";
 // MonoLisa webfonts: official per-unicode-range subsets (variable weight 1–900,
 // normal + italic) so the browser only fetches the glyph ranges a page actually
 // renders. Family names "MonoLisaText" / "MonoLisaCode" are used in globals.css.
 import "../styles/monolisa.css";
 import "../styles/globals.css";
-
-const siteDescription =
-  "Oleh Vanin is a senior full-stack engineer and AI engineer building scalable product systems with React, Next.js, Node.js, Go, cloud infrastructure, and LLM workflows.";
 
 const faviconVersion = "v=4";
 const faviconAsset = (path: string) => `${path}?${faviconVersion}`;
@@ -29,10 +26,10 @@ const umamiWebsiteId = "75a63c31-71fb-4712-9345-9b2e5a93445c";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Oleh Vanin - Senior Full Stack Engineer / AI Engineer",
-    template: "%s | Oleh Vanin",
+    default: `${SITE_PROFILE.name} - ${SITE_PROFILE.role}`,
+    template: `%s | ${SITE_PROFILE.name}`,
   },
-  description: siteDescription,
+  description: SITE_PROFILE.description,
   keywords: [
     "Oleh Vanin",
     "Senior Full Stack Engineer",
@@ -44,7 +41,7 @@ export const metadata: Metadata = {
     "MCP",
     "LLM",
   ],
-  authors: [{ name: "Oleh Vanin" }],
+  authors: [{ name: SITE_PROFILE.name }],
   alternates: {
     canonical: siteUrl,
   },
@@ -127,7 +124,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <KineticBackdrop />
           <Header />
           <HotkeysLoader />
-          <WebVitals />
           {children}
           <VersionTag />
         </div>

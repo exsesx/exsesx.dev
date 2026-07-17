@@ -2,10 +2,10 @@ import { Activity, ArrowRight, BrainCircuit, BriefcaseBusiness, Send, Sparkles, 
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import ProjectCard from "../components/Card";
 import CvMenu from "../components/CvMenu";
 import { GithubIcon } from "../components/icons/lucide-github";
 import { LinkedinIcon } from "../components/icons/lucide-linkedin";
+import ProjectCard from "../components/ProjectCard";
 import PulseTrace from "../components/PulseTrace";
 import SnapshotSpecialtyRail from "../components/SnapshotSpecialtyRail";
 import { buttonVariants } from "../components/ui/button-variants";
@@ -14,21 +14,14 @@ import { Separator } from "../components/ui/separator";
 import { createPageMetadata } from "../lib/metadata";
 import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "../lib/motion-contract";
 import { projects, specialties } from "../lib/projects";
+import { PROFILE_SNAPSHOT_STATS, SITE_PROFILE } from "../lib/site-profile";
 import { buildHomeStructuredData, serializeStructuredData } from "../lib/structured-data";
 import { cn } from "../lib/utils";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Oleh Vanin - Software Engineer",
-  description:
-    "Oleh Vanin is a Ukrainian Senior Full Stack Engineer / AI Engineer based in Poland, building practical AI systems, full-stack products, MCP servers, LLM workflows, and developer tools.",
+  description: SITE_PROFILE.description,
 });
-
-const snapshotStats = [
-  ["9+", "years building web products"],
-  ["17+", "projects supported as lead engineer"],
-  ["AI", "assistant systems, MCP, LLM workflows"],
-  ["Full-stack", "React, Next.js, Node.js, Go, cloud"],
-];
 
 const experienceHighlights = [
   {
@@ -90,7 +83,7 @@ export default function HomePage() {
           <div className="min-w-0 max-w-4xl">
             <div className="motion-rise glass-frost mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground">
               <Sparkles size={15} strokeWidth={2.4} className="text-accent" />
-              Senior Full Stack Engineer / AI Engineer
+              {SITE_PROFILE.role}
             </div>
 
             <h1 className="motion-rise motion-delay-1 max-w-5xl text-balance text-[clamp(3.25rem,8.2vw,8.9rem)] font-black leading-[0.88] tracking-tight text-foreground">
@@ -102,8 +95,7 @@ export default function HomePage() {
             </h1>
 
             <p className="motion-rise motion-delay-2 mt-8 max-w-2xl text-pretty text-xl leading-8 text-muted-foreground sm:text-2xl sm:leading-10">
-              I am Oleh, a Ukrainian engineer based in Poland. I build practical AI systems, full-stack products, MCP
-              servers, LLM workflows, and developer tools with TypeScript, React, Node.js, Go, and cloud infrastructure.
+              {SITE_PROFILE.introduction}
             </p>
 
             <div className="motion-rise motion-delay-3 mt-8 flex flex-wrap gap-3">
@@ -122,7 +114,7 @@ export default function HomePage() {
               </Link>
               <CvMenu />
               <a
-                href="https://www.linkedin.com/in/exsesx/"
+                href={SITE_PROFILE.links.linkedin}
                 className={buttonVariants({ variant: "glass", size: "lg" })}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -131,7 +123,7 @@ export default function HomePage() {
                 LinkedIn
               </a>
               <a
-                href="https://github.com/exsesx"
+                href={SITE_PROFILE.links.github}
                 className={buttonVariants({ variant: "glass", size: "lg" })}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -174,14 +166,14 @@ export default function HomePage() {
                     fill
                     sizes="(max-width: 639px) 64px, 80px"
                     className="object-cover object-[50%_34%]"
-                    priority
+                    preload
                   />
                 </span>
               </CardHeader>
 
               <CardContent className="min-w-0 px-2 pb-2 sm:px-5 sm:pb-5">
                 <div className="mt-5 grid grid-cols-1 gap-2 sm:mt-7 sm:grid-cols-2 sm:gap-3">
-                  {snapshotStats.map(([value, label]) => (
+                  {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => (
                     <UiCard
                       key={label}
                       className="snapshot-stat-card gap-0 rounded-[1.05rem] border-border bg-background/40 p-3.5 py-3.5 shadow-none ring-0 sm:rounded-2xl sm:bg-background/45 sm:p-4 sm:py-4 sm:ring-1"
@@ -197,7 +189,7 @@ export default function HomePage() {
             </UiCard>
 
             <a
-              href="https://cal.com/exsesx/meet"
+              href={SITE_PROFILE.links.booking}
               className={cn(
                 buttonVariants({ variant: "default", size: "lg" }),
                 "mt-3 min-w-0 w-full justify-between rounded-[1.1rem] p-4 sm:mt-4 sm:rounded-[1.45rem] sm:p-5",
@@ -288,10 +280,8 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid items-stretch gap-6 lg:grid-cols-3">
-            {featuredProjects.map((project, index) => (
-              <div key={project.id} className="h-full">
-                <ProjectCard project={project} enableMediaTransition mediaLoading={index === 0 ? "eager" : "lazy"} />
-              </div>
+            {featuredProjects.map(project => (
+              <ProjectCard key={project.id} project={project} />
             ))}
           </div>
         </section>
