@@ -68,6 +68,33 @@ function readCvShareHarness(page: Page) {
 
 if (!("Bun" in globalThis)) {
   test.describe("platform UI contracts", () => {
+    test("header keeps the GitHub action compact on mobile", async ({ page, isMobile }) => {
+      await page.goto("/project/this-is-language");
+
+      const nav = page.locator(".site-nav-glass");
+      const githubLink = nav.getByRole("link", { name: "GitHub" });
+      const githubLabel = githubLink.locator("span");
+
+      await expect(githubLink).toBeVisible();
+
+      const [githubBounds, navBounds] = await Promise.all([githubLink.boundingBox(), nav.boundingBox()]);
+      const viewport = page.viewportSize();
+
+      expect(githubBounds).not.toBeNull();
+      expect(navBounds).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
+
+      if (isMobile) {
+        expect(githubBounds?.width).toBeCloseTo(40, 1);
+        expect(githubBounds?.height).toBeCloseTo(40, 1);
+        await expect(githubLabel).toHaveCSS("position", "absolute");
+      } else {
+        expect(githubBounds?.width).toBeGreaterThan(40);
+        await expect(githubLabel).toHaveCSS("position", "static");
+      }
+    });
+
     test("theme dropdown stays anchored and applies a selected mode", async ({ page }) => {
       await page.addInitScript(() => {
         window.localStorage.setItem("exsesx:color-scheme", JSON.stringify("light"));
