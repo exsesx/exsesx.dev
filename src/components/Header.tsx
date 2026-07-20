@@ -133,10 +133,10 @@ export default function Header() {
           <div className="flex items-center justify-end gap-2">
             <a
               href={SITE_PROFILE.links.github}
-              className={`${buttonVariants({ variant: "glass", size: "default" })} hidden md:inline-flex`}
+              className={`${buttonVariants({ variant: "glass", size: "icon" })} md:w-auto md:gap-2 md:px-4 md:pl-3`}
             >
               <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
-              GitHub
+              <span className="sr-only md:not-sr-only">GitHub</span>
             </a>
             <ThemeSwitcher />
           </div>
