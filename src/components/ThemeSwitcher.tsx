@@ -1,8 +1,7 @@
 "use client";
 
 import { Check, Monitor, Moon, Sun } from "lucide-react";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { MOTION_DATASET_KEYS } from "@/lib/motion-contract";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   getServerThemeSnapshot,
   getThemeSnapshot,
@@ -13,11 +12,6 @@ import {
   THEME_CHROME_COLORS,
   type ThemeMode,
 } from "@/lib/theme";
-import {
-  canUseDesktopViewTransitions,
-  type NativeViewTransitionDocument,
-  startDocumentViewTransition,
-} from "@/lib/view-transitions";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -109,74 +103,8 @@ function paintSafariChromeSamples(isDark: boolean) {
   }
 }
 
-function getThemeTransitionOrigin(element: HTMLElement | null) {
-  const rect = element?.getBoundingClientRect();
-  const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
-  const y = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
-  const radius = Math.ceil(Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))) + 16;
-
-  return { radius, x, y };
-}
-
-function shouldUseThemeViewTransition() {
-  return (
-    typeof document !== "undefined" &&
-    typeof (document as NativeViewTransitionDocument).startViewTransition === "function" &&
-    canUseDesktopViewTransitions() &&
-    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
-function persistThemeModeWithTransition(mode: ThemeMode, originElement: HTMLElement | null) {
-  if (!shouldUseThemeViewTransition()) {
-    persistThemeMode(mode);
-    return;
-  }
-
-  const root = document.documentElement;
-  const { radius, x, y } = getThemeTransitionOrigin(originElement);
-
-  root.style.setProperty("--theme-transition-x", `${x}px`);
-  root.style.setProperty("--theme-transition-y", `${y}px`);
-  root.style.setProperty("--theme-transition-radius", `${radius}px`);
-  root.dataset[MOTION_DATASET_KEYS.themeTransition] = "active";
-
-  const cleanup = () => {
-    delete root.dataset[MOTION_DATASET_KEYS.themeTransition];
-    root.style.removeProperty("--theme-transition-x");
-    root.style.removeProperty("--theme-transition-y");
-    root.style.removeProperty("--theme-transition-radius");
-  };
-  let didPersistThemeMode = false;
-  const persistThemeModeOnce = () => {
-    if (didPersistThemeMode) {
-      return;
-    }
-
-    didPersistThemeMode = true;
-    persistThemeMode(mode);
-  };
-
-  try {
-    const transition = startDocumentViewTransition(document as NativeViewTransitionDocument, persistThemeModeOnce);
-
-    if (!transition) {
-      cleanup();
-      persistThemeModeOnce();
-      return;
-    }
-
-    void transition.finished.then(cleanup, cleanup);
-  } catch {
-    cleanup();
-    persistThemeModeOnce();
-  }
-}
-
 export default function ThemeSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
-  const themeFrameRef = useRef<number | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { mode, resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const isDark = resolvedTheme === "dark";
@@ -190,14 +118,7 @@ export default function ThemeSwitcher() {
       return;
     }
 
-    if (themeFrameRef.current !== null) {
-      window.cancelAnimationFrame(themeFrameRef.current);
-    }
-
-    themeFrameRef.current = window.requestAnimationFrame(() => {
-      themeFrameRef.current = null;
-      persistThemeModeWithTransition(nextMode, triggerRef.current);
-    });
+    persistThemeMode(nextMode);
   }
 
   useEffect(() => {
@@ -210,20 +131,11 @@ export default function ThemeSwitcher() {
     setMetaContent("theme-color", isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light);
   }, [isDark, mode]);
 
-  useEffect(() => {
-    return () => {
-      if (themeFrameRef.current !== null) {
-        window.cancelAnimationFrame(themeFrameRef.current);
-      }
-    };
-  }, []);
-
   return (
     <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
       <DropdownMenuTrigger
         render={
           <Button
-            ref={triggerRef}
             type="button"
             variant="glass"
             size="icon"
@@ -250,22 +162,7 @@ export default function ThemeSwitcher() {
               const isActive = option.mode === mode;
 
               return (
-                <DropdownMenuRadioItem
-                  key={option.mode}
-                  value={option.mode}
-                  className="w-full"
-                  onKeyDown={event => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      selectThemeMode(option.mode);
-                    }
-                  }}
-                  onPointerDown={event => {
-                    if (event.button === 0) {
-                      selectThemeMode(option.mode);
-                    }
-                  }}
-                >
+                <DropdownMenuRadioItem key={option.mode} value={option.mode} className="w-full">
                   <Icon data-icon="inline-start" strokeWidth={2.2} />
                   <span className="min-w-0 flex-1 font-bold leading-none">{option.label}</span>
                   {isActive ? <Check data-icon="inline-end" strokeWidth={2.4} /> : <span aria-hidden="true" />}

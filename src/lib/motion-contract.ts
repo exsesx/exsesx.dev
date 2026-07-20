@@ -4,13 +4,11 @@ export const MOTION_ATTRIBUTES = {
   backTransitionType: "data-back-transition-type",
   condensedHeader: "data-condensed",
   suppressEntryMotion: "data-suppress-entry-motion",
-  themeTransition: "data-theme-transition",
   viewTransitionNavigated: "data-view-transition-navigated",
 } as const;
 
 export const MOTION_DATASET_KEYS = {
   condensedHeader: "condensed",
-  themeTransition: "themeTransition",
   viewTransitionNavigated: "viewTransitionNavigated",
 } as const;
 
