@@ -14,6 +14,7 @@ type CvShareHarness = {
 declare global {
   interface Window {
     __cvShareHarness: CvShareHarness;
+    __themeViewTransitionCalls: number;
   }
 }
 
@@ -98,6 +99,13 @@ if (!("Bun" in globalThis)) {
     test("theme dropdown stays anchored and applies a selected mode", async ({ page }) => {
       await page.addInitScript(() => {
         window.localStorage.setItem("exsesx:color-scheme", JSON.stringify("light"));
+        window.__themeViewTransitionCalls = 0;
+        document.startViewTransition = (options => {
+          window.__themeViewTransitionCalls += 1;
+          const updateCallback = typeof options === "function" ? options : options?.update;
+          void updateCallback?.();
+          return { finished: Promise.resolve() } as ViewTransition;
+        }) as Document["startViewTransition"];
       });
       await page.goto("/");
 
@@ -125,7 +133,41 @@ if (!("Bun" in globalThis)) {
 
       await expect(menu).toBeHidden();
       await expect(page.locator("html")).toHaveClass(/dark/);
+      const darkTrigger = page.getByRole("button", { name: "Theme: Dark" });
+      await expect(darkTrigger).toBeVisible();
+
+      await darkTrigger.click();
+      await page.getByRole("menuitemradio", { name: "Light" }).focus();
+      await page.keyboard.press("Enter");
+
+      await expect(menu).toBeHidden();
+      await expect(page.locator("html")).toHaveClass(/light/);
+      await expect(page.getByRole("button", { name: "Theme: Light" })).toBeVisible();
+      expect(await page.evaluate(() => window.__themeViewTransitionCalls)).toBe(0);
+    });
+
+    test("changing theme mode without changing its resolved color skips the sweep", async ({ page }) => {
+      await page.emulateMedia({ colorScheme: "dark" });
+      await page.addInitScript(() => {
+        window.localStorage.setItem("exsesx:color-scheme", JSON.stringify("system"));
+        window.__themeViewTransitionCalls = 0;
+        document.startViewTransition = (options => {
+          window.__themeViewTransitionCalls += 1;
+          const updateCallback = typeof options === "function" ? options : options?.update;
+          void updateCallback?.();
+          return { finished: Promise.resolve() } as ViewTransition;
+        }) as Document["startViewTransition"];
+      });
+      await page.goto("/");
+
+      await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "system");
+      await expect(page.locator("html")).toHaveClass(/dark/);
+      await page.getByRole("button", { name: "Theme: Device" }).click();
+      await page.getByRole("menuitemradio", { name: "Dark" }).click();
+
       await expect(page.getByRole("button", { name: "Theme: Dark" })).toBeVisible();
+      await expect.poll(() => page.evaluate(() => window.localStorage.getItem("exsesx:color-scheme"))).toBe('"dark"');
+      expect(await page.evaluate(() => window.__themeViewTransitionCalls)).toBe(0);
     });
 
     test("shortcuts use the shared focus-trapping dialog and restore focus", async ({ page, isMobile }) => {

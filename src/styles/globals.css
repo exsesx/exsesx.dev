@@ -65,7 +65,6 @@
   --duration-exit: 90ms;
   --duration-enter: 140ms;
   --duration-move: 280ms;
-  --duration-theme: 420ms;
   /* Liquid glass: the rim is drawn with layered inset shadows (a crisp top
      specular, soft curved corner light, and a bottom counter-shade) so every
      glass surface reads as a curved lens instead of flat frosted plastic. */
@@ -1216,45 +1215,6 @@ html[data-chrome-sample] .site-header {
   }
 }
 
-@keyframes theme-sweep {
-  from {
-    clip-path: circle(0 at var(--theme-transition-x) var(--theme-transition-y));
-  }
-
-  to {
-    clip-path: circle(var(--theme-transition-radius) at var(--theme-transition-x) var(--theme-transition-y));
-  }
-}
-
-/*
- * Theme sweep transition.
- * Gated in JS (canUseDesktopViewTransitions) before document.startViewTransition
- * is ever called, so these rules only need the reduced-motion guard.
- */
-@media (prefers-reduced-motion: no-preference) {
-  html[data-theme-transition="active"] *,
-  html[data-theme-transition="active"] *::before,
-  html[data-theme-transition="active"] *::after {
-    transition-delay: 0s !important;
-    transition-duration: 0s !important;
-    view-transition-name: none !important;
-  }
-
-  html[data-theme-transition="active"]::view-transition-old(root),
-  html[data-theme-transition="active"]::view-transition-new(root) {
-    animation: none;
-    mix-blend-mode: normal;
-  }
-
-  html[data-theme-transition="active"]::view-transition-group(root) {
-    animation-duration: var(--duration-theme);
-  }
-
-  html[data-theme-transition="active"]::view-transition-new(root) {
-    animation: theme-sweep var(--duration-theme) var(--ease-snap) both;
-  }
-}
-
 /* keep the live page clickable while a transition plays */
 ::view-transition {
   pointer-events: none;
@@ -1285,9 +1245,9 @@ html[data-chrome-sample] .site-header {
   z-index: 29;
 }
 
-html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-old(root),
-html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-new(root),
-html[data-view-transition-navigated="true"]:not([data-theme-transition="active"])::view-transition-group(root) {
+html[data-view-transition-navigated="true"]::view-transition-old(root),
+html[data-view-transition-navigated="true"]::view-transition-new(root),
+html[data-view-transition-navigated="true"]::view-transition-group(root) {
   animation: none;
   mix-blend-mode: normal;
 }
