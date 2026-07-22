@@ -496,7 +496,7 @@ function blogIndexSvg() {
   return baseSvg(`
     ${logo(82, 76, 74)}
     <text x="168" y="118" class="brand">Oleh Vanin</text>
-    <text x="168" y="148" class="tiny">exsesx.dev/blog/en</text>
+    <text x="168" y="148" class="tiny">exsesx.dev/blog</text>
     <text x="82" y="244" class="eyebrow">Technical writing</text>
     <text x="82" y="326" class="headline-small">Notes from</text>
     <text x="82" y="394" class="headline-small">the workbench</text>
@@ -535,10 +535,10 @@ function blogArticleSvg(post: BlogPostSummary) {
     minSize: 20,
     measureScale: 1.05,
   });
-  const titleY = 248;
+  const titleY = 260;
   const titleLineHeight = title.fontSize * 1.08;
   const descriptionY = titleY + title.lines.length * titleLineHeight + 38;
-  const metadataY = 454;
+  const metadataY = 472;
   const publishedLabel = new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "short",
@@ -550,16 +550,17 @@ function blogArticleSvg(post: BlogPostSummary) {
 
   return baseSvg(`
     <rect x="54" y="50" width="1092" height="530" rx="46" fill="${colors.night}"/>
-    <rect x="78" y="74" width="1044" height="482" rx="38" fill="${colors.frost}" opacity="0.98"/>
-    <circle cx="1040" cy="88" r="220" fill="${colors.ultramarineBright}" opacity="0.13"/>
-    ${logo(108, 102, 66)}
-    <text x="188" y="142" class="brand">Oleh Vanin</text>
-    <text x="188" y="172" class="tiny">exsesx.dev/blog/${escapeXml(post.locale)}/${escapeXml(post.slug)}</text>
-    <text x="1040" y="142" text-anchor="end" class="eyebrow">${escapeXml(post.locale.toUpperCase())} • BLOG</text>
+    <circle cx="1020" cy="90" r="240" fill="${colors.ultramarineBright}" opacity="0.18"/>
+    <circle cx="760" cy="560" r="260" fill="${colors.ultramarine}" opacity="0.08"/>
+    <rect x="84" y="80" width="1032" height="470" rx="36" fill="${colors.frost}" opacity="0.98"/>
+    ${logo(112, 112, 68, colors.ink)}
+    <text x="194" y="154" class="brand">Oleh Vanin</text>
+    <text x="194" y="184" class="tiny">exsesx.dev/blog/${escapeXml(post.locale)}/${escapeXml(post.slug)}</text>
+    <text x="1084" y="154" text-anchor="end" class="eyebrow">${escapeXml(post.locale.toUpperCase())} • BLOG</text>
     ${title.lines
       .map(
         (line, index) =>
-          `<text x="108" y="${titleY + index * titleLineHeight}" class="project-title" style="font-size:${title.fontSize}px">${escapeXml(line)}</text>`,
+          `<text x="112" y="${titleY + index * titleLineHeight}" class="project-title" style="font-size:${title.fontSize}px">${escapeXml(line)}</text>`,
       )
       .join("")}
     ${description.lines
@@ -586,7 +587,7 @@ function blogArticleSvg(post: BlogPostSummary) {
         })
         .join("");
     })()}
-    <text x="1040" y="480" text-anchor="end" class="tiny">${escapeXml(publishedLabel)}</text>
+    <text x="1084" y="498" text-anchor="end" class="tiny">${escapeXml(publishedLabel)}</text>
   `);
 }
 
