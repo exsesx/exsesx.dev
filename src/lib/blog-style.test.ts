@@ -143,8 +143,27 @@ describe("Blog production styles", () => {
       /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\.blog-read-link:hover svg[\s\S]*?\.blog-back-link:hover svg/,
     );
     expect(css).toMatch(
-      /@media \(prefers-reduced-transparency: reduce\) \{[\s\S]*?\.blog-toc-mobile\s*\{[\s\S]*?backdrop-filter:\s*none/,
+      /@media \(prefers-reduced-transparency: reduce\) \{[\s\S]*?\.blog-toc-mobile-trigger,[\s\S]*?\.blog-toc-drawer,[\s\S]*?backdrop-filter:\s*none/,
     );
+    expect(css).toMatch(/\.blog-toc-mobile-shell::after\s*\{[^}]*display:\s*none/s);
+  });
+
+  test("keeps the mobile table of contents compact and confines overflow to the modal drawer", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const drawerScrollRule = css.match(/\.blog-toc-drawer-scroll\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const fadeRule = css.match(/\.blog-toc-mobile-shell::after\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(triggerRule).toContain("width: 100%");
+    expect(triggerRule).toContain("min-height: 3rem");
+    expect(drawerRule).toContain("max-height: 72dvh");
+    expect(drawerRule).toContain("margin-inline: auto");
+    expect(drawerScrollRule).toContain("overflow-y: auto");
+    expect(drawerScrollRule).toContain("overscroll-behavior: contain");
+    expect(fadeRule).toContain("height: 1.25rem");
+    expect(fadeRule).toContain("pointer-events: none");
+    expect(css).not.toContain(".blog-toc-mobile nav");
   });
 
   test("updates continuous reading progress without a React render per frame", async () => {
@@ -233,7 +252,7 @@ describe("Blog production styles", () => {
       /:is\([\s\S]*?\[data-blog-passive-hidden="true"\][\s\S]*?\[data-blog-focus="true"\][\s\S]*?\)\s*\.blog-toc-desktop\s*\{[^}]*safe-area-inset-top/s,
     );
     expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.blog-toc-mobile-shell,[\s\S]*?\.blog-toc-desktop\s*\{\s*transition:\s*none/s,
+      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.blog-toc-mobile-shell,[\s\S]*?\.blog-toc-desktop,[\s\S]*?\[data-slot="drawer-popup"\][\s\S]*?\{\s*transition:\s*none/s,
     );
     expect(css).toMatch(
       /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.site-nav-glass,[\s\S]*?\.site-header-nav-frame,[\s\S]*?\.nav-back-button\s*\{\s*transition:\s*none/s,

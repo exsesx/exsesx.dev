@@ -157,6 +157,7 @@ html.dark {
 }
 
 body {
+  position: relative;
   margin: 0;
   min-height: 100vh;
   min-height: 100svh;
@@ -1924,10 +1925,29 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-toc-mobile-shell {
+  --blog-toc-visible-top: 5.5rem;
   position: sticky;
-  top: 5.5rem;
+  top: var(--blog-toc-visible-top);
   z-index: 40;
+  isolation: isolate;
   transition: top 180ms var(--ease-out);
+}
+
+.blog-toc-mobile-shell::after {
+  position: absolute;
+  right: 0;
+  bottom: -1.25rem;
+  left: 0;
+  z-index: 0;
+  height: 1.25rem;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--background) 72%, transparent),
+    color-mix(in oklab, var(--background) 20%, transparent) 62%,
+    transparent
+  );
+  content: "";
+  pointer-events: none;
 }
 
 .blog-toc-desktop {
@@ -1963,7 +1983,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-toc-desktop > p,
-.blog-toc-mobile > summary > :first-child {
+.blog-toc-mobile-kicker {
   color: var(--muted-foreground);
   font-size: 0.75rem;
   font-weight: 850;
@@ -2056,43 +2076,46 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   opacity: 1;
 }
 
-.blog-toc-mobile {
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  background: color-mix(in oklab, var(--background) 86%, transparent);
-  box-shadow: 0 12px 32px color-mix(in oklab, var(--foreground) 7%, transparent);
-  backdrop-filter: blur(14px) saturate(1.2);
-}
-
-.blog-toc-mobile > summary {
+.blog-toc-mobile-trigger {
+  position: relative;
+  z-index: 1;
   display: grid;
-  min-height: 2.75rem;
+  width: 100%;
+  min-height: 3rem;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.55rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  appearance: none;
+  background: color-mix(in oklab, var(--background) 86%, transparent);
+  box-shadow: 0 12px 32px color-mix(in oklab, var(--foreground) 7%, transparent);
+  color: var(--foreground);
   cursor: pointer;
-  list-style: none;
+  font: inherit;
+  text-align: left;
   touch-action: manipulation;
+  backdrop-filter: blur(14px) saturate(1.2);
+  transition:
+    border-color var(--duration-press) ease,
+    background-color var(--duration-press) ease,
+    box-shadow var(--duration-press) ease,
+    transform var(--duration-press) ease;
 }
 
-.blog-toc-mobile > summary::-webkit-details-marker {
-  display: none;
+.blog-toc-mobile-trigger:is(:hover, :focus-visible) {
+  border-color: color-mix(in oklab, var(--foreground) 22%, transparent);
+  background: color-mix(in oklab, var(--background) 91%, var(--foreground) 2%);
 }
 
-.blog-toc-mobile > summary::after {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  color: var(--muted-foreground);
-  content: "";
-  transform: translateY(-0.1rem) rotate(45deg);
-  transition: transform var(--duration-press) ease;
+.blog-toc-mobile-trigger:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--ring) 38%, transparent);
+  outline-offset: 2px;
 }
 
-.blog-toc-mobile[open] > summary::after {
-  transform: translateY(0.1rem) rotate(225deg);
+.blog-toc-mobile-trigger:active {
+  transform: scale(0.99);
 }
 
 .blog-toc-current {
@@ -2102,18 +2125,101 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   font-size: 0.75rem;
   font-weight: 750;
   line-height: 1.3;
-  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.blog-toc-mobile nav {
-  max-height: min(55svh, 30rem);
-  overflow-y: auto;
+.blog-toc-current::before {
+  margin-right: 0.55rem;
+  color: var(--muted-foreground);
+  content: "·";
 }
 
-.blog-toc-mobile .blog-toc-list a {
+.blog-toc-mobile-icon {
+  grid-column: 3;
+  color: var(--muted-foreground);
+}
+
+.blog-toc-drawer {
+  --drawer-bleed-background: var(--background);
+  display: flex;
+  width: min(100%, 42rem);
+  max-height: 72dvh;
+  margin-inline: auto;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--foreground) 16%, transparent);
+  border-bottom: 0;
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: color-mix(in oklab, var(--background) 96%, var(--foreground) 2%);
+  box-shadow: 0 -24px 70px color-mix(in oklab, var(--foreground) 18%, transparent);
+  color: var(--foreground);
+}
+
+.blog-toc-drawer-header {
+  display: flex;
+  flex: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 1rem 0.75rem;
+  text-align: left;
+}
+
+.blog-toc-drawer-heading {
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: -0.015em;
+}
+
+.blog-toc-drawer-close {
+  display: inline-grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--duration-press) ease,
+    transform var(--duration-press) ease;
+}
+
+.blog-toc-drawer-close:is(:hover, :focus-visible) {
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.blog-toc-drawer-close:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--ring) 38%, transparent);
+  outline-offset: 2px;
+}
+
+.blog-toc-drawer-close:active {
+  transform: scale(0.96);
+}
+
+.blog-toc-drawer-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 1rem calc(1rem + env(safe-area-inset-bottom));
+  scroll-padding-block: 0.75rem;
+}
+
+.blog-toc-drawer .blog-toc-list {
+  margin-top: 0;
+}
+
+.blog-toc-drawer .blog-toc-list a {
   min-height: 2.75rem;
+  font-size: 0.84rem;
 }
 
 .blog-prose {
@@ -2696,10 +2802,15 @@ code[data-theme] span {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .blog-toc-mobile,
+  .blog-toc-mobile-trigger,
+  .blog-toc-drawer,
   .blog-focus-toast {
     background: color-mix(in oklab, var(--background) 96%, var(--foreground) 3%);
     backdrop-filter: none;
+  }
+
+  .blog-toc-mobile-shell::after {
+    display: none;
   }
 }
 
@@ -2720,9 +2831,13 @@ code[data-theme] span {
 
   .blog-toc-list a,
   .blog-toc-tick,
-  .blog-toc-mobile > summary::after,
+  .blog-toc-mobile-trigger,
   .blog-toc-mobile-shell,
-  .blog-toc-desktop {
+  .blog-toc-desktop,
+  [data-slot="drawer-overlay"],
+  [data-slot="drawer-popup"],
+  [data-slot="drawer-content"],
+  [data-slot="drawer-swipe-handle"] {
     transition: none;
   }
 

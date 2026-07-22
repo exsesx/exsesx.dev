@@ -46,6 +46,7 @@ export default function Header() {
   const visualActiveNav =
     visualActiveNavHref === "/projects" ? "projects" : visualActiveNavHref === "/blog/en" ? "blog" : "home";
   const isReadingHeaderHidden = isFocusMode || isPassiveHeaderHidden;
+  const isBackButtonActive = isProjectDetailPath(pathname) || isBlogPostPath(pathname);
 
   useEffect(() => {
     setVisualActiveNavHref(activeNavHref);
@@ -84,8 +85,10 @@ export default function Header() {
         style={{ viewTransitionName: "persistent-nav" }}
       >
         <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full px-2 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between sm:gap-3 sm:px-3">
-          <div className="site-nav-leading flex min-w-0 items-center">
-            <NavBackButton active={isProjectDetailPath(pathname) || isBlogPostPath(pathname)} />
+          <div
+            className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1.5 sm:gap-x-0" : "gap-x-0"}`}
+          >
+            <NavBackButton active={isBackButtonActive} />
             <Link
               href="/"
               {...suppressEntryMotionProps}
@@ -147,7 +150,7 @@ export default function Header() {
               href={SITE_PROFILE.links.github}
               className={`${buttonVariants({ variant: "glass", size: "icon" })} md:w-auto md:gap-2 md:px-4 md:pl-3`}
             >
-              <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
+              <GithubIcon data-icon="inline-start" strokeWidth={2.2} />
               <span className="sr-only md:not-sr-only">GitHub</span>
             </a>
             <span className="site-nav-theme inline-flex">

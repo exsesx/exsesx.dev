@@ -1,6 +1,8 @@
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
+
+const MOBILE_SAFARI_SPEC = /mobile-safari\.spec\.ts/;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -15,6 +17,7 @@ export default defineConfig({
   projects: [
     {
       name: "desktop-chromium",
+      testIgnore: MOBILE_SAFARI_SPEC,
       use: {
         browserName: "chromium",
         viewport: { width: 1280, height: 900 },
@@ -24,11 +27,19 @@ export default defineConfig({
     },
     {
       name: "mobile-chromium",
+      testIgnore: MOBILE_SAFARI_SPEC,
       use: {
         browserName: "chromium",
         viewport: { width: 390, height: 844 },
         hasTouch: true,
         isMobile: true,
+      },
+    },
+    {
+      name: "mobile-webkit-iphone-17-pro",
+      testMatch: MOBILE_SAFARI_SPEC,
+      use: {
+        ...devices["iPhone 17 Pro"],
       },
     },
   ],
