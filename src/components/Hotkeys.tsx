@@ -1,13 +1,33 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Command, Home, Monitor, SunMoon, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpenText,
+  BriefcaseBusiness,
+  Command,
+  Focus,
+  Home,
+  Monitor,
+  SunMoon,
+  X,
+} from "lucide-react";
+import type { Route } from "next";
+import { usePathname, useRouter } from "next/navigation";
 import { type ElementType, useEffect, useEffectEvent, useRef, useState } from "react";
-import { getHotkeyDecision, getHotkeySequenceKey, type HotkeyRouteAction, type HotkeyState } from "@/lib/hotkeys";
+import { BLOG_UI, type BlogLocale, getBlogLocaleFromPath } from "@/lib/blog";
+import {
+  BLOG_FOCUS_HOTKEY_ACTION,
+  getHotkeyDecision,
+  getHotkeySequenceKey,
+  type HotkeyRouteAction,
+  type HotkeyState,
+} from "@/lib/hotkeys";
 import { prepareHotkeyRouteNavigation } from "@/lib/route-intent";
 import { SITE_PROFILE } from "@/lib/site-profile";
 import { getThemeSnapshot, parseThemeSnapshot, persistThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { useBlogFocus } from "./blog/BlogFocusProvider";
 import { GithubIcon } from "./icons/lucide-github";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 
@@ -23,6 +43,7 @@ const HOTKEYS: Array<{
 }> = [
   { sequence: ["g", "h"], action: "home", description: "Home", icon: Home, repeatable: true },
   { sequence: ["g", "p"], action: "projects", description: "Projects", icon: BriefcaseBusiness, repeatable: true },
+  { sequence: ["g", "b"], action: "blog", description: "Blog", icon: BookOpenText, repeatable: true },
   { sequence: ["g", "t"], action: "theme-toggle", description: "Toggle theme", icon: SunMoon, repeatable: true },
   { sequence: ["g", "d"], action: "theme-device", description: "Device theme", icon: Monitor, repeatable: true },
   {
@@ -62,8 +83,16 @@ function createInitialHotkeyState(): HotkeyState<HotkeyAction> {
   };
 }
 
-function Hotkeys() {
+function Hotkeys({
+  allowBlogFocusShortcut = false,
+  showHint = true,
+}: {
+  allowBlogFocusShortcut?: boolean;
+  showHint?: boolean;
+}) {
   const router = useRouter();
+  const pathname = usePathname();
+  const { exitFocusMode, isBlogArticle, isFocusMode, toggleFocusMode } = useBlogFocus();
   const [hotkeyState, setHotkeyState] = useState<HotkeyState<HotkeyAction>>(createInitialHotkeyState);
   const hotkeyStateRef = useRef(hotkeyState);
   const lastPendingSequenceRef = useRef<string[]>([]);
@@ -71,6 +100,9 @@ function Hotkeys() {
   const pendingSequence = hotkeyState.pendingSequence;
   const isSequenceRendered = pendingSequence.length > 0;
   const displayedPendingSequence = isSequenceRendered ? pendingSequence : lastPendingSequenceRef.current;
+  const modifierKey = getPlatformModifierKey();
+  const blogLocale = getBlogLocaleFromPath(pathname) ?? "en";
+  const blogCopy = BLOG_UI[blogLocale];
 
   function commitHotkeyState(nextState: HotkeyState<HotkeyAction>) {
     if (nextState.pendingSequence.length > 0) {
@@ -82,20 +114,29 @@ function Hotkeys() {
   }
 
   function setHotkeyModalOpen(isOpen: boolean) {
+    const shouldRestoreReadingFocus = isFocusMode && hotkeyStateRef.current.isModalOpen && !isOpen;
+
     commitHotkeyState({
       ...hotkeyStateRef.current,
       isModalOpen: isOpen,
       pendingSequence: [],
     });
+
+    if (shouldRestoreReadingFocus) {
+      focusMainContent();
+    }
   }
 
   const handleHotkeyKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    const activeElement = document.activeElement;
     const decision = getHotkeyDecision({
       input: {
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         defaultPrevented: event.defaultPrevented,
         isEditableTarget: isEditableTarget(event.target),
+        isBlogFocusActive: isFocusMode,
+        isBlogFocusShortcutEnabled: allowBlogFocusShortcut,
         key: event.key,
         metaKey: event.metaKey,
         pathname: window.location.pathname,
@@ -110,10 +151,25 @@ function Hotkeys() {
       event.preventDefault();
     }
 
+    const shouldRestoreReadingFocus =
+      isFocusMode && hotkeyStateRef.current.isModalOpen && !decision.nextState.isModalOpen;
     commitHotkeyState(decision.nextState);
 
     if (decision.action) {
-      runHotkeyAction(decision.action, router);
+      if (decision.action === BLOG_FOCUS_HOTKEY_ACTION) {
+        const isEnteringFocusMode = !isFocusMode;
+        toggleFocusMode();
+
+        if (isEnteringFocusMode && shouldRehomeFocusForFocusMode(activeElement)) {
+          focusMainContent();
+        }
+      } else {
+        runHotkeyAction(decision.action, router);
+      }
+    }
+
+    if (shouldRestoreReadingFocus) {
+      focusMainContent();
     }
   });
 
@@ -127,62 +183,117 @@ function Hotkeys() {
     return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
   }, []);
 
+  useEffect(() => {
+    if (!allowBlogFocusShortcut && isFocusMode) {
+      exitFocusMode();
+    }
+  }, [allowBlogFocusShortcut, exitFocusMode, isFocusMode]);
+
   return (
     <Dialog open={isModalOpen} onOpenChange={setHotkeyModalOpen}>
-      <HotkeyHint isSequenceRendered={isSequenceRendered} sequence={displayedPendingSequence} />
-      <HotkeyModal />
+      {showHint ? (
+        <HotkeyHint
+          isSequenceRendered={isSequenceRendered}
+          modifierKey={modifierKey}
+          sequence={displayedPendingSequence}
+        />
+      ) : null}
+      <HotkeyModal
+        allowBlogFocusShortcut={allowBlogFocusShortcut}
+        focusLabel={isFocusMode ? blogCopy.exitFocus : blogCopy.focus}
+        focusLocale={blogLocale}
+        isBlogArticle={isBlogArticle}
+        modifierKey={modifierKey}
+      />
     </Dialog>
   );
 }
 
 export default Hotkeys;
 
-function HotkeyHint({ isSequenceRendered, sequence }: { isSequenceRendered: boolean; sequence: string[] }) {
+function HotkeyHint({
+  isSequenceRendered,
+  modifierKey,
+  sequence,
+}: {
+  isSequenceRendered: boolean;
+  modifierKey: PlatformModifierKey;
+  sequence: string[];
+}) {
   return (
-    <div
-      className="hotkeys-corner-hint glass-frost fixed bottom-4 left-4 z-[80] hidden h-11 grid-cols-1 grid-rows-1 rounded-full text-foreground shadow-menu md:grid"
-      data-pending={isSequenceRendered ? "true" : "false"}
-    >
+    <>
       <DialogTrigger
+        lang="en"
         type="button"
         aria-label="Toggle keyboard shortcuts"
-        aria-hidden={isSequenceRendered}
-        className="hotkeys-corner-state hotkeys-pointer-control col-start-1 row-start-1 flex h-11 items-center gap-2 rounded-full px-1.5"
-        data-visible={isSequenceRendered ? "false" : "true"}
-        tabIndex={isSequenceRendered ? -1 : undefined}
+        aria-keyshortcuts="Meta+/ Control+/"
+        className="hotkeys-corner-hint glass-frost hotkeys-pointer-control fixed bottom-4 left-4 z-[80] hidden h-9 cursor-pointer grid-cols-1 grid-rows-1 rounded-xl text-foreground md:grid"
+        data-pending={isSequenceRendered ? "true" : "false"}
       >
-        <kbd aria-label="Command period" className="hotkeys-trigger-key hotkeys-command-key">
-          <Command aria-hidden="true" size={13} strokeWidth={2.5} />
-          <span aria-hidden="true" className="hotkeys-command-period" />
-        </kbd>
-        <span className="hotkeys-state-label">Shortcuts</span>
+        <span
+          aria-hidden="true"
+          className="hotkeys-corner-state col-start-1 row-start-1 flex h-9 items-center justify-center px-2"
+          data-visible={isSequenceRendered ? "false" : "true"}
+        >
+          <span className="hotkeys-wait-sequence">
+            <kbd className="hotkeys-trigger-key hotkeys-command-key">{modifierKey.key}</kbd>
+            <kbd className="hotkeys-trigger-key">/</kbd>
+          </span>
+        </span>
+
+        <span
+          aria-hidden="true"
+          className="hotkeys-chord-panel hotkeys-chord-waiting hotkeys-corner-state col-start-1 row-start-1 flex h-9 items-center justify-center gap-1 px-2"
+          data-visible={isSequenceRendered ? "true" : "false"}
+        >
+          <span className="hotkeys-wait-sequence">
+            {sequence.map((key, index) => (
+              <span key={getHotkeySequenceKey("pending", key, index)} className="hotkeys-trigger-key">
+                <kbd className="relative z-10 leading-none">{key}</kbd>
+              </span>
+            ))}
+          </span>
+          <span className="hotkeys-pending-mark">…</span>
+        </span>
       </DialogTrigger>
 
-      <aside
-        aria-hidden={isSequenceRendered ? undefined : "true"}
-        aria-label={isSequenceRendered ? `${sequence.join(" ")} pressed; awaiting next shortcut key` : undefined}
-        aria-live="polite"
-        className="hotkeys-chord-panel hotkeys-chord-waiting hotkeys-corner-state col-start-1 row-start-1 flex h-11 items-center gap-2 rounded-full px-1.5"
-        data-visible={isSequenceRendered ? "true" : "false"}
-      >
-        <span className="hotkeys-wait-sequence">
-          {sequence.map((key, index) => (
-            <span key={getHotkeySequenceKey("pending", key, index)} className="hotkeys-trigger-key">
-              <kbd className="relative z-10 font-mono text-xs font-black leading-none">{key}</kbd>
-            </span>
-          ))}
-        </span>
-        <span className="hotkeys-state-label">Pending…</span>
-      </aside>
-    </div>
+      <span className="sr-only" aria-live="polite">
+        {isSequenceRendered ? `${sequence.join(" ")} pressed; awaiting next shortcut key` : ""}
+      </span>
+    </>
   );
 }
 
-function HotkeyModal() {
+function HotkeyModal({
+  allowBlogFocusShortcut,
+  focusLabel,
+  focusLocale,
+  isBlogArticle,
+  modifierKey,
+}: {
+  allowBlogFocusShortcut: boolean;
+  focusLabel: string;
+  focusLocale: BlogLocale;
+  isBlogArticle: boolean;
+  modifierKey: PlatformModifierKey;
+}) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const menuItems =
+    isBlogArticle && allowBlogFocusShortcut
+      ? [
+          ...HOTKEY_MENU_ITEMS,
+          {
+            sequence: [modifierKey.key, "."],
+            id: BLOG_FOCUS_HOTKEY_ACTION,
+            description: focusLabel,
+            icon: Focus,
+          },
+        ]
+      : HOTKEY_MENU_ITEMS;
 
   return (
     <DialogContent
+      lang="en"
       initialFocus={closeButtonRef}
       className="hotkeys-panel glass-frost relative max-w-lg rounded-[1.75rem] p-3 text-foreground shadow-menu sm:p-4"
     >
@@ -203,14 +314,19 @@ function HotkeyModal() {
       </div>
 
       <div className="mt-2 grid gap-1">
-        {HOTKEY_MENU_ITEMS.map(shortcut => {
+        {menuItems.map(shortcut => {
           const Icon = shortcut.icon;
 
           return (
             <div key={shortcut.id} className="flex items-center justify-between gap-4 rounded-2xl px-3 py-3 sm:px-4">
               <div className="flex min-w-0 items-center gap-3">
                 <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={2.3} />
-                <span className="truncate text-base font-bold">{shortcut.description}</span>
+                <span
+                  className="truncate text-base font-bold"
+                  lang={shortcut.id === BLOG_FOCUS_HOTKEY_ACTION ? focusLocale : undefined}
+                >
+                  {shortcut.description}
+                </span>
               </div>
               <span className="flex shrink-0 items-center gap-1.5">
                 {shortcut.sequence.map((key, index) => (
@@ -233,7 +349,7 @@ function HotkeyModal() {
       <div className="mt-2 flex items-center justify-between gap-3 border-t border-border px-3 pt-3 pb-0 text-sm font-bold text-muted-foreground sm:px-4">
         <span className="flex h-8 min-w-0 items-center gap-2">
           <kbd className="grid place-items-center rounded-lg border border-border bg-secondary px-2 py-1 font-mono text-xs leading-none text-secondary-foreground">
-            ⌘.
+            {modifierKey.key} /
           </kbd>
           <span className="truncate leading-5">toggles this menu</span>
         </span>
@@ -248,6 +364,19 @@ function HotkeyModal() {
   );
 }
 
+type PlatformModifierKey = {
+  key: "⌘" | "⌃";
+};
+
+function getPlatformModifierKey(): PlatformModifierKey {
+  const isApplePlatform =
+    typeof navigator !== "undefined" &&
+    (/Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
+      (/Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
+
+  return { key: isApplePlatform ? "⌘" : "⌃" };
+}
+
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return false;
@@ -257,6 +386,16 @@ function isEditableTarget(target: EventTarget | null) {
     target.isContentEditable ||
     target.closest("input, textarea, select, [contenteditable='true'], [role='textbox']") !== null
   );
+}
+
+function shouldRehomeFocusForFocusMode(target: Element | null) {
+  return Boolean(
+    target?.closest('.site-header, .hotkeys-corner-hint, [data-slot="dialog-content"], [data-slot="dropdown-menu"]'),
+  );
+}
+
+function focusMainContent() {
+  requestAnimationFrame(() => document.getElementById("main-content")?.focus({ preventScroll: true }));
 }
 
 function runHotkeyAction(action: HotkeyAction, router: ReturnType<typeof useRouter>) {
@@ -277,7 +416,7 @@ function runHotkeyAction(action: HotkeyAction, router: ReturnType<typeof useRout
 
   const { href, transitionTypes } = prepareHotkeyRouteNavigation(action);
 
-  router.push(href, { transitionTypes });
+  router.push(href as Route, { transitionTypes });
 }
 
 function areHotkeyStatesEqual(left: HotkeyState<HotkeyAction>, right: HotkeyState<HotkeyAction>) {

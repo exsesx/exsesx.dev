@@ -11,14 +11,22 @@ type CvShareHarness = {
   }>;
 };
 
+type ThemeSnapshot = {
+  className: string;
+  label: string | null;
+  mode: string | null;
+};
+
 declare global {
   interface Window {
     __cvShareHarness: CvShareHarness;
+    __localeSwitchThemeSnapshots: ThemeSnapshot[];
     __themeViewTransitionCalls: number;
   }
 }
 
 const TEST_PDF = "%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF";
+const BLOG_ARTICLE_PATH = "/blog/en/codex-agents-v2";
 
 async function installIosShareHarness(page: Page) {
   await page.addInitScript(() => {
@@ -96,6 +104,234 @@ if (!("Bun" in globalThis)) {
       }
     });
 
+    test("document language follows the Blog locale without changing the site language", async ({ page, isMobile }) => {
+      test.skip(Boolean(isMobile), "document language is viewport-independent");
+
+      await page.goto("/");
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+
+      await page.goto("/blog/en");
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expect(page.locator(".site-header")).toHaveAttribute("lang", "en");
+
+      await page.goto("/blog/uk");
+      await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+      await expect(page.locator(".site-header")).toHaveAttribute("lang", "en");
+      await expect(page.getByRole("heading", { level: 1, name: "Нотатки з майстерні" })).toBeVisible();
+    });
+
+    test("Blog locale switching keeps RSS and the device theme stable", async ({ page, isMobile }) => {
+      test.skip(Boolean(isMobile), "locale state is viewport-independent");
+
+      const consoleErrors: string[] = [];
+      page.on("console", message => {
+        if (message.type() === "error") {
+          consoleErrors.push(message.text());
+        }
+      });
+      await page.emulateMedia({ colorScheme: "dark" });
+      await page.addInitScript(() => {
+        window.localStorage.setItem("exsesx:color-scheme", JSON.stringify("system"));
+        window.__localeSwitchThemeSnapshots = [];
+      });
+      await page.goto("/blog/en");
+
+      await expect(page.getByRole("link", { name: "RSS feed" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Theme: Device" })).toBeVisible();
+      await expect(page.locator("html")).toHaveClass(/dark/);
+      await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "system");
+
+      await page.evaluate(() => {
+        window.__localeSwitchThemeSnapshots = [];
+        let frames = 0;
+        const sampleTheme = () => {
+          const themeButton = document.querySelector<HTMLButtonElement>('button[aria-label^="Theme:"]');
+          window.__localeSwitchThemeSnapshots.push({
+            className: document.documentElement.className,
+            label: themeButton?.getAttribute("aria-label") ?? null,
+            mode: document.documentElement.dataset.themeMode ?? null,
+          });
+          frames += 1;
+          if (frames < 180) {
+            requestAnimationFrame(sampleTheme);
+          }
+        };
+        requestAnimationFrame(sampleTheme);
+      });
+
+      await Promise.all([page.waitForURL("**/blog/uk"), page.getByRole("link", { name: "UA", exact: true }).click()]);
+      await page.evaluate(
+        () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      );
+
+      await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+      await expect(page.getByRole("link", { name: "RSS-стрічка" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Theme: Device" })).toBeVisible();
+      await expect(page.locator("html")).toHaveClass(/dark/);
+      await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "system");
+
+      const snapshots = await page.evaluate(() => window.__localeSwitchThemeSnapshots);
+      expect(snapshots.length).toBeGreaterThan(0);
+      expect(snapshots.every(snapshot => snapshot.className.includes("dark"))).toBe(true);
+      expect(snapshots.every(snapshot => snapshot.mode === "system")).toBe(true);
+      expect(snapshots.every(snapshot => snapshot.label === "Theme: Device")).toBe(true);
+      expect(consoleErrors).not.toContainEqual(expect.stringContaining("Encountered a script tag"));
+    });
+
+    test("Blog navigation and article content fit the 390px mobile viewport", async ({ page, isMobile }) => {
+      test.skip(!isMobile, "390px mobile contract");
+
+      await page.goto("/projects");
+      const blogLink = page.getByRole("link", { name: "Blog", exact: true });
+      await expect(blogLink).toBeVisible();
+      await expect(blogLink).toHaveAttribute("href", "/blog/en");
+      await Promise.all([page.waitForURL("**/blog/en"), blogLink.click()]);
+
+      await expect(page.getByRole("link", { name: "Blog", exact: true })).toHaveAttribute("aria-current", "page");
+      await expect(page.locator(".site-nav-active-pill")).toHaveAttribute("data-active-nav", "blog");
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expectPageToFitViewport(page);
+
+      await Promise.all([
+        page.waitForURL("**/blog/en/codex-agents-v2"),
+        page.getByRole("link", { name: "Read article" }).click(),
+      ]);
+      await expect(page.getByRole("heading", { level: 1, name: /Agents V2/ })).toBeVisible();
+      await expectPageToFitViewport(page);
+    });
+
+    test("Blog Focus has no header control and remains a desktop-only shortcut", async ({ page, isMobile }) => {
+      await page.goto("/blog/en");
+      await expect(page.getByRole("button", { name: "Focus" })).toHaveCount(0);
+      await expect(page.locator(".site-nav-glass").getByRole("link", { name: "GitHub" })).toBeVisible();
+
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      await expect(page.getByRole("button", { name: "Focus" })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Exit focus" })).toHaveCount(0);
+
+      if (!isMobile) {
+        await expect(page.getByRole("button", { name: "Toggle keyboard shortcuts" })).toBeVisible();
+      }
+
+      await page.keyboard.press("Control+.");
+
+      if (isMobile) {
+        await expect(root).not.toHaveAttribute("data-blog-focus", "true");
+        return;
+      }
+
+      await expect(root).toHaveAttribute("data-blog-focus", "true");
+      await expect(page.locator(".site-header-nav-frame")).toBeHidden();
+      await expect(page.locator(".site-header-fade")).toBeHidden();
+      await expect(page.locator(".kinetic-backdrop > *").first()).toBeHidden();
+      await expect(page.locator(".site-version-tag")).toBeHidden();
+      const readingProgress = page.locator(".blog-reading-progress");
+      await expect(readingProgress).toBeHidden();
+      await page.evaluate(() => {
+        const article = document.getElementById("article-content");
+
+        if (!article) {
+          throw new Error("Expected article content");
+        }
+
+        window.scrollTo(0, article.getBoundingClientRect().top + window.scrollY + 240);
+      });
+      await expect(readingProgress).toBeVisible();
+      await expect(page.locator(".blog-toc-desktop")).toBeVisible();
+
+      await page.keyboard.press("Control+.");
+      await expect(root).not.toHaveAttribute("data-blog-focus", "true");
+    });
+
+    test("Blog Focus shortcuts respect dialog, reading focus, and Back Escape precedence", async ({
+      page,
+      isMobile,
+    }) => {
+      test.skip(Boolean(isMobile), "explicit Focus is a desktop-only shortcut");
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const dialog = page.getByRole("dialog", { name: "Keyboard shortcuts" });
+      const themeTrigger = page.getByRole("button", { name: "Theme: Device" });
+
+      await themeTrigger.click();
+      await expect(page.getByRole("menu", { name: "Theme: Device" })).toBeVisible();
+
+      await page.keyboard.press("Control+.");
+      await expect(root).toHaveAttribute("data-blog-focus", "true");
+      await expect(page.getByRole("menu", { name: "Theme: Device" })).toBeHidden();
+      await expect(page.locator("#main-content")).toBeFocused();
+      await page.keyboard.press("Control+.");
+      await expect(root).not.toHaveAttribute("data-blog-focus", "true");
+      await page.keyboard.press("Control+.");
+      await expect(root).toHaveAttribute("data-blog-focus", "true");
+
+      await page.keyboard.press("Control+/");
+      await expect(dialog).toBeVisible();
+
+      await page.keyboard.press("Escape");
+      await expect(dialog).toBeHidden();
+      await expect(root).toHaveAttribute("data-blog-focus", "true");
+      await expect(page.locator("#main-content")).toBeFocused();
+
+      await page.keyboard.press("Escape");
+      await expect(root).not.toHaveAttribute("data-blog-focus", "true");
+      await expect(page).toHaveURL(new RegExp(`${BLOG_ARTICLE_PATH}$`));
+
+      await Promise.all([page.waitForURL("**/blog/en"), page.keyboard.press("Escape")]);
+      await page.goBack();
+      await expect(page).toHaveURL(new RegExp(`${BLOG_ARTICLE_PATH}$`));
+      await expect(page.locator('[data-blog-article="true"]')).not.toHaveAttribute("data-blog-focus", "true");
+    });
+
+    test("passive Blog header starts hidden at a restored reading position", async ({ page, isMobile }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const headerFrame = page.locator(".site-header-nav-frame");
+
+      await page.evaluate(() => {
+        const article = document.getElementById("article-content");
+        if (!article) {
+          throw new Error("Blog article content is missing");
+        }
+
+        const articleTop = article.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo(0, articleTop + 240);
+      });
+      await page.evaluate(
+        () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      );
+
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toBeHidden();
+
+      if (isMobile) {
+        await page.locator("body").dispatchEvent("touchmove");
+        await page.evaluate(() => window.scrollBy(0, 160));
+      } else {
+        const viewport = page.viewportSize();
+        expect(viewport).not.toBeNull();
+        await page.mouse.move((viewport?.width ?? 1280) / 2, (viewport?.height ?? 900) / 2);
+        await page.mouse.wheel(0, 160);
+      }
+
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toBeHidden();
+
+      if (isMobile) {
+        await page.locator("body").dispatchEvent("touchmove");
+        await page.evaluate(() => window.scrollBy(0, -320));
+      } else {
+        await page.mouse.wheel(0, -320);
+      }
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toBeVisible();
+    });
+
     test("theme dropdown stays anchored and applies a selected mode", async ({ page }) => {
       await page.addInitScript(() => {
         window.localStorage.setItem("exsesx:color-scheme", JSON.stringify("light"));
@@ -112,8 +348,9 @@ if (!("Bun" in globalThis)) {
       const trigger = page.getByRole("button", { name: "Theme: Light" });
       await trigger.click();
 
-      const menu = page.getByRole("menu", { name: "Theme: Light" });
+      const menu = page.getByRole("menu");
       await expect(menu).toBeVisible();
+      await expect(menu).toHaveAccessibleName("Theme: Light");
 
       const bounds = await menu.boundingBox();
       const viewport = page.viewportSize();
@@ -136,8 +373,10 @@ if (!("Bun" in globalThis)) {
       const darkTrigger = page.getByRole("button", { name: "Theme: Dark" });
       await expect(darkTrigger).toBeVisible();
 
-      await darkTrigger.click();
-      await page.getByRole("menuitemradio", { name: "Light" }).focus();
+      await darkTrigger.press("Enter");
+      await expect(menu).toBeVisible();
+      await page.keyboard.press("Home");
+      await expect(page.getByRole("menuitemradio", { name: "Light" })).toBeFocused();
       await page.keyboard.press("Enter");
 
       await expect(menu).toBeHidden();
@@ -388,4 +627,23 @@ if (!("Bun" in globalThis)) {
       expect(page.url()).toBe(initialUrl);
     });
   });
+}
+
+async function expectPageToFitViewport(page: Page) {
+  await expect.poll(() => page.evaluate(() => window.innerWidth)).toBe(390);
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth))
+    .toBeLessThanOrEqual(0);
+
+  const [mainBounds, navBounds] = await Promise.all([
+    page.locator("main").boundingBox(),
+    page.locator(".site-nav-glass").boundingBox(),
+  ]);
+
+  expect(mainBounds).not.toBeNull();
+  expect(navBounds).not.toBeNull();
+  expect(mainBounds?.x ?? -1).toBeGreaterThanOrEqual(0);
+  expect((mainBounds?.x ?? 0) + (mainBounds?.width ?? 0)).toBeLessThanOrEqual(391);
+  expect(navBounds?.x ?? -1).toBeGreaterThanOrEqual(0);
+  expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(391);
 }

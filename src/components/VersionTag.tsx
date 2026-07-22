@@ -23,7 +23,7 @@ export default function VersionTag() {
   );
 
   return (
-    <div className="flex w-full justify-center px-4 py-4">
+    <div className="site-version-tag flex w-full justify-center px-4 py-4">
       {owner && slug ? (
         <a
           href={`https://github.com/${owner}/${slug}/commit/${commitHash}`}

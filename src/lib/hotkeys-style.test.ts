@@ -10,31 +10,37 @@ function getRuleBody(css: string, selector: string) {
 }
 
 describe("hotkey loading and motion contracts", () => {
-  test("gates the implementation chunk after initial null parity and cleans up capability listeners", async () => {
+  test("always mounts the keyboard handler while capability-gating its pointer hint", async () => {
     const loader = await Bun.file(loaderUrl).text();
 
     expect(loader).toMatch(/dynamic\(\(\) => import\("\.\/Hotkeys"\),\s*\{\s*ssr:\s*false/);
     expect(loader).toMatch(/useState\(false\)/);
-    expect(loader).toMatch(/if \(!isEnabled\) \{\s*return null;\s*\}/);
+    expect(loader).not.toMatch(/if \(!isEnabled\) \{\s*return null;\s*\}/);
     expect(loader).toMatch(
       /shouldEnableHotkeys\(\{\s*hasHover:\s*hoverQuery\.matches,\s*hasCoarsePointer:\s*coarsePointerQuery\.matches/,
     );
-    expect(loader.match(/addEventListener\("change", handleChange\)/g)).toHaveLength(2);
-    expect(loader.match(/removeEventListener\("change", handleChange\)/g)).toHaveLength(2);
-    expect(loader).toMatch(/return <Hotkeys \/>/);
+    expect(loader).toContain('window.matchMedia("(min-width: 768px)")');
+    expect(loader.match(/addEventListener\("change", handleChange\)/g)).toHaveLength(3);
+    expect(loader.match(/removeEventListener\("change", handleChange\)/g)).toHaveLength(3);
+    expect(loader).toMatch(/return <Hotkeys allowBlogFocusShortcut=\{isDesktopViewport\} showHint=\{isEnabled\} \/>/);
   });
 
-  test("keeps capability detection out of the implementation and exposes descriptive shortcut UI", async () => {
+  test("keeps capability detection out of the implementation and exposes compact shortcut UI", async () => {
     const source = await Bun.file(hotkeysUrl).text();
 
     expect(source).not.toMatch(/matchMedia|shouldEnableHotkeys|isEnabled|setIsEnabled|syncEnabledState/);
     expect(source).not.toContain("getHotkeyContinuationKeys");
     expect(source).not.toMatch(/continuationKeys\.map|available next keys/);
-    expect(source).toMatch(/>\s*Shortcuts\s*</);
-    expect(source).toMatch(/>\s*Pending…\s*</);
+    expect(source).not.toMatch(/>\s*Shortcuts\s*</);
+    expect(source).not.toMatch(/>\s*Pending…\s*</);
+    expect(source).toContain("hotkeys-pending-mark");
     expect(source).toMatch(/<DialogTitle[^>]*>[\s\S]*?Keyboard shortcuts\s*<\/DialogTitle>/);
     expect(source).toMatch(/aria-live="polite"/);
     expect(source).toMatch(/awaiting next shortcut key/);
+    expect(source).toContain('aria-keyshortcuts="Meta+/ Control+/"');
+    expect(source).toContain("BLOG_FOCUS_HOTKEY_ACTION");
+    expect(source).toContain("isBlogArticle");
+    expect(source).not.toContain("blog-focus-toggle");
   });
 
   test("removes keyboard-driven loops, dots, entrances, and child staggering", async () => {
@@ -55,7 +61,7 @@ describe("hotkey loading and motion contracts", () => {
     expect(source).not.toContain("dialog.showModal()");
   });
 
-  test("keeps one corner surface mounted while its status crossfades", async () => {
+  test("keeps one clickable corner surface mounted while its status crossfades", async () => {
     const source = await Bun.file(hotkeysUrl).text();
     const css = await Bun.file(globalsUrl).text();
     const state = getRuleBody(css, ".hotkeys-corner-state");
@@ -64,7 +70,11 @@ describe("hotkey loading and motion contracts", () => {
     expect(source).not.toMatch(/isSequenceRendered\s*\?\s*<PendingSequence/);
     expect(source.match(/className="hotkeys-corner-hint/g)).toHaveLength(1);
     expect(source.match(/hotkeys-corner-state/g)).toHaveLength(2);
+    expect(source).toMatch(/<DialogTrigger[\s\S]*?className="hotkeys-corner-hint[^"]*hotkeys-pointer-control/);
     expect(state).toMatch(/transition:\s*opacity/);
+    expect(state).toContain("opacity var(--duration-press) var(--ease-out)");
+    expect(state).toMatch(/pointer-events:\s*none/);
+    expect(hiddenState).not.toMatch(/transition(?:-duration)?\s*:/);
     expect(hiddenState).toMatch(/opacity:\s*0/);
     expect(hiddenState).toMatch(/pointer-events:\s*none/);
   });

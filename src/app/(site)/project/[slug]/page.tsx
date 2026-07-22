@@ -4,19 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
-import AutoPauseVideo from "../../../components/AutoPauseVideo";
-import ProjectCard from "../../../components/ProjectCard";
-import { Badge } from "../../../components/ui/badge";
-import { buttonVariants } from "../../../components/ui/button-variants";
-import { CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "../../../components/ui/card";
-import { Separator } from "../../../components/ui/separator";
-import { createPageMetadata, createProjectSocialImage } from "../../../lib/metadata";
-import {
-  getBackTransitionTypeProps,
-  ROUTE_TRANSITION_TYPES,
-  suppressEntryMotionProps,
-} from "../../../lib/motion-contract";
-import { getProjectAccentClasses } from "../../../lib/project-accents";
+import AutoPauseVideo from "@/components/AutoPauseVideo";
+import ProjectCard from "@/components/ProjectCard";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { createPageMetadata, createProjectSocialImage } from "@/lib/metadata";
+import { getBackTransitionTypeProps, ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { getProjectAccentClasses } from "@/lib/project-accents";
 import {
   getAdjacentProjects,
   getProjectBySlug,
@@ -24,8 +20,8 @@ import {
   getProjectTransitionType,
   type Project,
   projects,
-} from "../../../lib/projects";
-import { cn } from "../../../lib/utils";
+} from "@/lib/projects";
+import { cn } from "@/lib/utils";
 
 type ProjectPageProps = {
   params: Promise<{
@@ -120,6 +116,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   return (
     <main
+      id="main-content"
+      tabIndex={-1}
       className="mx-auto w-full max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:pt-28"
       {...getBackTransitionTypeProps(projectTransitionType)}
     >

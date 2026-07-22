@@ -1,5 +1,15 @@
 # Repo notes
 
+## React Doctor
+
+This section does not require React Doctor to run on every task. When React Doctor is requested, triggered by a skill, or otherwise chosen by an agent, use the globally installed `react-doctor` executable from `PATH`. When skill guidance shows `npx react-doctor@latest`, preserve its arguments but replace the launcher with `react-doctor`:
+
+- Changed-code regression check: `react-doctor --verbose --scope changed`
+- Full scan: `react-doctor --verbose`
+- Focused design audit: `react-doctor design --verbose`
+
+Never invoke React Doctor through `npx`, `npm exec`, `bunx`, or another package-runner fallback. If `react-doctor` is unavailable on `PATH`, report that instead of downloading or executing a transient copy.
+
 ## Commits
 
 All commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Format: `<type>: <description>`, e.g. `feat: add dark mode`, `fix: correct typo`, `chore: update deps`. Common types: `feat`, `fix`, `chore`, `refactor`, `ci`, `docs`, `style`, `test`.

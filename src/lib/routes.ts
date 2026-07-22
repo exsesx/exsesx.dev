@@ -1,12 +1,17 @@
 import type { Route } from "next";
+import { isBlogLocale } from "./blog";
 
-export type PrimaryNavHref = "/" | "/projects";
+export type PrimaryNavHref = "/" | "/projects" | "/blog/en";
 export type NavbarHotkeyDirection = "left" | "right";
 
-export const PRIMARY_NAV_HREFS: readonly PrimaryNavHref[] = ["/", "/projects"];
+export const PRIMARY_NAV_HREFS: readonly PrimaryNavHref[] = ["/", "/projects", "/blog/en"];
 
 export function getPrimaryNavHref(pathname: string): PrimaryNavHref {
-  return isProjectsSectionPath(pathname) ? "/projects" : "/";
+  if (isProjectsSectionPath(pathname)) {
+    return "/projects";
+  }
+
+  return isBlogSectionPath(pathname) ? "/blog/en" : "/";
 }
 
 export function getAdjacentPrimaryNavHref(pathname: string, direction: NavbarHotkeyDirection): PrimaryNavHref {
@@ -24,6 +29,22 @@ export function isProjectsSectionPath(pathname: string) {
 
 export function isProjectDetailPath(pathname: string) {
   return pathname.startsWith("/project/");
+}
+
+export function isBlogSectionPath(pathname: string) {
+  return pathname === "/blog" || pathname.startsWith("/blog/");
+}
+
+export function isBlogPostPath(pathname: string) {
+  const segments = getRoutePathname(pathname).split("/").filter(Boolean);
+
+  return segments[0] === "blog" && segments.length === 3 && isBlogLocale(segments[1] ?? "");
+}
+
+export function isBlogIndexRoutePath(routePath: string) {
+  const segments = getRoutePathname(routePath).split("/").filter(Boolean);
+
+  return segments[0] === "blog" && segments.length === 2 && isBlogLocale(segments[1] ?? "");
 }
 
 export function isProjectsIndexRoutePath(routePath: string) {

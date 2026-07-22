@@ -2,21 +2,21 @@ import { Activity, ArrowRight, BrainCircuit, BriefcaseBusiness, Send, Sparkles, 
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import CvMenu from "../components/CvMenu";
-import { GithubIcon } from "../components/icons/lucide-github";
-import { LinkedinIcon } from "../components/icons/lucide-linkedin";
-import ProjectCard from "../components/ProjectCard";
-import PulseTrace from "../components/PulseTrace";
-import SnapshotSpecialtyRail from "../components/SnapshotSpecialtyRail";
-import { buttonVariants } from "../components/ui/button-variants";
-import { CardContent, CardHeader, CardTitle, Card as UiCard } from "../components/ui/card";
-import { Separator } from "../components/ui/separator";
-import { createPageMetadata } from "../lib/metadata";
-import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "../lib/motion-contract";
-import { projects, specialties } from "../lib/projects";
-import { PROFILE_SNAPSHOT_STATS, SITE_PROFILE } from "../lib/site-profile";
-import { buildHomeStructuredData, serializeStructuredData } from "../lib/structured-data";
-import { cn } from "../lib/utils";
+import CvMenu from "@/components/CvMenu";
+import { GithubIcon } from "@/components/icons/lucide-github";
+import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
+import ProjectCard from "@/components/ProjectCard";
+import PulseTrace from "@/components/PulseTrace";
+import SnapshotSpecialtyRail from "@/components/SnapshotSpecialtyRail";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { CardContent, CardHeader, CardTitle, Card as UiCard } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { createPageMetadata } from "@/lib/metadata";
+import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { projects, specialties } from "@/lib/projects";
+import { PROFILE_SNAPSHOT_STATS, SITE_PROFILE } from "@/lib/site-profile";
+import { buildHomeStructuredData, serializeStructuredData } from "@/lib/structured-data";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Oleh Vanin - Software Engineer",
@@ -78,7 +78,11 @@ export default function HomePage() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static site data.
         dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
       />
-      <main className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-20 pt-28 sm:px-6 lg:pt-32">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-20 pt-28 sm:px-6 lg:pt-32"
+      >
         <section className="hero-viewport grid min-w-0 items-center gap-10 pb-8 lg:grid-cols-[1.04fr_0.96fr] lg:pb-12">
           <div className="min-w-0 max-w-4xl">
             <div className="motion-rise glass-frost mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground">

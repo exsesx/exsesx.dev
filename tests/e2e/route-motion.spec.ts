@@ -163,7 +163,7 @@ if (!("Bun" in globalThis)) {
       await attachFailureDiagnostics(testInfo, probe, errors);
     });
 
-    test("persistent header navigation is lateral", async ({ page, isMobile }, testInfo) => {
+    test("persistent header navigation is lateral and includes Blog", async ({ page, isMobile }, testInfo) => {
       test.skip(Boolean(isMobile), "desktop contract");
       const errors = collectRuntimeErrors(page);
 
@@ -186,8 +186,25 @@ if (!("Bun" in globalThis)) {
 
       expect(homeProbe.calls.flatMap(call => call.types)).toEqual([]);
       expect(animationNames(homeProbe)).not.toContain("view-slide");
+
+      await resetProbe(page);
+      const blogLink = page.getByRole("link", { name: "Blog", exact: true });
+      await expect(blogLink).toHaveAttribute("href", "/blog/en");
+      await Promise.all([page.waitForURL("**/blog/en"), blogLink.click()]);
+      await waitForProbe(page);
+      const blogProbe = await readProbe(page);
+
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expect(page.getByRole("link", { name: "Blog", exact: true })).toHaveAttribute("aria-current", "page");
+      await expect(page.locator(".site-nav-active-pill")).toHaveAttribute("data-active-nav", "blog");
+      expect(blogProbe.calls.flatMap(call => call.types)).toEqual([]);
+      expect(animationNames(blogProbe)).not.toContain("view-slide");
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, { calls: [...projectsProbe.calls, ...homeProbe.calls] }, errors);
+      await attachFailureDiagnostics(
+        testInfo,
+        { calls: [...projectsProbe.calls, ...blogProbe.calls, ...homeProbe.calls] },
+        errors,
+      );
     });
 
     test("brand navigation keeps the logo circular while the active pill moves Home", async ({
@@ -355,7 +372,7 @@ if (!("Bun" in globalThis)) {
   });
 
   test.describe("route intent seams", () => {
-    test("404 Back home publishes suppression intent", async ({ page, isMobile }, testInfo) => {
+    test("404 Back home crosses the global root cleanly", async ({ page, isMobile }, testInfo) => {
       test.skip(Boolean(isMobile), "desktop route-intent contract");
       const errors = collectRuntimeErrors(page);
       await page.goto("/missing-route-for-motion-contract");
@@ -363,18 +380,7 @@ if (!("Bun" in globalThis)) {
 
       await Promise.all([page.waitForURL(/\/$/), page.getByRole("link", { name: "Back home", exact: true }).click()]);
 
-      expect(await page.locator("html").getAttribute("data-view-transition-navigated")).toBe("true");
-      expect(
-        await page
-          .locator(".motion-rise")
-          .first()
-          .evaluate(
-            element =>
-              element
-                .getAnimations()
-                .filter(animation => animation.playState === "running" && animation.currentTime !== null).length,
-          ),
-      ).toBe(0);
+      await expect(page.locator("main")).toBeVisible();
       expectRuntimeClean(errors);
       await attachFailureDiagnostics(testInfo, await readProbe(page), errors);
     });
@@ -398,6 +404,32 @@ if (!("Bun" in globalThis)) {
       expect(types).toContain("nav-back");
       expect(types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
       expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
+      expectRuntimeClean(errors);
+      await attachFailureDiagnostics(testInfo, probe, errors);
+    });
+
+    test("Blog article Back returns to its matching localized index", async ({ page, isMobile }, testInfo) => {
+      test.skip(Boolean(isMobile), "desktop route-intent contract");
+      const errors = collectRuntimeErrors(page);
+      await page.goto("/blog/en/codex-agents-v2");
+
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expect(page.getByRole("button", { name: "Back" })).toBeEnabled();
+      await page.evaluate(() => {
+        window.sessionStorage.setItem("exsesx.previousRoute", JSON.stringify({ path: "/blog/uk", scrollY: 0 }));
+      });
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL("**/blog/en"), page.getByRole("button", { name: "Back" }).click()]);
+      await waitForProbe(page);
+
+      const probe = await readProbe(page);
+      if (probe.calls.length > 0) {
+        expect(probe.calls.flatMap(call => call.types)).toContain("nav-back");
+      }
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expect(page.getByRole("heading", { level: 1, name: "Notes from the workbench" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Blog", exact: true })).toHaveAttribute("aria-current", "page");
       expectRuntimeClean(errors);
       await attachFailureDiagnostics(testInfo, probe, errors);
     });
@@ -429,13 +461,10 @@ if (!("Bun" in globalThis)) {
       const idleWidth = await cornerHint.evaluate(element => element.getBoundingClientRect().width);
 
       await page.keyboard.press("g");
-      await expect(page.getByLabel("g pressed; awaiting next shortcut key")).toBeVisible();
+      await expect(page.locator('.sr-only[aria-live="polite"]')).toHaveText("g pressed; awaiting next shortcut key");
       const pendingWidth = await cornerHint.evaluate(element => element.getBoundingClientRect().width);
       expect(Math.abs(pendingWidth - idleWidth)).toBeLessThanOrEqual(1);
-      await expect(page.locator('.hotkeys-corner-state[aria-label="Toggle keyboard shortcuts"]')).toHaveCSS(
-        "opacity",
-        "0",
-      );
+      await expect(page.locator(".hotkeys-corner-state:not(.hotkeys-chord-waiting)")).toHaveCSS("opacity", "0");
 
       const frameSamples = await page.evaluate(async () => {
         window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }));
@@ -468,9 +497,7 @@ if (!("Bun" in globalThis)) {
         const samples: Array<{ contentOpacity: number; pendingKeyCount: number; pendingOpacity: number }> = [];
 
         function sampleContent() {
-          const idleLayer = document.querySelector<HTMLElement>(
-            '.hotkeys-corner-state[aria-label="Toggle keyboard shortcuts"]',
-          );
+          const idleLayer = document.querySelector<HTMLElement>(".hotkeys-corner-state:not(.hotkeys-chord-waiting)");
           const pendingLayer = document.querySelector<HTMLElement>(".hotkeys-chord-waiting");
           const idleOpacity = idleLayer ? Number.parseFloat(getComputedStyle(idleLayer).opacity) : 0;
           const pendingOpacity = pendingLayer ? Number.parseFloat(getComputedStyle(pendingLayer).opacity) : 0;
