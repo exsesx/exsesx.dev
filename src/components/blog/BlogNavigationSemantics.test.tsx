@@ -14,13 +14,15 @@ describe("Blog navigation semantics", () => {
     expect(markup).toContain('href="/blog/uk"');
   });
 
-  test("keeps the mobile table of contents as a named navigation landmark", () => {
+  test("exposes the mobile table of contents as a compact dialog trigger", () => {
     const markup = renderToStaticMarkup(
       <ArticleToc headings={[{ depth: 2, id: "intro", text: "Introduction" }]} locale="en" mode="mobile" />,
     );
 
-    expect(markup).toContain('<nav aria-label="On this page"');
-    expect(markup).toContain('href="#intro"');
+    expect(markup).toContain('aria-haspopup="dialog"');
+    expect(markup).toContain('aria-expanded="false"');
+    expect(markup).toContain('data-testid="mobile-toc-trigger"');
+    expect(markup).toContain('<span class="blog-toc-mobile-kicker">On this page</span>');
   });
 
   test("marks only the current article section as the present location", () => {

@@ -83,8 +83,15 @@ if (!("Bun" in globalThis)) {
       const nav = page.locator(".site-nav-glass");
       const githubLink = nav.getByRole("link", { name: "GitHub" });
       const githubLabel = githubLink.locator("span");
+      const githubIcon = githubLink.locator("svg");
+      const themeIcon = nav
+        .getByRole("button", { name: /^Theme:/ })
+        .locator("svg")
+        .first();
 
       await expect(githubLink).toBeVisible();
+      await expect(githubIcon).toHaveAttribute("stroke-width", "2.2");
+      await expect(themeIcon).toHaveAttribute("stroke-width", "2.2");
 
       const [githubBounds, navBounds] = await Promise.all([githubLink.boundingBox(), nav.boundingBox()]);
       const viewport = page.viewportSize();
@@ -102,6 +109,38 @@ if (!("Bun" in globalThis)) {
         expect(githubBounds?.width).toBeGreaterThan(40);
         await expect(githubLabel).toHaveCSS("position", "static");
       }
+    });
+
+    test("header gives Back and the logo deliberate room on iPhone 17 Pro", async ({ page, isMobile }) => {
+      test.skip(!isMobile, "iPhone 17 Pro mobile contract");
+      await page.setViewportSize({ width: 402, height: 874 });
+      await page.goto("/project/this-is-language");
+
+      const nav = page.locator(".site-nav-glass");
+      const backButton = nav.getByRole("button", { name: "Back" });
+      const logoTile = nav.getByRole("link", { name: "Oleh Vanin home" }).locator(".logo-tile");
+
+      await expect(backButton).toBeVisible();
+      await expect(logoTile).toBeVisible();
+
+      const [backBounds, logoBounds, navBounds] = await Promise.all([
+        backButton.boundingBox(),
+        logoTile.boundingBox(),
+        nav.boundingBox(),
+      ]);
+      const viewport = page.viewportSize();
+
+      expect(backBounds).not.toBeNull();
+      expect(logoBounds).not.toBeNull();
+      expect(navBounds).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      expect(backBounds?.width).toBeCloseTo(40, 1);
+      expect(backBounds?.height).toBeCloseTo(40, 1);
+      expect(logoBounds?.width).toBeCloseTo(40, 1);
+      expect(logoBounds?.height).toBeCloseTo(40, 1);
+      expect((logoBounds?.x ?? 0) - ((backBounds?.x ?? 0) + (backBounds?.width ?? 0))).toBeGreaterThanOrEqual(6);
+      expect(navBounds?.x).toBeGreaterThanOrEqual(0);
+      expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
     });
 
     test("document language follows the Blog locale without changing the site language", async ({ page, isMobile }) => {
