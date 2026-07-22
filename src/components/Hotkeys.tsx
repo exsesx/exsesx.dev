@@ -1,6 +1,17 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Command, Home, Monitor, SunMoon, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpenText,
+  BriefcaseBusiness,
+  Command,
+  Home,
+  Monitor,
+  SunMoon,
+  X,
+} from "lucide-react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { type ElementType, useEffect, useEffectEvent, useRef, useState } from "react";
 import { getHotkeyDecision, getHotkeySequenceKey, type HotkeyRouteAction, type HotkeyState } from "@/lib/hotkeys";
@@ -23,6 +34,7 @@ const HOTKEYS: Array<{
 }> = [
   { sequence: ["g", "h"], action: "home", description: "Home", icon: Home, repeatable: true },
   { sequence: ["g", "p"], action: "projects", description: "Projects", icon: BriefcaseBusiness, repeatable: true },
+  { sequence: ["g", "b"], action: "blog", description: "Blog", icon: BookOpenText, repeatable: true },
   { sequence: ["g", "t"], action: "theme-toggle", description: "Toggle theme", icon: SunMoon, repeatable: true },
   { sequence: ["g", "d"], action: "theme-device", description: "Device theme", icon: Monitor, repeatable: true },
   {
@@ -140,6 +152,7 @@ export default Hotkeys;
 function HotkeyHint({ isSequenceRendered, sequence }: { isSequenceRendered: boolean; sequence: string[] }) {
   return (
     <div
+      lang="en"
       className="hotkeys-corner-hint glass-frost fixed bottom-4 left-4 z-[80] hidden h-11 grid-cols-1 grid-rows-1 rounded-full text-foreground shadow-menu md:grid"
       data-pending={isSequenceRendered ? "true" : "false"}
     >
@@ -183,6 +196,7 @@ function HotkeyModal() {
 
   return (
     <DialogContent
+      lang="en"
       initialFocus={closeButtonRef}
       className="hotkeys-panel glass-frost relative max-w-lg rounded-[1.75rem] p-3 text-foreground shadow-menu sm:p-4"
     >
@@ -277,7 +291,7 @@ function runHotkeyAction(action: HotkeyAction, router: ReturnType<typeof useRout
 
   const { href, transitionTypes } = prepareHotkeyRouteNavigation(action);
 
-  router.push(href, { transitionTypes });
+  router.push(href as Route, { transitionTypes });
 }
 
 function areHotkeyStatesEqual(left: HotkeyState<HotkeyAction>, right: HotkeyState<HotkeyAction>) {

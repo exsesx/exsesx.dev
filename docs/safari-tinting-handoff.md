@@ -53,16 +53,18 @@ viewport edges (live WebKit observer). Two sample sources:
 - Nav wrapped in `.site-header-nav-frame`; `viewTransitionName: "persistent-nav"` moved to
   the frame (keeps the morph). `suppressHydrationWarning` (script mutates inline bg pre-hydration).
 
-### `src/app/layout.tsx`
+### `src/components/AppDocument.tsx`
+- Shared by the site root, localized Blog root, and global 404 document so the
+  pre-paint theme and Safari chrome contract cannot drift between roots.
 - Bootstrap script runs in `<head>` via `dangerouslySetInnerHTML` (so chrome is set before
   Safari's first sample). `paintSafariChrome(darkMode)` sets `--background`,
   `--safari-chrome-color`, `<html>` bg/colorScheme, and calls `syncThemeColorMeta()`.
 - `syncThemeColorMeta()` + a `MutationObserver` on `<head>` keep exactly **one non-media**
   `theme-color` tag matching the theme (strips any media-keyed duplicates Next emits).
   Re-entrancy guarded; `window.MutationObserver` feature-checked.
-- `viewport` export: single non-media `themeColor: THEME_CHROME_COLORS.light` (not a
-  prefers-color-scheme array — media tags let iOS override the JS value), `viewportFit:
-  "cover"` (required for the bottom bar).
+- `src/lib/metadata.ts` exports the shared viewport with `viewportFit: "cover"`.
+  The bootstrap script owns the single non-media `theme-color` tag because media-keyed
+  metadata tags let iOS override the resolved JS value.
 
 ### `src/components/ThemeSwitcher.tsx`
 - On theme change (post-hydration): `paintSafariChromeSamples(isDark)` paints `<html>`,

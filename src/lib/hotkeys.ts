@@ -10,7 +10,7 @@ export interface HotkeyInputCapabilities {
   hasCoarsePointer: boolean;
 }
 
-export type HotkeyRouteAction = "home" | "projects";
+export type HotkeyRouteAction = "home" | "projects" | "blog";
 
 export type { NavbarHotkeyDirection };
 
@@ -92,9 +92,10 @@ export function getHotkeyDecision<TAction extends string>({
     const navbarDirection = getNavbarHotkeyDirection(input.key);
 
     if (navbarDirection) {
+      const href = getNavbarHotkeyRoute(input.pathname, navbarDirection);
+
       return {
-        action:
-          getNavbarHotkeyRoute(input.pathname, navbarDirection) === "/" ? ("home" as TAction) : ("projects" as TAction),
+        action: (href === "/" ? "home" : href === "/projects" ? "projects" : "blog") as TAction,
         nextState: resetInteractionState(state),
         preventDefault: true,
       };

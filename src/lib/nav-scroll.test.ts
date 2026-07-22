@@ -10,6 +10,10 @@ describe("shouldScrollToTopForNavClick", () => {
     expect(shouldScrollToTopForNavClick({ pathname: "/projects", href: "/projects", scrollY: 24 })).toBe(true);
   });
 
+  test("scrolls to top when clicking the current Blog route below the top", () => {
+    expect(shouldScrollToTopForNavClick({ pathname: "/blog/en", href: "/blog/en", scrollY: 24 })).toBe(true);
+  });
+
   test("does not intercept clicks at the top of the current route", () => {
     expect(shouldScrollToTopForNavClick({ pathname: "/", href: "/", scrollY: 0 })).toBe(false);
   });

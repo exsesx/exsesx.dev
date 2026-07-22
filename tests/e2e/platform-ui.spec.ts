@@ -96,6 +96,44 @@ if (!("Bun" in globalThis)) {
       }
     });
 
+    test("document language follows the Blog locale without changing the site language", async ({ page, isMobile }) => {
+      test.skip(Boolean(isMobile), "document language is viewport-independent");
+
+      await page.goto("/");
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+
+      await page.goto("/blog/en");
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expect(page.locator(".site-header")).toHaveAttribute("lang", "en");
+
+      await page.goto("/blog/uk");
+      await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+      await expect(page.locator(".site-header")).toHaveAttribute("lang", "en");
+      await expect(page.getByRole("heading", { level: 1, name: "Нотатки з майстерні" })).toBeVisible();
+    });
+
+    test("Blog navigation and article content fit the 390px mobile viewport", async ({ page, isMobile }) => {
+      test.skip(!isMobile, "390px mobile contract");
+
+      await page.goto("/projects");
+      const blogLink = page.getByRole("link", { name: "Blog", exact: true });
+      await expect(blogLink).toBeVisible();
+      await expect(blogLink).toHaveAttribute("href", "/blog/en");
+      await Promise.all([page.waitForURL("**/blog/en"), blogLink.click()]);
+
+      await expect(page.getByRole("link", { name: "Blog", exact: true })).toHaveAttribute("aria-current", "page");
+      await expect(page.locator(".site-nav-active-pill")).toHaveAttribute("data-active-nav", "blog");
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expectPageToFitViewport(page);
+
+      await Promise.all([
+        page.waitForURL("**/blog/en/codex-agents-v2"),
+        page.getByRole("link", { name: "Read article" }).click(),
+      ]);
+      await expect(page.getByRole("heading", { level: 1, name: /Agents V2/ })).toBeVisible();
+      await expectPageToFitViewport(page);
+    });
+
     test("theme dropdown stays anchored and applies a selected mode", async ({ page }) => {
       await page.addInitScript(() => {
         window.localStorage.setItem("exsesx:color-scheme", JSON.stringify("light"));
@@ -388,4 +426,23 @@ if (!("Bun" in globalThis)) {
       expect(page.url()).toBe(initialUrl);
     });
   });
+}
+
+async function expectPageToFitViewport(page: Page) {
+  await expect.poll(() => page.evaluate(() => window.innerWidth)).toBe(390);
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth))
+    .toBeLessThanOrEqual(0);
+
+  const [mainBounds, navBounds] = await Promise.all([
+    page.locator("main").boundingBox(),
+    page.locator(".site-nav-glass").boundingBox(),
+  ]);
+
+  expect(mainBounds).not.toBeNull();
+  expect(navBounds).not.toBeNull();
+  expect(mainBounds?.x ?? -1).toBeGreaterThanOrEqual(0);
+  expect((mainBounds?.x ?? 0) + (mainBounds?.width ?? 0)).toBeLessThanOrEqual(391);
+  expect(navBounds?.x ?? -1).toBeGreaterThanOrEqual(0);
+  expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(391);
 }

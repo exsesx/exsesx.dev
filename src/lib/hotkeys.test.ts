@@ -1,15 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { getHotkeyDecision, getNavbarHotkeyRoute, type HotkeyDecisionInput, type HotkeyState } from "./hotkeys";
 
-type TestAction = "home" | "projects" | "theme-toggle" | "github";
+type TestAction = "home" | "projects" | "blog" | "theme-toggle" | "github";
 
 const shortcuts = [
   { sequence: ["g", "h"], action: "home" },
   { sequence: ["g", "p"], action: "projects" },
+  { sequence: ["g", "b"], action: "blog" },
   { sequence: ["g", "t"], action: "theme-toggle" },
   { sequence: ["g", "g"], action: "github" },
 ] as const;
-const repeatableActions = new Set<TestAction>(["home", "projects", "theme-toggle"]);
+const repeatableActions = new Set<TestAction>(["home", "projects", "blog", "theme-toggle"]);
 
 function state(overrides: Partial<HotkeyState<TestAction>> = {}): HotkeyState<TestAction> {
   return {
@@ -44,12 +45,16 @@ describe("getNavbarHotkeyRoute", () => {
     expect(getNavbarHotkeyRoute("/projects", "left")).toBe("/");
   });
 
-  test("wraps left from home to projects", () => {
-    expect(getNavbarHotkeyRoute("/", "left")).toBe("/projects");
+  test("moves right from projects to Blog", () => {
+    expect(getNavbarHotkeyRoute("/projects", "right")).toBe("/blog/en");
   });
 
-  test("wraps right from projects to home", () => {
-    expect(getNavbarHotkeyRoute("/projects", "right")).toBe("/");
+  test("wraps left from home to Blog", () => {
+    expect(getNavbarHotkeyRoute("/", "left")).toBe("/blog/en");
+  });
+
+  test("wraps right from a localized Blog route to home", () => {
+    expect(getNavbarHotkeyRoute("/blog/uk/codex-agents-v2", "right")).toBe("/");
   });
 
   test("treats project detail pages as the projects nav item", () => {
@@ -69,6 +74,10 @@ describe("getHotkeyDecision", () => {
     });
     expect(decide({ key: "h", shiftKey: true, pathname: "/project/quicklizard" })).toMatchObject({
       action: "home",
+      preventDefault: true,
+    });
+    expect(decide({ key: "l", shiftKey: true, pathname: "/projects" })).toMatchObject({
+      action: "blog",
       preventDefault: true,
     });
   });
@@ -102,6 +111,16 @@ describe("getHotkeyDecision", () => {
     expect(decide({ key: "p" }, pending.nextState)).toEqual({
       action: "projects",
       nextState: state({ lastRepeatableAction: "projects" }),
+      preventDefault: true,
+    });
+  });
+
+  test("matches and repeats the Blog chord", () => {
+    const pending = decide({ key: "g" });
+
+    expect(decide({ key: "b" }, pending.nextState)).toEqual({
+      action: "blog",
+      nextState: state({ lastRepeatableAction: "blog" }),
       preventDefault: true,
     });
   });

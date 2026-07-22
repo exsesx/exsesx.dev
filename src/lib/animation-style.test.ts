@@ -4,9 +4,9 @@ const globalsUrl = new URL("../styles/globals.css", import.meta.url);
 const buttonVariantsUrl = new URL("../components/ui/button-variants.ts", import.meta.url);
 const cvMenuUrl = new URL("../components/CvMenu.tsx", import.meta.url);
 const themeSwitcherUrl = new URL("../components/ThemeSwitcher.tsx", import.meta.url);
-const homePageUrl = new URL("../app/page.tsx", import.meta.url);
-const projectsPageUrl = new URL("../app/projects/page.tsx", import.meta.url);
-const projectDetailUrl = new URL("../app/project/[slug]/page.tsx", import.meta.url);
+const homePageUrl = new URL("../app/(site)/page.tsx", import.meta.url);
+const projectsPageUrl = new URL("../app/(site)/projects/page.tsx", import.meta.url);
+const projectDetailUrl = new URL("../app/(site)/project/[slug]/page.tsx", import.meta.url);
 
 async function readGlobalsCss() {
   return Bun.file(globalsUrl).text();
@@ -117,8 +117,12 @@ describe("semantic animation styles", () => {
 
   test("preserves non-spatial feedback for reduced motion", async () => {
     const css = await readGlobalsCss();
-    const reducedMotion = css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
+    const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce) {\n  ::view-transition-old(*)");
+    const reducedMotionEnd = css.indexOf("\n@media (prefers-contrast: more)", reducedMotionStart);
+    const reducedMotion = css.slice(reducedMotionStart, reducedMotionEnd);
 
+    expect(reducedMotionStart).toBeGreaterThan(-1);
+    expect(reducedMotionEnd).toBeGreaterThan(reducedMotionStart);
     expect(reducedMotion).not.toMatch(/animation-duration:\s*0\.01ms/);
     expect(reducedMotion).not.toMatch(/transition-duration:\s*0\.01ms/);
     expect(reducedMotion).toContain(".site-header-nav-frame");
