@@ -90,7 +90,7 @@ viewport edges (live WebKit observer). Two sample sources:
 ## Verify
 
 - `bunx tsc --noEmit` (ignore pre-existing `bun:test` errors in *.test.ts).
-- `bun run check` clean.
+- `bun run biome:check` clean.
 - `bun run build` → `/` and `/projects` are `○ (Static)`.
 - SSR emits exactly one `<meta name="theme-color">` (no media variants).
 - iOS 26: top + bottom chrome tint on load + live on toggle; nav clears the status bar

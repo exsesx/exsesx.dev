@@ -10,8 +10,10 @@
     "test:e2e": "playwright test",
     "test:motion": "playwright test tests/e2e/route-motion.spec.ts",
     "start": "next start",
-    "check": "biome check . --diagnostic-level=error",
-    "check:write": "biome check --write .",
+    "biome:check": "biome check . --diagnostic-level=error",
+    "biome:write": "biome check --write .",
+    "mdx:check": "bun scripts/check-mdx-format.ts",
+    "mdx:format": "remark src/content --ext mdx --output",
     "generate:favicons": "bun scripts/generate-favicons.ts",
     "generate:social-images": "bun scripts/generate-social-images.ts",
     "prepare": "husky"
@@ -51,6 +53,9 @@
     "@types/react-dom": "19.2.3",
     "babel-plugin-react-compiler": "1.0.0",
     "husky": "9.1.7",
+    "remark": "15.0.1",
+    "remark-cli": "12.0.1",
+    "remark-mdx": "3.1.1",
     "typescript": "7.0.2"
   },
   "overrides": {
