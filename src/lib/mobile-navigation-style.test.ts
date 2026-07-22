@@ -2,8 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { getBackTransitionTypeProps, MOTION_ATTRIBUTES, ROUTE_TRANSITION_TYPES } from "./motion-contract";
 
 const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
+const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 const navBackButtonUrl = new URL("../components/NavBackButton.tsx", import.meta.url);
-const rootLayoutUrl = new URL("../app/layout.tsx", import.meta.url);
+const appDocumentUrl = new URL("../components/AppDocument.tsx", import.meta.url);
+const documentBootstrapScriptsUrl = new URL("../components/DocumentBootstrapScripts.tsx", import.meta.url);
+const blogFocusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
 const nextConfigUrl = new URL("../../next.config.mts", import.meta.url);
 
 async function readGlobalsCss() {
@@ -43,6 +46,21 @@ describe("mobile navigation styles", () => {
     // remove the slide, never the transform itself
     expect(activePillRule).not.toMatch(/transform:/);
     expect(activePillRule).toMatch(/transition:\s*none/);
+  });
+
+  test("aligns the active pill with all three navigation destinations", async () => {
+    const [css, header] = await Promise.all([readGlobalsCss(), Bun.file(headerUrl).text()]);
+    const activePillRule = getRuleBody(css, ".site-nav-active-pill");
+    const projectsPillRule = getRuleBody(css, '.site-nav-active-pill[data-active-nav="projects"]');
+    const blogPillRule = getRuleBody(css, '.site-nav-active-pill[data-active-nav="blog"]');
+
+    expect(header).toContain('{ href: "/blog/en", label: "Blog", icon: BookOpenText }');
+    expect(header).toContain("grid-cols-[2.5rem_2.5rem_2.5rem]");
+    expect(header).toContain("sm:grid-cols-3");
+    expect(activePillRule).toMatch(/width:\s*calc\(\(100% - 1rem\) \/ 3\)/);
+    expect(projectsPillRule).toMatch(/translate3d\(calc\(100% \+ 0\.25rem\), 0, 0\)/);
+    expect(blogPillRule).toMatch(/translate3d\(calc\(200% \+ 0\.5rem\), 0, 0\)/);
+    expect(css).toMatch(/@media \(max-width: 639px\) \{[\s\S]*?\.site-nav-active-pill\s*\{[\s\S]*?width:\s*2\.5rem/);
   });
 
   test("folds the back-chip slot on the live element so the brand glides with it", async () => {
@@ -107,10 +125,37 @@ describe("mobile navigation styles", () => {
   });
 
   test("does not put the app shell in an overflow container that disables sticky descendants", async () => {
-    const rootLayout = await Bun.file(rootLayoutUrl).text();
+    const [appDocument, blogFocusProvider] = await Promise.all([
+      Bun.file(appDocumentUrl).text(),
+      Bun.file(blogFocusProviderUrl).text(),
+    ]);
+    const appShell = `${appDocument}\n${blogFocusProvider}`;
 
-    expect(rootLayout).not.toContain("overflow-x-hidden");
-    expect(rootLayout).toContain("overflow-x-clip");
+    expect(appShell).not.toContain("overflow-x-hidden");
+    expect(appShell).toContain("overflow-x-clip");
+  });
+
+  test("server-inserts document bootstraps outside client route rendering", async () => {
+    const [appDocument, bootstrapScripts] = await Promise.all([
+      Bun.file(appDocumentUrl).text(),
+      Bun.file(documentBootstrapScriptsUrl).text(),
+    ]);
+
+    expect(appDocument).toContain("<DocumentBootstrapScripts />");
+    expect(appDocument).not.toContain('id="noflash"');
+    expect(appDocument).not.toContain('id="blog-focus-bootstrap"');
+    expect(bootstrapScripts).toContain("useServerInsertedHTML");
+    expect(bootstrapScripts).toContain('id="noflash"');
+    expect(bootstrapScripts).toContain('id="blog-focus-bootstrap"');
+    expect(bootstrapScripts).toContain("dangerouslySetInnerHTML");
+  });
+
+  test("offers a localized keyboard escape route to the main content", async () => {
+    const appDocument = await Bun.file(appDocumentUrl).text();
+
+    expect(appDocument).toContain('className="skip-to-content"');
+    expect(appDocument).toContain('href="#main-content"');
+    expect(appDocument).toContain('lang === "uk" ? "Перейти до основного вмісту" : "Skip to main content"');
   });
 
   test("keeps the Turbopack persistent build cache disabled", async () => {

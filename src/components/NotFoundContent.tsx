@@ -1,19 +1,16 @@
 import { ArrowRight, Home } from "lucide-react";
-import type { Metadata } from "next";
 import Link from "next/link";
-import { buttonVariants } from "../components/ui/button-variants";
-import { siteName } from "../lib/metadata";
-import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "../lib/motion-contract";
+import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { buttonVariants } from "./ui/button-variants";
 
-export const metadata: Metadata = {
-  title: `Page not found - ${siteName}`,
-  description: "This page wandered off. The link may be old or the project was renamed.",
-  robots: { index: false, follow: true },
-};
-
-export default function NotFound() {
+export default function NotFoundContent() {
   return (
-    <main className="mx-auto flex min-h-[calc(100svh-8rem)] w-full max-w-7xl flex-col justify-center px-4 pb-20 pt-28 sm:px-6 lg:pt-32">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      lang="en"
+      className="mx-auto flex min-h-[calc(100svh-8rem)] w-full max-w-7xl flex-col justify-center px-4 pb-20 pt-28 sm:px-6 lg:pt-32"
+    >
       <section className="max-w-3xl">
         <p className="motion-rise flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-accent">
           Error 404
@@ -23,7 +20,6 @@ export default function NotFound() {
           Flatlined.
         </h1>
 
-        {/* a flat "pulse" — the page has no heartbeat. echoes the site's pulse motif */}
         <svg
           aria-hidden="true"
           viewBox="0 0 420 40"

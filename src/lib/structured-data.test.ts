@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { buildHomeStructuredData, buildProjectsStructuredData } from "./structured-data";
+import { getBlogPost, getBlogPosts } from "@/content/blog/manifest";
+import {
+  buildBlogIndexStructuredData,
+  buildBlogPostingStructuredData,
+  buildHomeStructuredData,
+  buildProjectsStructuredData,
+} from "./structured-data";
 
 describe("buildHomeStructuredData", () => {
   test("describes the visible profile page, person, and website", () => {
@@ -67,6 +73,42 @@ describe("buildProjectsStructuredData", () => {
         name: "ControlUp",
         url: "https://exsesx.dev/project/controlup",
       },
+    });
+  });
+});
+
+describe("Blog structured data", () => {
+  test("describes the visible article as a BlogPosting by Oleh Vanin", () => {
+    const article = getBlogPost("en", "codex-agents-v2", { includeDrafts: false });
+
+    if (!article) {
+      throw new Error("Expected the published English article fixture");
+    }
+
+    expect(buildBlogPostingStructuredData(article)).toMatchObject({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "@id": "https://exsesx.dev/blog/en/codex-agents-v2#article",
+      url: "https://exsesx.dev/blog/en/codex-agents-v2",
+      headline: "Codex Agents V2 in 0.145.0: what changed and how to enable it",
+      inLanguage: "en",
+      datePublished: "2026-07-22T12:00:00+02:00",
+      author: {
+        "@type": "Person",
+        "@id": "https://exsesx.dev/#person",
+        name: "Oleh Vanin",
+      },
+    });
+  });
+
+  test("lists only visible posts on a localized Blog index", () => {
+    const posts = getBlogPosts("en", { includeDrafts: false });
+    const data = buildBlogIndexStructuredData("en", posts);
+
+    expect(data["@graph"][0]).toMatchObject({
+      "@type": "ItemList",
+      "@id": "https://exsesx.dev/blog/en#itemlist",
+      numberOfItems: 1,
     });
   });
 });

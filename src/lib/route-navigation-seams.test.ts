@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 const hotkeysUrl = new URL("../components/Hotkeys.tsx", import.meta.url);
 const navBackButtonUrl = new URL("../components/NavBackButton.tsx", import.meta.url);
-const notFoundUrl = new URL("../app/not-found.tsx", import.meta.url);
-const projectDetailUrl = new URL("../app/project/[slug]/page.tsx", import.meta.url);
+const notFoundUrl = new URL("../components/NotFoundContent.tsx", import.meta.url);
+const projectDetailUrl = new URL("../app/(site)/project/[slug]/page.tsx", import.meta.url);
 
 describe("route navigation seams", () => {
   test("Back home publishes the shared entry-motion suppression intent", async () => {
@@ -26,7 +26,7 @@ describe("route navigation seams", () => {
   test("Hotkeys performs one direct navigation with the prepared types", async () => {
     const source = await Bun.file(hotkeysUrl).text();
 
-    expect(source).toMatch(/router\.push\(href,\s*\{\s*transitionTypes\s*\}\s*\);/);
+    expect(source).toMatch(/router\.push\(href as Route,\s*\{\s*transitionTypes\s*\}\s*\);/);
     expect(source).not.toMatch(/\bstartTransition\b/);
   });
 

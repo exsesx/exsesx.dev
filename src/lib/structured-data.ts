@@ -1,3 +1,5 @@
+import type { BlogPostEntry, BlogPostSummary } from "@/content/blog/types";
+import { type BlogLocale, getBlogIndexPath, getBlogPostPath } from "./blog";
 import { defaultSocialImage, siteName, siteUrl } from "./metadata";
 import { getProjectPath, projects, specialties } from "./projects";
 import { SITE_PROFILE } from "./site-profile";
@@ -79,6 +81,71 @@ export function buildProjectsStructuredData() {
             url: `${siteUrl}${getProjectPath(project)}`,
             description: project.description,
             about: project.tags,
+          },
+        })),
+      },
+    ],
+  } as const;
+}
+
+export function buildBlogPostingStructuredData(article: BlogPostEntry) {
+  const url = `${siteUrl}${getBlogPostPath(article.locale, article.slug)}`;
+  const personId = `${siteUrl}/#person`;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    url,
+    headline: article.seoTitle ?? article.title,
+    description: article.description,
+    inLanguage: article.locale,
+    datePublished: article.publishedAt,
+    dateModified: article.updatedAt ?? article.publishedAt,
+    image: absoluteUrl(article.socialImage.path),
+    keywords: article.tags,
+    mainEntityOfPage: url,
+    isPartOf: {
+      "@type": "Blog",
+      "@id": `${siteUrl}${getBlogIndexPath(article.locale)}#blog`,
+    },
+    author: {
+      "@type": "Person",
+      "@id": personId,
+      name: SITE_PROFILE.name,
+      url: siteUrl,
+    },
+    publisher: {
+      "@type": "Person",
+      "@id": personId,
+      name: SITE_PROFILE.name,
+      url: siteUrl,
+    },
+  } as const;
+}
+
+export function buildBlogIndexStructuredData(locale: BlogLocale, posts: readonly BlogPostSummary[]) {
+  const indexUrl = `${siteUrl}${getBlogIndexPath(locale)}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ItemList",
+        "@id": `${indexUrl}#itemlist`,
+        name: locale === "en" ? "Oleh Vanin's technical Blog" : "Технічний блог Олега Ваніна",
+        url: indexUrl,
+        numberOfItems: posts.length,
+        itemListElement: posts.map((post, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          item: {
+            "@type": "BlogPosting",
+            "@id": `${siteUrl}${getBlogPostPath(locale, post.slug)}#article`,
+            name: post.title,
+            url: `${siteUrl}${getBlogPostPath(locale, post.slug)}`,
+            description: post.description,
+            inLanguage: locale,
           },
         })),
       },

@@ -1,12 +1,12 @@
-import type { Route } from "next";
+import { resolveBlogBackHref } from "./blog";
 import { MOTION_ATTRIBUTES, MOTION_DATASET_KEYS, ROUTE_TRANSITION_TYPES } from "./motion-contract";
 import { isProjectsIndexRoutePath } from "./routes";
 
 const PREVIOUS_ROUTE_STORAGE_KEY = "exsesx.previousRoute";
 const PENDING_SCROLL_RESTORE_STORAGE_KEY = "exsesx.pendingScrollRestore";
-const FALLBACK_BACK_HREF = "/projects" as Route;
+const FALLBACK_BACK_HREF = "/projects";
 
-export type RouteHotkeyAction = "home" | "projects";
+export type RouteHotkeyAction = "home" | "projects" | "blog";
 
 type StoredRoute = {
   path: string;
@@ -14,7 +14,7 @@ type StoredRoute = {
 };
 
 type RouteNavigationIntent = {
-  href: Route;
+  href: string;
   scroll?: false;
   transitionTypes: string[];
 };
@@ -31,14 +31,20 @@ export function captureAnchorRouteIntent(anchor: RouteIntentAnchor) {
 }
 
 export function getBackNavigationIntent(): RouteNavigationIntent {
-  const fallbackTransitionTypes = getBackTransitionTypes();
-  const previousRoute = readPreviousRoute({ allowCurrent: false });
+  const blogFallbackHref = resolveBlogBackHref(window.location.pathname);
+  const fallbackHref = blogFallbackHref ?? FALLBACK_BACK_HREF;
+  const fallbackTransitionTypes = blogFallbackHref ? [ROUTE_TRANSITION_TYPES.navBack] : getBackTransitionTypes();
+  const storedPreviousRoute = readPreviousRoute({ allowCurrent: false });
+  const previousRoute =
+    blogFallbackHref && storedPreviousRoute && getPathname(storedPreviousRoute.path) !== blogFallbackHref
+      ? null
+      : storedPreviousRoute;
 
   setRouteNavigationSuppressed(true);
 
   if (!previousRoute) {
     return {
-      href: FALLBACK_BACK_HREF,
+      href: fallbackHref,
       transitionTypes: fallbackTransitionTypes,
     };
   }
@@ -46,11 +52,13 @@ export function getBackNavigationIntent(): RouteNavigationIntent {
   queueScrollRestore(previousRoute);
 
   return {
-    href: previousRoute.path as Route,
+    href: previousRoute.path,
     scroll: false,
-    transitionTypes: isProjectsIndexRoutePath(previousRoute.path)
-      ? fallbackTransitionTypes
-      : [ROUTE_TRANSITION_TYPES.navBack],
+    transitionTypes: blogFallbackHref
+      ? [ROUTE_TRANSITION_TYPES.navBack]
+      : isProjectsIndexRoutePath(previousRoute.path)
+        ? fallbackTransitionTypes
+        : [ROUTE_TRANSITION_TYPES.navBack],
   };
 }
 
@@ -58,9 +66,17 @@ export function prepareHotkeyRouteNavigation(action: RouteHotkeyAction): RouteNa
   setRouteNavigationSuppressed(true);
 
   return {
-    href: action === "home" ? "/" : FALLBACK_BACK_HREF,
+    href: action === "home" ? "/" : action === "projects" ? FALLBACK_BACK_HREF : "/blog/en",
     transitionTypes: [],
   };
+}
+
+function getPathname(value: string) {
+  try {
+    return new URL(value, "https://exsesx.dev").pathname;
+  } catch {
+    return value.split(/[?#]/, 1)[0] ?? value;
+  }
 }
 
 export function queueBrowserBackScrollRestore() {

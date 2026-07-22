@@ -1,6 +1,6 @@
 "use client";
 
-import { BriefcaseBusiness, Home } from "lucide-react";
+import { BookOpenText, BriefcaseBusiness, Home } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,17 +9,19 @@ import { useEffect, useRef, useState } from "react";
 import { MOTION_ATTRIBUTES, suppressEntryMotionProps } from "@/lib/motion-contract";
 import { attachNavCondense } from "@/lib/nav-condense";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
-import { getPrimaryNavHref } from "@/lib/routes";
+import { getPrimaryNavHref, isBlogPostPath, isProjectDetailPath, type PrimaryNavHref } from "@/lib/routes";
 import { SITE_PROFILE } from "@/lib/site-profile";
+import { useBlogFocus } from "./blog/BlogFocusProvider";
 import { GithubIcon } from "./icons/lucide-github";
 import LogoMark from "./LogoMark";
 import NavBackButton from "./NavBackButton";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { buttonVariants } from "./ui/button-variants";
 
-const navigation: Array<{ href: Route; label: string; icon: typeof Home }> = [
+const navigation: Array<{ href: PrimaryNavHref; label: string; icon: typeof Home }> = [
   { href: "/", label: "Home", icon: Home },
   { href: "/projects", label: "Projects", icon: BriefcaseBusiness },
+  { href: "/blog/en", label: "Blog", icon: BookOpenText },
 ];
 
 const navActionBaseClassName =
@@ -37,10 +39,13 @@ function shouldPreviewNavChange(event: MouseEvent<HTMLAnchorElement> | PointerEv
 
 export default function Header() {
   const pathname = usePathname();
+  const { isFocusMode, isPassiveHeaderHidden, revealHeader } = useBlogFocus();
   const activeNavHref = getPrimaryNavHref(pathname);
-  const [visualActiveNavHref, setVisualActiveNavHref] = useState<Route>(activeNavHref);
+  const [visualActiveNavHref, setVisualActiveNavHref] = useState<PrimaryNavHref>(activeNavHref);
   const navFrameRef = useRef<HTMLDivElement | null>(null);
-  const visualActiveNav = visualActiveNavHref === "/projects" ? "projects" : "home";
+  const visualActiveNav =
+    visualActiveNavHref === "/projects" ? "projects" : visualActiveNavHref === "/blog/en" ? "blog" : "home";
+  const isReadingHeaderHidden = isFocusMode || isPassiveHeaderHidden;
 
   useEffect(() => {
     setVisualActiveNavHref(activeNavHref);
@@ -56,7 +61,7 @@ export default function Header() {
     return attachNavCondense(frame);
   }, []);
 
-  function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, href: Route) {
+  function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, href: PrimaryNavHref) {
     if (shouldPreviewNavChange(event)) {
       setVisualActiveNavHref(href);
     }
@@ -68,16 +73,23 @@ export default function Header() {
   }
 
   return (
-    <header className="site-header fixed inset-x-0 top-0 z-50" data-safari-chrome-sample>
+    <header lang="en" className="site-header fixed inset-x-0 top-0 z-50" data-safari-chrome-sample>
       <div aria-hidden="true" className="site-header-fade" style={{ viewTransitionName: "persistent-nav-fade" }} />
-      <div ref={navFrameRef} className="site-header-nav-frame" style={{ viewTransitionName: "persistent-nav" }}>
-        <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-full px-3 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between">
-          <div className="flex min-w-0 items-center">
-            <NavBackButton active={pathname.startsWith("/project/")} />
+      <div
+        ref={navFrameRef}
+        aria-hidden={isReadingHeaderHidden ? "true" : undefined}
+        className="site-header-nav-frame"
+        inert={isReadingHeaderHidden ? true : undefined}
+        onFocusCapture={revealHeader}
+        style={{ viewTransitionName: "persistent-nav" }}
+      >
+        <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full px-2 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between sm:gap-3 sm:px-3">
+          <div className="site-nav-leading flex min-w-0 items-center">
+            <NavBackButton active={isProjectDetailPath(pathname) || isBlogPostPath(pathname)} />
             <Link
               href="/"
               {...suppressEntryMotionProps}
-              className="site-nav-brand-link flex min-w-0 items-center rounded-full px-2 py-1 text-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
+              className="site-nav-brand-link flex min-w-0 items-center rounded-full px-0 py-1 text-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent sm:px-2"
               aria-label="Oleh Vanin home"
               onClick={event => handleNavLinkClick(event, "/")}
               onPointerDown={event => {
@@ -97,7 +109,7 @@ export default function Header() {
           </div>
 
           <div
-            className="site-nav-switcher relative grid grid-cols-[3rem_3rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-2"
+            className="site-nav-switcher relative grid grid-cols-[2.5rem_2.5rem_2.5rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-3"
             {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
           >
             <span
@@ -111,7 +123,7 @@ export default function Header() {
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={item.href as Route}
                   {...suppressEntryMotionProps}
                   aria-label={item.label}
                   aria-current={activeNavHref === item.href ? "page" : undefined}
@@ -130,7 +142,7 @@ export default function Header() {
             })}
           </div>
 
-          <div className="flex items-center justify-end gap-2">
+          <div className="site-nav-actions flex items-center justify-end gap-1 sm:gap-2">
             <a
               href={SITE_PROFILE.links.github}
               className={`${buttonVariants({ variant: "glass", size: "icon" })} md:w-auto md:gap-2 md:px-4 md:pl-3`}
@@ -138,7 +150,9 @@ export default function Header() {
               <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
               <span className="sr-only md:not-sr-only">GitHub</span>
             </a>
-            <ThemeSwitcher />
+            <span className="site-nav-theme inline-flex">
+              <ThemeSwitcher />
+            </span>
           </div>
         </nav>
       </div>

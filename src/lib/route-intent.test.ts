@@ -170,7 +170,44 @@ describe("route intent", () => {
       href: "/projects",
       transitionTypes: [],
     });
+    expect(prepareHotkeyRouteNavigation("blog")).toEqual({
+      href: "/blog/en",
+      transitionTypes: [],
+    });
     expect(runtime.dataset[MOTION_DATASET_KEYS.viewTransitionNavigated]).toBe("true");
+  });
+
+  test("falls back from a directly loaded Blog article to its locale index", () => {
+    installRouteRuntime({ pathname: "/blog/uk/codex-agents-v2", backTransitionType: "project-transition-stale" });
+
+    expect(getBackNavigationIntent()).toEqual({
+      href: "/blog/uk",
+      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack],
+    });
+  });
+
+  test("restores the matching Blog index route and ignores unrelated stored routes", () => {
+    const runtime = installRouteRuntime({ pathname: "/blog/uk", search: "?from=article", scrollY: 320 });
+    captureAnchorRouteIntent(routeAnchor(true));
+    runtime.location.pathname = "/blog/uk/codex-agents-v2";
+    runtime.location.search = "";
+
+    expect(getBackNavigationIntent()).toEqual({
+      href: "/blog/uk?from=article",
+      scroll: false,
+      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack],
+    });
+    expect(consumeQueuedScrollRestore("/blog/uk?from=article")).toBe(320);
+
+    runtime.location.pathname = "/";
+    runtime.location.search = "";
+    runtime.location.hash = "";
+    runtime.location.pathname = "/blog/en/codex-agents-v2";
+
+    expect(getBackNavigationIntent()).toEqual({
+      href: "/blog/en",
+      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack],
+    });
   });
 
   test("falls back cleanly when session storage is unavailable", () => {

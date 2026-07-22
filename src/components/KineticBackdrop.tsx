@@ -46,7 +46,7 @@ function SignalTraces() {
 
 export default function KineticBackdrop() {
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background">
+    <div className="kinetic-backdrop pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background">
       <div className="absolute inset-0 technical-grid" />
       <SignalTraces />
       <div className="page-top-fade absolute inset-x-0 top-0 h-52" />

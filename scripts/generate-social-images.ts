@@ -1,6 +1,8 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
+import { getAllBlogPosts } from "../src/content/blog/manifest";
+import type { BlogPostSummary } from "../src/content/blog/types";
 import { type Project, projects } from "../src/lib/projects";
 import { PROFILE_SNAPSHOT_STATS } from "../src/lib/site-profile";
 
@@ -490,6 +492,109 @@ function projectSvg(project: Project) {
   `);
 }
 
+function blogIndexSvg() {
+  return baseSvg(`
+    ${logo(82, 76, 74)}
+    <text x="168" y="118" class="brand">Oleh Vanin</text>
+    <text x="168" y="148" class="tiny">exsesx.dev/blog</text>
+    <text x="82" y="244" class="eyebrow">Technical writing</text>
+    <text x="82" y="326" class="headline-small">Notes from</text>
+    <text x="82" y="394" class="headline-small">the workbench</text>
+    ${textLines("Source-audited field notes on AI systems, product engineering, and developer tools", {
+      x: 86,
+      y: 452,
+      maxChars: 44,
+      lineHeight: 32,
+      className: "body",
+    })}
+    <g filter="url(#shadow)">
+      <rect x="666" y="100" width="430" height="430" rx="38" fill="${colors.night}"/>
+      <rect x="666" y="100" width="430" height="430" rx="38" fill="url(#grid-dark)"/>
+      <circle cx="1024" cy="138" r="160" fill="${colors.ultramarineBright}" opacity="0.24"/>
+      <text x="710" y="176" class="eyebrow" style="fill:${colors.frost}">Build • verify • write</text>
+      ${pulseTrace(710, 214, 330, { stroke: colors.ultramarineBright, glow: colors.ultramarine, strokeWidth: 7 })}
+      <text x="710" y="368" class="body-dark">Primary sources</text>
+      <text x="710" y="408" class="body-dark">Runnable examples</text>
+      <text x="710" y="448" class="body-dark">Practical caveats</text>
+    </g>
+  `);
+}
+
+function blogArticleSvg(post: BlogPostSummary) {
+  const title = fittedLines(post.title, {
+    maxWidth: 940,
+    maxLines: 3,
+    idealSize: 62,
+    minSize: 44,
+    measureScale: 1.08,
+  });
+  const description = fittedLines(post.description, {
+    maxWidth: 900,
+    maxLines: 2,
+    idealSize: 24,
+    minSize: 20,
+    measureScale: 1.05,
+  });
+  const titleY = 260;
+  const titleLineHeight = title.fontSize * 1.08;
+  const metadataY = 472;
+  const descriptionLineHeight = 31;
+  const descriptionY = Math.min(
+    titleY + title.lines.length * titleLineHeight + 38,
+    metadataY - 44 - (description.lines.length - 1) * descriptionLineHeight,
+  );
+  const publishedLabel = new Intl.DateTimeFormat(post.locale === "uk" ? "uk-UA" : "en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  })
+    .format(new Date(post.publishedAt))
+    .toUpperCase();
+
+  return baseSvg(`
+    <rect x="54" y="50" width="1092" height="530" rx="46" fill="${colors.night}"/>
+    <circle cx="1020" cy="90" r="240" fill="${colors.ultramarineBright}" opacity="0.18"/>
+    <circle cx="760" cy="560" r="260" fill="${colors.ultramarine}" opacity="0.08"/>
+    <rect x="84" y="80" width="1032" height="470" rx="36" fill="${colors.frost}" opacity="0.98"/>
+    ${logo(112, 112, 68, colors.ink)}
+    <text x="194" y="154" class="brand">Oleh Vanin</text>
+    <text x="194" y="184" class="tiny">exsesx.dev/blog/${escapeXml(post.locale)}/${escapeXml(post.slug)}</text>
+    <text x="1084" y="154" text-anchor="end" class="eyebrow">${escapeXml(post.locale.toUpperCase())} • BLOG</text>
+    ${title.lines
+      .map(
+        (line, index) =>
+          `<text x="112" y="${titleY + index * titleLineHeight}" class="project-title" style="font-size:${title.fontSize}px">${escapeXml(line)}</text>`,
+      )
+      .join("")}
+    ${description.lines
+      .map(
+        (line, index) =>
+          `<text x="112" y="${descriptionY + index * descriptionLineHeight}" class="body" style="font-size:${description.fontSize}px">${escapeXml(line)}</text>`,
+      )
+      .join("")}
+    ${(() => {
+      let cursor = 112;
+      return post.tags
+        .slice(0, 3)
+        .map(tag => {
+          const built = pill(cursor, metadataY, tag, {
+            fill: colors.card,
+            stroke: colors.ultramarine,
+            textClass: "pill-text",
+            fontSize: 17,
+            height: 40,
+            padX: 18,
+          });
+          cursor += built.width + 12;
+          return built.svg;
+        })
+        .join("");
+    })()}
+    <text x="1084" y="498" text-anchor="end" class="tiny">${escapeXml(publishedLabel)}</text>
+  `);
+}
+
 async function writePng(svg: string, outputPath: string) {
   await sharp(Buffer.from(svg)).png({ compressionLevel: 9, adaptiveFiltering: true }).toFile(outputPath);
 }
@@ -498,10 +603,17 @@ async function main() {
   await mkdir(outDir, { recursive: true });
   await writePng(homeSvg(), homeOut);
   await writePng(projectsSvg(), path.join(outDir, "projects.png"));
+  await writePng(blogIndexSvg(), path.join(outDir, "blog.png"));
 
-  await Promise.all(
-    projects.map(project => writePng(projectSvg(project), path.join(outDir, `project-${project.slug}.png`))),
-  );
+  await Promise.all([
+    ...projects.map(project => writePng(projectSvg(project), path.join(outDir, `project-${project.slug}.png`))),
+    ...getAllBlogPosts({ includeDrafts: false }).map(async post => {
+      const outputPath = path.join(process.cwd(), "public", post.socialImage.path.replace(/^\//, ""));
+
+      await mkdir(path.dirname(outputPath), { recursive: true });
+      await writePng(blogArticleSvg(post), outputPath);
+    }),
+  ]);
 }
 
 await main();

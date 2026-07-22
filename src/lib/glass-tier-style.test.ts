@@ -3,9 +3,9 @@ import { describe, expect, test } from "bun:test";
 const globalsUrl = new URL("../styles/globals.css", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 const dropdownUrl = new URL("../components/ui/dropdown-menu.tsx", import.meta.url);
-const homeUrl = new URL("../app/page.tsx", import.meta.url);
-const projectsUrl = new URL("../app/projects/page.tsx", import.meta.url);
-const detailUrl = new URL("../app/project/[slug]/page.tsx", import.meta.url);
+const homeUrl = new URL("../app/(site)/page.tsx", import.meta.url);
+const projectsUrl = new URL("../app/(site)/projects/page.tsx", import.meta.url);
+const detailUrl = new URL("../app/(site)/project/[slug]/page.tsx", import.meta.url);
 const cardUrl = new URL("../components/ProjectCard.tsx", import.meta.url);
 const hotkeysUrl = new URL("../components/Hotkeys.tsx", import.meta.url);
 

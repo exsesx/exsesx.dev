@@ -12,6 +12,7 @@ import {
   THEME_CHROME_COLORS,
   type ThemeMode,
 } from "@/lib/theme";
+import { useBlogFocus } from "./blog/BlogFocusProvider";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -104,6 +105,7 @@ function paintSafariChromeSamples(isDark: boolean) {
 }
 
 export default function ThemeSwitcher() {
+  const { isFocusMode } = useBlogFocus();
   const [isOpen, setIsOpen] = useState(false);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { mode, resolvedTheme } = parseThemeSnapshot(themeSnapshot);
@@ -131,8 +133,14 @@ export default function ThemeSwitcher() {
     setMetaContent("theme-color", isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light);
   }, [isDark, mode]);
 
+  useEffect(() => {
+    if (isFocusMode) {
+      setIsOpen(false);
+    }
+  }, [isFocusMode]);
+
   return (
-    <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
+    <DropdownMenu onOpenChange={setIsOpen} open={isOpen && !isFocusMode}>
       <DropdownMenuTrigger
         render={
           <Button

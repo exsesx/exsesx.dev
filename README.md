@@ -26,14 +26,15 @@ The CV endpoint (`/api/resume/pdf`) proxies a resume from RXResume and needs
 ## Verification
 
 ```shell
-bun run check
+bun run biome:check
+bun run mdx:check
 bunx tsc --noEmit
 bun test
 bun run build
 ```
 
-CI uses Bun 1.3.14 to run a frozen install, Biome checks, the Bun test suite,
-and a production build on every push to `main` and on pull requests. The
+CI uses Bun 1.3.14 to run a frozen install, Biome and MDX checks, the Bun test
+suite, and a production build on every push to `main` and on pull requests. The
 route-motion browser contract can also be run locally with `bun run test:motion`.
 
 Production builds use Webpack while the 16.3 preview's Turbopack build path is

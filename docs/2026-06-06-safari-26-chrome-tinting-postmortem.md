@@ -154,7 +154,7 @@ color across the full status-bar zone — and float the visible glass nav below 
 removed, nav wrapped in `.site-header-nav-frame`, `viewTransitionName` moved to the frame,
 `suppressHydrationWarning` (the script mutates the header's inline bg pre-hydration).
 
-**`src/app/layout.tsx`** — the no-flash script runs in `<head>` (so chrome is set before
+**`src/components/AppDocument.tsx`** — the shared no-flash script runs in `<head>` (so chrome is set before
 Safari's first sample), sets `--background` + `--safari-chrome-color` + `<html>`/`<body>`
 bg + every `[data-safari-chrome-sample]` inline, on load and on the `exsesx:theme-change`
 event. The header is React-rendered, so a `DOMContentLoaded` re-run repaints it once present.

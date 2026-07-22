@@ -17,8 +17,10 @@ jobs:
         with:
           bun-version: 1.3.14
       - run: bun install --frozen-lockfile
-      - name: Format & lint
-        run: bun run check
+      - name: Biome check
+        run: bun run biome:check
+      - name: MDX check
+        run: bun run mdx:check
       - name: Typecheck
         run: bun run typecheck
       - name: Tests

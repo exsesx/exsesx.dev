@@ -55,7 +55,7 @@ Each item is independent. Read the **invariants** section before touching anythi
 
 - **`.react-doctor/false-positives.md` does not exist yet.** Creating it with the validated FPs
   below lifts the score without code changes (was 56 → 67 in this slice; FPs are most of the rest):
-  - `react-doctor/no-danger` + `nextjs-no-native-script` — `src/app/layout.tsx` noflash script:
+  - `react-doctor/no-danger` + `nextjs-no-native-script` — `src/components/AppDocument.tsx` noflash script:
     static trusted content that must run pre-paint for Safari chrome sampling.
   - `react-doctor/exhaustive-deps` — `InteractiveCardShell.tsx`, `ThemeSwitcher.tsx`: cleanup reads
     a **rAF-id ref** (not a DOM node); canceling the latest frame at unmount is correct.

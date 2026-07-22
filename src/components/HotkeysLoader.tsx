@@ -10,10 +10,12 @@ const Hotkeys = dynamic(() => import("./Hotkeys"), {
 
 export default function HotkeysLoader() {
   const [isEnabled, setIsEnabled] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
 
   useEffect(() => {
     const hoverQuery = window.matchMedia("(hover: hover)");
     const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+    const desktopQuery = window.matchMedia("(min-width: 768px)");
 
     function handleChange() {
       setIsEnabled(
@@ -22,21 +24,20 @@ export default function HotkeysLoader() {
           hasCoarsePointer: coarsePointerQuery.matches,
         }),
       );
+      setIsDesktopViewport(desktopQuery.matches);
     }
 
     handleChange();
     hoverQuery.addEventListener("change", handleChange);
     coarsePointerQuery.addEventListener("change", handleChange);
+    desktopQuery.addEventListener("change", handleChange);
 
     return () => {
       hoverQuery.removeEventListener("change", handleChange);
       coarsePointerQuery.removeEventListener("change", handleChange);
+      desktopQuery.removeEventListener("change", handleChange);
     };
   }, []);
 
-  if (!isEnabled) {
-    return null;
-  }
-
-  return <Hotkeys />;
+  return <Hotkeys allowBlogFocusShortcut={isDesktopViewport} showHint={isEnabled} />;
 }
