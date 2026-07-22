@@ -461,13 +461,10 @@ if (!("Bun" in globalThis)) {
       const idleWidth = await cornerHint.evaluate(element => element.getBoundingClientRect().width);
 
       await page.keyboard.press("g");
-      await expect(page.getByLabel("g pressed; awaiting next shortcut key")).toBeVisible();
+      await expect(page.locator('.sr-only[aria-live="polite"]')).toHaveText("g pressed; awaiting next shortcut key");
       const pendingWidth = await cornerHint.evaluate(element => element.getBoundingClientRect().width);
       expect(Math.abs(pendingWidth - idleWidth)).toBeLessThanOrEqual(1);
-      await expect(page.locator('.hotkeys-corner-state[aria-label="Toggle keyboard shortcuts"]')).toHaveCSS(
-        "opacity",
-        "0",
-      );
+      await expect(page.locator(".hotkeys-corner-state:not(.hotkeys-chord-waiting)")).toHaveCSS("opacity", "0");
 
       const frameSamples = await page.evaluate(async () => {
         window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }));
@@ -500,9 +497,7 @@ if (!("Bun" in globalThis)) {
         const samples: Array<{ contentOpacity: number; pendingKeyCount: number; pendingOpacity: number }> = [];
 
         function sampleContent() {
-          const idleLayer = document.querySelector<HTMLElement>(
-            '.hotkeys-corner-state[aria-label="Toggle keyboard shortcuts"]',
-          );
+          const idleLayer = document.querySelector<HTMLElement>(".hotkeys-corner-state:not(.hotkeys-chord-waiting)");
           const pendingLayer = document.querySelector<HTMLElement>(".hotkeys-chord-waiting");
           const idleOpacity = idleLayer ? Number.parseFloat(getComputedStyle(idleLayer).opacity) : 0;
           const pendingOpacity = pendingLayer ? Number.parseFloat(getComputedStyle(pendingLayer).opacity) : 0;

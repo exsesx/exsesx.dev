@@ -1,6 +1,6 @@
 import Script from "next/script";
-import { createNoFlashScript } from "@/lib/no-flash-script";
-import { THEME_CHROME_COLORS } from "@/lib/theme";
+import { BlogFocusProvider } from "./blog/BlogFocusProvider";
+import DocumentBootstrapScripts from "./DocumentBootstrapScripts";
 import Header from "./Header";
 import HotkeysLoader from "./HotkeysLoader";
 import KineticBackdrop from "./KineticBackdrop";
@@ -8,7 +8,6 @@ import LiquidGlassLens from "./LiquidGlassLens";
 import RouteMotionGuard from "./RouteMotionGuard";
 import VersionTag from "./VersionTag";
 
-const noFlashScript = createNoFlashScript(THEME_CHROME_COLORS.dark, THEME_CHROME_COLORS.light);
 const shouldLoadAnalytics = process.env.VERCEL_ENV === "production";
 const umamiWebsiteId = "75a63c31-71fb-4712-9345-9b2e5a93445c";
 
@@ -30,9 +29,7 @@ export default function AppDocument({ children, lang }: AppDocumentProps) {
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        <Script id="noflash" strategy="beforeInteractive">
-          {noFlashScript}
-        </Script>
+        <DocumentBootstrapScripts />
       </head>
       <body>
         <a className="skip-to-content" href="#main-content">
@@ -40,13 +37,13 @@ export default function AppDocument({ children, lang }: AppDocumentProps) {
         </a>
         <LiquidGlassLens />
         <RouteMotionGuard />
-        <div className="relative isolate min-h-full w-full overflow-x-clip text-foreground transition-colors duration-300">
+        <BlogFocusProvider>
           <KineticBackdrop />
           <Header />
           <HotkeysLoader />
           {children}
           <VersionTag />
-        </div>
+        </BlogFocusProvider>
       </body>
       {shouldLoadAnalytics ? (
         <Script

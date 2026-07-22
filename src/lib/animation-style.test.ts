@@ -109,10 +109,26 @@ describe("semantic animation styles", () => {
     const headerRule = ruleBody(css, ".site-header-nav-frame");
     const pillRule = ruleBody(css, ".site-nav-active-pill");
 
-    expect(headerRule).toContain("transition: transform var(--duration-ui) var(--ease-in-out)");
+    expect(headerRule).toContain("opacity 180ms var(--ease-out)");
+    expect(headerRule).toContain("transform var(--duration-ui) var(--ease-in-out)");
+    expect(headerRule).toContain("visibility 0s linear");
     expect(pillRule).toContain("transition: transform var(--duration-ui) var(--ease-in-out)");
     expect(css).not.toContain("--ease-spring");
     expect(css).not.toContain("transition-duration: 380ms");
+  });
+
+  test("limits the Safari chrome sample band to coarse touch WebKit", async () => {
+    const css = await readGlobalsCss();
+    const sampleSelector = "html[data-chrome-sample] .site-header";
+    const webkitGateIndex = css.indexOf("@supports (-webkit-touch-callout: none)");
+    const coarsePointerGateIndex = css.indexOf("@media (hover: none) and (pointer: coarse)", webkitGateIndex);
+    const sampleRuleIndex = css.indexOf(sampleSelector);
+
+    expect(ruleBody(css, ".site-header")).toContain("--safari-sample-band: 0px");
+    expect(webkitGateIndex).toBeGreaterThan(-1);
+    expect(coarsePointerGateIndex).toBeGreaterThan(webkitGateIndex);
+    expect(sampleRuleIndex).toBeGreaterThan(coarsePointerGateIndex);
+    expect(css.match(/html\[data-chrome-sample\] \.site-header/g)).toHaveLength(1);
   });
 
   test("preserves non-spatial feedback for reduced motion", async () => {

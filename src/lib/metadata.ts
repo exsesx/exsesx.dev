@@ -107,9 +107,9 @@ export function createBlogArticleMetadata(article: BlogPostEntry, availableLocal
     openGraph: {
       type: "article",
       locale: article.locale === "en" ? "en_US" : "uk_UA",
-      alternateLocale: availableLocales
-        .filter(locale => locale !== article.locale)
-        .map(locale => (locale === "en" ? "en_US" : "uk_UA")),
+      alternateLocale: availableLocales.flatMap(locale =>
+        locale === article.locale ? [] : [locale === "en" ? "en_US" : "uk_UA"],
+      ),
       url,
       siteName,
       title,

@@ -537,9 +537,13 @@ function blogArticleSvg(post: BlogPostSummary) {
   });
   const titleY = 260;
   const titleLineHeight = title.fontSize * 1.08;
-  const descriptionY = titleY + title.lines.length * titleLineHeight + 38;
   const metadataY = 472;
-  const publishedLabel = new Intl.DateTimeFormat("en-US", {
+  const descriptionLineHeight = 31;
+  const descriptionY = Math.min(
+    titleY + title.lines.length * titleLineHeight + 38,
+    metadataY - 44 - (description.lines.length - 1) * descriptionLineHeight,
+  );
+  const publishedLabel = new Intl.DateTimeFormat(post.locale === "uk" ? "uk-UA" : "en-US", {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
@@ -566,7 +570,7 @@ function blogArticleSvg(post: BlogPostSummary) {
     ${description.lines
       .map(
         (line, index) =>
-          `<text x="112" y="${descriptionY + index * 31}" class="body" style="font-size:${description.fontSize}px">${escapeXml(line)}</text>`,
+          `<text x="112" y="${descriptionY + index * descriptionLineHeight}" class="body" style="font-size:${description.fontSize}px">${escapeXml(line)}</text>`,
       )
       .join("")}
     ${(() => {

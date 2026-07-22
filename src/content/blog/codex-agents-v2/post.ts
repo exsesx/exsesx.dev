@@ -17,5 +17,18 @@ export default defineBlogPost({
       },
       load: () => import("./en.mdx"),
     },
+    uk: {
+      title: "Codex Agents V2 у версії 0.145.0",
+      seoTitle: "Codex Agents V2 у версії 0.145.0: що змінилося та як їх увімкнути",
+      description: "Що змінилося порівняно з V1, як увімкнути V2 і які деталі конфігурації варто знати.",
+      publishedAt: "2026-07-22T12:00:00+02:00",
+      status: "published",
+      sourcePath: "src/content/blog/codex-agents-v2/uk.mdx",
+      socialImage: {
+        path: "/images/og/blog/codex-agents-v2-uk.png",
+        alt: "Стаття Олега Ваніна про Codex Agents V2",
+      },
+      load: () => import("./uk.mdx"),
+    },
   },
 });

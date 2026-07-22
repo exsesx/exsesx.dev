@@ -5,6 +5,8 @@ const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 const navBackButtonUrl = new URL("../components/NavBackButton.tsx", import.meta.url);
 const appDocumentUrl = new URL("../components/AppDocument.tsx", import.meta.url);
+const documentBootstrapScriptsUrl = new URL("../components/DocumentBootstrapScripts.tsx", import.meta.url);
+const blogFocusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
 const nextConfigUrl = new URL("../../next.config.mts", import.meta.url);
 
 async function readGlobalsCss() {
@@ -123,19 +125,29 @@ describe("mobile navigation styles", () => {
   });
 
   test("does not put the app shell in an overflow container that disables sticky descendants", async () => {
-    const appDocument = await Bun.file(appDocumentUrl).text();
+    const [appDocument, blogFocusProvider] = await Promise.all([
+      Bun.file(appDocumentUrl).text(),
+      Bun.file(blogFocusProviderUrl).text(),
+    ]);
+    const appShell = `${appDocument}\n${blogFocusProvider}`;
 
-    expect(appDocument).not.toContain("overflow-x-hidden");
-    expect(appDocument).toContain("overflow-x-clip");
+    expect(appShell).not.toContain("overflow-x-hidden");
+    expect(appShell).toContain("overflow-x-clip");
   });
 
-  test("delivers the no-flash bootstrap through the Next.js pre-interactive script boundary", async () => {
-    const appDocument = await Bun.file(appDocumentUrl).text();
+  test("server-inserts document bootstraps outside client route rendering", async () => {
+    const [appDocument, bootstrapScripts] = await Promise.all([
+      Bun.file(appDocumentUrl).text(),
+      Bun.file(documentBootstrapScriptsUrl).text(),
+    ]);
 
-    expect(appDocument).not.toContain('<script id="noflash"');
-    expect(appDocument).toContain("<Script");
-    expect(appDocument).toContain('id="noflash"');
-    expect(appDocument).toContain('strategy="beforeInteractive"');
+    expect(appDocument).toContain("<DocumentBootstrapScripts />");
+    expect(appDocument).not.toContain('id="noflash"');
+    expect(appDocument).not.toContain('id="blog-focus-bootstrap"');
+    expect(bootstrapScripts).toContain("useServerInsertedHTML");
+    expect(bootstrapScripts).toContain('id="noflash"');
+    expect(bootstrapScripts).toContain('id="blog-focus-bootstrap"');
+    expect(bootstrapScripts).toContain("dangerouslySetInnerHTML");
   });
 
   test("offers a localized keyboard escape route to the main content", async () => {

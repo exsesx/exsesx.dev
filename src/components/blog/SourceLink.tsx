@@ -19,9 +19,13 @@ export default function SourceLink({ children, href }: SourceLinkProps) {
         <span>{hostname}</span>
         <ExternalLink className="size-3" strokeWidth={2.35} />
       </span>
-      <span className="sr-only" lang="en">
+      <span className="source-link-new-tab-en sr-only" lang="en">
         {" "}
         (opens in a new tab)
+      </span>
+      <span className="source-link-new-tab-uk sr-only" lang="uk">
+        {" "}
+        (відкриється в новій вкладці)
       </span>
     </a>
   );

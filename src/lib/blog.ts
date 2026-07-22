@@ -20,6 +20,10 @@ export const BLOG_UI = {
     published: "Published",
     updated: "Updated",
     readArticle: "Read article",
+    focus: "Focus",
+    exitFocus: "Exit focus",
+    focusModeOn: "Focus mode activated",
+    focusModeOff: "Focus mode deactivated",
   },
   uk: {
     eyebrow: "Технічні матеріали",
@@ -36,8 +40,27 @@ export const BLOG_UI = {
     published: "Опубліковано",
     updated: "Оновлено",
     readArticle: "Читати матеріал",
+    focus: "Фокус",
+    exitFocus: "Вийти з фокусу",
+    focusModeOn: "Режим фокусу увімкнено",
+    focusModeOff: "Режим фокусу вимкнено",
   },
 } as const;
+
+const BLOG_DATE_FORMATTERS: Record<BlogLocale, Intl.DateTimeFormat> = {
+  en: new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Europe/Warsaw",
+  }),
+  uk: new Intl.DateTimeFormat("uk-UA", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Europe/Warsaw",
+  }),
+};
 
 export function isBlogLocale(value: string): value is BlogLocale {
   return BLOG_LOCALES.some(locale => locale === value);
@@ -69,12 +92,7 @@ export function resolveBlogBackHref(pathname: string): BlogIndexPath | null {
 }
 
 export function formatBlogDate(value: string, locale: BlogLocale) {
-  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "uk-UA", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "Europe/Warsaw",
-  }).format(new Date(value));
+  return BLOG_DATE_FORMATTERS[locale].format(new Date(value));
 }
 
 function getPathname(value: string) {

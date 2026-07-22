@@ -19,15 +19,15 @@ export function ArticleWithToc({ children, headings, locale }: ArticleWithTocPro
 
   return (
     <>
-      <div className="blog-toc-mobile-shell mx-auto mt-8 max-w-4xl xl:hidden">
+      <div className="blog-toc-mobile-shell mx-auto mt-4 max-w-4xl xl:hidden">
         <ArticleToc activeHeadingId={activeHeadingId} headings={headings} locale={locale} mode="mobile" />
       </div>
 
-      <div className="blog-article-grid mx-auto mt-10">
+      <div className="blog-article-grid mx-auto mt-4 xl:mt-10">
         <aside className="hidden xl:block">
           <ArticleToc activeHeadingId={activeHeadingId} headings={headings} locale={locale} mode="desktop" />
         </aside>
-        <article id="article-content" className="blog-prose min-w-0">
+        <article id="article-content" className="blog-prose min-w-0" lang={locale}>
           {children}
         </article>
       </div>

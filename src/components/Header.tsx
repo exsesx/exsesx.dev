@@ -11,6 +11,7 @@ import { attachNavCondense } from "@/lib/nav-condense";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { getPrimaryNavHref, isBlogPostPath, isProjectDetailPath, type PrimaryNavHref } from "@/lib/routes";
 import { SITE_PROFILE } from "@/lib/site-profile";
+import { useBlogFocus } from "./blog/BlogFocusProvider";
 import { GithubIcon } from "./icons/lucide-github";
 import LogoMark from "./LogoMark";
 import NavBackButton from "./NavBackButton";
@@ -38,11 +39,13 @@ function shouldPreviewNavChange(event: MouseEvent<HTMLAnchorElement> | PointerEv
 
 export default function Header() {
   const pathname = usePathname();
+  const { isFocusMode, isPassiveHeaderHidden, revealHeader } = useBlogFocus();
   const activeNavHref = getPrimaryNavHref(pathname);
   const [visualActiveNavHref, setVisualActiveNavHref] = useState<PrimaryNavHref>(activeNavHref);
   const navFrameRef = useRef<HTMLDivElement | null>(null);
   const visualActiveNav =
     visualActiveNavHref === "/projects" ? "projects" : visualActiveNavHref === "/blog/en" ? "blog" : "home";
+  const isReadingHeaderHidden = isFocusMode || isPassiveHeaderHidden;
 
   useEffect(() => {
     setVisualActiveNavHref(activeNavHref);
@@ -72,9 +75,16 @@ export default function Header() {
   return (
     <header lang="en" className="site-header fixed inset-x-0 top-0 z-50" data-safari-chrome-sample>
       <div aria-hidden="true" className="site-header-fade" style={{ viewTransitionName: "persistent-nav-fade" }} />
-      <div ref={navFrameRef} className="site-header-nav-frame" style={{ viewTransitionName: "persistent-nav" }}>
+      <div
+        ref={navFrameRef}
+        aria-hidden={isReadingHeaderHidden ? "true" : undefined}
+        className="site-header-nav-frame"
+        inert={isReadingHeaderHidden ? true : undefined}
+        onFocusCapture={revealHeader}
+        style={{ viewTransitionName: "persistent-nav" }}
+      >
         <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full px-2 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between sm:gap-3 sm:px-3">
-          <div className="flex min-w-0 items-center">
+          <div className="site-nav-leading flex min-w-0 items-center">
             <NavBackButton active={isProjectDetailPath(pathname) || isBlogPostPath(pathname)} />
             <Link
               href="/"
@@ -132,7 +142,7 @@ export default function Header() {
             })}
           </div>
 
-          <div className="flex items-center justify-end gap-1 sm:gap-2">
+          <div className="site-nav-actions flex items-center justify-end gap-1 sm:gap-2">
             <a
               href={SITE_PROFILE.links.github}
               className={`${buttonVariants({ variant: "glass", size: "icon" })} md:w-auto md:gap-2 md:px-4 md:pl-3`}
@@ -140,7 +150,9 @@ export default function Header() {
               <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
               <span className="sr-only md:not-sr-only">GitHub</span>
             </a>
-            <ThemeSwitcher />
+            <span className="site-nav-theme inline-flex">
+              <ThemeSwitcher />
+            </span>
           </div>
         </nav>
       </div>

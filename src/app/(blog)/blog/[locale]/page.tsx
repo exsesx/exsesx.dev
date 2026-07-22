@@ -49,7 +49,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
         tabIndex={-1}
         className="blog-index mx-auto w-full max-w-6xl px-4 pb-20 pt-28 sm:px-6 lg:pt-32"
       >
-        <header className="motion-rise grid gap-8 border-b border-border pb-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <header className="motion-rise grid gap-8 pb-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-accent">
               <BookOpenText size={15} strokeWidth={2.4} />
@@ -101,7 +101,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
             </article>
           </section>
         ) : (
-          <section className="blog-empty-state py-16">
+          <section className="blog-empty-state py-16 mt-10">
             <h2>{copy.emptyTitle}</h2>
             <p>{copy.emptyDescription}</p>
           </section>

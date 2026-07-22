@@ -16,6 +16,15 @@ type MermaidDiagramProps = {
 
 type MermaidState = { status: "loading" } | { status: "ready"; svg: string } | { status: "error"; message: string };
 
+type MermaidDiagramViewProps = {
+  accessibleLabel: string;
+  isRendering: boolean;
+  reactId: string;
+  resolvedTheme: "light" | "dark";
+  source: string;
+  state: MermaidState;
+};
+
 let mermaidRenderQueue: Promise<void> = Promise.resolve();
 let mermaidRenderAttempt = 0;
 
@@ -41,6 +50,48 @@ async function renderMermaid(source: string, id: string, resolvedTheme: "light" 
   );
 
   return renderTask;
+}
+
+export function MermaidDiagramView({
+  accessibleLabel,
+  isRendering,
+  reactId,
+  resolvedTheme,
+  source,
+  state,
+}: MermaidDiagramViewProps) {
+  const isBusy = state.status === "loading" || (state.status === "ready" && isRendering);
+  const labelId = `${reactId}-label`;
+  const visualState = state.status === "ready" && isRendering ? "updating" : state.status;
+
+  return (
+    <figure
+      className="blog-mermaid"
+      aria-busy={isBusy}
+      aria-labelledby={labelId}
+      data-state={visualState}
+      data-theme={resolvedTheme}
+      role={state.status === "error" ? undefined : "img"}
+    >
+      <figcaption id={labelId} className={state.status === "error" ? undefined : "sr-only"} lang="en">
+        {state.status === "error" ? `Diagram unavailable: ${state.message}` : accessibleLabel}
+      </figcaption>
+      {state.status === "ready" ? (
+        <div
+          className="blog-mermaid-visual blog-mermaid-svg"
+          aria-hidden="true"
+          //biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid renders trusted local MDX with strict security enabled.
+          dangerouslySetInnerHTML={{ __html: state.svg }}
+        />
+      ) : state.status === "loading" ? (
+        <div className="blog-mermaid-visual blog-mermaid-skeleton" aria-hidden="true" />
+      ) : (
+        <pre className="blog-mermaid-visual blog-mermaid-source">
+          <code>{source}</code>
+        </pre>
+      )}
+    </figure>
+  );
 }
 
 export default function MermaidDiagram({ source }: MermaidDiagramProps) {
@@ -83,38 +134,14 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     };
   }, [reactId, resolvedTheme, source]);
 
-  if (state.status === "ready") {
-    return (
-      <figure
-        className="blog-mermaid"
-        aria-busy={isRendering}
-        aria-labelledby={`${reactId}-label`}
-        data-state={isRendering ? "updating" : "ready"}
-        data-theme={resolvedTheme}
-        role="img"
-      >
-        <figcaption id={`${reactId}-label`} className="sr-only" lang="en">
-          {accessibleLabel}
-        </figcaption>
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid renders trusted local MDX with strict security enabled. */}
-        <div className="blog-mermaid-svg" dangerouslySetInnerHTML={{ __html: state.svg }} />
-      </figure>
-    );
-  }
-
   return (
-    <figure
-      className="blog-mermaid"
-      aria-busy={state.status === "loading"}
-      data-state={state.status}
-      data-theme={resolvedTheme}
-    >
-      <figcaption className={state.status === "error" ? undefined : "sr-only"} lang="en">
-        {state.status === "error" ? `Diagram unavailable: ${state.message}` : accessibleLabel}
-      </figcaption>
-      <pre className="blog-mermaid-source">
-        <code>{source}</code>
-      </pre>
-    </figure>
+    <MermaidDiagramView
+      accessibleLabel={accessibleLabel}
+      isRendering={isRendering}
+      reactId={reactId}
+      resolvedTheme={resolvedTheme}
+      source={source}
+      state={state}
+    />
   );
 }

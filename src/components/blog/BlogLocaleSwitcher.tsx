@@ -34,6 +34,7 @@ export default function BlogLocaleSwitcher({
             href={href as Route}
             hrefLang={locale}
             lang={locale}
+            prefetch
             aria-current={locale === currentLocale ? "page" : undefined}
             className="blog-locale-link"
           >

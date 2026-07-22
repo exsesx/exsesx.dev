@@ -1,4 +1,6 @@
-import { getAdjacentPrimaryNavHref, type NavbarHotkeyDirection } from "./routes";
+import { getAdjacentPrimaryNavHref, isBlogPostPath, type NavbarHotkeyDirection } from "./routes";
+
+export const BLOG_FOCUS_HOTKEY_ACTION = "blog-focus" as const;
 
 export interface HotkeyShortcut<TAction extends string = string> {
   sequence: readonly string[];
@@ -25,6 +27,8 @@ export type HotkeyDecisionInput = {
   ctrlKey?: boolean;
   defaultPrevented?: boolean;
   isEditableTarget?: boolean;
+  isBlogFocusActive?: boolean;
+  isBlogFocusShortcutEnabled?: boolean;
   key: string;
   metaKey?: boolean;
   pathname: string;
@@ -32,7 +36,7 @@ export type HotkeyDecisionInput = {
 };
 
 export type HotkeyDecision<TAction extends string = string> = {
-  action?: TAction;
+  action?: TAction | typeof BLOG_FOCUS_HOTKEY_ACTION;
   nextState: HotkeyState<TAction>;
   preventDefault: boolean;
 };
@@ -70,7 +74,27 @@ export function getHotkeyDecision<TAction extends string>({
       };
     }
 
+    if (input.isBlogFocusActive) {
+      return {
+        action: BLOG_FOCUS_HOTKEY_ACTION,
+        nextState: resetInteractionState(state),
+        preventDefault: true,
+      };
+    }
+
     return keepState(state);
+  }
+
+  if (isBlogFocusShortcut(input)) {
+    if (!input.isBlogFocusShortcutEnabled || !isBlogPostPath(input.pathname)) {
+      return keepState(state);
+    }
+
+    return {
+      action: BLOG_FOCUS_HOTKEY_ACTION,
+      nextState: resetInteractionState(state),
+      preventDefault: true,
+    };
   }
 
   if (isHelpShortcut(input)) {
@@ -172,7 +196,11 @@ function resetInteractionState<TAction extends string>(state: HotkeyState<TActio
 }
 
 function isHelpShortcut(input: HotkeyDecisionInput) {
-  return input.metaKey && (input.key === "." || input.key === "?" || (input.key === "/" && input.shiftKey));
+  return !input.altKey && Boolean(input.metaKey || input.ctrlKey) && (input.key === "?" || input.key === "/");
+}
+
+function isBlogFocusShortcut(input: HotkeyDecisionInput) {
+  return !input.altKey && Boolean(input.metaKey || input.ctrlKey) && input.key === ".";
 }
 
 function normalizeSequenceKey(key: string) {
