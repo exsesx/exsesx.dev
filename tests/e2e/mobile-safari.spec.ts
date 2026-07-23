@@ -59,6 +59,8 @@ if (!("Bun" in globalThis)) {
       await expect(toolbar.getByRole("button")).toHaveCount(3);
       await expect(toolbar.getByRole("button", { name: "Move", exact: true })).toHaveCount(0);
       await expect(toolbar.getByRole("button", { name: "Zoom out" })).toBeDisabled();
+      await expect(toolbar).toHaveCSS("backdrop-filter", "none");
+      expect(await toolbar.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
       const resetZoom = toolbar.getByRole("button", { name: /^Reset diagram zoom,/ });
       await expect(resetZoom).toBeDisabled();
       await expect(resetZoom).toHaveCSS("appearance", "none");
@@ -120,6 +122,8 @@ if (!("Bun" in globalThis)) {
 
       const trigger = page.getByTestId("mobile-toc-trigger");
       await expect(trigger).toBeVisible();
+      const tocShell = page.locator(".blog-toc-mobile-shell");
+      expect(await tocShell.evaluate(element => getComputedStyle(element, "::after").content)).toBe("none");
 
       const triggerBounds = await trigger.boundingBox();
       expect(triggerBounds).not.toBeNull();

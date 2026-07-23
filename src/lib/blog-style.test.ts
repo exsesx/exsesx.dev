@@ -35,6 +35,9 @@ describe("Blog production styles", () => {
     expect(mobileToolbarRule).toContain("display: flex");
     expect(mobileToolbarRule).toContain("width: max-content");
     expect(mobileToolbarRule).toContain("margin: 0.75rem 0 0 auto");
+    expect(mobileToolbarRule).toContain("background: color-mix(in oklab, var(--foreground) 6%, var(--background))");
+    expect(mobileToolbarRule).toContain("backdrop-filter: none");
+    expect(mobileToolbarRule).not.toContain("saturate(");
     expect(mobileToolbarRule).toContain("0 4px 12px");
     expect(controlRule).toContain("appearance: none");
     expect(controlRule).toContain("width: 2.75rem");
@@ -167,7 +170,6 @@ describe("Blog production styles", () => {
     expect(css).toMatch(
       /@media \(prefers-reduced-transparency: reduce\) \{[\s\S]*?\.blog-toc-mobile-trigger,[\s\S]*?\.blog-toc-drawer,[\s\S]*?backdrop-filter:\s*none/,
     );
-    expect(css).toMatch(/\.blog-toc-mobile-shell::after\s*\{[^}]*display:\s*none/s);
   });
 
   test("keeps the mobile table of contents compact and confines overflow to the modal drawer", async () => {
@@ -175,7 +177,6 @@ describe("Blog production styles", () => {
     const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerScrollRule = css.match(/\.blog-toc-drawer-scroll\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const fadeRule = css.match(/\.blog-toc-mobile-shell::after\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(triggerRule).toContain("width: 100%");
     expect(triggerRule).toContain("min-height: 3rem");
@@ -183,11 +184,7 @@ describe("Blog production styles", () => {
     expect(drawerRule).toContain("margin-inline: auto");
     expect(drawerScrollRule).toContain("overflow-y: auto");
     expect(drawerScrollRule).toContain("overscroll-behavior: contain");
-    expect(fadeRule).toContain("top: -0.75rem");
-    expect(fadeRule).not.toContain("bottom:");
-    expect(fadeRule).toContain("height: 0.75rem");
-    expect(fadeRule).toContain("to top");
-    expect(fadeRule).toContain("pointer-events: none");
+    expect(css).not.toContain(".blog-toc-mobile-shell::after");
     expect(css).not.toContain(".blog-toc-mobile nav");
   });
 

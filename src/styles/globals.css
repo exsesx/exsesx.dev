@@ -1950,23 +1950,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   transition: top 180ms var(--ease-out);
 }
 
-.blog-toc-mobile-shell::after {
-  position: absolute;
-  top: -0.75rem;
-  right: 0;
-  left: 0;
-  z-index: 0;
-  height: 0.75rem;
-  background: linear-gradient(
-    to top,
-    color-mix(in oklab, var(--background) 72%, transparent),
-    color-mix(in oklab, var(--background) 20%, transparent) 62%,
-    transparent
-  );
-  content: "";
-  pointer-events: none;
-}
-
 .blog-toc-desktop {
   position: sticky;
   top: 8rem;
@@ -2842,11 +2825,11 @@ code[data-theme] span {
     width: max-content;
     margin: 0.75rem 0 0 auto;
     border-color: color-mix(in oklab, var(--border) 68%, transparent);
-    background: color-mix(in oklab, var(--background) 76%, transparent);
+    background: color-mix(in oklab, var(--foreground) 6%, var(--background));
     box-shadow:
       inset 0 1px 0 color-mix(in oklab, var(--foreground) 5%, transparent),
       0 4px 12px color-mix(in oklab, var(--foreground) 5%, transparent);
-    backdrop-filter: blur(12px) saturate(1.08);
+    backdrop-filter: none;
   }
 
   .blog-mermaid-control svg {
@@ -2928,10 +2911,6 @@ code[data-theme] span {
   .blog-mermaid-toolbar {
     background: color-mix(in oklab, var(--background) 96%, var(--foreground) 3%);
     backdrop-filter: none;
-  }
-
-  .blog-toc-mobile-shell::after {
-    display: none;
   }
 }
 
