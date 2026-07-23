@@ -338,6 +338,7 @@ if (!("Bun" in globalThis)) {
       const [currentX = 0, currentY = 0] = (viewBoxBeforeDrag ?? "").split(/\s+/).map(Number);
       const dragDeltaX = currentX > baseX + 0.01 ? 48 : -48;
       const dragDeltaY = currentY > baseY + 0.01 ? 32 : -32;
+      await viewport.scrollIntoViewIfNeeded();
       const dragBounds = await viewport.boundingBox();
       expect(dragBounds).not.toBeNull();
       const dragStart = {
