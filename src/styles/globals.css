@@ -2437,6 +2437,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   font-family: MonoLisaCode, ui-monospace, monospace;
   font-size: 0.9em;
   font-weight: 650;
+  vertical-align: 0.04em;
   overflow-wrap: anywhere;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
