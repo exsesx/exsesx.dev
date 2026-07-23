@@ -6,6 +6,7 @@ import HotkeysLoader from "./HotkeysLoader";
 import KineticBackdrop from "./KineticBackdrop";
 import LiquidGlassLens from "./LiquidGlassLens";
 import RouteMotionGuard from "./RouteMotionGuard";
+import { TooltipProvider } from "./ui/tooltip";
 import VersionTag from "./VersionTag";
 
 const shouldLoadAnalytics = process.env.VERCEL_ENV === "production";
@@ -32,18 +33,20 @@ export default function AppDocument({ children, lang }: AppDocumentProps) {
         <DocumentBootstrapScripts />
       </head>
       <body>
-        <a className="skip-to-content" href="#main-content">
-          {skipLinkLabel}
-        </a>
-        <LiquidGlassLens />
-        <RouteMotionGuard />
-        <BlogFocusProvider>
-          <KineticBackdrop />
-          <Header />
-          <HotkeysLoader />
-          {children}
-          <VersionTag />
-        </BlogFocusProvider>
+        <TooltipProvider delay={450}>
+          <a className="skip-to-content" href="#main-content">
+            {skipLinkLabel}
+          </a>
+          <LiquidGlassLens />
+          <RouteMotionGuard />
+          <BlogFocusProvider>
+            <KineticBackdrop />
+            <Header />
+            <HotkeysLoader />
+            {children}
+            <VersionTag />
+          </BlogFocusProvider>
+        </TooltipProvider>
       </body>
       {shouldLoadAnalytics ? (
         <Script

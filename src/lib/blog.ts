@@ -26,6 +26,14 @@ export const BLOG_UI = {
     exitFocus: "Exit focus",
     focusModeOn: "Focus mode activated",
     focusModeOff: "Focus mode deactivated",
+    codeBlock: {
+      copied: "Code copied",
+      copy: "Copy code",
+      copyFailed: "Couldn't copy code",
+      toolbar: "Code actions",
+      unwrap: "Unwrap lines",
+      wrap: "Wrap lines",
+    },
     mermaid: {
       diagramUnavailable: "Diagram unavailable",
       keyboardInstructions:
@@ -58,6 +66,14 @@ export const BLOG_UI = {
     exitFocus: "Вийти з фокусу",
     focusModeOn: "Режим фокусу увімкнено",
     focusModeOff: "Режим фокусу вимкнено",
+    codeBlock: {
+      copied: "Код скопійовано",
+      copy: "Копіювати код",
+      copyFailed: "Не вдалося скопіювати код",
+      toolbar: "Дії з кодом",
+      unwrap: "Не переносити рядки",
+      wrap: "Переносити рядки",
+    },
     mermaid: {
       diagramUnavailable: "Діаграма недоступна",
       keyboardInstructions:
