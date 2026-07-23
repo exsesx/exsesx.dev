@@ -47,9 +47,9 @@ flowchart TD
   accDescr: A previous task becomes idle, a later root task starts the background pipeline, and Codex attempts extraction then consolidation for future tasks.
   previous["Prior task is idle"] --> startup["Later root starts"]
   startup --> gate{"Quota check"}
-  gate -->|Yes| pipeline["Phase 1: extract tasks<br/>Phase 2: attempt consolidation"]
+  gate --> pipeline["Phase 1: extract tasks<br/>Phase 2: attempt consolidation"]
   pipeline --> future["Memory for future tasks"]
-  gate -->|No| skip["Skip this pass"]
+  gate --> skip["Skip this pass"]
 ```
 
 Phase 1 selects recent tasks that have been idle long enough and have not already

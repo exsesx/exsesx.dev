@@ -51,6 +51,20 @@ describe("Blog manifest", () => {
     expect(article.headings.at(-1)).toEqual({ depth: 2, id: "sources", text: "Sources" });
   });
 
+  test("keeps the Memories diagram free of WebKit-unstable Mermaid edge labels", async () => {
+    const [english, ukrainian] = await Promise.all([
+      Bun.file(new URL("./codex-memories/en.mdx", import.meta.url)).text(),
+      Bun.file(new URL("./codex-memories/uk.mdx", import.meta.url)).text(),
+    ]);
+
+    expect(english).toContain('gate --> pipeline["Phase 1: extract tasks');
+    expect(english).toContain('gate --> skip["Skip this pass"]');
+    expect(english).not.toMatch(/gate -->\|(?:Yes|No)\|/);
+    expect(ukrainian).toContain('gate --> pipeline["Фаза 1: виділити пам’ять');
+    expect(ukrainian).toContain('gate --> skip["Пропустити запуск"]');
+    expect(ukrainian).not.toMatch(/gate -->\|(?:Так|Ні)\|/);
+  });
+
   test("looks up both editions and exposes their published translation alternates", () => {
     expect(getBlogPost("en", "codex-memories", { includeDrafts: false })).toMatchObject({
       locale: "en",

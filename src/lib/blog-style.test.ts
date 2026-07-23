@@ -23,6 +23,31 @@ describe("Blog production styles", () => {
     expect(css).toMatch(/\.blog-mermaid-source\s*\{[^}]*font-family:\s*var\(--font-mono\)/s);
   });
 
+  test("keeps mobile Mermaid controls below the canvas without shrinking their touch targets", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const mobileMermaidRules = css.slice(css.lastIndexOf("@variant max-sm"));
+    const mobileToolbarRule = mobileMermaidRules.match(/\.blog-mermaid-toolbar\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const mobileControlRule = mobileMermaidRules.match(/\.blog-mermaid-control svg\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const mobileResetRule = mobileMermaidRules.match(/\.blog-mermaid-reset\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const controlRule = css.match(/\.blog-mermaid-control\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(mobileToolbarRule).toContain("position: static");
+    expect(mobileToolbarRule).toContain("display: flex");
+    expect(mobileToolbarRule).toContain("width: max-content");
+    expect(mobileToolbarRule).toContain("margin: 0.75rem 0 0 auto");
+    expect(mobileToolbarRule).toContain("background: color-mix(in oklab, var(--foreground) 6%, var(--background))");
+    expect(mobileToolbarRule).toContain("backdrop-filter: none");
+    expect(mobileToolbarRule).not.toContain("saturate(");
+    expect(mobileToolbarRule).toContain("0 4px 12px");
+    expect(controlRule).toContain("appearance: none");
+    expect(controlRule).toContain("width: 2.75rem");
+    expect(controlRule).toContain("height: 2.75rem");
+    expect(mobileControlRule).toContain("width: 0.9rem");
+    expect(mobileControlRule).toContain("height: 0.9rem");
+    expect(mobileResetRule).toContain("width: 3rem");
+    expect(mobileResetRule).toContain("min-width: 3rem");
+  });
+
   test("frames Mermaid diagrams with the site's restrained accent treatment", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const rule = css.match(/\.blog-mermaid\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -67,7 +92,7 @@ describe("Blog production styles", () => {
     expect(frameRule).toContain("border-radius: var(--blog-rich-block-radius)");
     expect(frameRule).toContain("background: var(--blog-rich-block-surface)");
     expect(scrollRule).toContain("overflow-x: auto");
-    expect(scrollRule).not.toContain("overscroll-behavior");
+    expect(scrollRule).toContain("overscroll-behavior-x: none");
     expect(tableRule).toContain("font-family: var(--font-sans)");
     expect(tableRule).toContain("margin: 0");
     expect(tableRule).not.toContain("overflow");
@@ -145,7 +170,6 @@ describe("Blog production styles", () => {
     expect(css).toMatch(
       /@media \(prefers-reduced-transparency: reduce\) \{[\s\S]*?\.blog-toc-mobile-trigger,[\s\S]*?\.blog-toc-drawer,[\s\S]*?backdrop-filter:\s*none/,
     );
-    expect(css).toMatch(/\.blog-toc-mobile-shell::after\s*\{[^}]*display:\s*none/s);
   });
 
   test("keeps the mobile table of contents compact and confines overflow to the modal drawer", async () => {
@@ -153,7 +177,6 @@ describe("Blog production styles", () => {
     const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerScrollRule = css.match(/\.blog-toc-drawer-scroll\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const fadeRule = css.match(/\.blog-toc-mobile-shell::after\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(triggerRule).toContain("width: 100%");
     expect(triggerRule).toContain("min-height: 3rem");
@@ -161,8 +184,7 @@ describe("Blog production styles", () => {
     expect(drawerRule).toContain("margin-inline: auto");
     expect(drawerScrollRule).toContain("overflow-y: auto");
     expect(drawerScrollRule).toContain("overscroll-behavior: contain");
-    expect(fadeRule).toContain("height: 1.25rem");
-    expect(fadeRule).toContain("pointer-events: none");
+    expect(css).not.toContain(".blog-toc-mobile-shell::after");
     expect(css).not.toContain(".blog-toc-mobile nav");
   });
 
