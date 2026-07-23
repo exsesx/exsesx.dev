@@ -85,22 +85,27 @@ if (!("Bun" in globalThis)) {
       const githubLink = nav.getByRole("link", { name: "GitHub" });
       const githubLabel = githubLink.locator("span");
       const githubIcon = githubLink.locator("svg");
-      const themeIcon = nav
-        .getByRole("button", { name: /^Theme:/ })
-        .locator("svg")
-        .first();
+      const themeButton = nav.getByRole("button", { name: /^Theme:/ });
+      const themeIcon = themeButton.locator("svg").first();
 
       await expect(githubLink).toBeVisible();
       await expect(githubIcon).toHaveAttribute("stroke-width", "2.2");
       await expect(themeIcon).toHaveAttribute("stroke-width", "2.2");
 
-      const [githubBounds, navBounds] = await Promise.all([githubLink.boundingBox(), nav.boundingBox()]);
+      const [githubBounds, navBounds, githubBorderColor, themeBorderColor] = await Promise.all([
+        githubLink.boundingBox(),
+        nav.boundingBox(),
+        githubLink.evaluate(element => getComputedStyle(element).borderColor),
+        themeButton.evaluate(element => getComputedStyle(element).borderColor),
+      ]);
       const viewport = page.viewportSize();
 
       expect(githubBounds).not.toBeNull();
       expect(navBounds).not.toBeNull();
       expect(viewport).not.toBeNull();
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
+      expect(githubBorderColor).toBe(themeBorderColor);
+      expect(githubBorderColor).not.toBe("rgba(0, 0, 0, 0)");
 
       if (isMobile) {
         expect(githubBounds?.width).toBeCloseTo(40, 1);

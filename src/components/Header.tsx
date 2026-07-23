@@ -11,6 +11,7 @@ import { attachNavCondense } from "@/lib/nav-condense";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { getPrimaryNavHref, isBlogPostPath, isProjectDetailPath, type PrimaryNavHref } from "@/lib/routes";
 import { SITE_PROFILE } from "@/lib/site-profile";
+import { cn } from "@/lib/utils";
 import { useBlogFocus } from "./blog/BlogFocusProvider";
 import { GithubIcon } from "./icons/lucide-github";
 import LogoMark from "./LogoMark";
@@ -148,7 +149,7 @@ export default function Header() {
           <div className="site-nav-actions flex items-center justify-end gap-1 sm:gap-2">
             <a
               href={SITE_PROFILE.links.github}
-              className={`${buttonVariants({ variant: "glass", size: "icon" })} md:w-auto md:gap-2 md:px-4 md:pl-3`}
+              className={cn(buttonVariants({ variant: "glass", size: "icon" }), "md:w-auto md:gap-2 md:px-4 md:pl-3")}
             >
               <GithubIcon data-icon="inline-start" strokeWidth={2.2} />
               <span className="sr-only md:not-sr-only">GitHub</span>
