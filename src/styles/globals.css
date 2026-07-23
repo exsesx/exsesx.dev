@@ -194,7 +194,7 @@ select {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--ring) 42%, var(--background));
+  background: color-mix(in oklab, var(--ring) 28%, transparent);
   color: var(--foreground);
 }
 
@@ -225,8 +225,26 @@ select {
 }
 
 .dark ::selection {
-  background: color-mix(in oklab, var(--ring) 48%, var(--background));
+  background: color-mix(in oklab, var(--ring) 30%, transparent);
   color: var(--foreground);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  ::selection {
+    background: color-mix(in oklab, var(--ring) 42%, var(--background));
+  }
+
+  .dark ::selection {
+    background: color-mix(in oklab, var(--ring) 48%, var(--background));
+  }
+}
+
+@media (forced-colors: active) {
+  ::selection,
+  .dark ::selection {
+    color: HighlightText;
+    background: Highlight;
+  }
 }
 
 .hero-viewport {
