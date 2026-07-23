@@ -1840,7 +1840,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   display: grid;
   gap: 1.25rem;
   padding: 1.25rem 0;
-  border-bottom: 1px solid var(--border);
 }
 
 .blog-post-row h3 {
