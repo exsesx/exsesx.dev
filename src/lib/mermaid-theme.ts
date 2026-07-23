@@ -53,6 +53,10 @@ export function getMermaidAccessibleLabel(source: string) {
   return /^\s*accTitle:\s*(.+?)\s*$/m.exec(source)?.[1]?.trim() || "Diagram illustrating this section";
 }
 
+export function getMermaidAccessibleDescription(source: string) {
+  return /^\s*accDescr:\s*(.+?)\s*$/m.exec(source)?.[1]?.trim() || null;
+}
+
 function clampChannel(value: number) {
   return Math.max(0, Math.min(255, Math.round(value)));
 }

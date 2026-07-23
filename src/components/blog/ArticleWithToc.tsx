@@ -5,6 +5,7 @@ import type { ArticleHeading } from "@/content/blog/reading";
 import type { BlogLocale } from "@/lib/blog";
 import { resolveActiveHeadingId } from "@/lib/blog-scroll-spy";
 import ArticleToc from "./ArticleToc";
+import { BlogLocaleProvider } from "./BlogLocaleContext";
 
 const ACTIVE_HEADING_OFFSET = 144;
 
@@ -27,9 +28,11 @@ export function ArticleWithToc({ children, headings, locale }: ArticleWithTocPro
         <aside className="hidden xl:block">
           <ArticleToc activeHeadingId={activeHeadingId} headings={headings} locale={locale} mode="desktop" />
         </aside>
-        <article id="article-content" className="blog-prose min-w-0" lang={locale}>
-          {children}
-        </article>
+        <BlogLocaleProvider locale={locale}>
+          <article id="article-content" className="blog-prose min-w-0" lang={locale}>
+            {children}
+          </article>
+        </BlogLocaleProvider>
       </div>
     </>
   );

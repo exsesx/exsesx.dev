@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { getMermaidAccessibleLabel } from "@/lib/mermaid-theme";
+import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "@/lib/mermaid-theme";
 import MermaidDiagram, { MermaidDiagramView } from "./MermaidDiagram";
 
 const mermaidDiagramSourceUrl = new URL("./MermaidDiagram.tsx", import.meta.url);
+const mermaidCameraHookUrl = new URL("./useMermaidCamera.ts", import.meta.url);
 const globalsCssUrl = new URL("../../styles/globals.css", import.meta.url);
 
 describe("MermaidDiagram", () => {
@@ -14,7 +15,7 @@ describe("MermaidDiagram", () => {
     expect(markup).toContain('data-state="loading"');
     expect(markup).toContain('data-theme="light"');
     expect(markup).toContain('aria-busy="true"');
-    expect(markup).toContain('role="img"');
+    expect(markup).not.toContain('role="img"');
     expect(markup).toContain('class="blog-mermaid-visual blog-mermaid-skeleton"');
     expect(markup).toContain('aria-hidden="true"');
     expect(markup).toContain("Diagram illustrating this section");
@@ -22,7 +23,12 @@ describe("MermaidDiagram", () => {
     expect(markup).not.toContain("Browser-&gt;&gt;Server");
     expect(markup).not.toContain("blog-mermaid-skeleton-node");
     expect(css).toMatch(/\.blog-mermaid-visual\s*\{[^}]*block-size:\s*clamp\(/s);
+    expect(css).toMatch(/\.blog-mermaid-visual\s*\{[^}]*clamp\(20rem,\s*65vw,\s*32rem\)/s);
     expect(css).toMatch(/\.blog-mermaid-svg\s*\{[^}]*position:\s*relative/s);
+    expect(css).toMatch(/\.blog-mermaid-svg\s*\{[^}]*cursor:\s*default/s);
+    expect(css).not.toMatch(/cursor:\s*zoom-in/);
+    expect(css).toMatch(/\.blog-mermaid-svg\s*\{[^}]*touch-action:\s*pan-y/s);
+    expect(css).toMatch(/\.blog-mermaid-svg\[data-zoomed="true"\]\s*\{[^}]*touch-action:\s*none/s);
     expect(css).toMatch(/\.blog-mermaid-svg svg\s*\{[^}]*position:\s*absolute[^}]*height:\s*100%/s);
     expect(css).toMatch(/\.blog-mermaid-svg svg\s*\{[^}]*max-width:\s*none !important/s);
     expect(css).toMatch(/\.blog-mermaid\[data-state="loading"\]\s*\{[^}]*overflow:\s*hidden/s);
@@ -41,12 +47,17 @@ describe("MermaidDiagram", () => {
   test("hands the reserved visual over to one labelled ready-state image", () => {
     const markup = renderToStaticMarkup(
       <MermaidDiagramView
+        accessibleDescription="A root agent delegates work."
         accessibleLabel="Agents V2 task hierarchy"
         isRendering={false}
         reactId="diagram"
         resolvedTheme="dark"
         source="flowchart TD"
-        state={{ status: "ready", svg: '<svg role="graphics-document"><title>Duplicate title</title></svg>' }}
+        state={{
+          status: "ready",
+          renderedSource: "flowchart TD",
+          svg: '<svg aria-hidden="true" focusable="false"><title>Duplicate title</title></svg>',
+        }}
       />,
     );
 
@@ -55,7 +66,15 @@ describe("MermaidDiagram", () => {
     expect(markup).toContain('aria-busy="false"');
     expect(markup).toContain('aria-labelledby="diagram-label"');
     expect(markup).toContain('class="blog-mermaid-visual blog-mermaid-svg"');
-    expect(markup).toMatch(/class="blog-mermaid-visual blog-mermaid-svg"[^>]*aria-hidden="true"/);
+    expect(markup).toMatch(/class="blog-mermaid-visual blog-mermaid-svg"[^>]*role="img"[^>]*tabindex="0"/);
+    expect(markup).toContain('role="toolbar"');
+    expect(markup).toContain('aria-label="Zoom in"');
+    expect(markup).toContain('aria-label="Zoom out"');
+    expect(markup).toContain('aria-label="Reset diagram zoom, 100%"');
+    expect(markup).not.toContain('aria-label="Move"');
+    expect(markup).not.toContain("blog-mermaid-gesture-hint");
+    expect(markup).toContain('aria-hidden="true" focusable="false"');
+    expect(markup).toContain("A root agent delegates work.");
     expect(markup).not.toContain("blog-mermaid-skeleton");
     expect(markup).not.toContain("blog-mermaid-source");
   });
@@ -65,14 +84,21 @@ describe("MermaidDiagram", () => {
       "Agents V2 task hierarchy",
     );
     expect(getMermaidAccessibleLabel("flowchart TD\n  root --> child")).toBe("Diagram illustrating this section");
+    expect(getMermaidAccessibleDescription("flowchart TD\n  accDescr: The root delegates work.")).toBe(
+      "The root delegates work.",
+    );
+    expect(getMermaidAccessibleDescription("flowchart TD\n  root --> child")).toBeNull();
   });
 
   test("keeps the previous SVG while a loaded mono font theme is rendered", async () => {
     const source = await Bun.file(mermaidDiagramSourceUrl).text();
+    const cameraSource = await Bun.file(mermaidCameraHookUrl).text();
 
     expect(source).toContain("await document.fonts.load");
     expect(source).toContain("const [isRendering, setIsRendering] = useState(true)");
-    expect(source).toContain('const visualState = state.status === "ready" && isRendering ? "updating" : state.status');
+    expect(source).toContain("useMermaidCamera({ isReady, renderedSvg");
+    expect(cameraSource).toContain("rebaseViewBox(previousBase, previousCamera, parsedViewBox)");
+    expect(source).toContain("const renderedSvg = isReady ? state.svg : null");
     expect(source).toContain("data-state={visualState}");
     expect(source).not.toContain('setState({ status: "loading" });');
   });

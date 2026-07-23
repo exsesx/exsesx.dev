@@ -1,22 +1,33 @@
 "use client";
 
+import { Minus, Plus } from "lucide-react";
 import type { RenderResult } from "mermaid";
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { Button } from "@/components/ui/button";
+import { BLOG_UI } from "@/lib/blog";
+import { MAX_MERMAID_ZOOM, MIN_MERMAID_ZOOM } from "@/lib/mermaid-camera";
 import {
   createMermaidPalette,
+  getMermaidAccessibleDescription,
   getMermaidAccessibleLabel,
   getMermaidConfig,
   readMermaidThemeTokens,
 } from "@/lib/mermaid-theme";
 import { getServerThemeSnapshot, getThemeSnapshot, parseThemeSnapshot, subscribeToTheme } from "@/lib/theme";
+import { useBlogLocale } from "./BlogLocaleContext";
+import { useMermaidCamera } from "./useMermaidCamera";
 
 type MermaidDiagramProps = {
   source: string;
 };
 
-type MermaidState = { status: "loading" } | { status: "ready"; svg: string } | { status: "error"; message: string };
+type MermaidState =
+  | { status: "loading" }
+  | { status: "ready"; renderedSource: string; svg: string }
+  | { status: "error"; message: string; renderedSource: string };
 
 type MermaidDiagramViewProps = {
+  accessibleDescription: string | null;
   accessibleLabel: string;
   isRendering: boolean;
   reactId: string;
@@ -24,6 +35,17 @@ type MermaidDiagramViewProps = {
   source: string;
   state: MermaidState;
 };
+
+type MermaidUi = (typeof BLOG_UI)[keyof typeof BLOG_UI]["mermaid"];
+type MermaidCamera = ReturnType<typeof useMermaidCamera>;
+
+type MermaidToolbarProps = {
+  camera: MermaidCamera;
+  isReady: boolean;
+  ui: MermaidUi;
+};
+
+const ZOOM_BUTTON_STEP = 0.25;
 
 let mermaidRenderQueue: Promise<void> = Promise.resolve();
 let mermaidRenderAttempt = 0;
@@ -52,7 +74,16 @@ async function renderMermaid(source: string, id: string, resolvedTheme: "light" 
   return renderTask;
 }
 
-export function MermaidDiagramView({
+function hideInjectedSvgSemantics(svg: string) {
+  return svg.replace("<svg ", '<svg aria-hidden="true" focusable="false" ');
+}
+
+export function MermaidDiagramView(props: MermaidDiagramViewProps) {
+  return <MermaidDiagramViewForSource key={props.source} {...props} />;
+}
+
+function MermaidDiagramViewForSource({
+  accessibleDescription,
   accessibleLabel,
   isRendering,
   reactId,
@@ -60,37 +91,115 @@ export function MermaidDiagramView({
   source,
   state,
 }: MermaidDiagramViewProps) {
-  const isBusy = state.status === "loading" || (state.status === "ready" && isRendering);
+  const locale = useBlogLocale();
+  const ui = BLOG_UI[locale].mermaid;
+  const isReady = state.status === "ready" && state.renderedSource === source;
+  const isCurrentError = state.status === "error" && state.renderedSource === source;
+  const renderedSvg = isReady ? state.svg : null;
+  const camera = useMermaidCamera({ isReady, renderedSvg, zoomStatus: ui.zoomStatus });
+  const isBusy = isRendering || (!isReady && !isCurrentError);
   const labelId = `${reactId}-label`;
-  const visualState = state.status === "ready" && isRendering ? "updating" : state.status;
+  const descriptionId = `${reactId}-description`;
+  const keyboardId = `${reactId}-keyboard`;
+  const visualState = isReady && isRendering ? "updating" : isReady ? "ready" : isCurrentError ? "error" : "loading";
 
   return (
     <figure
       className="blog-mermaid"
       aria-busy={isBusy}
-      aria-labelledby={labelId}
       data-state={visualState}
       data-theme={resolvedTheme}
-      role={state.status === "error" ? undefined : "img"}
+      data-zoom={camera.zoomPercent}
     >
-      <figcaption id={labelId} className={state.status === "error" ? undefined : "sr-only"} lang="en">
-        {state.status === "error" ? `Diagram unavailable: ${state.message}` : accessibleLabel}
+      <figcaption id={labelId} className={isCurrentError ? undefined : "sr-only"} lang={locale}>
+        {isCurrentError ? `${ui.diagramUnavailable}: ${state.message}` : accessibleLabel}
       </figcaption>
-      {state.status === "ready" ? (
-        <div
-          className="blog-mermaid-visual blog-mermaid-svg"
-          aria-hidden="true"
-          //biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid renders trusted local MDX with strict security enabled.
-          dangerouslySetInnerHTML={{ __html: state.svg }}
-        />
-      ) : state.status === "loading" ? (
-        <div className="blog-mermaid-visual blog-mermaid-skeleton" aria-hidden="true" />
-      ) : (
+
+      {accessibleDescription ? (
+        <p id={descriptionId} className="sr-only" lang={locale}>
+          {accessibleDescription}
+        </p>
+      ) : null}
+      <p id={keyboardId} className="sr-only" lang={locale}>
+        {ui.keyboardInstructions}
+      </p>
+
+      {isReady ? (
+        <>
+          <div
+            ref={camera.visualRef}
+            className="blog-mermaid-visual blog-mermaid-svg"
+            aria-describedby={`${accessibleDescription ? `${descriptionId} ` : ""}${keyboardId}`}
+            aria-labelledby={labelId}
+            data-panning={camera.isPanning ? "true" : "false"}
+            data-testid="mermaid-viewport"
+            data-zoomed={camera.isZoomed ? "true" : "false"}
+            onKeyDown={camera.handleKeyDown}
+            onLostPointerCapture={camera.handlePointerEnd}
+            onPointerCancel={camera.handlePointerEnd}
+            onPointerDown={camera.handlePointerDown}
+            onPointerMove={camera.handlePointerMove}
+            onPointerUp={camera.handlePointerEnd}
+            role="img"
+            //biome-ignore lint/a11y/noNoninteractiveTabindex: The SVG camera is keyboard-operable while this labelled image viewport is focused.
+            tabIndex={0}
+            //biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid renders trusted local MDX with strict security enabled.
+            dangerouslySetInnerHTML={{ __html: state.svg }}
+          />
+
+          <MermaidToolbar camera={camera} isReady={isReady} ui={ui} />
+        </>
+      ) : isCurrentError ? (
         <pre className="blog-mermaid-visual blog-mermaid-source">
           <code>{source}</code>
         </pre>
+      ) : (
+        <div className="blog-mermaid-visual blog-mermaid-skeleton" aria-hidden="true" />
       )}
+
+      <div className="sr-only" aria-atomic="true" role="status">
+        {camera.zoomAnnouncement}
+      </div>
     </figure>
+  );
+}
+
+function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
+  return (
+    <div className="blog-mermaid-toolbar" aria-label={ui.toolbar} role="toolbar">
+      <Button
+        type="button"
+        variant="glass"
+        size="icon"
+        className="blog-mermaid-control"
+        aria-label={ui.zoomOut}
+        disabled={!isReady || camera.zoomPercent <= MIN_MERMAID_ZOOM * 100}
+        onClick={() => camera.zoomBy(-ZOOM_BUTTON_STEP)}
+      >
+        <Minus strokeWidth={2.4} />
+      </Button>
+      <Button
+        type="button"
+        variant="glass"
+        className="blog-mermaid-control blog-mermaid-reset"
+        aria-label={`${ui.resetZoom}, ${camera.zoomPercent}%`}
+        disabled={!isReady || !camera.isZoomed}
+        onClick={camera.resetCamera}
+      >
+        {camera.zoomPercent}%
+      </Button>
+      <Button
+        type="button"
+        variant="glass"
+        size="icon"
+        className="blog-mermaid-control"
+        aria-label={ui.zoomIn}
+        disabled={!isReady || camera.zoomPercent >= MAX_MERMAID_ZOOM * 100}
+        onClick={() => camera.zoomBy(ZOOM_BUTTON_STEP)}
+      >
+        <Plus strokeWidth={2.4} />
+      </Button>
+    </div>
   );
 }
 
@@ -99,6 +208,7 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const accessibleLabel = getMermaidAccessibleLabel(source);
+  const accessibleDescription = getMermaidAccessibleDescription(source);
   const [state, setState] = useState<MermaidState>({ status: "loading" });
   const [isRendering, setIsRendering] = useState(true);
 
@@ -113,7 +223,7 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
         const { svg } = await renderMermaid(source, id, resolvedTheme);
 
         if (!cancelled) {
-          setState({ status: "ready", svg });
+          setState({ status: "ready", renderedSource: source, svg: hideInjectedSvgSemantics(svg) });
           setIsRendering(false);
         }
       } catch (error) {
@@ -121,6 +231,7 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
           setState({
             status: "error",
             message: error instanceof Error ? error.message : "The diagram could not be rendered.",
+            renderedSource: source,
           });
           setIsRendering(false);
         }
@@ -136,6 +247,7 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
 
   return (
     <MermaidDiagramView
+      accessibleDescription={accessibleDescription}
       accessibleLabel={accessibleLabel}
       isRendering={isRendering}
       reactId={reactId}
