@@ -49,6 +49,18 @@ async function scrollWithBlogIntent(page: Page, isMobile: boolean | undefined, d
   );
 }
 
+async function readTocHeaderGap(toc: Locator) {
+  return toc.evaluate(element => {
+    const header = document.querySelector(".site-header-nav-frame");
+
+    if (!(header instanceof HTMLElement)) {
+      throw new Error("Expected the Blog header frame");
+    }
+
+    return element.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
+  });
+}
+
 async function installIosShareHarness(page: Page) {
   await page.addInitScript(() => {
     const harness: CvShareHarness = { openCalls: 0, shareCalls: [], shareRejectionName: null };
@@ -613,7 +625,6 @@ if (!("Bun" in globalThis)) {
 
       await scrollWithBlogIntent(page, isMobile, 640);
       await expect(toc).toBeVisible();
-      const hiddenTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
 
       await scrollWithBlogIntent(page, isMobile, -(revealDistance - 1));
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
@@ -622,18 +633,9 @@ if (!("Bun" in globalThis)) {
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeVisible();
 
-      if (isMobile) {
-        const revealedTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
-        expect(revealedTocTop).toBeCloseTo(hiddenTocTop, 0);
-      } else {
-        await expect
-          .poll(async () => toc.evaluate(element => element.getBoundingClientRect().top))
-          .toBeGreaterThan(hiddenTocTop + 60);
+      await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(16, 0);
 
-        const revealedTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
-        const headerBottom = await headerFrame.evaluate(element => element.getBoundingClientRect().bottom);
-        expect(revealedTocTop - headerBottom).toBeCloseTo(16, 0);
-
+      if (!isMobile) {
         const firstTocLink = toc.getByRole("link", { name: "The short version", exact: true });
         const firstLinkIsClickable = await firstTocLink.evaluate(element => {
           const bounds = element.getBoundingClientRect();

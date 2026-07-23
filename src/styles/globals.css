@@ -2036,10 +2036,23 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-toc-mobile-shell {
+  --blog-toc-visible-top: calc(env(safe-area-inset-top) + 5.875rem);
   position: sticky;
-  top: calc(env(safe-area-inset-top) + 0.75rem);
+  top: var(--blog-toc-visible-top);
   z-index: 40;
   isolation: isolate;
+  transition: top 180ms var(--ease-weight);
+}
+
+:where(
+    html[data-blog-focus-bootstrap="pending"] [data-blog-article="true"],
+    html[data-blog-focus-bootstrap="hidden"] [data-blog-article="true"],
+    [data-blog-article="true"][data-blog-passive-hidden="true"],
+    [data-blog-article="true"][data-blog-focus="true"]
+  )
+  .blog-toc-mobile-shell {
+  top: calc(env(safe-area-inset-top) + 0.75rem);
+  transition: top 220ms var(--ease-out);
 }
 
 .blog-toc-desktop {
@@ -2064,13 +2077,13 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   transition: top 220ms var(--ease-out);
 }
 
-html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
-[data-blog-article="true"][data-blog-header-motion="instant"] .blog-toc-desktop {
+html[data-blog-focus-bootstrap] [data-blog-article="true"] :is(.blog-toc-mobile-shell, .blog-toc-desktop),
+[data-blog-article="true"][data-blog-header-motion="instant"] :is(.blog-toc-mobile-shell, .blog-toc-desktop) {
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-blog-article="true"] .blog-toc-desktop {
+  [data-blog-article="true"] :is(.blog-toc-mobile-shell, .blog-toc-desktop) {
     transition: none;
   }
 }
