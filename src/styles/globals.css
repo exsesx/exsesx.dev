@@ -2061,10 +2061,35 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 .blog-toc-desktop {
   position: sticky;
-  top: calc(env(safe-area-inset-top) + 1.25rem);
-  max-height: calc(100svh - env(safe-area-inset-top) - 2.5rem);
+  /* Header frame: 0.75rem top gap + 4.125rem frame + 1rem clearance. */
+  top: calc(env(safe-area-inset-top) + 5.875rem);
+  /* Keep one height ceiling so the scrollable region does not resize in motion. */
+  max-height: calc(100svh - env(safe-area-inset-top) - 7.125rem);
   overflow-y: auto;
   padding-right: 1rem;
+  transition: top 180ms var(--ease-weight);
+}
+
+:where(
+    html[data-blog-focus-bootstrap="pending"] [data-blog-article="true"],
+    html[data-blog-focus-bootstrap="hidden"] [data-blog-article="true"],
+    [data-blog-article="true"][data-blog-passive-hidden="true"],
+    [data-blog-article="true"][data-blog-focus="true"]
+  )
+  .blog-toc-desktop {
+  top: calc(env(safe-area-inset-top) + 1.25rem);
+  transition: top 220ms var(--ease-out);
+}
+
+html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
+[data-blog-article="true"][data-blog-header-motion="instant"] .blog-toc-desktop {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-blog-article="true"] .blog-toc-desktop {
+    transition: none;
+  }
 }
 
 .blog-toc-desktop > p,
