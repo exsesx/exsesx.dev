@@ -23,7 +23,7 @@ describe("Blog production styles", () => {
     expect(css).toMatch(/\.blog-mermaid-source\s*\{[^}]*font-family:\s*var\(--font-mono\)/s);
   });
 
-  test("keeps mobile Mermaid controls below the canvas without shrinking their touch targets", async () => {
+  test("keeps narrow fine-pointer Mermaid controls below the canvas without shrinking targets", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const mobileMermaidRules = css.slice(css.lastIndexOf("@variant max-sm"));
     const mobileToolbarRule = mobileMermaidRules.match(/\.blog-mermaid-toolbar\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -46,6 +46,38 @@ describe("Blog production styles", () => {
     expect(mobileControlRule).toContain("height: 0.9rem");
     expect(mobileResetRule).toContain("width: 3rem");
     expect(mobileResetRule).toContain("min-width: 3rem");
+  });
+
+  test("shows only a compact reset chip after coarse-touch Mermaid zoom", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const coarseStart = css.indexOf("@media (hover: none) and (pointer: coarse)", css.indexOf(".blog-mermaid-reset"));
+    const coarseRules = css.slice(coarseStart, css.indexOf(".blog-mermaid-source", coarseStart));
+    const toolbarRule = coarseRules.match(/\.blog-mermaid-toolbar\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const stepRule = coarseRules.match(/\.blog-mermaid-zoom-step\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const resetRule = coarseRules.match(/\.blog-mermaid-reset\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const chipRule = coarseRules.match(/\.blog-mermaid-reset-chip\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(toolbarRule).toContain("position: absolute");
+    expect(toolbarRule).toContain("top: 0.5rem");
+    expect(toolbarRule).toContain("right: 0.5rem");
+    expect(toolbarRule).toContain("width: 2.75rem");
+    expect(toolbarRule).toContain("height: 2.75rem");
+    expect(toolbarRule).toContain("background: transparent");
+    expect(toolbarRule).toContain("box-shadow: none");
+    expect(stepRule).toContain("position: absolute");
+    expect(stepRule).toContain("clip-path: inset(50%)");
+    expect(resetRule).toContain("height: 2.75rem");
+    expect(resetRule).toContain("opacity 160ms var(--ease-out)");
+    expect(chipRule).toContain("min-width: 2.75rem");
+    expect(chipRule).toContain("height: 1.875rem");
+    expect(chipRule).toContain("backdrop-filter: blur(12px) saturate(1.1)");
+    expect(coarseRules).toMatch(
+      /\.blog-mermaid-toolbar\[data-zoomed="false"\] \.blog-mermaid-reset\s*\{[^}]*opacity:\s*0[^}]*pointer-events:\s*none/s,
+    );
+    expect(coarseRules).toMatch(
+      /\.blog-mermaid-toolbar\[data-zoomed="true"\] \.blog-mermaid-reset\s*\{[^}]*opacity:\s*1[^}]*pointer-events:\s*auto/s,
+    );
+    expect(css).toMatch(/@media print\s*\{[\s\S]*?\.blog-mermaid-toolbar\s*\{?\s*display:\s*none/s);
   });
 
   test("frames Mermaid diagrams with the site's restrained accent treatment", async () => {
@@ -287,6 +319,11 @@ describe("Blog production styles", () => {
 
   test("dismisses the article header as one unscaled, interruptible object", async () => {
     const css = await Bun.file(globalsCssUrl).text();
+    const coarseTouchStart = css.indexOf(
+      "@media (hover: none) and (pointer: coarse)",
+      css.indexOf('[data-blog-article="true"] .site-header-nav-frame'),
+    );
+    const coarseTouchRules = css.slice(coarseTouchStart, css.indexOf("/* Keyboard-driven", coarseTouchStart));
     const visibleFrameRule =
       css.match(/\[data-blog-article="true"\] \.site-header-nav-frame\s*\{([^}]*)\}/s)?.[1] ?? "";
     const visibleFadeRule = css.match(/\[data-blog-article="true"\] \.site-header-fade\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -311,6 +348,18 @@ describe("Blog production styles", () => {
     expect(hiddenFadeRule).toContain("opacity 160ms var(--ease-out)");
     expect(visibleFadeRule).not.toContain("transform");
     expect(hiddenFadeRule).not.toContain("transform");
+    expect(coarseTouchRules).toMatch(
+      /\[data-blog-article="true"\] \.site-header-nav-frame\s*\{[^}]*opacity 240ms var\(--ease-out\)[^}]*transform 300ms var\(--ease-weight\)/s,
+    );
+    expect(coarseTouchRules).toMatch(
+      /\[data-blog-article="true"\] \.site-header-fade\s*\{[^}]*opacity 240ms var\(--ease-out\)/s,
+    );
+    expect(coarseTouchRules).toMatch(
+      /\.site-header-nav-frame\s*\{[^}]*opacity 220ms var\(--ease-out\)[^}]*transform 280ms var\(--ease-out\)[^}]*visibility 0s linear 280ms/s,
+    );
+    expect(coarseTouchRules).toMatch(
+      /\.site-header-fade\s*\{[^}]*opacity 220ms var\(--ease-out\)[^}]*visibility 0s linear 220ms/s,
+    );
     expect(css).toMatch(
       /\[data-blog-article="true"\]\[data-blog-header-motion="instant"\] \.site-header-nav-frame,[\s\S]*?\.site-header-fade\s*\{\s*transition:\s*none/s,
     );
@@ -321,6 +370,8 @@ describe("Blog production styles", () => {
     const mobileRule = css.match(/\.blog-toc-mobile-shell\s*\{([^}]*)\}/s)?.[1] ?? "";
     const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
     const mobileSection = css.slice(css.indexOf(".blog-toc-mobile-shell"), css.indexOf(".blog-toc-desktop"));
+    const coarseTouchStart = mobileSection.indexOf("@media (hover: none) and (pointer: coarse)");
+    const coarseTouchRules = mobileSection.slice(coarseTouchStart);
     const desktopSection = css.slice(css.indexOf(".blog-toc-desktop"), css.indexOf(".blog-toc-desktop > p"));
 
     expect(css).toContain('html[data-blog-focus-bootstrap="pending"]');
@@ -330,6 +381,10 @@ describe("Blog production styles", () => {
     expect(mobileRule).toContain("transition: top 180ms var(--ease-weight)");
     expect(mobileSection).toMatch(
       /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\],[\s\S]*?\[data-blog-article="true"\]\[data-blog-focus="true"\][\s\S]*?\.blog-toc-mobile-shell\s*\{[^}]*top:\s*calc\(env\(safe-area-inset-top\) \+ 0\.75rem\)[^}]*transition:\s*top 220ms var\(--ease-out\)/s,
+    );
+    expect(coarseTouchRules).toMatch(/\.blog-toc-mobile-shell\s*\{[^}]*transition:\s*top 300ms var\(--ease-weight\)/s);
+    expect(coarseTouchRules).toMatch(
+      /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\],[\s\S]*?\.blog-toc-mobile-shell\s*\{[^}]*transition:\s*top 280ms var\(--ease-out\)/s,
     );
     expect(desktopRule).toContain("top: calc(env(safe-area-inset-top) + 5.875rem)");
     expect(desktopRule).toContain("max-height: calc(100svh - env(safe-area-inset-top) - 7.125rem)");
@@ -342,6 +397,29 @@ describe("Blog production styles", () => {
     );
     expect(desktopSection).toMatch(
       /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?:is\(\.blog-toc-mobile-shell, \.blog-toc-desktop\)\s*\{\s*transition:\s*none/s,
+    );
+  });
+
+  test("gives the compact table of contents a restrained supporting frost", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const hoverRule = css.match(/\.blog-toc-mobile-trigger:is\(:hover, :focus-visible\)\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const increasedContrastStart = css.indexOf(
+      "@media (prefers-contrast: more)",
+      css.indexOf(".blog-toc-mobile-trigger:active"),
+    );
+    const increasedContrastRules = css.slice(
+      increasedContrastStart,
+      css.indexOf(".blog-toc-current", increasedContrastStart),
+    );
+
+    expect(triggerRule).toContain("background: color-mix(in oklab, var(--background) 72%, transparent)");
+    expect(triggerRule).toContain("inset 0 1px 0");
+    expect(triggerRule).toContain("0 10px 28px");
+    expect(triggerRule).toContain("backdrop-filter: blur(14px) saturate(1.2)");
+    expect(hoverRule).toContain("background: color-mix(in oklab, var(--background) 78%, var(--foreground) 2%)");
+    expect(increasedContrastRules).toMatch(
+      /\.blog-toc-mobile-trigger\s*\{[^}]*background:\s*color-mix\(in oklab, var\(--background\) 97%, var\(--foreground\) 3%\)[^}]*backdrop-filter:\s*none/s,
     );
   });
 

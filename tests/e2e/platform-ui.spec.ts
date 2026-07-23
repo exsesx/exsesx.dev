@@ -1,7 +1,9 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
   BLOG_HEADER_HIDE_AFTER,
+  BLOG_HEADER_HIDE_START,
   BLOG_HEADER_REVEAL_DISTANCE,
+  BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
 } from "../../src/lib/blog-focus";
 
@@ -289,55 +291,78 @@ if (!("Bun" in globalThis)) {
       const viewport = diagram.getByTestId("mermaid-viewport");
       const toolbar = diagram.getByRole("toolbar", { name: "Diagram controls" });
       const zoomOut = toolbar.getByRole("button", { name: "Zoom out" });
-      const resetZoom = toolbar.getByRole("button", { name: /^Reset diagram zoom,/ });
+      const resetZoom = toolbar.locator('[data-mermaid-control="reset"]');
       const zoomIn = toolbar.getByRole("button", { name: "Zoom in" });
       const svg = viewport.locator("svg");
 
       await expect(diagram).toHaveAttribute("data-state", "ready", { timeout: 15_000 });
       await expect(viewport).toBeVisible();
       await expect(zoomIn).toBeEnabled();
-      await expect(toolbar.getByRole("button")).toHaveCount(3);
+      await expect(toolbar.getByRole("button")).toHaveCount(isMobile ? 2 : 3);
+      await expect(toolbar).toHaveAttribute("data-zoomed", "false");
+      await expect(zoomOut).toHaveAttribute("data-mermaid-control", "zoom-out");
+      await expect(resetZoom).toHaveAttribute("data-mermaid-control", "reset");
+      await expect(zoomIn).toHaveAttribute("data-mermaid-control", "zoom-in");
+      await expect(toolbar.locator(".blog-mermaid-zoom-step")).toHaveCount(2);
+      await expect(resetZoom.locator(".blog-mermaid-reset-chip")).toHaveText("100%");
       await expect(toolbar.getByRole("button", { name: "Move", exact: true })).toHaveCount(0);
       await expect(diagram.getByTestId("mermaid-gesture-hint")).toHaveCount(0);
       await expect(diagram).toHaveAttribute("data-zoom", "100");
       const baseViewBox = await svg.getAttribute("viewBox");
-      const zoomInBoundsAt100 = await zoomIn.boundingBox();
       expect(baseViewBox).not.toBeNull();
-      expect(zoomInBoundsAt100).not.toBeNull();
-
-      if (!isMobile) {
-        await expect(viewport).toHaveCSS("cursor", "default");
-        await viewport.click();
-        await expect(diagram).toHaveAttribute("data-zoom", "100");
-        await viewport.dblclick();
-        await expect(diagram).toHaveAttribute("data-zoom", "100");
-      }
-
-      await zoomIn.click();
-      await expect(diagram).toHaveAttribute("data-zoom", "125");
-      await expect(resetZoom).toHaveText("125%");
-      if (!isMobile) {
-        await expect(viewport).toHaveCSS("cursor", "grab");
-      }
-      const zoomInBoundsAt125 = await zoomIn.boundingBox();
-      expect(zoomInBoundsAt125).not.toBeNull();
-      expect(zoomInBoundsAt125?.x).toBeCloseTo(zoomInBoundsAt100?.x ?? 0, 1);
-      await zoomOut.click();
-      await expect(diagram).toHaveAttribute("data-zoom", "100");
-      await zoomIn.click();
-      await resetZoom.click();
-      await expect(diagram).toHaveAttribute("data-zoom", "100");
 
       if (isMobile) {
+        await expect(zoomOut).toHaveCSS("position", "absolute");
+        await expect(zoomIn).toHaveCSS("position", "absolute");
+        await expect(resetZoom).toHaveCSS("opacity", "0");
+        await expect(resetZoom).toHaveCSS("pointer-events", "none");
+
         await pinchMermaidWithPointers(viewport);
         await expect.poll(async () => Number(await diagram.getAttribute("data-zoom"))).toBeGreaterThan(210);
+        await expect(toolbar).toHaveAttribute("data-zoomed", "true");
+        await expect(toolbar.getByRole("button")).toHaveCount(3);
+        await expect(resetZoom).toBeEnabled();
+        await expect(resetZoom).toHaveCSS("opacity", "1");
+        await expect(resetZoom).toHaveCSS("pointer-events", "auto");
+        const [resetBounds, chipBounds] = await Promise.all([
+          resetZoom.boundingBox(),
+          resetZoom.locator(".blog-mermaid-reset-chip").boundingBox(),
+        ]);
+        expect(resetBounds?.height).toBeCloseTo(44, 0);
+        expect(chipBounds?.height).toBeCloseTo(30, 0);
+
         const viewBoxBeforeTouchDrag = await svg.getAttribute("viewBox");
         await dragMermaidWithTouchPointer(viewport);
         await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeTouchDrag);
         await resetZoom.click();
         await expect(diagram).toHaveAttribute("data-zoom", "100");
+        await expect(toolbar).toHaveAttribute("data-zoomed", "false");
+        await expect(resetZoom).toHaveCSS("opacity", "0");
         return;
       }
+
+      await expect(viewport).toHaveCSS("cursor", "default");
+      await viewport.click();
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+      await viewport.dblclick();
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+      const zoomInBoundsAt100 = await zoomIn.boundingBox();
+      expect(zoomInBoundsAt100).not.toBeNull();
+
+      await zoomIn.click();
+      await expect(diagram).toHaveAttribute("data-zoom", "125");
+      await expect(toolbar).toHaveAttribute("data-zoomed", "true");
+      await expect(resetZoom).toHaveText("125%");
+      await expect(viewport).toHaveCSS("cursor", "grab");
+      const zoomInBoundsAt125 = await zoomIn.boundingBox();
+      expect(zoomInBoundsAt125).not.toBeNull();
+      expect(zoomInBoundsAt125?.x).toBeCloseTo(zoomInBoundsAt100?.x ?? 0, 1);
+      await zoomOut.click();
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+      await expect(toolbar).toHaveAttribute("data-zoomed", "false");
+      await zoomIn.click();
+      await resetZoom.click();
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
 
       await viewport.scrollIntoViewIfNeeded();
       const viewportBounds = await viewport.boundingBox();
@@ -597,10 +622,11 @@ if (!("Bun" in globalThis)) {
       const headerFrame = page.locator(".site-header-nav-frame");
       const title = page.getByRole("heading", { level: 1 });
       const toc = page.locator(isMobile ? ".blog-toc-mobile-shell" : ".blog-toc-desktop");
+      const hideAfter = isMobile ? BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE : BLOG_HEADER_HIDE_AFTER;
       const revealDistance = isMobile ? BLOG_HEADER_TOUCH_REVEAL_DISTANCE : BLOG_HEADER_REVEAL_DISTANCE;
 
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
-      await scrollWithBlogIntent(page, isMobile, BLOG_HEADER_HIDE_AFTER - 1);
+      await scrollWithBlogIntent(page, isMobile, hideAfter - 1);
 
       await expect(headerFrame).toHaveAttribute("data-condensed", "true");
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");

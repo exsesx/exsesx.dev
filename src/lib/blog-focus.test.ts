@@ -4,6 +4,7 @@ import {
   BLOG_HEADER_HIDE_DISTANCE,
   BLOG_HEADER_HIDE_START,
   BLOG_HEADER_REVEAL_DISTANCE,
+  BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
   createPassiveBlogHeaderState,
   revealPassiveBlogHeader,
@@ -17,6 +18,7 @@ describe("passive blog header", () => {
     expect(BLOG_HEADER_HIDE_AFTER).toBe(120);
     expect(BLOG_HEADER_HIDE_AFTER).toBe(BLOG_HEADER_HIDE_START + BLOG_HEADER_HIDE_DISTANCE);
     expect(BLOG_HEADER_REVEAL_DISTANCE).toBe(48);
+    expect(BLOG_HEADER_TOUCH_HIDE_DISTANCE).toBe(40);
     expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(64);
   });
 
@@ -134,6 +136,33 @@ describe("passive blog header", () => {
       hidden: true,
     });
     expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
+  });
+
+  test("requires 40px of downward intent to re-hide on coarse touch input", () => {
+    const hidden = createPassiveBlogHeaderState(400, true);
+    const revealed = updatePassiveBlogHeader(hidden, {
+      hasUserScrollIntent: true,
+      revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+      scrollY: 400 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+    });
+    const almostHidden = updatePassiveBlogHeader(revealed, {
+      hasUserScrollIntent: true,
+      hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+      scrollY: 400 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1,
+    });
+    const hiddenAgain = updatePassiveBlogHeader(almostHidden, {
+      hasUserScrollIntent: true,
+      hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+      scrollY: 400 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+    });
+
+    expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
+    expect(almostHidden).toMatchObject({
+      accumulatedDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1,
+      direction: "down",
+      hidden: false,
+    });
+    expect(hiddenAgain).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
   });
 
   test("reveals immediately at 32px even without the full upward threshold", () => {

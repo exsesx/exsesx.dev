@@ -16,7 +16,9 @@ import {
 import { BLOG_UI, getBlogLocaleFromPath } from "@/lib/blog";
 import {
   BLOG_HEADER_HIDE_AFTER,
+  BLOG_HEADER_HIDE_DISTANCE,
   BLOG_HEADER_REVEAL_DISTANCE,
+  BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
   createPassiveBlogHeaderState,
   revealPassiveBlogHeader,
@@ -30,6 +32,7 @@ const BLOG_FOCUS_TOAST_ID = "blog-focus-mode";
 const BLOG_FOCUS_TOAST_TIMEOUT = 2400;
 
 type BlogFocusContextValue = {
+  beginTocNavigation: () => TocNavigationTransaction;
   exitFocusMode: () => void;
   isBlogArticle: boolean;
   isFocusMode: boolean;
@@ -38,7 +41,17 @@ type BlogFocusContextValue = {
   toggleFocusMode: () => void;
 };
 
+type TocNavigationTransaction = {
+  complete: () => void;
+  isActive: () => boolean;
+};
+
 const BlogFocusContext = createContext<BlogFocusContextValue | null>(null);
+const noopTocNavigation: TocNavigationTransaction = {
+  complete: () => undefined,
+  isActive: () => true,
+};
+const beginNoopTocNavigation = () => noopTocNavigation;
 
 type BlogFocusProviderProps = Readonly<{
   children: ReactNode;
@@ -64,7 +77,10 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
     pathname: string;
   }>({ hidden: false, motion: "instant", pathname: "" });
   const { add: addToast, close: closeToast, toasts } = Toast.useToastManager();
+  const hasUserScrollIntentRef = useRef(false);
   const passiveStateRef = useRef(createPassiveBlogHeaderState());
+  const tocNavigationIdRef = useRef<number | null>(null);
+  const nextTocNavigationIdRef = useRef(0);
   const isFocusMode = isBlogArticle && focusState.pathname === pathname && focusState.active;
   const isPassiveHeaderHidden =
     isBlogArticle && !isFocusMode && passiveVisibility.pathname === pathname && passiveVisibility.hidden;
@@ -93,6 +109,35 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
     passiveStateRef.current = revealPassiveBlogHeader(passiveStateRef.current, window.scrollY);
     setPassiveVisibility({ hidden: false, motion: "instant", pathname });
   }, [pathname]);
+
+  const beginTocNavigation = useCallback(() => {
+    const navigationId = nextTocNavigationIdRef.current + 1;
+    nextTocNavigationIdRef.current = navigationId;
+    tocNavigationIdRef.current = navigationId;
+    hasUserScrollIntentRef.current = false;
+
+    const nextState = updatePassiveBlogHeader(passiveStateRef.current, {
+      hasUserScrollIntent: false,
+      shouldHideWithoutIntent: isBlogArticle && !isFocusMode,
+      scrollY: window.scrollY,
+    });
+
+    passiveStateRef.current = nextState;
+    setPassiveVisibility({ hidden: nextState.hidden, motion: "animated", pathname });
+
+    return {
+      complete: () => {
+        if (tocNavigationIdRef.current !== navigationId) {
+          return;
+        }
+
+        tocNavigationIdRef.current = null;
+        hasUserScrollIntentRef.current = false;
+        passiveStateRef.current = createPassiveBlogHeaderState(window.scrollY, passiveStateRef.current.hidden);
+      },
+      isActive: () => tocNavigationIdRef.current === navigationId,
+    };
+  }, [isBlogArticle, isFocusMode, pathname]);
 
   const exitFocusMode = useCallback(() => {
     if (!isFocusMode) {
@@ -137,10 +182,11 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
     }
 
     const headerFrame = document.querySelector<HTMLElement>(".site-header-nav-frame");
-    const revealDistance = window.matchMedia("(pointer: coarse)").matches
-      ? BLOG_HEADER_TOUCH_REVEAL_DISTANCE
-      : BLOG_HEADER_REVEAL_DISTANCE;
-    let hasUserScrollIntent = false;
+    const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const hideDistance = isCoarsePointer ? BLOG_HEADER_TOUCH_HIDE_DISTANCE : BLOG_HEADER_HIDE_DISTANCE;
+    const revealDistance = isCoarsePointer ? BLOG_HEADER_TOUCH_REVEAL_DISTANCE : BLOG_HEADER_REVEAL_DISTANCE;
+    hasUserScrollIntentRef.current = false;
+    tocNavigationIdRef.current = null;
     let motion: PassiveHeaderMotion = "instant";
     let frame = 0;
 
@@ -152,9 +198,10 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
         const hasHeaderFocus = activeElement instanceof Node && Boolean(headerFrame?.contains(activeElement));
         const nextState = updatePassiveBlogHeader(passiveStateRef.current, {
           hasHeaderFocus,
-          hasUserScrollIntent,
+          hasUserScrollIntent: tocNavigationIdRef.current === null && hasUserScrollIntentRef.current,
+          hideDistance,
           revealDistance,
-          shouldHideWithoutIntent: scrollY >= BLOG_HEADER_HIDE_AFTER,
+          shouldHideWithoutIntent: tocNavigationIdRef.current !== null || scrollY >= BLOG_HEADER_HIDE_AFTER,
           scrollY,
         });
 
@@ -173,13 +220,15 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
       }
 
       if (SCROLL_INTENT_KEYS.has(event.key)) {
-        hasUserScrollIntent = true;
+        tocNavigationIdRef.current = null;
+        hasUserScrollIntentRef.current = true;
         motion = "instant";
       }
     }
 
     function handleTouchMove() {
-      hasUserScrollIntent = true;
+      tocNavigationIdRef.current = null;
+      hasUserScrollIntentRef.current = true;
       motion = "animated";
     }
 
@@ -188,14 +237,16 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
       const isScrollbarLane = event.clientX >= document.documentElement.clientWidth - 1;
 
       if (isMiddleButton || isScrollbarLane) {
-        hasUserScrollIntent = true;
+        tocNavigationIdRef.current = null;
+        hasUserScrollIntentRef.current = true;
         motion = "animated";
       }
     }
 
     function handleWheel(event: WheelEvent) {
       if (event.deltaY !== 0) {
-        hasUserScrollIntent = true;
+        tocNavigationIdRef.current = null;
+        hasUserScrollIntentRef.current = true;
         motion = "animated";
       }
     }
@@ -240,6 +291,7 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
 
   const value = useMemo(
     () => ({
+      beginTocNavigation,
       exitFocusMode,
       isBlogArticle,
       isFocusMode,
@@ -247,7 +299,15 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
       revealHeader,
       toggleFocusMode,
     }),
-    [exitFocusMode, isBlogArticle, isFocusMode, isPassiveHeaderHidden, revealHeader, toggleFocusMode],
+    [
+      beginTocNavigation,
+      exitFocusMode,
+      isBlogArticle,
+      isFocusMode,
+      isPassiveHeaderHidden,
+      revealHeader,
+      toggleFocusMode,
+    ],
   );
 
   return (
@@ -288,4 +348,8 @@ export function useBlogFocus() {
   }
 
   return context;
+}
+
+export function useBlogTocNavigation() {
+  return useContext(BlogFocusContext)?.beginTocNavigation ?? beginNoopTocNavigation;
 }

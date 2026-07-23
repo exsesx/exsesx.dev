@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/drawer";
 import type { ArticleHeading } from "@/content/blog/reading";
 import { BLOG_UI, type BlogLocale } from "@/lib/blog";
+import { useBlogTocNavigation } from "./BlogFocusProvider";
 
 type ArticleTocProps = {
   activeHeadingId?: string | null;
@@ -22,6 +23,7 @@ type ArticleTocProps = {
 };
 
 export default function ArticleToc({ activeHeadingId, headings, locale, mode }: ArticleTocProps) {
+  const beginTocNavigation = useBlogTocNavigation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const activeLinkRef = useRef<HTMLAnchorElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -49,12 +51,17 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
 
     const trigger = triggerRef.current;
     const isNavigatingUp = heading.getBoundingClientRect().top < 0;
-    const reserveVisibleHeader = isNavigatingUp && !trigger?.closest('[data-blog-focus="true"]');
+    const tocNavigation = mode === "mobile" ? beginTocNavigation() : null;
+    const reserveVisibleHeader = mode !== "mobile" && isNavigatingUp && !trigger?.closest('[data-blog-focus="true"]');
     const topOffset = getHeadingOffset(trigger, reserveVisibleHeader);
     const top = Math.max(0, window.scrollY + heading.getBoundingClientRect().top - topOffset);
     const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
     const settleHeading = () => {
+      if (tocNavigation && !tocNavigation.isActive()) {
+        return;
+      }
+
       const triggerBottom = trigger?.getBoundingClientRect().bottom ?? 60;
       const chromeRemainsHidden = Boolean(
         trigger?.closest('[data-blog-passive-hidden="true"], [data-blog-focus="true"]'),
@@ -68,6 +75,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
       }
 
       focusHeading(heading);
+      tocNavigation?.complete();
     };
 
     if (behavior === "auto") {

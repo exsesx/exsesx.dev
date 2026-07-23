@@ -764,6 +764,46 @@ html[data-season="pride"] .logo-mark-pride {
     visibility 0s linear 160ms;
 }
 
+@media (hover: none) and (pointer: coarse) {
+  [data-blog-article="true"] .site-header-nav-frame {
+    transition:
+      opacity 240ms var(--ease-out),
+      transform 300ms var(--ease-weight),
+      visibility 0s linear;
+  }
+
+  [data-blog-article="true"] .site-header-fade {
+    transition:
+      opacity 240ms var(--ease-out),
+      visibility 0s linear;
+  }
+
+  :is(
+      html[data-blog-focus-bootstrap="pending"] [data-blog-article="true"],
+      html[data-blog-focus-bootstrap="hidden"] [data-blog-article="true"],
+      [data-blog-article="true"][data-blog-passive-hidden="true"],
+      [data-blog-article="true"][data-blog-focus="true"]
+    )
+    .site-header-nav-frame {
+    transition:
+      opacity 220ms var(--ease-out),
+      transform 280ms var(--ease-out),
+      visibility 0s linear 280ms;
+  }
+
+  :is(
+      html[data-blog-focus-bootstrap="pending"] [data-blog-article="true"],
+      html[data-blog-focus-bootstrap="hidden"] [data-blog-article="true"],
+      [data-blog-article="true"][data-blog-passive-hidden="true"],
+      [data-blog-article="true"][data-blog-focus="true"]
+    )
+    .site-header-fade {
+    transition:
+      opacity 220ms var(--ease-out),
+      visibility 0s linear 220ms;
+  }
+}
+
 /* Keyboard-driven visibility changes are intentionally non-spatial; the
    controller replaces this hook on the next spatial visibility change. */
 [data-blog-article="true"][data-blog-header-motion="instant"] .site-header-nav-frame,
@@ -2055,6 +2095,22 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   transition: top 220ms var(--ease-out);
 }
 
+@media (hover: none) and (pointer: coarse) {
+  .blog-toc-mobile-shell {
+    transition: top 300ms var(--ease-weight);
+  }
+
+  :where(
+      html[data-blog-focus-bootstrap="pending"] [data-blog-article="true"],
+      html[data-blog-focus-bootstrap="hidden"] [data-blog-article="true"],
+      [data-blog-article="true"][data-blog-passive-hidden="true"],
+      [data-blog-article="true"][data-blog-focus="true"]
+    )
+    .blog-toc-mobile-shell {
+    transition: top 280ms var(--ease-out);
+  }
+}
+
 .blog-toc-desktop {
   position: sticky;
   /* Header frame: 0.75rem top gap + 4.125rem frame + 1rem clearance. */
@@ -2195,8 +2251,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] :is(.blog-toc-mobile-
   border: 1px solid var(--border);
   border-radius: 1rem;
   appearance: none;
-  background: color-mix(in oklab, var(--background) 86%, transparent);
-  box-shadow: 0 12px 32px color-mix(in oklab, var(--foreground) 7%, transparent);
+  background: color-mix(in oklab, var(--background) 72%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--foreground) 7%, transparent),
+    0 10px 28px color-mix(in oklab, var(--foreground) 5%, transparent);
   color: var(--foreground);
   cursor: pointer;
   font: inherit;
@@ -2212,7 +2270,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] :is(.blog-toc-mobile-
 
 .blog-toc-mobile-trigger:is(:hover, :focus-visible) {
   border-color: color-mix(in oklab, var(--foreground) 22%, transparent);
-  background: color-mix(in oklab, var(--background) 91%, var(--foreground) 2%);
+  background: color-mix(in oklab, var(--background) 78%, var(--foreground) 2%);
 }
 
 .blog-toc-mobile-trigger:focus-visible {
@@ -2222,6 +2280,14 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] :is(.blog-toc-mobile-
 
 .blog-toc-mobile-trigger:active {
   transform: scale(0.99);
+}
+
+@media (prefers-contrast: more) {
+  .blog-toc-mobile-trigger {
+    border-color: color-mix(in oklab, var(--foreground) 30%, transparent);
+    background: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
+    backdrop-filter: none;
+  }
 }
 
 .blog-toc-current {
@@ -2861,6 +2927,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] :is(.blog-toc-mobile-
     display: none;
   }
 
+  .blog-mermaid-toolbar {
+    display: none;
+  }
+
   .blog-code-block pre {
     overflow-x: visible;
     white-space: pre-wrap;
@@ -3020,8 +3090,10 @@ code[data-theme] span {
 }
 
 .blog-mermaid-reset {
+  display: grid;
   width: 3.5rem;
   min-width: 3.5rem;
+  place-items: center;
   font-family: var(--font-mono);
   font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
@@ -3051,6 +3123,87 @@ code[data-theme] span {
     width: 3rem;
     min-width: 3rem;
     font-size: 0.64rem;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .blog-mermaid-toolbar {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: block;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .blog-mermaid-zoom-step {
+    position: absolute;
+    width: 1px;
+    min-width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .blog-mermaid-reset {
+    position: absolute;
+    inset: 0;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    background: transparent;
+    transform: scale(1);
+    transition:
+      opacity 160ms var(--ease-out),
+      transform 160ms var(--ease-out),
+      visibility 0s linear;
+  }
+
+  .blog-mermaid-reset-chip {
+    display: inline-grid;
+    min-width: 2.75rem;
+    height: 1.875rem;
+    padding-inline: 0.45rem;
+    place-items: center;
+    border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
+    border-radius: 999px;
+    color: var(--foreground);
+    background: color-mix(in oklab, var(--background) 76%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 7%, transparent);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 650;
+    line-height: 1;
+    backdrop-filter: blur(12px) saturate(1.1);
+  }
+
+  .blog-mermaid-toolbar[data-zoomed="false"] .blog-mermaid-reset {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.9);
+    transition:
+      opacity 160ms var(--ease-out),
+      transform 160ms var(--ease-out),
+      visibility 0s linear 160ms;
+  }
+
+  .blog-mermaid-toolbar[data-zoomed="true"] .blog-mermaid-reset {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
   }
 }
 
@@ -3120,6 +3273,17 @@ code[data-theme] span {
   .blog-focus-toast,
   .blog-mermaid-toolbar,
   .blog-code-toolbar {
+    background: color-mix(in oklab, var(--background) 96%, var(--foreground) 3%);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) and (hover: none) and (pointer: coarse) {
+  .blog-mermaid-toolbar {
+    background: transparent;
+  }
+
+  .blog-mermaid-reset-chip {
     background: color-mix(in oklab, var(--background) 96%, var(--foreground) 3%);
     backdrop-filter: none;
   }

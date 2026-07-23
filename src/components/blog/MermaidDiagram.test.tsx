@@ -68,9 +68,16 @@ describe("MermaidDiagram", () => {
     expect(markup).toContain('class="blog-mermaid-visual blog-mermaid-svg"');
     expect(markup).toMatch(/class="blog-mermaid-visual blog-mermaid-svg"[^>]*role="img"[^>]*tabindex="0"/);
     expect(markup).toContain('role="toolbar"');
+    expect(markup).toContain('class="blog-mermaid-toolbar"');
+    expect(markup).toContain('data-zoomed="false"');
     expect(markup).toContain('aria-label="Zoom in"');
     expect(markup).toContain('aria-label="Zoom out"');
     expect(markup).toContain('aria-label="Reset diagram zoom, 100%"');
+    expect(markup).toContain('data-mermaid-control="zoom-in"');
+    expect(markup).toContain('data-mermaid-control="zoom-out"');
+    expect(markup).toContain('data-mermaid-control="reset"');
+    expect(markup.match(/blog-mermaid-zoom-step/g)).toHaveLength(2);
+    expect(markup).toContain('class="blog-mermaid-reset-chip">100%</span>');
     expect(markup).not.toContain('aria-label="Move"');
     expect(markup).not.toContain("blog-mermaid-gesture-hint");
     expect(markup).toContain('aria-hidden="true" focusable="false"');

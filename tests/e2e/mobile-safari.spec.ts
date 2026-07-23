@@ -1,5 +1,9 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import { BLOG_HEADER_HIDE_AFTER, BLOG_HEADER_TOUCH_REVEAL_DISTANCE } from "../../src/lib/blog-focus";
+import {
+  BLOG_HEADER_HIDE_START,
+  BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+  BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+} from "../../src/lib/blog-focus";
 
 const BLOG_ARTICLE_PATH = "/blog/en/codex-agents-v2";
 const MERMAID_ARTICLE_PATH = "/blog/en/codex-memories";
@@ -53,7 +57,7 @@ if (!("Bun" in globalThis)) {
       const toc = page.locator(".blog-toc-mobile-shell");
 
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
-      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_AFTER - 1);
+      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1);
 
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       const visibleTransform = await headerFrame.evaluate(element => {
@@ -83,7 +87,7 @@ if (!("Bun" in globalThis)) {
       await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(16, 0);
     });
 
-    test("Mermaid accepts pinch and drag gestures in iPhone Safari", async ({ page }) => {
+    test("Mermaid reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
       await page.goto(MERMAID_ARTICLE_PATH);
 
       const diagram = page.locator(".blog-mermaid").first();
@@ -96,50 +100,62 @@ if (!("Bun" in globalThis)) {
       await expect(viewport).toHaveAccessibleName("Codex local memory pipeline");
       await expect(svg).toBeVisible();
       await expect(toolbar.getByRole("button", { name: "Zoom in" })).toBeEnabled();
-      await expect(toolbar.getByRole("button")).toHaveCount(3);
+      await expect(toolbar.getByRole("button")).toHaveCount(2);
+      await expect(toolbar).toHaveAttribute("data-zoomed", "false");
       await expect(toolbar.getByRole("button", { name: "Move", exact: true })).toHaveCount(0);
       await expect(toolbar.getByRole("button", { name: "Zoom out" })).toBeDisabled();
       await expect(toolbar).toHaveCSS("backdrop-filter", "none");
-      expect(await toolbar.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
-      const resetZoom = toolbar.getByRole("button", { name: /^Reset diagram zoom,/ });
+      const resetZoom = toolbar.locator('[data-mermaid-control="reset"]');
       await expect(resetZoom).toBeDisabled();
-      await expect(resetZoom).toHaveCSS("appearance", "none");
-      await expect(resetZoom).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+      await expect(resetZoom).toHaveCSS("opacity", "0");
+      await expect(resetZoom).toHaveCSS("pointer-events", "none");
 
-      const [bounds, diagramBounds, toolbarBounds, zoomInBounds] = await Promise.all([
+      const [bounds, diagramBounds, toolbarBounds] = await Promise.all([
         viewport.boundingBox(),
         diagram.boundingBox(),
         toolbar.boundingBox(),
-        toolbar.getByRole("button", { name: "Zoom in" }).boundingBox(),
       ]);
       const pageViewport = page.viewportSize();
       expect(bounds).not.toBeNull();
       expect(diagramBounds).not.toBeNull();
       expect(toolbarBounds).not.toBeNull();
-      expect(zoomInBounds).not.toBeNull();
       expect(pageViewport).not.toBeNull();
       expect(bounds?.height).toBeCloseTo(320, 0);
       expect(bounds?.x ?? -1).toBeGreaterThanOrEqual(0);
       expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(pageViewport?.width ?? 0);
-      expect(toolbarBounds?.y ?? 0).toBeGreaterThanOrEqual((bounds?.y ?? 0) + (bounds?.height ?? 0) + 10);
-      expect((toolbarBounds?.x ?? 0) + (toolbarBounds?.width ?? 0)).toBeCloseTo(
-        (bounds?.x ?? 0) + (bounds?.width ?? 0),
-        1,
-      );
-      expect(toolbarBounds?.height).toBeCloseTo(46, 0);
-      expect(zoomInBounds?.height).toBeCloseTo(44, 0);
-      expect((diagramBounds?.y ?? 0) + (diagramBounds?.height ?? 0)).toBeGreaterThanOrEqual(
-        (toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0),
-      );
+      const toolbarRightInset =
+        (diagramBounds?.x ?? 0) + (diagramBounds?.width ?? 0) - ((toolbarBounds?.x ?? 0) + (toolbarBounds?.width ?? 0));
+      expect(toolbarRightInset).toBeCloseTo(9, 0);
+      expect(toolbarBounds?.y).toBeCloseTo((diagramBounds?.y ?? 0) + 9, 0);
+      expect(toolbarBounds?.width).toBeCloseTo(44, 0);
+      expect(toolbarBounds?.height).toBeCloseTo(44, 0);
 
       await viewport.scrollIntoViewIfNeeded();
       const scrollBeforePinch = await page.evaluate(() => window.scrollY);
       await pinchMermaidWithPointers(viewport);
       await expect.poll(async () => Number(await diagram.getAttribute("data-zoom"))).toBeGreaterThan(210);
+      await expect(toolbar).toHaveAttribute("data-zoomed", "true");
+      await expect(toolbar.getByRole("button")).toHaveCount(3);
+      await expect(resetZoom).toBeEnabled();
+      await expect(resetZoom).toHaveCSS("opacity", "1");
+      await expect(resetZoom).toHaveCSS("pointer-events", "auto");
+      await expect(resetZoom.locator(".blog-mermaid-reset-chip")).toHaveText(/\d+%/);
+      const [resetBounds, chipBounds] = await Promise.all([
+        resetZoom.boundingBox(),
+        resetZoom.locator(".blog-mermaid-reset-chip").boundingBox(),
+      ]);
+      expect(resetBounds?.height).toBeCloseTo(44, 0);
+      expect(chipBounds?.height).toBeCloseTo(30, 0);
+
       const viewBoxBeforeTouchDrag = await svg.getAttribute("viewBox");
       await dragMermaidWithTouchPointer(viewport);
       await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeTouchDrag);
       expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(scrollBeforePinch, 0);
+
+      await resetZoom.click();
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+      await expect(toolbar).toHaveAttribute("data-zoomed", "false");
+      await expect(resetZoom).toHaveCSS("opacity", "0");
     });
 
     test("wide tables keep horizontal scrolling without elastic edge gaps", async ({ page }) => {
@@ -157,9 +173,10 @@ if (!("Bun" in globalThis)) {
       expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth);
     });
 
-    test("mobile table of contents closes and lands reliably on a section", async ({ page }) => {
+    test("mobile table of contents keeps an upward selection current after retained touch intent", async ({ page }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
+      const root = page.locator('[data-blog-article="true"]');
       const trigger = page.getByTestId("mobile-toc-trigger");
       await expect(trigger).toBeVisible();
       const tocShell = page.locator(".blog-toc-mobile-shell");
@@ -196,6 +213,12 @@ if (!("Bun" in globalThis)) {
       await waitForScrollToSettle(page);
       await expect(target).toBeFocused();
       await expectTargetBelowTrigger(target, trigger);
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+
+      // Reproduce the touch intent retained immediately before a TOC-driven
+      // upward scroll. The programmatic scroll must not consume that intent
+      // and reveal the header above the selected heading.
+      await page.locator("body").dispatchEvent("touchmove");
 
       await trigger.click();
       await expect(drawer).toBeVisible();
@@ -210,7 +233,20 @@ if (!("Bun" in globalThis)) {
       const earlierTarget = page.locator("#what-changed-from-v1");
       await waitForScrollToSettle(page);
       await expect(earlierTarget).toBeFocused();
-      await expectTargetBelowTrigger(earlierTarget, trigger);
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect.poll(async () => Math.floor(await readTargetTriggerGap(earlierTarget, trigger))).toBe(16);
+      await expect(trigger.locator(".blog-toc-current")).toHaveText("What changed from V1");
+
+      await trigger.click();
+      await expect(drawer).toBeVisible();
+      await sectionLink.scrollIntoViewIfNeeded();
+      await sectionLink.click();
+      await expect(page).toHaveURL(/#how-to-enable-agents-v2$/);
+
+      // New touch input interrupts the in-flight TOC navigation. Its upward
+      // movement is immediately interpreted by the normal passive header.
+      await scrollWithTouchIntent(page, -BLOG_HEADER_TOUCH_REVEAL_DISTANCE);
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
     });
   });
 }
@@ -236,13 +272,17 @@ async function readTocHeaderGap(toc: Locator) {
 }
 
 async function expectTargetBelowTrigger(target: Locator, trigger: Locator) {
+  const targetGap = await readTargetTriggerGap(target, trigger);
+  expect(targetGap).toBeGreaterThanOrEqual(8);
+  expect(targetGap).toBeLessThanOrEqual(180);
+}
+
+async function readTargetTriggerGap(target: Locator, trigger: Locator) {
   const [targetBounds, triggerBounds] = await Promise.all([target.boundingBox(), trigger.boundingBox()]);
   expect(targetBounds).not.toBeNull();
   expect(triggerBounds).not.toBeNull();
 
-  const targetGap = (targetBounds?.y ?? 0) - ((triggerBounds?.y ?? 0) + (triggerBounds?.height ?? 0));
-  expect(targetGap).toBeGreaterThanOrEqual(8);
-  expect(targetGap).toBeLessThanOrEqual(180);
+  return (targetBounds?.y ?? 0) - ((triggerBounds?.y ?? 0) + (triggerBounds?.height ?? 0));
 }
 
 async function readDocumentScrollLock(page: Page) {

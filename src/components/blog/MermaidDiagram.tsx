@@ -166,13 +166,19 @@ function MermaidDiagramViewForSource({
 
 function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
   return (
-    <div className="blog-mermaid-toolbar" aria-label={ui.toolbar} role="toolbar">
+    <div
+      className="blog-mermaid-toolbar"
+      aria-label={ui.toolbar}
+      data-zoomed={camera.isZoomed ? "true" : "false"}
+      role="toolbar"
+    >
       <Button
         type="button"
         variant="glass"
         size="icon"
-        className="blog-mermaid-control"
+        className="blog-mermaid-control blog-mermaid-zoom-step"
         aria-label={ui.zoomOut}
+        data-mermaid-control="zoom-out"
         disabled={!isReady || camera.zoomPercent <= MIN_MERMAID_ZOOM * 100}
         onClick={() => camera.zoomBy(-ZOOM_BUTTON_STEP)}
       >
@@ -183,17 +189,19 @@ function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
         variant="glass"
         className="blog-mermaid-control blog-mermaid-reset"
         aria-label={`${ui.resetZoom}, ${camera.zoomPercent}%`}
+        data-mermaid-control="reset"
         disabled={!isReady || !camera.isZoomed}
         onClick={camera.resetCamera}
       >
-        {camera.zoomPercent}%
+        <span className="blog-mermaid-reset-chip">{camera.zoomPercent}%</span>
       </Button>
       <Button
         type="button"
         variant="glass"
         size="icon"
-        className="blog-mermaid-control"
+        className="blog-mermaid-control blog-mermaid-zoom-step"
         aria-label={ui.zoomIn}
+        data-mermaid-control="zoom-in"
         disabled={!isReady || camera.zoomPercent >= MAX_MERMAID_ZOOM * 100}
         onClick={() => camera.zoomBy(ZOOM_BUTTON_STEP)}
       >
