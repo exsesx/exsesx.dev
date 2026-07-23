@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const BLOG_ARTICLE_PATH = "/blog/en/codex-agents-v2";
+const MERMAID_ARTICLE_PATH = "/blog/en/codex-memories";
 
 if (!("Bun" in globalThis)) {
   test.describe("iPhone 17 Pro Safari contracts", () => {
@@ -40,6 +41,40 @@ if (!("Bun" in globalThis)) {
       expect((logoBounds?.x ?? 0) - ((backBounds?.x ?? 0) + (backBounds?.width ?? 0))).toBeGreaterThanOrEqual(6);
       expect(navBounds?.x).toBeGreaterThanOrEqual(0);
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
+    });
+
+    test("Mermaid accepts pinch and drag gestures in iPhone Safari", async ({ page }) => {
+      await page.goto(MERMAID_ARTICLE_PATH);
+
+      const diagram = page.locator(".blog-mermaid").first();
+      const viewport = diagram.getByTestId("mermaid-viewport");
+      const toolbar = diagram.getByRole("toolbar", { name: "Diagram controls" });
+      const svg = viewport.locator("svg");
+
+      await expect(diagram).toHaveAttribute("data-state", "ready", { timeout: 15_000 });
+      await expect(viewport).toHaveRole("img");
+      await expect(viewport).toHaveAccessibleName("Codex local memory pipeline");
+      await expect(svg).toBeVisible();
+      await expect(toolbar.getByRole("button", { name: "Zoom in" })).toBeEnabled();
+      await expect(toolbar.getByRole("button")).toHaveCount(3);
+      await expect(toolbar.getByRole("button", { name: "Move", exact: true })).toHaveCount(0);
+
+      const bounds = await viewport.boundingBox();
+      const pageViewport = page.viewportSize();
+      expect(bounds).not.toBeNull();
+      expect(pageViewport).not.toBeNull();
+      expect(bounds?.height).toBeCloseTo(320, 0);
+      expect(bounds?.x ?? -1).toBeGreaterThanOrEqual(0);
+      expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(pageViewport?.width ?? 0);
+
+      await viewport.scrollIntoViewIfNeeded();
+      const scrollBeforePinch = await page.evaluate(() => window.scrollY);
+      await pinchMermaidWithPointers(viewport);
+      await expect.poll(async () => Number(await diagram.getAttribute("data-zoom"))).toBeGreaterThan(210);
+      const viewBoxBeforeTouchDrag = await svg.getAttribute("viewBox");
+      await dragMermaidWithTouchPointer(viewport);
+      await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeTouchDrag);
+      expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(scrollBeforePinch, 0);
     });
 
     test("mobile table of contents closes and lands reliably on a section", async ({ page }) => {
@@ -150,4 +185,63 @@ async function waitForScrollToSettle(page: Page) {
         requestAnimationFrame(sample);
       }),
   );
+}
+
+async function pinchMermaidWithPointers(viewport: Locator) {
+  await viewport.scrollIntoViewIfNeeded();
+  const bounds = await viewport.boundingBox();
+  expect(bounds).not.toBeNull();
+
+  const centerX = (bounds?.x ?? 0) + (bounds?.width ?? 0) / 2;
+  const centerY = (bounds?.y ?? 0) + (bounds?.height ?? 0) / 2;
+  const pointer = (pointerId: number, clientX: number, isPrimary: boolean, buttons: number) => ({
+    bubbles: true,
+    button: 0,
+    buttons,
+    cancelable: true,
+    clientX,
+    clientY: centerY,
+    composed: true,
+    isPrimary,
+    pointerId,
+    pointerType: "touch",
+  });
+  const firstStart = pointer(51, centerX - 24, true, 1);
+  const secondStart = pointer(52, centerX + 24, false, 1);
+
+  await viewport.dispatchEvent("pointerdown", firstStart);
+  await viewport.dispatchEvent("pointerdown", secondStart);
+
+  for (let step = 1; step <= 4; step += 1) {
+    const halfDistance = 24 + step * 6;
+    await viewport.dispatchEvent("pointermove", pointer(51, centerX - halfDistance, true, 1));
+    await viewport.dispatchEvent("pointermove", pointer(52, centerX + halfDistance, false, 1));
+  }
+
+  await viewport.dispatchEvent("pointerup", pointer(51, centerX - 48, true, 0));
+  await viewport.dispatchEvent("pointerup", pointer(52, centerX + 48, false, 0));
+}
+
+async function dragMermaidWithTouchPointer(viewport: Locator) {
+  const bounds = await viewport.boundingBox();
+  expect(bounds).not.toBeNull();
+
+  const startX = (bounds?.x ?? 0) + (bounds?.width ?? 0) / 2;
+  const startY = (bounds?.y ?? 0) + (bounds?.height ?? 0) / 2;
+  const pointer = (clientX: number, clientY: number, buttons: number) => ({
+    bubbles: true,
+    button: 0,
+    buttons,
+    cancelable: true,
+    clientX,
+    clientY,
+    composed: true,
+    isPrimary: true,
+    pointerId: 53,
+    pointerType: "touch",
+  });
+
+  await viewport.dispatchEvent("pointerdown", pointer(startX, startY, 1));
+  await viewport.dispatchEvent("pointermove", pointer(startX + 48, startY + 32, 1));
+  await viewport.dispatchEvent("pointerup", pointer(startX + 48, startY + 32, 0));
 }

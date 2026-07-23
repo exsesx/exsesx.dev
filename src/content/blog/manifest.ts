@@ -2,10 +2,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { BLOG_LOCALES } from "@/lib/blog";
 import codexAgentsV2 from "./codex-agents-v2/post";
+import codexMemories from "./codex-memories/post";
 import { analyzeMdxSource } from "./reading";
 import type { AnalyzedBlogPostSummary, BlogLocale, BlogPost, BlogPostEntry, BlogPostSummary } from "./types";
 
-const posts: readonly BlogPost[] = [codexAgentsV2];
+const posts: readonly BlogPost[] = [codexMemories, codexAgentsV2];
 
 type BlogPostQueryOptions = {
   includeDrafts?: boolean;

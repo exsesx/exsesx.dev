@@ -26,6 +26,16 @@ export const BLOG_UI = {
     exitFocus: "Exit focus",
     focusModeOn: "Focus mode activated",
     focusModeOff: "Focus mode deactivated",
+    mermaid: {
+      diagramUnavailable: "Diagram unavailable",
+      keyboardInstructions:
+        "Use plus and minus to zoom, arrow keys to move around the diagram when zoomed, and Home to reset.",
+      resetZoom: "Reset diagram zoom",
+      toolbar: "Diagram controls",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
+      zoomStatus: "Diagram zoom",
+    },
   },
   uk: {
     eyebrow: "Технічні матеріали",
@@ -48,6 +58,16 @@ export const BLOG_UI = {
     exitFocus: "Вийти з фокусу",
     focusModeOn: "Режим фокусу увімкнено",
     focusModeOff: "Режим фокусу вимкнено",
+    mermaid: {
+      diagramUnavailable: "Діаграма недоступна",
+      keyboardInstructions:
+        "Використовуйте плюс і мінус для масштабування, стрілки для навігації збільшеною діаграмою, а Home — для скидання.",
+      resetZoom: "Скинути масштаб діаграми",
+      toolbar: "Керування діаграмою",
+      zoomIn: "Збільшити",
+      zoomOut: "Зменшити",
+      zoomStatus: "Масштаб діаграми",
+    },
   },
 } as const;
 

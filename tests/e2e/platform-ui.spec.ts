@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 type CvShareHarness = {
   openCalls: number;
@@ -27,6 +27,7 @@ declare global {
 
 const TEST_PDF = "%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF";
 const BLOG_ARTICLE_PATH = "/blog/en/codex-agents-v2";
+const MERMAID_ARTICLE_PATH = "/blog/en/codex-memories";
 
 async function installIosShareHarness(page: Page) {
   await page.addInitScript(() => {
@@ -232,11 +233,128 @@ if (!("Bun" in globalThis)) {
       await expectPageToFitViewport(page);
 
       await Promise.all([
-        page.waitForURL("**/blog/en/codex-agents-v2"),
+        page.waitForURL("**/blog/en/codex-memories"),
         page.getByRole("link", { name: "Read article" }).click(),
       ]);
-      await expect(page.getByRole("heading", { level: 1, name: /Agents V2/ })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 1, name: "How I use Codex Memories between coding sessions" }),
+      ).toBeVisible();
       await expectPageToFitViewport(page);
+    });
+
+    test("Mermaid camera preserves scrolling and supports pointer, keyboard, and touch gestures", async ({
+      page,
+      isMobile,
+    }) => {
+      await page.goto(MERMAID_ARTICLE_PATH);
+
+      const diagram = page.locator(".blog-mermaid").first();
+      const viewport = diagram.getByTestId("mermaid-viewport");
+      const toolbar = diagram.getByRole("toolbar", { name: "Diagram controls" });
+      const zoomOut = toolbar.getByRole("button", { name: "Zoom out" });
+      const resetZoom = toolbar.getByRole("button", { name: /^Reset diagram zoom,/ });
+      const zoomIn = toolbar.getByRole("button", { name: "Zoom in" });
+      const svg = viewport.locator("svg");
+
+      await expect(diagram).toHaveAttribute("data-state", "ready", { timeout: 15_000 });
+      await expect(viewport).toBeVisible();
+      await expect(zoomIn).toBeEnabled();
+      await expect(toolbar.getByRole("button")).toHaveCount(3);
+      await expect(toolbar.getByRole("button", { name: "Move", exact: true })).toHaveCount(0);
+      await expect(diagram.getByTestId("mermaid-gesture-hint")).toHaveCount(0);
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+      const baseViewBox = await svg.getAttribute("viewBox");
+      const zoomInBoundsAt100 = await zoomIn.boundingBox();
+      expect(baseViewBox).not.toBeNull();
+      expect(zoomInBoundsAt100).not.toBeNull();
+
+      if (!isMobile) {
+        await expect(viewport).toHaveCSS("cursor", "default");
+        await viewport.click();
+        await expect(diagram).toHaveAttribute("data-zoom", "100");
+        await viewport.dblclick();
+        await expect(diagram).toHaveAttribute("data-zoom", "100");
+      }
+
+      await zoomIn.click();
+      await expect(diagram).toHaveAttribute("data-zoom", "125");
+      await expect(resetZoom).toHaveText("125%");
+      if (!isMobile) {
+        await expect(viewport).toHaveCSS("cursor", "grab");
+      }
+      const zoomInBoundsAt125 = await zoomIn.boundingBox();
+      expect(zoomInBoundsAt125).not.toBeNull();
+      expect(zoomInBoundsAt125?.x).toBeCloseTo(zoomInBoundsAt100?.x ?? 0, 1);
+      await zoomOut.click();
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+      await zoomIn.click();
+      await resetZoom.click();
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+
+      if (isMobile) {
+        await pinchMermaidWithPointers(viewport);
+        await expect.poll(async () => Number(await diagram.getAttribute("data-zoom"))).toBeGreaterThan(210);
+        const viewBoxBeforeTouchDrag = await svg.getAttribute("viewBox");
+        await dragMermaidWithTouchPointer(viewport);
+        await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeTouchDrag);
+        await resetZoom.click();
+        await expect(diagram).toHaveAttribute("data-zoom", "100");
+        return;
+      }
+
+      await viewport.scrollIntoViewIfNeeded();
+      const viewportBounds = await viewport.boundingBox();
+      expect(viewportBounds).not.toBeNull();
+      const pointer = {
+        x: (viewportBounds?.x ?? 0) + (viewportBounds?.width ?? 0) / 2,
+        y: (viewportBounds?.y ?? 0) + (viewportBounds?.height ?? 0) / 2,
+      };
+      await page.mouse.move(pointer.x, pointer.y);
+
+      const scrollBeforeWheel = await page.evaluate(() => window.scrollY);
+      await page.mouse.wheel(0, 240);
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollBeforeWheel);
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+
+      await viewport.scrollIntoViewIfNeeded();
+      const wheelBounds = await viewport.boundingBox();
+      expect(wheelBounds).not.toBeNull();
+      await page.mouse.move(
+        (wheelBounds?.x ?? 0) + (wheelBounds?.width ?? 0) / 2,
+        (wheelBounds?.y ?? 0) + (wheelBounds?.height ?? 0) / 2,
+      );
+      await page.keyboard.down("Control");
+      try {
+        await page.mouse.wheel(0, -120);
+      } finally {
+        await page.keyboard.up("Control");
+      }
+      await expect.poll(async () => Number(await diagram.getAttribute("data-zoom"))).toBeGreaterThan(100);
+      await resetZoom.click();
+
+      await zoomIn.click();
+      const viewBoxBeforeDrag = await svg.getAttribute("viewBox");
+      const [baseX = 0, baseY = 0] = (baseViewBox ?? "").split(/\s+/).map(Number);
+      const [currentX = 0, currentY = 0] = (viewBoxBeforeDrag ?? "").split(/\s+/).map(Number);
+      const dragDeltaX = currentX > baseX + 0.01 ? 48 : -48;
+      const dragDeltaY = currentY > baseY + 0.01 ? 32 : -32;
+      const dragBounds = await viewport.boundingBox();
+      expect(dragBounds).not.toBeNull();
+      const dragStart = {
+        x: (dragBounds?.x ?? 0) + (dragBounds?.width ?? 0) / 2,
+        y: (dragBounds?.y ?? 0) + (dragBounds?.height ?? 0) / 2,
+      };
+      await page.mouse.move(dragStart.x, dragStart.y);
+      await page.mouse.down();
+      await page.mouse.move(dragStart.x + dragDeltaX, dragStart.y + dragDeltaY, { steps: 4 });
+      await page.mouse.up();
+      await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeDrag);
+
+      await viewport.focus();
+      await expect(viewport).toBeFocused();
+      await page.keyboard.press("Home");
+      await expect(diagram).toHaveAttribute("data-zoom", "100");
+      await expect(svg).toHaveAttribute("viewBox", baseViewBox ?? "");
     });
 
     test("Blog Focus has no header control and remains a desktop-only shortcut", async ({ page, isMobile }) => {
@@ -685,4 +803,63 @@ async function expectPageToFitViewport(page: Page) {
   expect((mainBounds?.x ?? 0) + (mainBounds?.width ?? 0)).toBeLessThanOrEqual(391);
   expect(navBounds?.x ?? -1).toBeGreaterThanOrEqual(0);
   expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(391);
+}
+
+async function pinchMermaidWithPointers(viewport: Locator) {
+  await viewport.scrollIntoViewIfNeeded();
+  const bounds = await viewport.boundingBox();
+  expect(bounds).not.toBeNull();
+
+  const centerX = (bounds?.x ?? 0) + (bounds?.width ?? 0) / 2;
+  const centerY = (bounds?.y ?? 0) + (bounds?.height ?? 0) / 2;
+  const pointer = (pointerId: number, clientX: number, isPrimary: boolean, buttons: number) => ({
+    bubbles: true,
+    button: 0,
+    buttons,
+    cancelable: true,
+    clientX,
+    clientY: centerY,
+    composed: true,
+    isPrimary,
+    pointerId,
+    pointerType: "touch",
+  });
+  const firstStart = pointer(41, centerX - 24, true, 1);
+  const secondStart = pointer(42, centerX + 24, false, 1);
+
+  await viewport.dispatchEvent("pointerdown", firstStart);
+  await viewport.dispatchEvent("pointerdown", secondStart);
+
+  for (let step = 1; step <= 4; step += 1) {
+    const halfDistance = 24 + step * 6;
+    await viewport.dispatchEvent("pointermove", pointer(41, centerX - halfDistance, true, 1));
+    await viewport.dispatchEvent("pointermove", pointer(42, centerX + halfDistance, false, 1));
+  }
+
+  await viewport.dispatchEvent("pointerup", pointer(41, centerX - 48, true, 0));
+  await viewport.dispatchEvent("pointerup", pointer(42, centerX + 48, false, 0));
+}
+
+async function dragMermaidWithTouchPointer(viewport: Locator) {
+  const bounds = await viewport.boundingBox();
+  expect(bounds).not.toBeNull();
+
+  const startX = (bounds?.x ?? 0) + (bounds?.width ?? 0) / 2;
+  const startY = (bounds?.y ?? 0) + (bounds?.height ?? 0) / 2;
+  const pointer = (clientX: number, clientY: number, buttons: number) => ({
+    bubbles: true,
+    button: 0,
+    buttons,
+    cancelable: true,
+    clientX,
+    clientY,
+    composed: true,
+    isPrimary: true,
+    pointerId: 43,
+    pointerType: "touch",
+  });
+
+  await viewport.dispatchEvent("pointerdown", pointer(startX, startY, 1));
+  await viewport.dispatchEvent("pointermove", pointer(startX + 48, startY + 32, 1));
+  await viewport.dispatchEvent("pointerup", pointer(startX + 48, startY + 32, 0));
 }

@@ -2,8 +2,17 @@ import { describe, expect, test } from "bun:test";
 import { getBlogPost, getBlogPostSummaries, getBlogPosts, getPublishedBlogLocales } from "./manifest";
 
 describe("Blog manifest", () => {
-  test("publishes the English and Ukrainian article editions", () => {
+  test("publishes the English and Ukrainian article editions newest first", () => {
     expect(getBlogPosts("en", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "en",
+        slug: "codex-memories",
+        status: "published",
+        title: "How I use Codex Memories between coding sessions",
+        seoTitle: "How I use Codex Memories in 0.145.0: config, tools, and workflow",
+        description:
+          "My Codex Memories config, what each setting changes, and how memory fits into a source-checked coding workflow.",
+      }),
       expect.objectContaining({
         locale: "en",
         slug: "codex-agents-v2",
@@ -14,6 +23,15 @@ describe("Blog manifest", () => {
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "uk",
+        slug: "codex-memories",
+        status: "published",
+        title: "Як я використовую Codex Memories у роботі",
+        seoTitle: "Як я використовую Codex Memories у версії 0.145.0: конфігурація, інструменти та робочий процес",
+        description:
+          "Моя конфігурація Codex Memories, призначення кожного параметра й місце пам’яті в роботі з перевіркою джерел.",
+      }),
       expect.objectContaining({
         locale: "uk",
         slug: "codex-agents-v2",
@@ -34,6 +52,17 @@ describe("Blog manifest", () => {
   });
 
   test("looks up both editions and exposes their published translation alternates", () => {
+    expect(getBlogPost("en", "codex-memories", { includeDrafts: false })).toMatchObject({
+      locale: "en",
+      slug: "codex-memories",
+      status: "published",
+    });
+    expect(getBlogPost("uk", "codex-memories", { includeDrafts: false })).toMatchObject({
+      locale: "uk",
+      slug: "codex-memories",
+      status: "published",
+    });
+    expect(getPublishedBlogLocales("codex-memories")).toEqual(["en", "uk"]);
     expect(getBlogPost("en", "codex-agents-v2", { includeDrafts: false })).toMatchObject({
       locale: "en",
       slug: "codex-agents-v2",
@@ -49,12 +78,14 @@ describe("Blog manifest", () => {
 
   test("ships deterministic social images for the Blog index and every published edition", async () => {
     const articles = [
+      getBlogPost("en", "codex-memories", { includeDrafts: false }),
+      getBlogPost("uk", "codex-memories", { includeDrafts: false }),
       getBlogPost("en", "codex-agents-v2", { includeDrafts: false }),
       getBlogPost("uk", "codex-agents-v2", { includeDrafts: false }),
     ];
 
     if (articles.some(article => !article)) {
-      throw new Error("Expected both published article fixtures");
+      throw new Error("Expected all published article fixtures");
     }
 
     expect(await Bun.file(new URL("../../../public/images/og/blog.png", import.meta.url)).exists()).toBe(true);

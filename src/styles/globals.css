@@ -2681,7 +2681,7 @@ code[data-theme] span {
 .blog-mermaid {
   position: relative;
   isolation: isolate;
-  overflow-x: auto;
+  overflow: hidden;
   padding: clamp(1rem, 3vw, 1.5rem);
   border: 1px solid color-mix(in oklab, var(--accent) 16%, var(--blog-rich-block-border));
   border-radius: var(--blog-rich-block-radius);
@@ -2694,7 +2694,7 @@ code[data-theme] span {
 }
 
 .blog-mermaid-visual {
-  block-size: clamp(13rem, 42vw, 18.125rem);
+  block-size: clamp(20rem, 65vw, 32rem);
 }
 
 .blog-mermaid[data-state="loading"] {
@@ -2727,6 +2727,26 @@ code[data-theme] span {
 
 .blog-mermaid-svg {
   position: relative;
+  border-radius: calc(var(--blog-rich-block-radius) - 0.35rem);
+  outline: none;
+  cursor: default;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.blog-mermaid-svg[data-zoomed="true"] {
+  cursor: grab;
+  touch-action: none;
+}
+
+.blog-mermaid-svg[data-panning="true"] {
+  cursor: grabbing;
+}
+
+.blog-mermaid-svg:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline-offset: -2px;
 }
 
 .blog-mermaid-svg svg {
@@ -2738,7 +2758,62 @@ code[data-theme] span {
   max-width: none !important;
   max-height: none;
   margin: 0;
-  overflow: visible;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blog-mermaid-toolbar {
+  position: absolute;
+  top: clamp(0.75rem, 2vw, 1rem);
+  right: clamp(0.75rem, 2vw, 1rem);
+  z-index: 3;
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--border) 88%, transparent);
+  border-radius: 0.8rem;
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--foreground) 7%, transparent),
+    0 8px 24px color-mix(in oklab, var(--foreground) 8%, transparent);
+  backdrop-filter: blur(16px) saturate(1.12);
+}
+
+.blog-mermaid-control {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted-foreground);
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.blog-mermaid-control + .blog-mermaid-control {
+  border-left: 1px solid color-mix(in oklab, var(--border) 76%, transparent);
+}
+
+.blog-mermaid-control:hover,
+.blog-mermaid-control:focus-visible,
+.blog-mermaid-control[aria-expanded="true"] {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--muted) 72%, transparent);
+}
+
+.blog-mermaid-control:disabled {
+  cursor: default;
+}
+
+.blog-mermaid-reset {
+  width: 3.5rem;
+  min-width: 3.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .blog-mermaid-source {
@@ -2804,7 +2879,8 @@ code[data-theme] span {
 @media (prefers-reduced-transparency: reduce) {
   .blog-toc-mobile-trigger,
   .blog-toc-drawer,
-  .blog-focus-toast {
+  .blog-focus-toast,
+  .blog-mermaid-toolbar {
     background: color-mix(in oklab, var(--background) 96%, var(--foreground) 3%);
     backdrop-filter: none;
   }
@@ -2816,6 +2892,10 @@ code[data-theme] span {
 
 @media (prefers-reduced-motion: reduce) {
   .blog-focus-toast {
+    transition: none;
+  }
+
+  .blog-mermaid-control {
     transition: none;
   }
 

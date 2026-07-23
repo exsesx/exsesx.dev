@@ -8,7 +8,7 @@ describe("Blog RSS", () => {
     const xml = buildBlogRss("en", [
       {
         ...posts[0],
-        description: "Agents V2: stable & opt-in <without hype>.",
+        description: "Memories: local & inspectable <without another server>.",
       },
     ]);
 
@@ -17,8 +17,8 @@ describe("Blog RSS", () => {
       '<atom:link href="https://exsesx.dev/blog/en/rss.xml" rel="self" type="application/rss+xml"/>',
     );
     expect(xml).toContain("<language>en</language>");
-    expect(xml).toContain("https://exsesx.dev/blog/en/codex-agents-v2");
-    expect(xml).toContain("Agents V2: stable &amp; opt-in &lt;without hype&gt;.");
+    expect(xml).toContain("https://exsesx.dev/blog/en/codex-memories");
+    expect(xml).toContain("Memories: local &amp; inspectable &lt;without another server&gt;.");
     expect(xml).toContain("<category>Codex</category>");
     expect(xml).not.toContain("<SourceLink");
   });

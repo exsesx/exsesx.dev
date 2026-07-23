@@ -7,7 +7,11 @@ describe("llms.txt", () => {
 
     expect(body).toContain("## Blog");
     expect(body).toContain("[Blog](https://exsesx.dev/blog/en)");
+    expect(body).toContain(
+      "[How I use Codex Memories between coding sessions](https://exsesx.dev/blog/en/codex-memories)",
+    );
     expect(body).toContain("[Codex Agents V2 in 0.145.0](https://exsesx.dev/blog/en/codex-agents-v2)");
+    expect(body).not.toContain("https://exsesx.dev/blog/uk/codex-memories");
     expect(body).not.toContain("https://exsesx.dev/blog/uk/codex-agents-v2");
   });
 });
