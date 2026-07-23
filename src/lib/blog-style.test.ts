@@ -25,7 +25,7 @@ describe("Blog production styles", () => {
 
   test("keeps mobile Mermaid controls below the canvas without shrinking their touch targets", async () => {
     const css = await Bun.file(globalsCssUrl).text();
-    const mobileMermaidRules = css.slice(css.lastIndexOf("@media (max-width: 639px)"));
+    const mobileMermaidRules = css.slice(css.lastIndexOf("@variant max-sm"));
     const mobileToolbarRule = mobileMermaidRules.match(/\.blog-mermaid-toolbar\s*\{([^}]*)\}/s)?.[1] ?? "";
     const mobileControlRule = mobileMermaidRules.match(/\.blog-mermaid-control svg\s*\{([^}]*)\}/s)?.[1] ?? "";
     const mobileResetRule = mobileMermaidRules.match(/\.blog-mermaid-reset\s*\{([^}]*)\}/s)?.[1] ?? "";

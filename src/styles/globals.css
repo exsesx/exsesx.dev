@@ -554,7 +554,7 @@ html[data-season="pride"] .logo-mark-pride {
   backdrop-filter: none;
 }
 
-@media (max-width: 639px) {
+@variant max-sm {
   .snapshot-inner-card {
     border-color: transparent;
     background: transparent;
@@ -653,7 +653,7 @@ html[data-season="pride"] .logo-mark-pride {
   transform: translate3d(0, -2px, 0) scale(0.955);
 }
 
-@media (min-width: 640px) {
+@variant sm {
   .site-header-nav-frame {
     right: 1.5rem;
     left: 1.5rem;
@@ -961,7 +961,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
     0 8px 20px color-mix(in oklab, black 26%, transparent);
 }
 
-@media (max-width: 639px) {
+@variant max-sm {
   .site-nav-active-pill {
     width: 2.5rem;
   }
@@ -1123,7 +1123,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
     0 15px 38px rgba(0, 0, 0, 0.3);
 }
 
-@media (max-width: 639px) {
+@variant max-sm {
   .site-nav-glass {
     background:
       radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.4), transparent 36%),
@@ -1522,7 +1522,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
-@media (max-width: 640px) {
+@variant max-sm {
   .technical-grid {
     opacity: 0.28;
     background-size:
@@ -2818,7 +2818,7 @@ code[data-theme] span {
   letter-spacing: -0.02em;
 }
 
-@media (max-width: 639px) {
+@variant max-sm {
   .blog-mermaid-toolbar {
     position: static;
     display: flex;
@@ -2875,7 +2875,7 @@ code[data-theme] span {
   text-align: center;
 }
 
-@media (min-width: 640px) {
+@variant sm {
   .blog-post-row {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
