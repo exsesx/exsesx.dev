@@ -2,13 +2,13 @@
 
 import { useServerInsertedHTML } from "next/navigation";
 import { useRef } from "react";
-import { BLOG_ARTICLE_START_OFFSET } from "@/lib/blog-focus";
+import { BLOG_HEADER_HIDE_AFTER } from "@/lib/blog-focus";
 import { createBlogFocusBootstrapScript } from "@/lib/blog-focus-bootstrap";
 import { createNoFlashScript } from "@/lib/no-flash-script";
 import { THEME_CHROME_COLORS } from "@/lib/theme";
 
 const noFlashScript = createNoFlashScript(THEME_CHROME_COLORS.dark, THEME_CHROME_COLORS.light);
-const blogFocusBootstrapScript = createBlogFocusBootstrapScript(BLOG_ARTICLE_START_OFFSET);
+const blogFocusBootstrapScript = createBlogFocusBootstrapScript(BLOG_HEADER_HIDE_AFTER);
 
 export default function DocumentBootstrapScripts() {
   const hasInsertedScripts = useRef(false);

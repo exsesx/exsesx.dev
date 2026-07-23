@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { BLOG_HEADER_HIDE_AFTER, BLOG_HEADER_TOUCH_REVEAL_DISTANCE } from "../../src/lib/blog-focus";
 
 const BLOG_ARTICLE_PATH = "/blog/en/codex-agents-v2";
 const MERMAID_ARTICLE_PATH = "/blog/en/codex-memories";
@@ -41,6 +42,47 @@ if (!("Bun" in globalThis)) {
       expect((logoBounds?.x ?? 0) - ((backBounds?.x ?? 0) + (backBounds?.width ?? 0))).toBeGreaterThanOrEqual(6);
       expect(navBounds?.x).toBeGreaterThanOrEqual(0);
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
+    });
+
+    test("passive Blog header uses deliberate coarse-touch intent without moving the TOC", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const headerFrame = page.locator(".site-header-nav-frame");
+      const title = page.getByRole("heading", { level: 1 });
+      const toc = page.locator(".blog-toc-mobile-shell");
+
+      await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
+      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_AFTER - 1);
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      const visibleTransform = await headerFrame.evaluate(element => {
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+
+        return { scale: matrix.a, translateY: matrix.m42 };
+      });
+      expect(visibleTransform.scale).toBeCloseTo(1, 3);
+      expect(visibleTransform.translateY).toBeCloseTo(0, 1);
+
+      await scrollWithTouchIntent(page, 1);
+
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toBeHidden();
+      await expect(title).toBeInViewport();
+
+      await scrollWithTouchIntent(page, 640);
+      await expect(toc).toBeVisible();
+      const hiddenTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
+
+      await scrollWithTouchIntent(page, -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE - 1));
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+
+      await scrollWithTouchIntent(page, -1);
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toBeVisible();
+      const revealedTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
+
+      expect(revealedTocTop).toBeCloseTo(hiddenTocTop, 0);
     });
 
     test("Mermaid accepts pinch and drag gestures in iPhone Safari", async ({ page }) => {
@@ -131,6 +173,14 @@ if (!("Bun" in globalThis)) {
       await expectTargetBelowTrigger(earlierTarget, trigger);
     });
   });
+}
+
+async function scrollWithTouchIntent(page: Page, deltaY: number) {
+  await page.locator("body").dispatchEvent("touchmove");
+  await page.evaluate(distance => window.scrollBy({ behavior: "instant" as ScrollBehavior, top: distance }), deltaY);
+  await page.evaluate(
+    () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+  );
 }
 
 async function expectTargetBelowTrigger(target: Locator, trigger: Locator) {

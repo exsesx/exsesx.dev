@@ -1,13 +1,25 @@
 import { describe, expect, test } from "bun:test";
 import {
+  BLOG_HEADER_HIDE_AFTER,
   BLOG_HEADER_HIDE_DISTANCE,
+  BLOG_HEADER_HIDE_START,
   BLOG_HEADER_REVEAL_DISTANCE,
+  BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
   createPassiveBlogHeaderState,
   revealPassiveBlogHeader,
   updatePassiveBlogHeader,
 } from "./blog-focus";
 
 describe("passive blog header", () => {
+  test("uses the confirmed hide and deliberate-reveal thresholds", () => {
+    expect(BLOG_HEADER_HIDE_START).toBe(96);
+    expect(BLOG_HEADER_HIDE_DISTANCE).toBe(24);
+    expect(BLOG_HEADER_HIDE_AFTER).toBe(120);
+    expect(BLOG_HEADER_HIDE_AFTER).toBe(BLOG_HEADER_HIDE_START + BLOG_HEADER_HIDE_DISTANCE);
+    expect(BLOG_HEADER_REVEAL_DISTANCE).toBe(48);
+    expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(64);
+  });
+
   test("starts visible at the top and can initialize hidden inside restored article content", () => {
     expect(createPassiveBlogHeaderState()).toEqual({
       accumulatedDistance: 0,
@@ -24,49 +36,60 @@ describe("passive blog header", () => {
     });
   });
 
-  test("does not hide before the article body begins and resets the baseline", () => {
-    const state = updatePassiveBlogHeader(createPassiveBlogHeaderState(80), {
+  test("stays visible through the 96px safe zone and hides at 120px", () => {
+    const safeZone = updatePassiveBlogHeader(createPassiveBlogHeaderState(), {
       hasUserScrollIntent: true,
-      isPastArticleStart: false,
-      scrollY: 240,
+      scrollY: BLOG_HEADER_HIDE_START,
     });
 
-    expect(state).toEqual({
+    expect(safeZone).toEqual({
       accumulatedDistance: 0,
-      direction: null,
+      direction: "down",
       hidden: false,
-      lastScrollY: 240,
+      lastScrollY: BLOG_HEADER_HIDE_START,
     });
 
-    expect(
-      updatePassiveBlogHeader(state, {
-        hasUserScrollIntent: true,
-        isPastArticleStart: true,
-        scrollY: 240 + BLOG_HEADER_HIDE_DISTANCE - 1,
-      }).hidden,
-    ).toBe(false);
+    const beforeHide = updatePassiveBlogHeader(safeZone, {
+      hasUserScrollIntent: true,
+      scrollY: BLOG_HEADER_HIDE_AFTER - 1,
+    });
+
+    expect(beforeHide).toEqual({
+      accumulatedDistance: BLOG_HEADER_HIDE_DISTANCE - 1,
+      direction: "down",
+      hidden: false,
+      lastScrollY: BLOG_HEADER_HIDE_AFTER - 1,
+    });
+
+    const hidden = updatePassiveBlogHeader(beforeHide, {
+      hasUserScrollIntent: true,
+      scrollY: BLOG_HEADER_HIDE_AFTER,
+    });
+
+    expect(hidden).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
   });
 
   test("hides only after cumulative downward intent crosses the threshold", () => {
-    const initial = createPassiveBlogHeaderState(200);
+    const initial = createPassiveBlogHeaderState(BLOG_HEADER_HIDE_START);
     const firstMove = updatePassiveBlogHeader(initial, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
-      scrollY: 207,
+      scrollY: BLOG_HEADER_HIDE_START + 12,
     });
     const secondMove = updatePassiveBlogHeader(firstMove, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
-      scrollY: 217,
+      scrollY: BLOG_HEADER_HIDE_AFTER - 1,
     });
     const hidden = updatePassiveBlogHeader(secondMove, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
-      scrollY: 218,
+      scrollY: BLOG_HEADER_HIDE_AFTER,
     });
 
-    expect(firstMove).toMatchObject({ accumulatedDistance: 7, direction: "down", hidden: false });
-    expect(secondMove).toMatchObject({ accumulatedDistance: 17, direction: "down", hidden: false });
+    expect(firstMove).toMatchObject({ accumulatedDistance: 12, direction: "down", hidden: false });
+    expect(secondMove).toMatchObject({
+      accumulatedDistance: BLOG_HEADER_HIDE_DISTANCE - 1,
+      direction: "down",
+      hidden: false,
+    });
     expect(hidden).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
   });
 
@@ -77,44 +100,122 @@ describe("passive blog header", () => {
     };
     const firstMove = updatePassiveBlogHeader(hidden, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
-      scrollY: 294,
+      scrollY: 300 - BLOG_HEADER_REVEAL_DISTANCE + 1,
     });
     const revealed = updatePassiveBlogHeader(firstMove, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
       scrollY: 300 - BLOG_HEADER_REVEAL_DISTANCE,
     });
 
-    expect(firstMove).toMatchObject({ accumulatedDistance: 6, direction: "up", hidden: true });
+    expect(firstMove).toMatchObject({
+      accumulatedDistance: BLOG_HEADER_REVEAL_DISTANCE - 1,
+      direction: "up",
+      hidden: true,
+    });
     expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
   });
 
-  test("ignores stationary jitter and restarts accumulation when direction changes", () => {
-    const down = updatePassiveBlogHeader(createPassiveBlogHeaderState(100), {
+  test("requires 64px of upward intent on coarse touch input", () => {
+    const hidden = createPassiveBlogHeaderState(300, true);
+    const almostRevealed = updatePassiveBlogHeader(hidden, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
-      scrollY: 110,
+      revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+      scrollY: 300 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE + 1,
+    });
+    const revealed = updatePassiveBlogHeader(almostRevealed, {
+      hasUserScrollIntent: true,
+      revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+      scrollY: 300 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+    });
+
+    expect(almostRevealed).toMatchObject({
+      accumulatedDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE - 1,
+      direction: "up",
+      hidden: true,
+    });
+    expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
+  });
+
+  test("reveals immediately at 32px even without the full upward threshold", () => {
+    const hidden = createPassiveBlogHeaderState(40, true);
+    const justAboveTopZone = updatePassiveBlogHeader(hidden, {
+      hasUserScrollIntent: true,
+      scrollY: 33,
+    });
+
+    expect(justAboveTopZone).toMatchObject({
+      accumulatedDistance: 7,
+      direction: "up",
+      hidden: true,
+    });
+
+    expect(
+      updatePassiveBlogHeader(justAboveTopZone, {
+        hasUserScrollIntent: true,
+        scrollY: 32,
+      }),
+    ).toEqual({
+      accumulatedDistance: 0,
+      direction: null,
+      hidden: false,
+      lastScrollY: 32,
+    });
+  });
+
+  test("restarts intent after a direction reversal and re-hides after 24px down", () => {
+    const hidden = createPassiveBlogHeaderState(300, true);
+    const upward = updatePassiveBlogHeader(hidden, {
+      hasUserScrollIntent: true,
+      scrollY: 276,
+    });
+    const reversedDown = updatePassiveBlogHeader(upward, {
+      hasUserScrollIntent: true,
+      scrollY: 280,
+    });
+    const almostRevealed = updatePassiveBlogHeader(reversedDown, {
+      hasUserScrollIntent: true,
+      scrollY: 233,
+    });
+    const revealed = updatePassiveBlogHeader(almostRevealed, {
+      hasUserScrollIntent: true,
+      scrollY: 232,
+    });
+    const almostHidden = updatePassiveBlogHeader(revealed, {
+      hasUserScrollIntent: true,
+      scrollY: 255,
+    });
+    const hiddenAgain = updatePassiveBlogHeader(almostHidden, {
+      hasUserScrollIntent: true,
+      scrollY: 256,
+    });
+
+    expect(upward).toMatchObject({ accumulatedDistance: 24, direction: "up", hidden: true });
+    expect(reversedDown).toMatchObject({ accumulatedDistance: 4, direction: "down", hidden: true });
+    expect(almostRevealed).toMatchObject({
+      accumulatedDistance: BLOG_HEADER_REVEAL_DISTANCE - 1,
+      direction: "up",
+      hidden: true,
+    });
+    expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
+    expect(almostHidden).toMatchObject({
+      accumulatedDistance: BLOG_HEADER_HIDE_DISTANCE - 1,
+      direction: "down",
+      hidden: false,
+    });
+    expect(hiddenAgain).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
+  });
+
+  test("ignores stationary jitter", () => {
+    const down = updatePassiveBlogHeader(createPassiveBlogHeaderState(BLOG_HEADER_HIDE_START), {
+      hasUserScrollIntent: true,
+      scrollY: BLOG_HEADER_HIDE_START + 10,
     });
     const stationary = updatePassiveBlogHeader(down, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
-      scrollY: 110,
-    });
-    const reversed = updatePassiveBlogHeader(stationary, {
-      hasUserScrollIntent: true,
-      isPastArticleStart: true,
-      scrollY: 108,
-    });
-    const downAgain = updatePassiveBlogHeader(reversed, {
-      hasUserScrollIntent: true,
-      isPastArticleStart: true,
-      scrollY: 111,
+      scrollY: BLOG_HEADER_HIDE_START + 10,
     });
 
     expect(stationary).toBe(down);
-    expect(reversed).toMatchObject({ accumulatedDistance: 2, direction: "up", hidden: false });
-    expect(downAgain).toMatchObject({ accumulatedDistance: 3, direction: "down", hidden: false });
   });
 
   test("reveals immediately while focus is inside the header", () => {
@@ -129,7 +230,6 @@ describe("passive blog header", () => {
       updatePassiveBlogHeader(hidden, {
         hasHeaderFocus: true,
         hasUserScrollIntent: true,
-        isPastArticleStart: true,
         scrollY: 324,
       }),
     ).toEqual({
@@ -148,7 +248,6 @@ describe("passive blog header", () => {
     const reset = revealPassiveBlogHeader(hidden, 520);
     const rearmed = updatePassiveBlogHeader(reset, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
       scrollY: 520 + BLOG_HEADER_HIDE_DISTANCE,
     });
 
@@ -164,22 +263,19 @@ describe("passive blog header", () => {
   test("keeps delayed restoration hidden until upward reading intent arrives", () => {
     const firstRestoration = updatePassiveBlogHeader(createPassiveBlogHeaderState(), {
       hasUserScrollIntent: false,
-      isPastArticleStart: true,
+      shouldHideWithoutIntent: true,
       scrollY: 640,
     });
     const delayedRestoration = updatePassiveBlogHeader(firstRestoration, {
       hasUserScrollIntent: false,
-      isPastArticleStart: true,
       scrollY: 960,
     });
     const continuedReading = updatePassiveBlogHeader(delayedRestoration, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
       scrollY: 960 + BLOG_HEADER_HIDE_DISTANCE,
     });
     const upwardReading = updatePassiveBlogHeader(continuedReading, {
       hasUserScrollIntent: true,
-      isPastArticleStart: true,
       scrollY: 960 + BLOG_HEADER_HIDE_DISTANCE - BLOG_HEADER_REVEAL_DISTANCE,
     });
 

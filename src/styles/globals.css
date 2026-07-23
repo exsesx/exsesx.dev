@@ -713,6 +713,64 @@ html[data-season="pride"] .logo-mark-pride {
     visibility 0s linear 160ms;
 }
 
+/* Article reading keeps the nav at one physical size. The visible rule also
+   wins over nav-condense.ts; hiding is one interruptible edge dismissal. */
+[data-blog-article="true"] .site-header-nav-frame {
+  opacity: 1;
+  visibility: visible;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    opacity 140ms var(--ease-out),
+    transform 180ms var(--ease-weight),
+    visibility 0s linear;
+}
+
+[data-blog-article="true"] .site-header-fade {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 140ms var(--ease-out),
+    visibility 0s linear;
+}
+
+:is(
+    html[data-blog-focus-bootstrap="pending"] [data-blog-article="true"],
+    html[data-blog-focus-bootstrap="hidden"] [data-blog-article="true"],
+    [data-blog-article="true"][data-blog-passive-hidden="true"],
+    [data-blog-article="true"][data-blog-focus="true"]
+  )
+  .site-header-nav-frame {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(0, calc(-100% - env(safe-area-inset-top) - 1.5rem), 0) scale(1);
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 220ms var(--ease-out),
+    visibility 0s linear 220ms;
+}
+
+:is(
+    html[data-blog-focus-bootstrap="pending"] [data-blog-article="true"],
+    html[data-blog-focus-bootstrap="hidden"] [data-blog-article="true"],
+    [data-blog-article="true"][data-blog-passive-hidden="true"],
+    [data-blog-article="true"][data-blog-focus="true"]
+  )
+  .site-header-fade {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 160ms var(--ease-out),
+    visibility 0s linear 160ms;
+}
+
+/* Keyboard-driven visibility changes are intentionally non-spatial; the
+   controller replaces this hook on the next spatial visibility change. */
+[data-blog-article="true"][data-blog-header-motion="instant"] .site-header-nav-frame,
+[data-blog-article="true"][data-blog-header-motion="instant"] .site-header-fade {
+  transition: none;
+}
+
 html[data-blog-focus-bootstrap] .site-header-nav-frame,
 html[data-blog-focus-bootstrap] .site-header-fade {
   transition: none;
@@ -1599,6 +1657,42 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     transition: none;
   }
 
+  /* Reduced motion keeps the useful fade but removes all header travel. */
+  [data-blog-article="true"] .site-header-nav-frame {
+    transform: none;
+    transition:
+      opacity 140ms var(--ease-out),
+      visibility 0s linear;
+  }
+
+  [data-blog-article="true"] .site-header-fade {
+    transition:
+      opacity 140ms var(--ease-out),
+      visibility 0s linear;
+  }
+
+  :is([data-blog-article="true"][data-blog-passive-hidden="true"], [data-blog-article="true"][data-blog-focus="true"])
+    .site-header-nav-frame {
+    transform: none;
+    transition:
+      opacity 160ms var(--ease-out),
+      visibility 0s linear 160ms;
+  }
+
+  :is([data-blog-article="true"][data-blog-passive-hidden="true"], [data-blog-article="true"][data-blog-focus="true"])
+    .site-header-fade {
+    transition:
+      opacity 160ms var(--ease-out),
+      visibility 0s linear 160ms;
+  }
+
+  html[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-nav-frame,
+  html[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-fade,
+  [data-blog-article="true"][data-blog-header-motion="instant"] .site-header-nav-frame,
+  [data-blog-article="true"][data-blog-header-motion="instant"] .site-header-fade {
+    transition: none;
+  }
+
   .dropdown-menu {
     transform: none;
     transition: opacity var(--duration-popover-exit) var(--ease-out);
@@ -1942,12 +2036,10 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-toc-mobile-shell {
-  --blog-toc-visible-top: 5.5rem;
   position: sticky;
-  top: var(--blog-toc-visible-top);
+  top: calc(env(safe-area-inset-top) + 0.75rem);
   z-index: 40;
   isolation: isolate;
-  transition: top 180ms var(--ease-out);
 }
 
 .blog-toc-mobile-shell::after {
@@ -1969,34 +2061,10 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 .blog-toc-desktop {
   position: sticky;
-  top: 8rem;
-  max-height: calc(100svh - 10rem);
-  overflow-y: auto;
-  padding-right: 1rem;
-  transition:
-    top 180ms var(--ease-out),
-    max-height 180ms var(--ease-out);
-}
-
-:is(
-    html[data-blog-focus-bootstrap="pending"],
-    html[data-blog-focus-bootstrap="hidden"],
-    [data-blog-passive-hidden="true"],
-    [data-blog-focus="true"]
-  )
-  .blog-toc-mobile-shell {
-  top: calc(env(safe-area-inset-top) + 0.75rem);
-}
-
-:is(
-    html[data-blog-focus-bootstrap="pending"],
-    html[data-blog-focus-bootstrap="hidden"],
-    [data-blog-passive-hidden="true"],
-    [data-blog-focus="true"]
-  )
-  .blog-toc-desktop {
   top: calc(env(safe-area-inset-top) + 1.25rem);
   max-height: calc(100svh - env(safe-area-inset-top) - 2.5rem);
+  overflow-y: auto;
+  padding-right: 1rem;
 }
 
 .blog-toc-desktop > p,
