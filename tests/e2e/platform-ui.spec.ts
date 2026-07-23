@@ -513,9 +513,34 @@ if (!("Bun" in globalThis)) {
       await scrollWithBlogIntent(page, isMobile, -1);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeVisible();
-      const revealedTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
 
-      expect(revealedTocTop).toBeCloseTo(hiddenTocTop, 0);
+      if (isMobile) {
+        const revealedTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
+        expect(revealedTocTop).toBeCloseTo(hiddenTocTop, 0);
+      } else {
+        await expect
+          .poll(async () => toc.evaluate(element => element.getBoundingClientRect().top))
+          .toBeGreaterThan(hiddenTocTop + 60);
+
+        const revealedTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
+        const headerBottom = await headerFrame.evaluate(element => element.getBoundingClientRect().bottom);
+        expect(revealedTocTop - headerBottom).toBeCloseTo(16, 0);
+
+        const firstTocLink = toc.getByRole("link", { name: "The short version", exact: true });
+        const firstLinkIsClickable = await firstTocLink.evaluate(element => {
+          const bounds = element.getBoundingClientRect();
+          const y = bounds.top + bounds.height / 2;
+
+          return [0.25, 0.5, 0.75].every(position => {
+            const hitTarget = document.elementFromPoint(bounds.left + bounds.width * position, y);
+            return hitTarget === element || (hitTarget !== null && element.contains(hitTarget));
+          });
+        });
+
+        expect(firstLinkIsClickable).toBe(true);
+        await firstTocLink.click();
+        await expect(page).toHaveURL(/#the-short-version$/);
+      }
     });
 
     test("keyboard scrolling changes passive Blog header state without spatial motion", async ({ page, isMobile }) => {
@@ -524,18 +549,21 @@ if (!("Bun" in globalThis)) {
 
       const root = page.locator('[data-blog-article="true"]');
       const headerFrame = page.locator(".site-header-nav-frame");
+      const toc = page.locator(".blog-toc-desktop");
 
       await page.keyboard.press("PageDown");
 
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
       await expect(headerFrame).toBeHidden();
+      await expect(toc).toHaveCSS("transition-duration", "0s");
 
       await page.keyboard.press("Home");
 
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
       await expect(headerFrame).toBeVisible();
+      await expect(toc).toHaveCSS("transition-duration", "0s");
     });
 
     test("passive Blog header starts hidden at a restored reading position", async ({ page, isMobile }) => {

@@ -271,19 +271,29 @@ describe("Blog production styles", () => {
     );
   });
 
-  test("keeps article table-of-contents anchors stable beneath the transient header", async () => {
+  test("keeps the desktop table of contents clear of the transient header", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const mobileRule = css.match(/\.blog-toc-mobile-shell\s*\{([^}]*)\}/s)?.[1] ?? "";
     const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const desktopSection = css.slice(css.indexOf(".blog-toc-desktop"), css.indexOf(".blog-toc-desktop > p"));
 
     expect(css).toContain('html[data-blog-focus-bootstrap="pending"]');
     expect(css).toContain('html[data-blog-focus-bootstrap="hidden"]');
     expect(mobileRule).toContain("top: calc(env(safe-area-inset-top) + 0.75rem)");
     expect(mobileRule).not.toContain("transition");
-    expect(desktopRule).toContain("top: calc(env(safe-area-inset-top) + 1.25rem)");
-    expect(desktopRule).toContain("max-height: calc(100svh - env(safe-area-inset-top) - 2.5rem)");
-    expect(desktopRule).not.toContain("transition");
-    expect(css).not.toMatch(/\[data-blog-passive-hidden="true"\][\s\S]{0,400}\.blog-toc-(?:mobile-shell|desktop)/);
+    expect(desktopRule).toContain("top: calc(env(safe-area-inset-top) + 5.875rem)");
+    expect(desktopRule).toContain("max-height: calc(100svh - env(safe-area-inset-top) - 7.125rem)");
+    expect(desktopRule).toContain("transition: top 180ms var(--ease-weight)");
+    expect(desktopSection).toMatch(
+      /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\],[\s\S]*?\[data-blog-article="true"\]\[data-blog-focus="true"\][\s\S]*?\.blog-toc-desktop\s*\{[^}]*top:\s*calc\(env\(safe-area-inset-top\) \+ 1\.25rem\)[^}]*transition:\s*top 220ms var\(--ease-out\)/s,
+    );
+    expect(desktopSection).toMatch(
+      /html\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.blog-toc-desktop,[\s\S]*?\[data-blog-header-motion="instant"\] \.blog-toc-desktop\s*\{\s*transition:\s*none/s,
+    );
+    expect(desktopSection).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-toc-desktop\s*\{\s*transition:\s*none/s,
+    );
+    expect(desktopSection).not.toContain(".blog-toc-mobile-shell");
   });
 
   test("uses opacity-only article header changes when reduced motion is requested", async () => {
