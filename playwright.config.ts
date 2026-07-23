@@ -3,21 +3,27 @@ import { join } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 const MOBILE_SAFARI_SPEC = /mobile-safari\.spec\.ts/;
+const DESKTOP_ONLY = /@desktop-only/;
+const MOBILE_ONLY = /@mobile-only/;
+const BASE_URL = "http://127.0.0.1:3010";
+const IS_CI = Boolean(process.env.CI);
 
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
-  workers: 1,
+  workers: IS_CI ? 2 : "50%",
+  forbidOnly: IS_CI,
   reporter: "line",
   outputDir: join(tmpdir(), "exsesx-dev-playwright-results"),
   use: {
-    baseURL: "http://127.0.0.1:3010",
+    baseURL: BASE_URL,
     trace: "retain-on-failure",
   },
   projects: [
     {
       name: "desktop-chromium",
       testIgnore: MOBILE_SAFARI_SPEC,
+      grepInvert: MOBILE_ONLY,
       use: {
         browserName: "chromium",
         viewport: { width: 1280, height: 900 },
@@ -28,6 +34,7 @@ export default defineConfig({
     {
       name: "mobile-chromium",
       testIgnore: MOBILE_SAFARI_SPEC,
+      grepInvert: DESKTOP_ONLY,
       use: {
         browserName: "chromium",
         viewport: { width: 390, height: 844 },
@@ -45,7 +52,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "bun run start -- -H 127.0.0.1 -p 3010",
-    url: "http://127.0.0.1:3010",
-    reuseExistingServer: false,
+    url: BASE_URL,
+    reuseExistingServer: !IS_CI,
   },
 });
