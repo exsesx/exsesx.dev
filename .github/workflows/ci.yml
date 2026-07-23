@@ -28,6 +28,6 @@ jobs:
       - name: Build
         run: bun run build
       - name: Install browser
-        run: bunx playwright install --with-deps chromium
+        run: bunx playwright install --with-deps chromium webkit
       - name: Browser tests
         run: bun run test:e2e
