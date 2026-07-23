@@ -37,6 +37,14 @@ function getReducedMotionBackButtonRule(css: string) {
 }
 
 describe("mobile navigation styles", () => {
+  test("routes the shared small-screen boundary through Tailwind variants", async () => {
+    const css = await readGlobalsCss();
+
+    expect(css).not.toMatch(/@media \((?:min|max)-width: (?:639|640)px\)/);
+    expect(css.match(/@variant max-sm/g)).toHaveLength(5);
+    expect(css.match(/@variant sm/g)).toHaveLength(2);
+  });
+
   test("keeps the active nav pill positioned when reduced motion removes animation", async () => {
     const css = await readGlobalsCss();
     const activePillRule = getReducedMotionActivePillRule(css);
@@ -60,7 +68,7 @@ describe("mobile navigation styles", () => {
     expect(activePillRule).toMatch(/width:\s*calc\(\(100% - 1rem\) \/ 3\)/);
     expect(projectsPillRule).toMatch(/translate3d\(calc\(100% \+ 0\.25rem\), 0, 0\)/);
     expect(blogPillRule).toMatch(/translate3d\(calc\(200% \+ 0\.5rem\), 0, 0\)/);
-    expect(css).toMatch(/@media \(max-width: 639px\) \{[\s\S]*?\.site-nav-active-pill\s*\{[\s\S]*?width:\s*2\.5rem/);
+    expect(css).toMatch(/@variant max-sm \{[\s\S]*?\.site-nav-active-pill\s*\{[\s\S]*?width:\s*2\.5rem/);
   });
 
   test("folds the back-chip slot on the live element so the brand glides with it", async () => {
