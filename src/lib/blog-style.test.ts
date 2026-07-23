@@ -36,6 +36,7 @@ describe("Blog production styles", () => {
     expect(mobileToolbarRule).toContain("width: max-content");
     expect(mobileToolbarRule).toContain("margin: 0.75rem 0 0 auto");
     expect(mobileToolbarRule).toContain("0 4px 12px");
+    expect(controlRule).toContain("appearance: none");
     expect(controlRule).toContain("width: 2.75rem");
     expect(controlRule).toContain("height: 2.75rem");
     expect(mobileControlRule).toContain("width: 0.9rem");
@@ -88,7 +89,7 @@ describe("Blog production styles", () => {
     expect(frameRule).toContain("border-radius: var(--blog-rich-block-radius)");
     expect(frameRule).toContain("background: var(--blog-rich-block-surface)");
     expect(scrollRule).toContain("overflow-x: auto");
-    expect(scrollRule).not.toContain("overscroll-behavior");
+    expect(scrollRule).toContain("overscroll-behavior-x: none");
     expect(tableRule).toContain("font-family: var(--font-sans)");
     expect(tableRule).toContain("margin: 0");
     expect(tableRule).not.toContain("overflow");

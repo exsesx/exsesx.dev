@@ -2424,6 +2424,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 .blog-table-scroll {
   width: 100%;
   overflow-x: auto;
+  overscroll-behavior-x: none;
 }
 
 .blog-prose table {
@@ -2796,6 +2797,7 @@ code[data-theme] span {
 }
 
 .blog-mermaid-control {
+  appearance: none;
   width: 2.75rem;
   min-width: 2.75rem;
   height: 2.75rem;

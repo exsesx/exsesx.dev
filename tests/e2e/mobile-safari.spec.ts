@@ -59,7 +59,10 @@ if (!("Bun" in globalThis)) {
       await expect(toolbar.getByRole("button")).toHaveCount(3);
       await expect(toolbar.getByRole("button", { name: "Move", exact: true })).toHaveCount(0);
       await expect(toolbar.getByRole("button", { name: "Zoom out" })).toBeDisabled();
-      await expect(toolbar.getByRole("button", { name: /^Reset diagram zoom,/ })).toBeDisabled();
+      const resetZoom = toolbar.getByRole("button", { name: /^Reset diagram zoom,/ });
+      await expect(resetZoom).toBeDisabled();
+      await expect(resetZoom).toHaveCSS("appearance", "none");
+      await expect(resetZoom).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 
       const [bounds, diagramBounds, toolbarBounds, zoomInBounds] = await Promise.all([
         viewport.boundingBox(),
@@ -95,6 +98,21 @@ if (!("Bun" in globalThis)) {
       await dragMermaidWithTouchPointer(viewport);
       await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeTouchDrag);
       expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(scrollBeforePinch, 0);
+    });
+
+    test("wide tables keep horizontal scrolling without elastic edge gaps", async ({ page }) => {
+      await page.goto(MERMAID_ARTICLE_PATH);
+
+      const tableScroll = page.locator(".blog-table-scroll").first();
+      await expect(tableScroll).toBeVisible();
+      await expect(tableScroll).toHaveCSS("overflow-x", "auto");
+      await expect(tableScroll).toHaveCSS("overscroll-behavior-x", "none");
+
+      const dimensions = await tableScroll.evaluate(element => ({
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+      }));
+      expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth);
     });
 
     test("mobile table of contents closes and lands reliably on a section", async ({ page }) => {
