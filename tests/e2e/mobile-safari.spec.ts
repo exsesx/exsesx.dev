@@ -44,7 +44,7 @@ if (!("Bun" in globalThis)) {
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
     });
 
-    test("passive Blog header uses deliberate coarse-touch intent without moving the TOC", async ({ page }) => {
+    test("passive Blog header uses deliberate coarse-touch intent without overlapping the TOC", async ({ page }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
       const root = page.locator('[data-blog-article="true"]');
@@ -72,7 +72,6 @@ if (!("Bun" in globalThis)) {
 
       await scrollWithTouchIntent(page, 640);
       await expect(toc).toBeVisible();
-      const hiddenTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
 
       await scrollWithTouchIntent(page, -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE - 1));
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
@@ -80,9 +79,8 @@ if (!("Bun" in globalThis)) {
       await scrollWithTouchIntent(page, -1);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeVisible();
-      const revealedTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
 
-      expect(revealedTocTop).toBeCloseTo(hiddenTocTop, 0);
+      await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(16, 0);
     });
 
     test("Mermaid accepts pinch and drag gestures in iPhone Safari", async ({ page }) => {
@@ -223,6 +221,18 @@ async function scrollWithTouchIntent(page: Page, deltaY: number) {
   await page.evaluate(
     () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
   );
+}
+
+async function readTocHeaderGap(toc: Locator) {
+  return toc.evaluate(element => {
+    const header = document.querySelector(".site-header-nav-frame");
+
+    if (!(header instanceof HTMLElement)) {
+      throw new Error("Expected the Blog header frame");
+    }
+
+    return element.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
+  });
 }
 
 async function expectTargetBelowTrigger(target: Locator, trigger: Locator) {
