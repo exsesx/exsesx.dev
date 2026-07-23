@@ -58,14 +58,34 @@ if (!("Bun" in globalThis)) {
       await expect(toolbar.getByRole("button", { name: "Zoom in" })).toBeEnabled();
       await expect(toolbar.getByRole("button")).toHaveCount(3);
       await expect(toolbar.getByRole("button", { name: "Move", exact: true })).toHaveCount(0);
+      await expect(toolbar.getByRole("button", { name: "Zoom out" })).toBeDisabled();
+      await expect(toolbar.getByRole("button", { name: /^Reset diagram zoom,/ })).toBeDisabled();
 
-      const bounds = await viewport.boundingBox();
+      const [bounds, diagramBounds, toolbarBounds, zoomInBounds] = await Promise.all([
+        viewport.boundingBox(),
+        diagram.boundingBox(),
+        toolbar.boundingBox(),
+        toolbar.getByRole("button", { name: "Zoom in" }).boundingBox(),
+      ]);
       const pageViewport = page.viewportSize();
       expect(bounds).not.toBeNull();
+      expect(diagramBounds).not.toBeNull();
+      expect(toolbarBounds).not.toBeNull();
+      expect(zoomInBounds).not.toBeNull();
       expect(pageViewport).not.toBeNull();
       expect(bounds?.height).toBeCloseTo(320, 0);
       expect(bounds?.x ?? -1).toBeGreaterThanOrEqual(0);
       expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(pageViewport?.width ?? 0);
+      expect(toolbarBounds?.y ?? 0).toBeGreaterThanOrEqual((bounds?.y ?? 0) + (bounds?.height ?? 0) + 10);
+      expect((toolbarBounds?.x ?? 0) + (toolbarBounds?.width ?? 0)).toBeCloseTo(
+        (bounds?.x ?? 0) + (bounds?.width ?? 0),
+        1,
+      );
+      expect(toolbarBounds?.height).toBeCloseTo(46, 0);
+      expect(zoomInBounds?.height).toBeCloseTo(44, 0);
+      expect((diagramBounds?.y ?? 0) + (diagramBounds?.height ?? 0)).toBeGreaterThanOrEqual(
+        (toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0),
+      );
 
       await viewport.scrollIntoViewIfNeeded();
       const scrollBeforePinch = await page.evaluate(() => window.scrollY);

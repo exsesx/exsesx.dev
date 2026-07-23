@@ -23,6 +23,27 @@ describe("Blog production styles", () => {
     expect(css).toMatch(/\.blog-mermaid-source\s*\{[^}]*font-family:\s*var\(--font-mono\)/s);
   });
 
+  test("keeps mobile Mermaid controls below the canvas without shrinking their touch targets", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const mobileMermaidRules = css.slice(css.lastIndexOf("@media (max-width: 639px)"));
+    const mobileToolbarRule = mobileMermaidRules.match(/\.blog-mermaid-toolbar\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const mobileControlRule = mobileMermaidRules.match(/\.blog-mermaid-control svg\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const mobileResetRule = mobileMermaidRules.match(/\.blog-mermaid-reset\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const controlRule = css.match(/\.blog-mermaid-control\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(mobileToolbarRule).toContain("position: static");
+    expect(mobileToolbarRule).toContain("display: flex");
+    expect(mobileToolbarRule).toContain("width: max-content");
+    expect(mobileToolbarRule).toContain("margin: 0.75rem 0 0 auto");
+    expect(mobileToolbarRule).toContain("0 4px 12px");
+    expect(controlRule).toContain("width: 2.75rem");
+    expect(controlRule).toContain("height: 2.75rem");
+    expect(mobileControlRule).toContain("width: 0.9rem");
+    expect(mobileControlRule).toContain("height: 0.9rem");
+    expect(mobileResetRule).toContain("width: 3rem");
+    expect(mobileResetRule).toContain("min-width: 3rem");
+  });
+
   test("frames Mermaid diagrams with the site's restrained accent treatment", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const rule = css.match(/\.blog-mermaid\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -161,7 +182,10 @@ describe("Blog production styles", () => {
     expect(drawerRule).toContain("margin-inline: auto");
     expect(drawerScrollRule).toContain("overflow-y: auto");
     expect(drawerScrollRule).toContain("overscroll-behavior: contain");
-    expect(fadeRule).toContain("height: 1.25rem");
+    expect(fadeRule).toContain("top: -0.75rem");
+    expect(fadeRule).not.toContain("bottom:");
+    expect(fadeRule).toContain("height: 0.75rem");
+    expect(fadeRule).toContain("to top");
     expect(fadeRule).toContain("pointer-events: none");
     expect(css).not.toContain(".blog-toc-mobile nav");
   });

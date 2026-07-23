@@ -1952,13 +1952,13 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 .blog-toc-mobile-shell::after {
   position: absolute;
+  top: -0.75rem;
   right: 0;
-  bottom: -1.25rem;
   left: 0;
   z-index: 0;
-  height: 1.25rem;
+  height: 0.75rem;
   background: linear-gradient(
-    to bottom,
+    to top,
     color-mix(in oklab, var(--background) 72%, transparent),
     color-mix(in oklab, var(--background) 20%, transparent) 62%,
     transparent
@@ -2831,6 +2831,32 @@ code[data-theme] span {
   font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+}
+
+@media (max-width: 639px) {
+  .blog-mermaid-toolbar {
+    position: static;
+    display: flex;
+    width: max-content;
+    margin: 0.75rem 0 0 auto;
+    border-color: color-mix(in oklab, var(--border) 68%, transparent);
+    background: color-mix(in oklab, var(--background) 76%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--foreground) 5%, transparent),
+      0 4px 12px color-mix(in oklab, var(--foreground) 5%, transparent);
+    backdrop-filter: blur(12px) saturate(1.08);
+  }
+
+  .blog-mermaid-control svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  .blog-mermaid-reset {
+    width: 3rem;
+    min-width: 3rem;
+    font-size: 0.64rem;
+  }
 }
 
 .blog-mermaid-source {
