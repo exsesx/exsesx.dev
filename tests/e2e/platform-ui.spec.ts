@@ -1,4 +1,9 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import {
+  BLOG_HEADER_HIDE_AFTER,
+  BLOG_HEADER_REVEAL_DISTANCE,
+  BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+} from "../../src/lib/blog-focus";
 
 type CvShareHarness = {
   openCalls: number;
@@ -28,6 +33,19 @@ declare global {
 const TEST_PDF = "%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF";
 const BLOG_ARTICLE_PATH = "/blog/en/codex-agents-v2";
 const MERMAID_ARTICLE_PATH = "/blog/en/codex-memories";
+
+async function scrollWithBlogIntent(page: Page, isMobile: boolean | undefined, deltaY: number) {
+  if (isMobile) {
+    await page.locator("body").dispatchEvent("touchmove");
+  } else {
+    await page.evaluate(distance => window.dispatchEvent(new WheelEvent("wheel", { deltaY: distance })), deltaY);
+  }
+
+  await page.evaluate(distance => window.scrollBy({ behavior: "instant" as ScrollBehavior, top: distance }), deltaY);
+  await page.evaluate(
+    () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+  );
+}
 
 async function installIosShareHarness(page: Page) {
   await page.addInitScript(() => {
@@ -449,12 +467,84 @@ if (!("Bun" in globalThis)) {
       await expect(page.locator('[data-blog-article="true"]')).not.toHaveAttribute("data-blog-focus", "true");
     });
 
+    test("passive Blog header stays full size, hides, and needs deliberate upward intent to reveal", async ({
+      page,
+      isMobile,
+    }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const headerFrame = page.locator(".site-header-nav-frame");
+      const title = page.getByRole("heading", { level: 1 });
+      const toc = page.locator(isMobile ? ".blog-toc-mobile-shell" : ".blog-toc-desktop");
+      const revealDistance = isMobile ? BLOG_HEADER_TOUCH_REVEAL_DISTANCE : BLOG_HEADER_REVEAL_DISTANCE;
+
+      await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
+      await scrollWithBlogIntent(page, isMobile, BLOG_HEADER_HIDE_AFTER - 1);
+
+      await expect(headerFrame).toHaveAttribute("data-condensed", "true");
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      const visibleTransform = await headerFrame.evaluate(element => {
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+
+        return {
+          scaleX: matrix.a,
+          scaleY: matrix.d,
+          translateY: matrix.m42,
+        };
+      });
+      expect(visibleTransform.scaleX).toBeCloseTo(1, 3);
+      expect(visibleTransform.scaleY).toBeCloseTo(1, 3);
+      expect(visibleTransform.translateY).toBeCloseTo(0, 1);
+
+      await scrollWithBlogIntent(page, isMobile, 1);
+
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toBeHidden();
+      await expect(title).toBeInViewport();
+
+      await scrollWithBlogIntent(page, isMobile, 640);
+      await expect(toc).toBeVisible();
+      const hiddenTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
+
+      await scrollWithBlogIntent(page, isMobile, -(revealDistance - 1));
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+
+      await scrollWithBlogIntent(page, isMobile, -1);
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toBeVisible();
+      const revealedTocTop = await toc.evaluate(element => element.getBoundingClientRect().top);
+
+      expect(revealedTocTop).toBeCloseTo(hiddenTocTop, 0);
+    });
+
+    test("keyboard scrolling changes passive Blog header state without spatial motion", async ({ page, isMobile }) => {
+      test.skip(Boolean(isMobile), "keyboard input contract is viewport-independent");
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const headerFrame = page.locator(".site-header-nav-frame");
+
+      await page.keyboard.press("PageDown");
+
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
+      await expect(headerFrame).toBeHidden();
+
+      await page.keyboard.press("Home");
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
+      await expect(headerFrame).toBeVisible();
+    });
+
     test("passive Blog header starts hidden at a restored reading position", async ({ page, isMobile }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
       const root = page.locator('[data-blog-article="true"]');
       const headerFrame = page.locator(".site-header-nav-frame");
 
+      await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
       await page.evaluate(() => {
         const article = document.getElementById("article-content");
         if (!article) {
@@ -471,25 +561,12 @@ if (!("Bun" in globalThis)) {
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeHidden();
 
-      if (isMobile) {
-        await page.locator("body").dispatchEvent("touchmove");
-        await page.evaluate(() => window.scrollBy(0, 160));
-      } else {
-        const viewport = page.viewportSize();
-        expect(viewport).not.toBeNull();
-        await page.mouse.move((viewport?.width ?? 1280) / 2, (viewport?.height ?? 900) / 2);
-        await page.mouse.wheel(0, 160);
-      }
+      await scrollWithBlogIntent(page, isMobile, 160);
 
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeHidden();
 
-      if (isMobile) {
-        await page.locator("body").dispatchEvent("touchmove");
-        await page.evaluate(() => window.scrollBy(0, -320));
-      } else {
-        await page.mouse.wheel(0, -320);
-      }
+      await scrollWithBlogIntent(page, isMobile, -320);
 
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeVisible();

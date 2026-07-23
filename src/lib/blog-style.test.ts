@@ -240,22 +240,67 @@ describe("Blog production styles", () => {
     expect(css).not.toMatch(/\[data-blog-focus="true"\][^{]*\.blog-prose/);
   });
 
-  test("reclaims the header offset for both sticky table-of-contents surfaces", async () => {
+  test("dismisses the article header as one unscaled, interruptible object", async () => {
     const css = await Bun.file(globalsCssUrl).text();
+    const visibleFrameRule =
+      css.match(/\[data-blog-article="true"\] \.site-header-nav-frame\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const visibleFadeRule = css.match(/\[data-blog-article="true"\] \.site-header-fade\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const hiddenFrameRule =
+      css.match(
+        /:is\(\s*html\[data-blog-focus-bootstrap="pending"\] \[data-blog-article="true"\],[\s\S]*?\[data-blog-article="true"\]\[data-blog-focus="true"\]\s*\)\s*\.site-header-nav-frame\s*\{([^}]*)\}/s,
+      )?.[1] ?? "";
+    const hiddenFadeRule =
+      css.match(
+        /:is\(\s*html\[data-blog-focus-bootstrap="pending"\] \[data-blog-article="true"\],[\s\S]*?\[data-blog-article="true"\]\[data-blog-focus="true"\]\s*\)\s*\.site-header-fade\s*\{([^}]*)\}/s,
+      )?.[1] ?? "";
+
+    expect(visibleFrameRule).toContain("transform: translate3d(0, 0, 0) scale(1)");
+    expect(visibleFrameRule).toContain("opacity 140ms var(--ease-out)");
+    expect(visibleFrameRule).toContain("transform 180ms var(--ease-weight)");
+    expect(hiddenFrameRule).toContain(
+      "transform: translate3d(0, calc(-100% - env(safe-area-inset-top) - 1.5rem), 0) scale(1)",
+    );
+    expect(hiddenFrameRule).toContain("opacity 160ms var(--ease-out)");
+    expect(hiddenFrameRule).toContain("transform 220ms var(--ease-out)");
+    expect(visibleFadeRule).toContain("opacity 140ms var(--ease-out)");
+    expect(hiddenFadeRule).toContain("opacity 160ms var(--ease-out)");
+    expect(visibleFadeRule).not.toContain("transform");
+    expect(hiddenFadeRule).not.toContain("transform");
+    expect(css).toMatch(
+      /\[data-blog-article="true"\]\[data-blog-header-motion="instant"\] \.site-header-nav-frame,[\s\S]*?\.site-header-fade\s*\{\s*transition:\s*none/s,
+    );
+  });
+
+  test("keeps article table-of-contents anchors stable beneath the transient header", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const mobileRule = css.match(/\.blog-toc-mobile-shell\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(css).toContain('html[data-blog-focus-bootstrap="pending"]');
     expect(css).toContain('html[data-blog-focus-bootstrap="hidden"]');
-    expect(css).toMatch(
-      /:is\([\s\S]*?\[data-blog-passive-hidden="true"\][\s\S]*?\[data-blog-focus="true"\][\s\S]*?\)\s*\.blog-toc-mobile-shell\s*\{[^}]*safe-area-inset-top[^}]*0\.75rem/s,
+    expect(mobileRule).toContain("top: calc(env(safe-area-inset-top) + 0.75rem)");
+    expect(mobileRule).not.toContain("transition");
+    expect(desktopRule).toContain("top: calc(env(safe-area-inset-top) + 1.25rem)");
+    expect(desktopRule).toContain("max-height: calc(100svh - env(safe-area-inset-top) - 2.5rem)");
+    expect(desktopRule).not.toContain("transition");
+    expect(css).not.toMatch(/\[data-blog-passive-hidden="true"\][\s\S]{0,400}\.blog-toc-(?:mobile-shell|desktop)/);
+  });
+
+  test("uses opacity-only article header changes when reduced motion is requested", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const reducedMotionCss = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
+
+    expect(reducedMotionCss).toMatch(
+      /\[data-blog-article="true"\] \.site-header-nav-frame\s*\{[^}]*transform:\s*none[^}]*opacity 140ms var\(--ease-out\)/s,
+    );
+    expect(reducedMotionCss).toMatch(
+      /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\][\s\S]*?\.site-header-nav-frame\s*\{[^}]*transform:\s*none[^}]*opacity 160ms var\(--ease-out\)/s,
+    );
+    expect(reducedMotionCss).toMatch(
+      /html\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.site-header-nav-frame,[\s\S]*?\[data-blog-header-motion="instant"\] \.site-header-fade\s*\{\s*transition:\s*none/s,
     );
     expect(css).toMatch(
-      /:is\([\s\S]*?\[data-blog-passive-hidden="true"\][\s\S]*?\[data-blog-focus="true"\][\s\S]*?\)\s*\.blog-toc-desktop\s*\{[^}]*safe-area-inset-top/s,
-    );
-    expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.blog-toc-mobile-shell,[\s\S]*?\.blog-toc-desktop,[\s\S]*?\[data-slot="drawer-popup"\][\s\S]*?\{\s*transition:\s*none/s,
-    );
-    expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.site-nav-glass,[\s\S]*?\.site-header-nav-frame,[\s\S]*?\.nav-back-button\s*\{\s*transition:\s*none/s,
+      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.site-header-nav-frame,[\s\S]*?\.site-header-fade,[\s\S]*?\.nav-back-button\s*\{\s*transition:\s*none/s,
     );
   });
 });

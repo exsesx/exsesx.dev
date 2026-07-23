@@ -15,7 +15,9 @@ import {
 } from "react";
 import { BLOG_UI, getBlogLocaleFromPath } from "@/lib/blog";
 import {
-  BLOG_ARTICLE_START_OFFSET,
+  BLOG_HEADER_HIDE_AFTER,
+  BLOG_HEADER_REVEAL_DISTANCE,
+  BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
   createPassiveBlogHeaderState,
   revealPassiveBlogHeader,
   updatePassiveBlogHeader,
@@ -42,6 +44,8 @@ type BlogFocusProviderProps = Readonly<{
   children: ReactNode;
 }>;
 
+type PassiveHeaderMotion = "animated" | "instant";
+
 export function BlogFocusProvider({ children }: BlogFocusProviderProps) {
   return (
     <Toast.Provider limit={1} timeout={BLOG_FOCUS_TOAST_TIMEOUT}>
@@ -54,7 +58,11 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
   const pathname = usePathname();
   const isBlogArticle = isBlogPostPath(pathname);
   const [focusState, setFocusState] = useState({ active: false, pathname });
-  const [passiveVisibility, setPassiveVisibility] = useState({ hidden: false, pathname: "" });
+  const [passiveVisibility, setPassiveVisibility] = useState<{
+    hidden: boolean;
+    motion: PassiveHeaderMotion;
+    pathname: string;
+  }>({ hidden: false, motion: "instant", pathname: "" });
   const { add: addToast, close: closeToast, toasts } = Toast.useToastManager();
   const passiveStateRef = useRef(createPassiveBlogHeaderState());
   const isFocusMode = isBlogArticle && focusState.pathname === pathname && focusState.active;
@@ -83,7 +91,7 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
 
   const revealHeader = useCallback(() => {
     passiveStateRef.current = revealPassiveBlogHeader(passiveStateRef.current, window.scrollY);
-    setPassiveVisibility({ hidden: false, pathname });
+    setPassiveVisibility({ hidden: false, motion: "instant", pathname });
   }, [pathname]);
 
   const exitFocusMode = useCallback(() => {
@@ -110,18 +118,15 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
   }, [copy.focusModeOn, exitFocusMode, isBlogArticle, isFocusMode, pathname, showFocusToast]);
 
   useLayoutEffect(() => {
-    const article = document.getElementById("article-content");
     const bootstrapElement = document.documentElement;
 
     function synchronizePassiveVisibility() {
       const scrollY = window.scrollY;
-      const articleStart = article ? article.getBoundingClientRect().top + scrollY : Number.POSITIVE_INFINITY;
       const bootstrapStartsHidden = bootstrapElement.dataset[BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE] === "hidden";
-      const startsInsideArticle =
-        isBlogArticle && (bootstrapStartsHidden || scrollY >= articleStart - BLOG_ARTICLE_START_OFFSET);
+      const startsPastHidePoint = isBlogArticle && (bootstrapStartsHidden || scrollY >= BLOG_HEADER_HIDE_AFTER);
 
-      passiveStateRef.current = createPassiveBlogHeaderState(scrollY, startsInsideArticle);
-      setPassiveVisibility({ hidden: startsInsideArticle, pathname });
+      passiveStateRef.current = createPassiveBlogHeaderState(scrollY, startsPastHidePoint);
+      setPassiveVisibility({ hidden: startsPastHidePoint, motion: "instant", pathname });
     }
 
     synchronizePassiveVisibility();
@@ -132,20 +137,24 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
     }
 
     const headerFrame = document.querySelector<HTMLElement>(".site-header-nav-frame");
+    const revealDistance = window.matchMedia("(pointer: coarse)").matches
+      ? BLOG_HEADER_TOUCH_REVEAL_DISTANCE
+      : BLOG_HEADER_REVEAL_DISTANCE;
     let hasUserScrollIntent = false;
+    let motion: PassiveHeaderMotion = "instant";
     let frame = 0;
 
     function update() {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const scrollY = window.scrollY;
-        const articleStart = article ? article.getBoundingClientRect().top + scrollY : Number.POSITIVE_INFINITY;
         const activeElement = document.activeElement;
         const hasHeaderFocus = activeElement instanceof Node && Boolean(headerFrame?.contains(activeElement));
         const nextState = updatePassiveBlogHeader(passiveStateRef.current, {
           hasHeaderFocus,
           hasUserScrollIntent,
-          isPastArticleStart: scrollY >= articleStart - BLOG_ARTICLE_START_OFFSET,
+          revealDistance,
+          shouldHideWithoutIntent: scrollY >= BLOG_HEADER_HIDE_AFTER,
           scrollY,
         });
 
@@ -153,7 +162,7 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
         setPassiveVisibility(current =>
           current.pathname === pathname && current.hidden === nextState.hidden
             ? current
-            : { hidden: nextState.hidden, pathname },
+            : { hidden: nextState.hidden, motion, pathname },
         );
       });
     }
@@ -165,11 +174,13 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
 
       if (SCROLL_INTENT_KEYS.has(event.key)) {
         hasUserScrollIntent = true;
+        motion = "instant";
       }
     }
 
     function handleTouchMove() {
       hasUserScrollIntent = true;
+      motion = "animated";
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -178,12 +189,14 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
 
       if (isMiddleButton || isScrollbarLane) {
         hasUserScrollIntent = true;
+        motion = "animated";
       }
     }
 
     function handleWheel(event: WheelEvent) {
       if (event.deltaY !== 0) {
         hasUserScrollIntent = true;
+        motion = "animated";
       }
     }
 
@@ -243,6 +256,11 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
         className="relative isolate min-h-full w-full overflow-x-clip text-foreground transition-colors duration-300"
         data-blog-article={isBlogArticle ? "true" : undefined}
         data-blog-focus={isFocusMode ? "true" : undefined}
+        data-blog-header-motion={
+          isBlogArticle && passiveVisibility.pathname === pathname && passiveVisibility.motion === "instant"
+            ? "instant"
+            : undefined
+        }
         data-blog-passive-hidden={isPassiveHeaderHidden ? "true" : undefined}
       >
         {children}

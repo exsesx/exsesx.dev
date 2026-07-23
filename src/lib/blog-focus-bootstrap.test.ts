@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { BLOG_HEADER_HIDE_AFTER } from "./blog-focus";
 import { BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE, createBlogFocusBootstrapScript } from "./blog-focus-bootstrap";
 
 type BootstrapHarness = ReturnType<typeof createBootstrapHarness>;
 
-function createBootstrapHarness(pathname: string, articleStart = 480) {
+function createBootstrapHarness(pathname: string) {
   const documentListeners = new Map<string, Array<() => void>>();
   const windowListeners = new Map<string, Array<() => void>>();
   const animationFrames: Array<() => void> = [];
@@ -30,15 +31,6 @@ function createBootstrapHarness(pathname: string, articleStart = 480) {
     addEventListener(type: string, listener: () => void) {
       documentListeners.set(type, [...(documentListeners.get(type) ?? []), listener]);
     },
-    getElementById(id: string) {
-      if (id !== "article-content") {
-        return null;
-      }
-
-      return {
-        getBoundingClientRect: () => ({ top: articleStart - windowObject.scrollY }),
-      };
-    },
   };
 
   Function("document", "window", "Event", createBlogFocusBootstrapScript())(documentObject, windowObject, Event);
@@ -62,7 +54,7 @@ function resolveInitialFrame(harness: BootstrapHarness) {
 }
 
 describe("Blog focus pre-paint bootstrap", () => {
-  test("protects article chrome while restored scroll is unresolved, then starts hidden mid-article", () => {
+  test("protects article chrome while restored scroll is unresolved, then starts hidden on a deep load", () => {
     const harness = createBootstrapHarness("/blog/en/codex-agents-v2");
 
     expect(harness.documentElement.dataset[BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE]).toBe("pending");
@@ -81,6 +73,36 @@ describe("Blog focus pre-paint bootstrap", () => {
     resolveInitialFrame(harness);
 
     expect(harness.documentElement.dataset[BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE]).toBe("visible");
+  });
+
+  test("uses the same 120px hide boundary as the hydrated header", () => {
+    expect(BLOG_HEADER_HIDE_AFTER).toBe(120);
+
+    const beforeBoundary = createBootstrapHarness("/blog/en/codex-agents-v2");
+    beforeBoundary.windowObject.scrollY = BLOG_HEADER_HIDE_AFTER - 1;
+    resolveInitialFrame(beforeBoundary);
+
+    expect(beforeBoundary.documentElement.dataset[BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE]).toBe("visible");
+
+    const atBoundary = createBootstrapHarness("/blog/en/codex-agents-v2");
+    atBoundary.windowObject.scrollY = BLOG_HEADER_HIDE_AFTER;
+    resolveInitialFrame(atBoundary);
+
+    expect(atBoundary.documentElement.dataset[BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE]).toBe("hidden");
+  });
+
+  test("recalculates the phase after a back-forward cache restore", () => {
+    const harness = createBootstrapHarness("/blog/en/codex-agents-v2");
+    resolveInitialFrame(harness);
+    harness.windowObject.scrollY = BLOG_HEADER_HIDE_AFTER;
+
+    for (const listener of harness.windowListeners.get("pageshow") ?? []) {
+      (listener as unknown as (event: { persisted: boolean }) => void)({ persisted: true });
+    }
+
+    expect(harness.documentElement.dataset[BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE]).toBe("pending");
+    harness.animationFrames.shift()?.();
+    expect(harness.documentElement.dataset[BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE]).toBe("hidden");
   });
 
   test("does nothing outside Blog article routes", () => {
