@@ -153,12 +153,35 @@ describe("Blog production styles", () => {
     expect(css).toContain("border-color var(--source-link-hover-duration) var(--source-link-hover-ease)");
   });
 
-  test("extends compact Blog controls to touch-friendly hit areas", async () => {
+  test("keeps compact Blog controls smaller on precise pointers and touch-friendly elsewhere", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 
     expect(css).toMatch(/\.blog-locale-link::before\s*\{[^}]*inset:\s*-0\.25rem 0/s);
-    expect(css).toMatch(/\.blog-code-copy::before\s*\{[^}]*inset:\s*-0\.45rem/s);
+    expect(css).toMatch(/\.blog-code-action\s*\{[^}]*width:\s*2\.5rem;[^}]*height:\s*2\.5rem/s);
+    expect(css).toMatch(
+      /@media \(hover: hover\) and \(pointer: fine\)\s*\{[\s\S]*?\.blog-code-action\s*\{[^}]*width:\s*2\.25rem;[^}]*height:\s*2\.25rem/s,
+    );
     expect(css).toMatch(/\.blog-read-link,\s*\.blog-back-link\s*\{[^}]*min-height:\s*2\.75rem/s);
+  });
+
+  test("keeps code wrapping opt-in, visibly selected, and printable", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+
+    expect(css).toMatch(
+      /\.blog-code-block\[data-wrap="true"\] pre\s*\{[^}]*overflow-x:\s*hidden;[^}]*white-space:\s*pre-wrap/s,
+    );
+    expect(css).toMatch(/\.blog-code-block pre\s*\{[^}]*overflow-x:\s*auto;[^}]*overscroll-behavior-x:\s*none/s);
+    expect(css).toMatch(
+      /\.blog-code-action\[aria-pressed="true"\]\s*\{[^}]*color:\s*var\(--accent\);[^}]*background:[^}]*var\(--accent\)/s,
+    );
+    expect(css).not.toContain('.blog-code-action[data-code-action="wrap"]::after');
+    expect(css).toMatch(
+      /@media print\s*\{[\s\S]*?\.blog-code-toolbar\s*\{[^}]*display:\s*none;[\s\S]*?\.blog-code-block pre\s*\{[^}]*white-space:\s*pre-wrap/s,
+    );
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-code-state-icon\s*\{[^}]*animation:\s*none/s,
+    );
+    expect(css).not.toContain(".blog-code-tooltip");
   });
 
   test("keeps Blog pointer motion gated and transparency preferences effective", async () => {

@@ -25,6 +25,8 @@ type ThemeSnapshot = {
 declare global {
   interface Window {
     __cvShareHarness: CvShareHarness;
+    __copiedCode: string | null;
+    __copyShouldFail: boolean;
     __localeSwitchThemeSnapshots: ThemeSnapshot[];
     __themeViewTransitionCalls: number;
   }
@@ -379,6 +381,112 @@ if (!("Bun" in globalThis)) {
       await page.keyboard.press("Home");
       await expect(diagram).toHaveAttribute("data-zoom", "100");
       await expect(svg).toHaveAttribute("viewBox", baseViewBox ?? "");
+    });
+
+    test("Blog code blocks wrap locally and preserve exact clipboard content", async ({ page, isMobile }) => {
+      await page.addInitScript(() => {
+        window.__copiedCode = null;
+        window.__copyShouldFail = false;
+
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: {
+            writeText(value: string) {
+              if (window.__copyShouldFail) {
+                return Promise.reject(new DOMException("Copy rejected", "NotAllowedError"));
+              }
+
+              window.__copiedCode = value;
+              return Promise.resolve();
+            },
+          },
+        });
+      });
+      await page.goto(MERMAID_ARTICLE_PATH);
+
+      const codeBlock = page.locator(".blog-code-block").first();
+      const pre = codeBlock.locator("pre");
+      const toolbar = codeBlock.getByRole("group", { name: "Code actions" });
+      const wrapButton = toolbar.locator('[data-code-action="wrap"]');
+      const copyButton = toolbar.locator('[data-code-action="copy"]');
+      const source = await pre.innerText();
+
+      await expect(page.locator(".blog-code-block")).toHaveCount(3);
+      await expect(codeBlock).toHaveAttribute("data-wrap", "false");
+      await expect(wrapButton).toHaveAttribute("aria-pressed", "false");
+      await expect(pre).toHaveCSS("overscroll-behavior-x", "none");
+
+      const [wrapBounds, copyBounds] = await Promise.all([wrapButton.boundingBox(), copyButton.boundingBox()]);
+      const expectedButtonSize = isMobile ? 40 : 36;
+      expect(wrapBounds?.width).toBeCloseTo(expectedButtonSize, 1);
+      expect(wrapBounds?.height).toBeCloseTo(expectedButtonSize, 1);
+      expect(copyBounds?.width).toBeCloseTo(expectedButtonSize, 1);
+      expect(copyBounds?.height).toBeCloseTo(expectedButtonSize, 1);
+
+      if (!isMobile) {
+        await copyButton.focus();
+        await page.keyboard.press("Shift+Tab");
+        await expect(wrapButton).toBeFocused();
+        const tooltip = page.locator('[data-slot="tooltip-content"][data-open]');
+        await expect(tooltip).toBeVisible();
+        await expect(tooltip).toHaveText("Wrap lines");
+        await page.keyboard.press("Escape");
+        await expect(tooltip).toBeHidden();
+        await expect(wrapButton).toBeFocused();
+      }
+
+      await wrapButton.click();
+      await expect(codeBlock).toHaveAttribute("data-wrap", "true");
+      await expect(wrapButton).toHaveAttribute("aria-pressed", "true");
+      await expect(pre).toHaveCSS("overflow-x", "hidden");
+      await expect(pre.locator("code")).toHaveCSS("min-width", "0px");
+
+      if (isMobile) {
+        await expect(page.locator('[data-slot="tooltip-content"][data-open]')).toBeHidden();
+      }
+
+      await copyButton.click();
+      await expect(copyButton).toHaveAttribute("aria-label", "Code copied");
+      await expect.poll(() => page.evaluate(() => window.__copiedCode)).toBe(source);
+      await expect(codeBlock.getByRole("status")).toHaveText("Code copied");
+
+      await page.evaluate(() => {
+        window.__copyShouldFail = true;
+      });
+      await copyButton.click();
+      await expect(copyButton).toHaveAttribute("aria-label", "Couldn't copy code");
+      await expect(codeBlock.getByRole("status")).toHaveText("Couldn't copy code");
+
+      if (isMobile) {
+        const overflowingBlock = page.locator(".blog-code-block").nth(1);
+        const overflowingPre = overflowingBlock.locator("pre");
+        const overflowingWrap = overflowingBlock.locator('[data-code-action="wrap"]');
+
+        await overflowingPre.evaluate(element => {
+          element.scrollLeft = 48;
+        });
+        const savedScrollLeft = await overflowingPre.evaluate(element => element.scrollLeft);
+        expect(savedScrollLeft).toBeGreaterThan(0);
+
+        await overflowingWrap.click();
+        await expect(overflowingBlock).toHaveAttribute("data-wrap", "true");
+        await overflowingWrap.click();
+        await expect(overflowingBlock).toHaveAttribute("data-wrap", "false");
+        await expect.poll(() => overflowingPre.evaluate(element => element.scrollLeft)).toBe(savedScrollLeft);
+      }
+
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await expect(copyButton.locator(".blog-code-state-icon")).toHaveCSS("animation-name", "none");
+
+      await page.emulateMedia({ media: "print", reducedMotion: "no-preference" });
+      await expect(toolbar).toBeHidden();
+      await expect(pre).toHaveCSS("white-space", "pre-wrap");
+
+      await page.emulateMedia({ media: "screen" });
+      await page.goto("/blog/uk/codex-memories");
+      const ukrainianToolbar = page.locator(".blog-code-block").first().getByRole("group", { name: "Дії з кодом" });
+      await expect(ukrainianToolbar.getByRole("button", { name: "Переносити рядки" })).toBeVisible();
+      await expect(ukrainianToolbar.getByRole("button", { name: "Копіювати код" })).toBeVisible();
     });
 
     test("Blog Focus has no header control and remains a desktop-only shortcut", async ({ page, isMobile }) => {
