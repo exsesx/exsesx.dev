@@ -108,7 +108,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
         )}
 
         {remainingPosts.length > 0 ? (
-          <section className="border-t border-border py-10">
+          <section className="py-10">
             <h2 className="text-2xl font-black tracking-tight text-foreground">{copy.allPosts}</h2>
             <div className="mt-6 grid gap-4">
               {remainingPosts.map(post => (
