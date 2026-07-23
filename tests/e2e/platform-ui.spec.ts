@@ -151,8 +151,9 @@ if (!("Bun" in globalThis)) {
       }
     });
 
-    test("header gives Back and the logo deliberate room on iPhone 17 Pro", async ({ page, isMobile }) => {
-      test.skip(!isMobile, "iPhone 17 Pro mobile contract");
+    test("header gives Back and the logo deliberate room on iPhone 17 Pro", { tag: "@mobile-only" }, async ({
+      page,
+    }) => {
       await page.setViewportSize({ width: 402, height: 874 });
       await page.goto("/project/this-is-language");
 
@@ -183,9 +184,9 @@ if (!("Bun" in globalThis)) {
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
     });
 
-    test("document language follows the Blog locale without changing the site language", async ({ page, isMobile }) => {
-      test.skip(Boolean(isMobile), "document language is viewport-independent");
-
+    test("document language follows the Blog locale without changing the site language", {
+      tag: "@desktop-only",
+    }, async ({ page }) => {
       await page.goto("/");
       await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
@@ -199,9 +200,7 @@ if (!("Bun" in globalThis)) {
       await expect(page.getByRole("heading", { level: 1, name: "Нотатки з майстерні" })).toBeVisible();
     });
 
-    test("Blog locale switching keeps RSS and the device theme stable", async ({ page, isMobile }) => {
-      test.skip(Boolean(isMobile), "locale state is viewport-independent");
-
+    test("Blog locale switching keeps RSS and the device theme stable", { tag: "@desktop-only" }, async ({ page }) => {
       const consoleErrors: string[] = [];
       page.on("console", message => {
         if (message.type() === "error") {
@@ -257,9 +256,9 @@ if (!("Bun" in globalThis)) {
       expect(consoleErrors).not.toContainEqual(expect.stringContaining("Encountered a script tag"));
     });
 
-    test("Blog navigation and article content fit the 390px mobile viewport", async ({ page, isMobile }) => {
-      test.skip(!isMobile, "390px mobile contract");
-
+    test("Blog navigation and article content fit the 390px mobile viewport", { tag: "@mobile-only" }, async ({
+      page,
+    }) => {
       await page.goto("/projects");
       const blogLink = page.getByRole("link", { name: "Blog", exact: true });
       await expect(blogLink).toBeVisible();
@@ -571,11 +570,9 @@ if (!("Bun" in globalThis)) {
       await expect(root).not.toHaveAttribute("data-blog-focus", "true");
     });
 
-    test("Blog Focus shortcuts respect dialog, reading focus, and Back Escape precedence", async ({
-      page,
-      isMobile,
-    }) => {
-      test.skip(Boolean(isMobile), "explicit Focus is a desktop-only shortcut");
+    test("Blog Focus shortcuts respect dialog, reading focus, and Back Escape precedence", {
+      tag: "@desktop-only",
+    }, async ({ page }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
       const root = page.locator('[data-blog-article="true"]');
@@ -679,8 +676,9 @@ if (!("Bun" in globalThis)) {
       }
     });
 
-    test("keyboard scrolling changes passive Blog header state without spatial motion", async ({ page, isMobile }) => {
-      test.skip(Boolean(isMobile), "keyboard input contract is viewport-independent");
+    test("keyboard scrolling changes passive Blog header state without spatial motion", {
+      tag: "@desktop-only",
+    }, async ({ page }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
       const root = page.locator('[data-blog-article="true"]');
@@ -813,8 +811,9 @@ if (!("Bun" in globalThis)) {
       expect(await page.evaluate(() => window.__themeViewTransitionCalls)).toBe(0);
     });
 
-    test("shortcuts use the shared focus-trapping dialog and restore focus", async ({ page, isMobile }) => {
-      test.skip(Boolean(isMobile), "shortcuts are intentionally disabled on coarse-only pointers");
+    test("shortcuts use the shared focus-trapping dialog and restore focus", { tag: "@desktop-only" }, async ({
+      page,
+    }) => {
       await page.goto("/");
 
       const trigger = page.getByRole("button", { name: "Toggle keyboard shortcuts" });
@@ -850,8 +849,9 @@ if (!("Bun" in globalThis)) {
       );
     });
 
-    test("seasonal logo motion is CSS-owned and respects reduced motion", async ({ page, isMobile }) => {
-      test.skip(Boolean(isMobile), "one rendering contract is sufficient");
+    test("seasonal logo motion is CSS-owned and respects reduced motion", { tag: "@desktop-only" }, async ({
+      page,
+    }) => {
       await page.goto("/");
       await page.evaluate(() => {
         document.documentElement.dataset.season = "pride";
@@ -864,9 +864,7 @@ if (!("Bun" in globalThis)) {
       await expect(stripes).toHaveCSS("animation-name", "none");
     });
 
-    test("native metadata routes reflect current project data", async ({ request, isMobile }) => {
-      test.skip(Boolean(isMobile), "route content is viewport-independent");
-
+    test("native metadata routes reflect current project data", { tag: "@desktop-only" }, async ({ request }) => {
       const [sitemapResponse, robotsResponse] = await Promise.all([
         request.get("/sitemap.xml"),
         request.get("/robots.txt"),
@@ -882,9 +880,9 @@ if (!("Bun" in globalThis)) {
       expect(robots).toContain("Sitemap: https://exsesx.dev/sitemap.xml");
     });
 
-    test("iOS prepares a cold CV before invoking share in a fresh click", async ({ page, isMobile }) => {
-      test.skip(Boolean(isMobile), "one deterministic Web Share harness is sufficient");
-
+    test("iOS prepares a cold CV before invoking share in a fresh click", { tag: "@desktop-only" }, async ({
+      page,
+    }) => {
       let releasePdf = () => {};
       const pdfGate = new Promise<void>(resolve => {
         releasePdf = resolve;
@@ -968,9 +966,9 @@ if (!("Bun" in globalThis)) {
       expect(page.url()).toBe(initialUrl);
     });
 
-    test("iOS CV preparation failure retries in place without opening the PDF", async ({ page, isMobile }) => {
-      test.skip(Boolean(isMobile), "one deterministic Web Share harness is sufficient");
-
+    test("iOS CV preparation failure retries in place without opening the PDF", { tag: "@desktop-only" }, async ({
+      page,
+    }) => {
       let releaseRetry = () => {};
       const retryGate = new Promise<void>(resolve => {
         releaseRetry = resolve;
