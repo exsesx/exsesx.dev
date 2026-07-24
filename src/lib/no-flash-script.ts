@@ -16,11 +16,11 @@ function noFlashScript(themeColorDark: string, themeColorLight: string) {
   var themeColorMeta: HTMLMetaElement | null = null;
   var sampleBandTimer = 0;
 
-  // Safari 26 keeps a sampled chrome color after the sampled element disappears
-  // (found on device 2026-06-11), so the solid band in .site-header only needs
-  // to exist around repaints: flash html[data-chrome-sample] for ~1s on first
-  // paint and every theme change, then drop it. CSS consumes this signal only
-  // on coarse touch WebKit so desktop browsers never paint the sampling band.
+  // Safari 26 normally keeps a sampled chrome color after the sampled element
+  // disappears (found on device 2026-06-11), so flash .site-header around first
+  // paint and every theme change, then drop it. Article CSS retains the band
+  // while its reading header is hidden because modal chrome changes can trigger
+  // another sample. CSS consumes both signals only on coarse touch WebKit.
   // See html[data-chrome-sample] in globals.css.
   function flashChromeSampleBand() {
     window.clearTimeout(sampleBandTimer);

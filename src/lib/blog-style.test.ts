@@ -255,7 +255,7 @@ describe("Blog production styles", () => {
     expect(triggerRule).toContain("height: 2.75rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(0\.75rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.5rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 1rem\)\)/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(0\.5rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.25rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 1rem\)\)/,
     );
     expect(css).toMatch(
       /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
@@ -265,6 +265,7 @@ describe("Blog production styles", () => {
     );
     expect(drawerRule).toContain("max-height: 72dvh");
     expect(drawerRule).toContain("margin-inline: auto");
+    expect(drawerRule).not.toContain("overflow: hidden");
     expect(toc).toContain('className="blog-toc-drawer [--bleed:100dvh]"');
     expect(drawerScrollRule).toContain("overflow-y: auto");
     expect(drawerScrollRule).toContain("overscroll-behavior: none");
