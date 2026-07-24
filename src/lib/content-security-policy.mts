@@ -22,9 +22,10 @@ export function buildContentSecurityPolicy(environment: ContentSecurityPolicyEnv
   }
 
   if (environment.VERCEL_ENV === "production") {
-    const umamiOrigin = "https://cloud.umami.is";
-    connectSrc.push(umamiOrigin);
-    scriptSrc.push(umamiOrigin);
+    const umamiIngestionOrigin = "https://gateway.umami.is";
+    const umamiScriptOrigin = "https://cloud.umami.is";
+    connectSrc.push(umamiIngestionOrigin);
+    scriptSrc.push(umamiScriptOrigin);
   }
 
   if (!isProductionBuild) {
