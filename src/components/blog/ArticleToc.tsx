@@ -173,7 +173,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
         </DrawerTrigger>
 
         <DrawerContent
-          className="blog-toc-drawer"
+          className="blog-toc-drawer [--bleed:100dvh]"
           data-testid="mobile-toc-drawer"
           initialFocus={() => activeLinkRef.current ?? closeButtonRef.current}
         >
