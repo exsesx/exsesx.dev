@@ -6,6 +6,7 @@ import type { BlogLocale } from "@/lib/blog";
 import { resolveActiveHeadingId } from "@/lib/blog-scroll-spy";
 import ArticleToc from "./ArticleToc";
 import { BlogLocaleProvider } from "./BlogLocaleContext";
+import { useMobileTocLauncher } from "./useMobileTocLauncher";
 
 const ACTIVE_HEADING_OFFSET = 144;
 
@@ -17,10 +18,16 @@ type ArticleWithTocProps = {
 
 export function ArticleWithToc({ children, headings, locale }: ArticleWithTocProps) {
   const activeHeadingId = useActiveHeadingId(headings);
+  const mobileTocShellRef = useMobileTocLauncher();
 
   return (
     <>
-      <div className="blog-toc-mobile-shell mx-auto mt-4 max-w-4xl xl:hidden">
+      <div
+        ref={mobileTocShellRef}
+        className="blog-toc-mobile-shell mx-auto max-w-3xl xl:hidden"
+        data-toc-launcher-motion="instant"
+        data-toc-launcher-state="inline"
+      >
         <ArticleToc activeHeadingId={activeHeadingId} headings={headings} locale={locale} mode="mobile" />
       </div>
 

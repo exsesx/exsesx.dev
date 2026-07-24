@@ -3,6 +3,7 @@ import {
   BLOG_HEADER_HIDE_AFTER,
   BLOG_HEADER_HIDE_START,
   BLOG_HEADER_REVEAL_DISTANCE,
+  BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
   BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
 } from "../../src/lib/blog-focus";
@@ -328,7 +329,7 @@ if (!("Bun" in globalThis)) {
           resetZoom.locator(".blog-mermaid-reset-chip").boundingBox(),
         ]);
         expect(resetBounds?.height).toBeCloseTo(44, 0);
-        expect(chipBounds?.height).toBeCloseTo(30, 0);
+        expect(chipBounds?.height).toBeCloseTo(24, 0);
 
         const viewBoxBeforeTouchDrag = await svg.getAttribute("viewBox");
         await dragMermaidWithTouchPointer(viewport);
@@ -648,15 +649,40 @@ if (!("Bun" in globalThis)) {
 
       await scrollWithBlogIntent(page, isMobile, 640);
       await expect(toc).toBeVisible();
+      if (isMobile) {
+        await expect(toc).toHaveAttribute("data-toc-launcher-state", "docked");
+      }
 
-      await scrollWithBlogIntent(page, isMobile, -(revealDistance - 1));
+      const reversalDeadband = isMobile ? BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND : 0;
+      await scrollWithBlogIntent(page, isMobile, -(revealDistance + reversalDeadband - 1));
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
 
       await scrollWithBlogIntent(page, isMobile, -1);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeVisible();
 
-      await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(16, 0);
+      if (isMobile) {
+        await expect(toc).toHaveAttribute("data-toc-launcher-state", "docked");
+        await expect(page.getByTestId("mobile-toc-trigger")).toBeVisible();
+      } else {
+        await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(16, 0);
+      }
+
+      if (isMobile) {
+        await scrollWithBlogIntent(
+          page,
+          isMobile,
+          BLOG_HEADER_TOUCH_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+        );
+        await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+
+        await scrollWithBlogIntent(
+          page,
+          isMobile,
+          -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
+        );
+        await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      }
 
       if (!isMobile) {
         const firstTocLink = toc.getByRole("link", { name: "The short version", exact: true });
@@ -705,6 +731,7 @@ if (!("Bun" in globalThis)) {
 
       const root = page.locator('[data-blog-article="true"]');
       const headerFrame = page.locator(".site-header-nav-frame");
+      const mobileToc = page.locator(".blog-toc-mobile-shell");
 
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
       await page.evaluate(() => {
@@ -722,6 +749,10 @@ if (!("Bun" in globalThis)) {
 
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeHidden();
+      if (isMobile) {
+        await expect(mobileToc).toHaveAttribute("data-toc-launcher-state", "docked");
+        await expect(page.getByTestId("mobile-toc-trigger")).toBeVisible();
+      }
 
       await scrollWithBlogIntent(page, isMobile, 160);
 
