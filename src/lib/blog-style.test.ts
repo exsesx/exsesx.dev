@@ -255,7 +255,7 @@ describe("Blog production styles", () => {
     expect(triggerRule).toContain("height: 2.75rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(0\.5rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.25rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 0\.75rem\)\)/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(1rem, calc\(env\(safe-area-inset-bottom\) \+ 1rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 1rem\)\)/,
     );
     expect(css).toMatch(
       /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
@@ -266,7 +266,10 @@ describe("Blog production styles", () => {
     expect(drawerRule).toContain("max-height: 72dvh");
     expect(drawerRule).toContain("margin-inline: auto");
     expect(drawerScrollRule).toContain("overflow-y: auto");
-    expect(drawerScrollRule).toContain("overscroll-behavior: contain");
+    expect(drawerScrollRule).toContain("overscroll-behavior: none");
+    expect(drawerScrollRule).toContain("padding: 0.25rem var(--blog-toc-drawer-inline)");
+    expect(css).toMatch(/html:has\(\.blog-toc-drawer\[data-open\]\),[\s\S]*?overscroll-behavior:\s*none/);
+    expect(css).not.toContain(".blog-toc-mobile-accent");
     expect(css).not.toContain(".blog-toc-mobile-shell::after");
     expect(css).not.toContain(".blog-toc-mobile nav");
   });
@@ -290,7 +293,7 @@ describe("Blog production styles", () => {
     expect(subheadingRule).toContain("padding-left: 0.45rem");
     expect(activeRule).toContain("background: transparent");
     expect(activeTickRule).toContain("background: var(--accent)");
-    expect(drawerHeaderRule).toContain("padding: 0 1rem");
+    expect(drawerHeaderRule).toContain("padding: 0 var(--blog-toc-drawer-inline)");
   });
 
   test("updates continuous reading progress without a React render per frame", async () => {

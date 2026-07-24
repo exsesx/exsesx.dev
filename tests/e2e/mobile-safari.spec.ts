@@ -259,6 +259,8 @@ if (!("Bun" in globalThis)) {
       const drawerScroll = page.getByTestId("mobile-toc-scroll");
       await expect(drawer).toBeVisible();
       await expect(drawerScroll).toBeVisible();
+      await expect(drawerScroll).toHaveCSS("overscroll-behavior-y", "none");
+      await expect(page.locator("html")).toHaveCSS("overscroll-behavior-y", "none");
 
       const lockState = await readDocumentScrollLock(page);
       expect(lockState.overflowLocked || lockState.fixedBody).toBe(true);
@@ -285,6 +287,13 @@ if (!("Bun" in globalThis)) {
       const dockedFaceBounds = await triggerFace.boundingBox();
       expect(dockedFaceBounds?.width).toBeCloseTo(40, 0);
       expect(dockedFaceBounds?.height).toBeCloseTo(40, 0);
+      const dockedTriggerBounds = await trigger.boundingBox();
+      expect(dockedTriggerBounds).not.toBeNull();
+      expect(dockedTriggerBounds?.x).toBeCloseTo(16, 0);
+      expect(
+        (page.viewportSize()?.height ?? 0) - (dockedTriggerBounds?.y ?? 0) - (dockedTriggerBounds?.height ?? 0),
+      ).toBeCloseTo(16, 0);
+      await expect(triggerFace).not.toHaveCSS("backdrop-filter", "none");
 
       // Reproduce the touch intent retained immediately before a TOC-driven
       // upward scroll. The programmatic scroll must not consume that intent
