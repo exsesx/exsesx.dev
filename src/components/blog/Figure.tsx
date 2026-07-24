@@ -5,13 +5,14 @@ type FigureProps = {
   alt: string;
   caption?: ReactNode;
   credit?: ReactNode;
+  frame?: "default" | "intrinsic";
   priority?: boolean;
   src: StaticImageData;
 };
 
-export default function Figure({ alt, caption, credit, priority = false, src }: FigureProps) {
+export default function Figure({ alt, caption, credit, frame = "default", priority = false, src }: FigureProps) {
   return (
-    <figure className="blog-figure">
+    <figure className={`blog-figure${frame === "intrinsic" ? " blog-figure--intrinsic" : ""}`}>
       <Image
         src={src}
         alt={alt}

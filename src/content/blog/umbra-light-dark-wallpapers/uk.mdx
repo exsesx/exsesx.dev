@@ -1,0 +1,120 @@
+import raycastSettings from "../../../../public/images/blog/umbra-light-dark-wallpapers/raycast-wallpaper-settings.webp";
+import umbraPair from "../../../../public/images/blog/umbra-light-dark-wallpapers/umbra-light-dark-pair.webp";
+
+Я так давно користувався темною темою, що повернення до світлої на Mac виявилося
+відчутнішою зміною, ніж я очікував. Із програмами все було гаразд, а от робочий
+стіл не давав спокою.
+
+Шпалери впливають на відчуття від macOS сильніше, ніж я зазвичай помічаю. Я хотів
+вибрати одне зображення для світлої теми, інше для темної й далі не думати про
+це: робочий стіл мав автоматично підлаштовуватися під систему. Мені не потрібна
+зміна за часом чи положенням сонця. Лише пара шпалер.
+
+## Пара, яку я шукав
+
+У Raycast є чудова
+<SourceLink href="https://www.raycast.com/wallpapers">добірка шпалер</SourceLink>.
+Я постійно повертався до двох зображень:
+<SourceLink href="https://misc-assets.raycast.com/wallpapers/mono_light_distortion_1.heic">`mono_light_distortion_1`</SourceLink>
+і
+<SourceLink href="https://misc-assets.raycast.com/wallpapers/mono_dark_distortion_1.heic">`mono_dark_distortion_1`</SourceLink>.
+Відразу видно, що це одна серія, і кожне зображення має вдалий контраст для своєї
+теми. Світле не здається вицвілим. Темне не перетворює робочий стіл на яскравий
+прямокутник позаду кожного вікна.
+
+<Figure
+  src={umbraPair}
+  alt="В Umbra поруч призначено світлі й темні монохромні шпалери Raycast"
+  caption="Моя пара шпалер для світлої й темної теми в Umbra."
+  credit={<SourceLink href="https://www.raycast.com/wallpapers">Шпалери від Raycast</SourceLink>}
+  frame="intrinsic"
+  priority
+/>
+
+## Варіанти, які майже підійшли
+
+<SourceLink href="https://equinoxmac.com/">Equinox</SourceLink> уміє створювати
+шпалери macOS, які змінюються разом із темою системи. Для цього достатньо двох
+зображень. Програма безплатна, має відкритий код, а ще підтримує зміну шпалер за
+часом і положенням сонця. Усе це доречно, якщо я хочу зібрати й експортувати
+повноцінні динамічні шпалери. Для мого випадку це було зайвим.
+
+Я вже користувався
+<SourceLink href="https://www.raycast.com/koinzhang/raycast-wallpaper">розширенням Raycast Wallpaper</SourceLink>.
+У ньому рівно дві команди: `Set Raycast Wallpaper` та
+`Auto Switch Raycast Wallpaper`. Обидві мають налаштування
+`Respect System Appearance`, тож стверджувати, ніби розширення зовсім не розуміє
+світлу й темну тему, було б неправильно.
+
+Різниця в тому, як саме працює це налаштування. Розширення позначає шпалери з
+каталогу Raycast як світлі або темні. Воно може показати лише шпалери для
+поточної теми чи звузити список, а потім вибрати з нього випадковий варіант. У поточному
+<SourceLink href="https://github.com/raycast/extensions/blob/main/extensions/raycast-wallpaper/package.json">маніфесті</SourceLink>
+та
+<SourceLink href="https://github.com/raycast/extensions/blob/main/extensions/raycast-wallpaper/src/auto-switch-raycast-wallpaper.ts">реалізації автоматичного перемикання</SourceLink>
+немає можливості закріпити одні вибрані шпалери для світлої теми, а інші для
+темної.
+
+<Figure
+  src={raycastSettings}
+  alt="Налаштування Raycast v2 для команд Set Raycast Wallpaper та Auto Switch Raycast Wallpaper"
+  caption={
+<>
+<SourceLink href="https://www.raycast.com/new">Налаштування Raycast v2</SourceLink>. Я вже
+користуюся цією версією, хоча вона ще в розробці. Розширення фільтрує або змінює шпалери, але не
+зберігає постійну пару.
+</>
+}
+  credit="Мої налаштування Raycast"
+  frame="intrinsic"
+/>
+
+Обхідний шлях тут напевно знайдеться. Але тоді мені доведеться підтримувати ще
+одну саморобну схему заради налаштування, яке мало б займати два кліки.
+
+## Umbra виявилася саме тим, що треба
+
+<SourceLink href="https://replay.software/umbra">Umbra</SourceLink> працює саме
+так, як я й уявляв це налаштування: одні шпалери для світлої теми, інші для
+темної. Я додаю два зображення, а Umbra перемикає їх разом із темою macOS. Темну
+тему також можна перемикати з рядка меню.
+
+Саме через таке просте налаштування я залишив програму. В Umbra є й додаткові можливості, зокрема окремі
+шпалери для різних дисплеїв і зручніша робота з HEIC. Та вона не змушує мене
+перетворювати просте вподобання на окремий проєкт. Replay пропонує модель "плати
+скільки хочеш", тож спробувати програму нескладно.
+
+## Короткий відступ про Replay
+
+Umbra була не першою моєю програмою від Replay. Я також користуюся
+<SourceLink href="https://replay.software/echo">Echo</SourceLink>, їхнім клієнтом
+SSH і Mosh для iPhone та iPad. Тепер відкриваю його рідше, бо
+<SourceLink href="https://openai.com/index/work-with-codex-from-anywhere/">за роботою Codex можна стежити з мобільного ChatGPT</SourceLink>,
+а в Claude є
+<SourceLink href="https://www.anthropic.com/news/finance-agents">Dispatch</SourceLink>.
+Проте Echo досі залишається класним проєктом. Вона добре переносить на телефон
+задачу, яку там дуже легко реалізувати незручно.
+
+Umbra теж не робить із себе більше, ніж потрібно. Вона не нав'язує новий спосіб
+керувати темами в macOS, а просто додає пару шпалер, якої мені бракувало.
+
+## Чому для мене важлива така дрібниця
+
+Я годинами дивлюся на macOS, тому ця дрібниця постійно перед очима. Робочий стіл
+залишається позаду кожного вікна. Він впливає на контраст по краях і часто першим
+потрапляє на очі, коли я переходжу до іншої задачі.
+
+Саме тому я люблю маленькі утиліти, з якими можу налаштувати ОС під себе й не
+додавати до дня ще один ритуал. Тепер ці дві шпалери Raycast живуть у мене в
+Umbra. Світла тема нарешті виглядає завершеною, а не тимчасовим режимом, який я
+вимкну за десять хвилин.
+
+## Джерела
+
+- <SourceLink href="https://replay.software/umbra">Replay: Umbra</SourceLink>
+- <SourceLink href="https://replay.software/echo">Replay: Echo</SourceLink>
+- <SourceLink href="https://equinoxmac.com/">Equinox</SourceLink>
+- <SourceLink href="https://www.raycast.com/wallpapers">Шпалери Raycast</SourceLink>
+- <SourceLink href="https://github.com/raycast/extensions/tree/main/extensions/raycast-wallpaper">Код розширення Raycast Wallpaper</SourceLink>
+- <SourceLink href="https://openai.com/index/work-with-codex-from-anywhere/">OpenAI: робота з Codex звідусіль</SourceLink>
+- <SourceLink href="https://www.anthropic.com/news/finance-agents">Anthropic: Dispatch у Claude Cowork</SourceLink>
