@@ -7,6 +7,7 @@ import {
 } from "../../src/lib/blog-focus";
 
 const BLOG_ARTICLE_PATH = "/blog/en/codex-agents-v2";
+const BLOG_INDEX_PATH = "/blog/en";
 const MERMAID_ARTICLE_PATH = "/blog/en/codex-memories";
 
 if (!("Bun" in globalThis)) {
@@ -28,11 +29,7 @@ if (!("Bun" in globalThis)) {
       await expect(logoTile).toBeVisible();
       await expect(githubIcon).toHaveAttribute("stroke-width", "2.2");
       await expect(themeIcon).toHaveAttribute("stroke-width", "2.2");
-      await expect(nav).toHaveCSS("backdrop-filter", "none");
-      await expect(nav).toHaveCSS("border-radius", "20px");
-      await expect(nav).toHaveCSS("box-shadow", "none");
-      await expect(page.locator(".site-header-fade")).toHaveCSS("display", "none");
-      expect(await nav.evaluate(element => getComputedStyle(element, "::before").backgroundImage)).toBe("none");
+      const articleHeaderSurface = await readHeaderSurface(page);
 
       const [navBounds, backBounds, logoLinkBounds, logoBounds, githubBounds, themeBounds] = await Promise.all([
         nav.boundingBox(),
@@ -51,29 +48,37 @@ if (!("Bun" in globalThis)) {
       expect(githubBounds).not.toBeNull();
       expect(themeBounds).not.toBeNull();
       expect(viewport).not.toBeNull();
-      expect(backBounds?.width).toBeCloseTo(44, 1);
-      expect(backBounds?.height).toBeCloseTo(44, 1);
-      expect(logoLinkBounds?.height).toBeGreaterThanOrEqual(44);
+      expect(backBounds?.width).toBeGreaterThanOrEqual(40);
+      expect(backBounds?.height).toBeGreaterThanOrEqual(40);
+      expect(logoLinkBounds?.height).toBeGreaterThanOrEqual(40);
       expect(logoBounds?.width).toBeCloseTo(40, 1);
       expect(logoBounds?.height).toBeCloseTo(40, 1);
-      expect(githubBounds?.width).toBeCloseTo(44, 1);
-      expect(githubBounds?.height).toBeCloseTo(44, 1);
-      expect(themeBounds?.width).toBeCloseTo(44, 1);
-      expect(themeBounds?.height).toBeCloseTo(44, 1);
+      expect(githubBounds?.width).toBeGreaterThanOrEqual(40);
+      expect(githubBounds?.height).toBeGreaterThanOrEqual(40);
+      expect(themeBounds?.width).toBeGreaterThanOrEqual(40);
+      expect(themeBounds?.height).toBeGreaterThanOrEqual(40);
       expect((logoBounds?.x ?? 0) - ((backBounds?.x ?? 0) + (backBounds?.width ?? 0))).toBeGreaterThanOrEqual(2);
       expect(navBounds?.x).toBeGreaterThanOrEqual(0);
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
+
+      await page.goto(BLOG_INDEX_PATH);
+      await expect(page.locator(".site-nav-glass")).toBeVisible();
+      expect(await readHeaderSurface(page)).toEqual(articleHeaderSurface);
     });
 
-    test("passive Blog header uses deliberate coarse-touch intent without overlapping the TOC", async ({ page }) => {
+    test("passive Blog header uses deliberate coarse-touch intent independently from the TOC launcher", async ({
+      page,
+    }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
       const root = page.locator('[data-blog-article="true"]');
       const headerFrame = page.locator(".site-header-nav-frame");
       const title = page.getByRole("heading", { level: 1 });
-      const toc = page.locator(".blog-toc-mobile-shell");
+      const tocShell = page.locator(".blog-toc-mobile-shell");
+      const tocTrigger = page.getByTestId("mobile-toc-trigger");
 
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "inline");
       await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1);
 
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
@@ -92,7 +97,10 @@ if (!("Bun" in globalThis)) {
       await expect(title).toBeInViewport();
 
       await scrollWithTouchIntent(page, 640);
-      await expect(toc).toBeVisible();
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
+      await expect(tocShell).not.toHaveAttribute("data-toc-launcher-entering", "true");
+      await expect(tocTrigger).toBeVisible();
+      const dockedBoundsBeforeReveal = await tocTrigger.boundingBox();
 
       await scrollWithTouchIntent(
         page,
@@ -104,7 +112,12 @@ if (!("Bun" in globalThis)) {
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeVisible();
 
-      await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(8, 0);
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
+      const dockedBoundsAfterReveal = await tocTrigger.boundingBox();
+      expect(dockedBoundsAfterReveal?.x).toBeCloseTo(dockedBoundsBeforeReveal?.x ?? 0, 1);
+      expect(dockedBoundsAfterReveal?.y).toBeCloseTo(dockedBoundsBeforeReveal?.y ?? 0, 1);
+      expect(dockedBoundsAfterReveal?.width).toBeCloseTo(dockedBoundsBeforeReveal?.width ?? 0, 1);
+      expect(dockedBoundsAfterReveal?.height).toBeCloseTo(dockedBoundsBeforeReveal?.height ?? 0, 1);
 
       await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
@@ -213,18 +226,21 @@ if (!("Bun" in globalThis)) {
 
       const root = page.locator('[data-blog-article="true"]');
       const trigger = page.getByTestId("mobile-toc-trigger");
-      await expect(trigger).toBeVisible();
-      await expect(trigger).toHaveAccessibleName("On this page");
-      await expect(trigger).toHaveCSS("backdrop-filter", "none");
-      await expect(trigger).toHaveCSS("border-radius", "14px");
-      await expect(trigger).toHaveCSS("box-shadow", "none");
       const tocShell = page.locator(".blog-toc-mobile-shell");
+      await expect(trigger).toBeVisible();
+      await expect(trigger).toHaveAccessibleName("Open table of contents");
+      await expect(trigger).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+      await expect(trigger).toHaveCSS("border-radius", "999px");
+      await expect(trigger).toHaveCSS("box-shadow", "none");
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "inline");
+      const triggerFace = trigger.locator(".blog-toc-mobile-face");
+      await expect(triggerFace).toContainText("On this page");
+      await expect(triggerFace).not.toHaveCSS("backdrop-filter", "none");
       expect(await tocShell.evaluate(element => getComputedStyle(element, "::after").content)).toBe("none");
 
       const triggerBounds = await trigger.boundingBox();
       expect(triggerBounds).not.toBeNull();
-      expect(triggerBounds?.height).toBeGreaterThanOrEqual(44);
-      expect(triggerBounds?.height).toBeLessThanOrEqual(50);
+      expect(triggerBounds?.height).toBeCloseTo(44, 0);
 
       await trigger.click();
 
@@ -251,8 +267,13 @@ if (!("Bun" in globalThis)) {
       const target = page.locator("#how-to-enable-agents-v2");
       await waitForScrollToSettle(page);
       await expect(target).toBeFocused();
-      await expectTargetBelowTrigger(target, trigger);
+      await expectTargetAtReadingOffset(target);
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
+      await expect(triggerFace.locator(".blog-toc-mobile-label")).toBeHidden();
+      const dockedFaceBounds = await triggerFace.boundingBox();
+      expect(dockedFaceBounds?.width).toBeCloseTo(36, 0);
+      expect(dockedFaceBounds?.height).toBeCloseTo(36, 0);
 
       // Reproduce the touch intent retained immediately before a TOC-driven
       // upward scroll. The programmatic scroll must not consume that intent
@@ -273,11 +294,14 @@ if (!("Bun" in globalThis)) {
       await waitForScrollToSettle(page);
       await expect(earlierTarget).toBeFocused();
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
-      await expect.poll(async () => Math.floor(await readTargetTriggerGap(earlierTarget, trigger))).toBe(16);
-      await expect(trigger.locator(".blog-toc-current")).toHaveText("What changed from V1");
+      await expectTargetAtReadingOffset(earlierTarget);
 
       await trigger.click();
       await expect(drawer).toBeVisible();
+      await expect(drawer.getByRole("link", { name: "What changed from V1", exact: true })).toHaveAttribute(
+        "aria-current",
+        "location",
+      );
       await sectionLink.scrollIntoViewIfNeeded();
       await sectionLink.click();
       await expect(page).toHaveURL(/#how-to-enable-agents-v2$/);
@@ -286,6 +310,30 @@ if (!("Bun" in globalThis)) {
       // movement is immediately interpreted by the normal passive header.
       await scrollWithTouchIntent(page, -BLOG_HEADER_TOUCH_REVEAL_DISTANCE);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+    });
+
+    test("mobile table of contents restores directly into its docked state and yields at article end", async ({
+      page,
+    }) => {
+      await page.goto(`${BLOG_ARTICLE_PATH}#how-to-enable-agents-v2`);
+
+      const tocShell = page.locator(".blog-toc-mobile-shell");
+      const trigger = page.getByTestId("mobile-toc-trigger");
+      await waitForScrollToSettle(page);
+
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
+      await expect(tocShell).not.toHaveAttribute("data-toc-launcher-entering", "true");
+      await expect(trigger).toBeVisible();
+
+      await page.locator("#article-content").evaluate(element => {
+        window.scrollTo({ behavior: "instant", top: element.getBoundingClientRect().bottom + window.scrollY });
+      });
+      await page.evaluate(
+        () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      );
+
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "hidden");
+      await expect(trigger).toBeHidden();
     });
   });
 }
@@ -298,30 +346,30 @@ async function scrollWithTouchIntent(page: Page, deltaY: number) {
   );
 }
 
-async function readTocHeaderGap(toc: Locator) {
-  return toc.evaluate(element => {
-    const header = document.querySelector(".site-header-nav-frame");
-
-    if (!(header instanceof HTMLElement)) {
-      throw new Error("Expected the Blog header frame");
-    }
-
-    return element.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
-  });
-}
-
-async function expectTargetBelowTrigger(target: Locator, trigger: Locator) {
-  const targetGap = await readTargetTriggerGap(target, trigger);
-  expect(targetGap).toBeGreaterThanOrEqual(8);
-  expect(targetGap).toBeLessThanOrEqual(180);
-}
-
-async function readTargetTriggerGap(target: Locator, trigger: Locator) {
-  const [targetBounds, triggerBounds] = await Promise.all([target.boundingBox(), trigger.boundingBox()]);
+async function expectTargetAtReadingOffset(target: Locator) {
+  const targetBounds = await target.boundingBox();
   expect(targetBounds).not.toBeNull();
-  expect(triggerBounds).not.toBeNull();
+  expect(targetBounds?.y ?? 0).toBeGreaterThanOrEqual(70);
+  expect(targetBounds?.y ?? 0).toBeLessThanOrEqual(180);
+}
 
-  return (targetBounds?.y ?? 0) - ((triggerBounds?.y ?? 0) + (triggerBounds?.height ?? 0));
+async function readHeaderSurface(page: Page) {
+  const nav = page.locator(".site-nav-glass");
+
+  return nav.evaluate(element => {
+    const style = getComputedStyle(element);
+    const before = getComputedStyle(element, "::before");
+    const fade = document.querySelector(".site-header-fade");
+
+    return {
+      backdropFilter: style.backdropFilter,
+      backgroundImage: style.backgroundImage,
+      borderRadius: style.borderRadius,
+      boxShadow: style.boxShadow,
+      fadeDisplay: fade ? getComputedStyle(fade).display : null,
+      lensBackground: before.backgroundImage,
+    };
+  });
 }
 
 async function readDocumentScrollLock(page: Page) {

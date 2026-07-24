@@ -652,6 +652,9 @@ if (!("Bun" in globalThis)) {
 
       await scrollWithBlogIntent(page, isMobile, 640);
       await expect(toc).toBeVisible();
+      if (isMobile) {
+        await expect(toc).toHaveAttribute("data-toc-launcher-state", "docked");
+      }
 
       const reversalDeadband = isMobile ? BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND : 0;
       await scrollWithBlogIntent(page, isMobile, -(revealDistance + reversalDeadband - 1));
@@ -661,7 +664,12 @@ if (!("Bun" in globalThis)) {
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeVisible();
 
-      await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(isMobile ? 8 : 16, 0);
+      if (isMobile) {
+        await expect(toc).toHaveAttribute("data-toc-launcher-state", "docked");
+        await expect(page.getByTestId("mobile-toc-trigger")).toBeVisible();
+      } else {
+        await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(16, 0);
+      }
 
       if (isMobile) {
         await scrollWithBlogIntent(page, isMobile, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
@@ -721,6 +729,7 @@ if (!("Bun" in globalThis)) {
 
       const root = page.locator('[data-blog-article="true"]');
       const headerFrame = page.locator(".site-header-nav-frame");
+      const mobileToc = page.locator(".blog-toc-mobile-shell");
 
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
       await page.evaluate(() => {
@@ -738,6 +747,10 @@ if (!("Bun" in globalThis)) {
 
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeHidden();
+      if (isMobile) {
+        await expect(mobileToc).toHaveAttribute("data-toc-launcher-state", "docked");
+        await expect(page.getByTestId("mobile-toc-trigger")).toBeVisible();
+      }
 
       await scrollWithBlogIntent(page, isMobile, 160);
 
