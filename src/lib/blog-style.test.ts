@@ -255,7 +255,7 @@ describe("Blog production styles", () => {
     expect(triggerRule).toContain("height: 2.75rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(1\.25rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.5rem\)\)[\s\S]*?left:\s*max\(1\.25rem, calc\(env\(safe-area-inset-left\) \+ 0\.5rem\)\)/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(1\.25rem, env\(safe-area-inset-bottom, 0px\)\)[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\)[\s\S]*?transition:\s*bottom 0\.2s ease/,
     );
     expect(css).toMatch(
       /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
@@ -266,14 +266,36 @@ describe("Blog production styles", () => {
     expect(drawerRule).toContain("max-height: 72dvh");
     expect(drawerRule).toContain("margin-inline: auto");
     expect(drawerRule).not.toContain("overflow: hidden");
-    expect(toc).toContain('className="blog-toc-drawer [--bleed:100dvh]"');
+    expect(toc).toContain('className="blog-toc-drawer"');
+    expect(toc).not.toContain("[--bleed:");
     expect(drawerScrollRule).toContain("overflow-y: auto");
-    expect(drawerScrollRule).toContain("overscroll-behavior: none");
+    expect(drawerScrollRule).not.toContain("overscroll-behavior");
     expect(drawerScrollRule).toContain("padding: 0.25rem var(--blog-toc-drawer-inline)");
-    expect(css).toMatch(/html:has\(\.blog-toc-drawer\[data-open\]\),[\s\S]*?overscroll-behavior:\s*none/);
+    expect(css).not.toContain("html:has(.blog-toc-drawer[data-open])");
     expect(css).not.toContain(".blog-toc-mobile-accent");
     expect(css).not.toContain(".blog-toc-mobile-shell::after");
     expect(css).not.toContain(".blog-toc-mobile nav");
+  });
+
+  test("leaves drawer mechanics to Base UI while preserving article navigation", async () => {
+    const [css, toc] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(articleTocUrl).text()]);
+    const drawerScrollRule = css.match(/\.blog-toc-drawer-scroll\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(css).toMatch(
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?bottom:\s*max\(1\.25rem, env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\);[\s\S]*?transition:\s*bottom 0\.2s ease;/,
+    );
+    expect(toc).not.toContain("mobileOpen");
+    expect(toc).toContain("pendingHeadingIdRef");
+    expect(toc).toContain("onOpenChangeComplete");
+    expect(toc).toContain("navigateToHeading");
+    expect(toc).toContain("actionsRef={drawerActionsRef}");
+    expect(toc).toContain("drawerActionsRef.current?.close()");
+    expect(toc).not.toContain("onOpenChange={");
+    expect(toc).not.toContain("handleOpenChange(open");
+    expect(toc).not.toContain("initialFocus");
+    expect(toc).not.toContain("[--bleed:");
+    expect(drawerScrollRule).not.toContain("overscroll-behavior");
+    expect(css).not.toContain("html:has(.blog-toc-drawer[data-open])");
   });
 
   test("uses one restrained heading hierarchy and compact active marker across both tables of contents", async () => {

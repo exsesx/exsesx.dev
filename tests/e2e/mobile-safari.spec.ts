@@ -260,12 +260,6 @@ if (!("Bun" in globalThis)) {
       await expect(drawer).toBeVisible();
       await expect(drawerScroll).toBeVisible();
       await expect(drawer).toHaveCSS("overflow", "visible");
-      await expect(drawerScroll).toHaveCSS("overscroll-behavior-y", "none");
-      await expect(page.locator("html")).toHaveCSS("overscroll-behavior-y", "none");
-      const drawerBleedHeight = await drawer.evaluate(element =>
-        Number.parseFloat(getComputedStyle(element, "::after").height),
-      );
-      expect(drawerBleedHeight).toBeGreaterThanOrEqual(page.viewportSize()?.height ?? 0);
 
       const lockState = await readDocumentScrollLock(page);
       expect(lockState.overflowLocked || lockState.fixedBody).toBe(true);

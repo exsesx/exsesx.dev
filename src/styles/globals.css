@@ -2294,10 +2294,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger {
   position: fixed;
-  bottom: max(1.25rem, calc(env(safe-area-inset-bottom) + 0.5rem));
-  left: max(1.25rem, calc(env(safe-area-inset-left) + 0.5rem));
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  left: max(1.25rem, env(safe-area-inset-left, 0px));
   z-index: 80;
   width: 2.75rem;
+  transition: bottom 0.2s ease;
 }
 
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-face,
@@ -2414,7 +2415,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   min-height: 0;
   flex: 1;
   overflow-y: auto;
-  overscroll-behavior: none;
   padding: 0.25rem var(--blog-toc-drawer-inline) calc(1.25rem + env(safe-area-inset-bottom));
   scroll-padding-block: 0.75rem;
 }
@@ -2438,11 +2438,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-drawer .blog-toc-list a[aria-current="location"] {
   color: var(--foreground);
   background: transparent;
-}
-
-html:has(.blog-toc-drawer[data-open]),
-html:has(.blog-toc-drawer[data-open]) body {
-  overscroll-behavior: none;
 }
 
 .blog-prose {

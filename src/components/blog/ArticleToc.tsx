@@ -1,7 +1,8 @@
 "use client";
 
+import type { DrawerRootActions } from "@base-ui/react/drawer";
 import { ListTree, X } from "lucide-react";
-import { type MouseEvent, useRef, useState } from "react";
+import { type MouseEvent, useRef } from "react";
 import {
   Drawer,
   DrawerClose,
@@ -24,9 +25,7 @@ type ArticleTocProps = {
 
 export default function ArticleToc({ activeHeadingId, headings, locale, mode }: ArticleTocProps) {
   const beginTocNavigation = useBlogTocNavigation();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const activeLinkRef = useRef<HTMLAnchorElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const drawerActionsRef = useRef<DrawerRootActions | null>(null);
   const pendingHeadingIdRef = useRef<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const copy = BLOG_UI[locale];
@@ -105,20 +104,11 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
 
     event.preventDefault();
     pendingHeadingIdRef.current = headingId;
-    setMobileOpen(false);
-  }
-
-  function handleOpenChange(open: boolean) {
-    if (open) {
-      pendingHeadingIdRef.current = null;
-    }
-
-    setMobileOpen(open);
+    drawerActionsRef.current?.close();
   }
 
   function handleOpenChangeComplete(open: boolean) {
     if (open) {
-      activeLinkRef.current?.scrollIntoView({ block: "nearest" });
       return;
     }
 
@@ -134,11 +124,9 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
     <ol className="blog-toc-list">
       {headings.map(heading => {
         const isActive = heading.id === activeHeadingId;
-
         return (
           <li key={heading.id} data-depth={heading.depth}>
             <a
-              ref={mode === "mobile" && isActive ? activeLinkRef : undefined}
               href={`#${heading.id}`}
               aria-current={isActive ? "location" : undefined}
               onClick={mode === "mobile" ? event => handleMobileLinkClick(event, heading.id) : undefined}
@@ -154,12 +142,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
 
   if (mode === "mobile") {
     return (
-      <Drawer
-        open={mobileOpen}
-        onOpenChange={handleOpenChange}
-        onOpenChangeComplete={handleOpenChangeComplete}
-        showSwipeHandle
-      >
+      <Drawer actionsRef={drawerActionsRef} onOpenChangeComplete={handleOpenChangeComplete} showSwipeHandle>
         <DrawerTrigger
           ref={triggerRef}
           aria-label={copy.openTableOfContents}
@@ -172,17 +155,13 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
           </span>
         </DrawerTrigger>
 
-        <DrawerContent
-          className="blog-toc-drawer [--bleed:100dvh]"
-          data-testid="mobile-toc-drawer"
-          initialFocus={() => activeLinkRef.current ?? closeButtonRef.current}
-        >
+        <DrawerContent className="blog-toc-drawer" data-testid="mobile-toc-drawer">
           <DrawerHeader className="blog-toc-drawer-header">
             <div className="blog-toc-drawer-heading">
               <DrawerTitle>{copy.onThisPage}</DrawerTitle>
               <DrawerDescription className="sr-only">{copy.onThisPageDescription}</DrawerDescription>
             </div>
-            <DrawerClose ref={closeButtonRef} aria-label={copy.closeTableOfContents} className="blog-toc-drawer-close">
+            <DrawerClose aria-label={copy.closeTableOfContents} className="blog-toc-drawer-close">
               <X aria-hidden="true" size={20} strokeWidth={2.2} />
             </DrawerClose>
           </DrawerHeader>
