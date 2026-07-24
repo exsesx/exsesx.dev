@@ -108,11 +108,19 @@ describe("Blog structured data", () => {
     expect(data["@graph"][0]).toMatchObject({
       "@type": "ItemList",
       "@id": "https://exsesx.dev/blog/en#itemlist",
-      numberOfItems: 2,
+      numberOfItems: 3,
       itemListElement: [
         {
           "@type": "ListItem",
           position: 1,
+          item: {
+            "@type": "BlogPosting",
+            url: "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
+          },
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
           item: {
             "@type": "BlogPosting",
             url: "https://exsesx.dev/blog/en/codex-memories",
@@ -120,7 +128,7 @@ describe("Blog structured data", () => {
         },
         {
           "@type": "ListItem",
-          position: 2,
+          position: 3,
           item: {
             "@type": "BlogPosting",
             url: "https://exsesx.dev/blog/en/codex-agents-v2",
