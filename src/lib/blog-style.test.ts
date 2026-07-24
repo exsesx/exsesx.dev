@@ -6,6 +6,7 @@ import ReadingProgress from "../components/blog/ReadingProgress";
 const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const readingProgressUrl = new URL("../components/blog/ReadingProgress.tsx", import.meta.url);
 const focusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
+const articleTocUrl = new URL("../components/blog/ArticleToc.tsx", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 
 describe("Blog production styles", () => {
@@ -68,9 +69,14 @@ describe("Blog production styles", () => {
     expect(stepRule).toContain("clip-path: inset(50%)");
     expect(resetRule).toContain("height: 2.75rem");
     expect(resetRule).toContain("opacity 160ms var(--ease-out)");
-    expect(chipRule).toContain("min-width: 2.75rem");
-    expect(chipRule).toContain("height: 1.875rem");
-    expect(chipRule).toContain("backdrop-filter: blur(12px) saturate(1.1)");
+    expect(chipRule).toContain("min-width: 2.25rem");
+    expect(chipRule).toContain("height: 1.5rem");
+    expect(chipRule).toContain("border: 0");
+    expect(chipRule).toContain("box-shadow: none");
+    expect(chipRule).toContain("backdrop-filter: none");
+    expect(coarseRules).toMatch(
+      /\.blog-mermaid-toolbar:has\(\.blog-mermaid-zoom-step:focus-visible\)[\s\S]*?\.blog-mermaid-zoom-step\s*\{[^}]*position:\s*static[^}]*width:\s*2\.75rem/s,
+    );
     expect(coarseRules).toMatch(
       /\.blog-mermaid-toolbar\[data-zoomed="false"\] \.blog-mermaid-reset\s*\{[^}]*opacity:\s*0[^}]*pointer-events:\s*none/s,
     );
@@ -233,24 +239,58 @@ describe("Blog production styles", () => {
       /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\.blog-read-link:hover svg[\s\S]*?\.blog-back-link:hover svg/,
     );
     expect(css).toMatch(
-      /@media \(prefers-reduced-transparency: reduce\) \{[\s\S]*?\.blog-toc-mobile-trigger,[\s\S]*?\.blog-toc-drawer,[\s\S]*?backdrop-filter:\s*none/,
+      /@media \(prefers-reduced-transparency: reduce\) \{[\s\S]*?\.blog-toc-drawer,[\s\S]*?backdrop-filter:\s*none/,
     );
   });
 
-  test("keeps the mobile table of contents compact and confines overflow to the modal drawer", async () => {
+  test("keeps the adaptive mobile table of contents compact and confines overflow to its drawer", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const faceRule = css.match(/\.blog-toc-mobile-face\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerScrollRule = css.match(/\.blog-toc-drawer-scroll\s*\{([^}]*)\}/s)?.[1] ?? "";
 
-    expect(triggerRule).toContain("width: 100%");
-    expect(triggerRule).toContain("min-height: 3rem");
+    expect(triggerRule).toContain("width: fit-content");
+    expect(triggerRule).toContain("min-width: 2.75rem");
+    expect(triggerRule).toContain("height: 2.75rem");
+    expect(faceRule).toContain("height: 2.5rem");
+    expect(css).toMatch(
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(0\.5rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.25rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 0\.75rem\)\)/,
+    );
+    expect(css).toMatch(
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 48rem\) and \(max-width: 79\.999rem\)[\s\S]*?\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\][\s\S]*?bottom:\s*max\(3\.75rem, calc\(env\(safe-area-inset-bottom\) \+ 3\.5rem\)\)/,
+    );
     expect(drawerRule).toContain("max-height: 72dvh");
     expect(drawerRule).toContain("margin-inline: auto");
     expect(drawerScrollRule).toContain("overflow-y: auto");
     expect(drawerScrollRule).toContain("overscroll-behavior: contain");
     expect(css).not.toContain(".blog-toc-mobile-shell::after");
     expect(css).not.toContain(".blog-toc-mobile nav");
+  });
+
+  test("uses one restrained heading hierarchy and compact active marker across both tables of contents", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const tickRule = css.match(/\.blog-toc-tick\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const subheadingRule = css.match(/\.blog-toc-list li\[data-depth="3"\] \.blog-toc-label\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const activeRule = css.match(/\.blog-toc-list a\[aria-current="location"\]\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const activeTickRule =
+      css.match(/\.blog-toc-list a\[aria-current="location"\] \.blog-toc-tick\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const drawerHeaderRule = css.match(/\.blog-toc-drawer-header\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(desktopRule).toContain("--blog-toc-heading-size: 0.8rem");
+    expect(desktopRule).toContain("--blog-toc-subheading-size: 0.7rem");
+    expect(drawerRule).toContain("--blog-toc-heading-size: 0.84rem");
+    expect(drawerRule).toContain("--blog-toc-subheading-size: 0.76rem");
+    expect(tickRule).toContain("width: var(--toc-tick-width)");
+    expect(subheadingRule).toContain("padding-left: 0.45rem");
+    expect(activeRule).toContain("background: transparent");
+    expect(activeTickRule).toContain("background: var(--accent)");
+    expect(drawerHeaderRule).toContain("padding: 0 1rem");
   });
 
   test("updates continuous reading progress without a React render per frame", async () => {
@@ -375,27 +415,19 @@ describe("Blog production styles", () => {
     );
   });
 
-  test("keeps article tables of contents clear of the transient header", async () => {
+  test("keeps the mobile launcher independent from the transient header", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const mobileRule = css.match(/\.blog-toc-mobile-shell\s*\{([^}]*)\}/s)?.[1] ?? "";
     const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const mobileSection = css.slice(css.indexOf(".blog-toc-mobile-shell"), css.indexOf(".blog-toc-desktop"));
-    const coarseTouchStart = mobileSection.indexOf("@media (hover: none) and (pointer: coarse)");
-    const coarseTouchRules = mobileSection.slice(coarseTouchStart);
     const desktopSection = css.slice(css.indexOf(".blog-toc-desktop"), css.indexOf(".blog-toc-desktop > p"));
 
     expect(css).toContain('html[data-blog-focus-bootstrap="pending"]');
     expect(css).toContain('html[data-blog-focus-bootstrap="hidden"]');
-    expect(mobileRule).toContain("--blog-toc-visible-top: calc(env(safe-area-inset-top) + 5.875rem)");
-    expect(mobileRule).toContain("top: var(--blog-toc-visible-top)");
-    expect(mobileRule).toContain("transition: top 180ms var(--ease-weight)");
-    expect(mobileSection).toMatch(
-      /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\],[\s\S]*?\[data-blog-article="true"\]\[data-blog-focus="true"\][\s\S]*?\.blog-toc-mobile-shell\s*\{[^}]*top:\s*calc\(env\(safe-area-inset-top\) \+ 0\.75rem\)[^}]*transition:\s*top 220ms var\(--ease-out\)/s,
-    );
-    expect(coarseTouchRules).toMatch(/\.blog-toc-mobile-shell\s*\{[^}]*transition:\s*top 300ms var\(--ease-weight\)/s);
-    expect(coarseTouchRules).toMatch(
-      /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\],[\s\S]*?\.blog-toc-mobile-shell\s*\{[^}]*transition:\s*top 280ms var\(--ease-out\)/s,
-    );
+    expect(mobileRule).toContain("position: relative");
+    expect(mobileRule).toContain("min-height: 2.75rem");
+    expect(mobileRule).not.toContain("position: sticky");
+    expect(mobileRule).not.toContain("top:");
+    expect(mobileRule).not.toContain("transition:");
     expect(desktopRule).toContain("top: calc(env(safe-area-inset-top) + 5.875rem)");
     expect(desktopRule).toContain("max-height: calc(100svh - env(safe-area-inset-top) - 7.125rem)");
     expect(desktopRule).toContain("transition: top 180ms var(--ease-weight)");
@@ -403,34 +435,35 @@ describe("Blog production styles", () => {
       /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\],[\s\S]*?\[data-blog-article="true"\]\[data-blog-focus="true"\][\s\S]*?\.blog-toc-desktop\s*\{[^}]*top:\s*calc\(env\(safe-area-inset-top\) \+ 1\.25rem\)[^}]*transition:\s*top 220ms var\(--ease-out\)/s,
     );
     expect(desktopSection).toMatch(
-      /html\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] :is\(\.blog-toc-mobile-shell, \.blog-toc-desktop\),[\s\S]*?\[data-blog-header-motion="instant"\] :is\(\.blog-toc-mobile-shell, \.blog-toc-desktop\)\s*\{\s*transition:\s*none/s,
+      /html\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.blog-toc-desktop,[\s\S]*?\[data-blog-header-motion="instant"\] \.blog-toc-desktop\s*\{\s*transition:\s*none/s,
     );
     expect(desktopSection).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?:is\(\.blog-toc-mobile-shell, \.blog-toc-desktop\)\s*\{\s*transition:\s*none/s,
+      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-toc-desktop\s*\{\s*transition:\s*none/s,
     );
   });
 
-  test("gives the compact table of contents a restrained supporting frost", async () => {
-    const css = await Bun.file(globalsCssUrl).text();
+  test("uses the shared frost tier for the launcher and a calm opaque drawer", async () => {
+    const [css, toc] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(articleTocUrl).text()]);
     const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const hoverRule = css.match(/\.blog-toc-mobile-trigger:is\(:hover, :focus-visible\)\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const increasedContrastStart = css.indexOf(
-      "@media (prefers-contrast: more)",
-      css.indexOf(".blog-toc-mobile-trigger:active"),
-    );
-    const increasedContrastRules = css.slice(
-      increasedContrastStart,
-      css.indexOf(".blog-toc-current", increasedContrastStart),
-    );
+    const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
 
-    expect(triggerRule).toContain("background: color-mix(in oklab, var(--background) 72%, transparent)");
-    expect(triggerRule).toContain("inset 0 1px 0");
-    expect(triggerRule).toContain("0 10px 28px");
-    expect(triggerRule).toContain("backdrop-filter: blur(14px) saturate(1.2)");
-    expect(hoverRule).toContain("background: color-mix(in oklab, var(--background) 78%, var(--foreground) 2%)");
-    expect(increasedContrastRules).toMatch(
-      /\.blog-toc-mobile-trigger\s*\{[^}]*background:\s*color-mix\(in oklab, var\(--background\) 97%, var\(--foreground\) 3%\)[^}]*backdrop-filter:\s*none/s,
-    );
+    expect(toc).toContain('className="blog-toc-mobile-face glass-frost"');
+    expect(toc).not.toContain("liquid-glass");
+    expect(triggerRule).toContain("background: transparent");
+    expect(triggerRule).toContain("box-shadow: none");
+    expect(drawerRule).toContain("background: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%)");
+    expect(drawerRule).toContain("0 -16px 48px");
+    expect(drawerRule).not.toContain("backdrop-filter");
+  });
+
+  test("does not give Blog articles a second mobile header skin", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+
+    expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-nav-glass\s*\{/);
+    expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-nav-glass::before\s*\{/);
+    expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-nav-switcher\s*\{/);
+    expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-nav-active-pill\s*\{/);
+    expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-header-fade\s*\{[^}]*display:\s*none/s);
   });
 
   test("uses opacity-only article header changes when reduced motion is requested", async () => {

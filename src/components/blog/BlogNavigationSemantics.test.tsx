@@ -21,8 +21,10 @@ describe("Blog navigation semantics", () => {
 
     expect(markup).toContain('aria-haspopup="dialog"');
     expect(markup).toContain('aria-expanded="false"');
+    expect(markup).toContain('aria-label="Open table of contents"');
     expect(markup).toContain('data-testid="mobile-toc-trigger"');
-    expect(markup).toContain('<span class="blog-toc-mobile-kicker">On this page</span>');
+    expect(markup).toContain('class="blog-toc-mobile-face glass-frost"');
+    expect(markup).toContain('<span class="blog-toc-mobile-label">On this page</span>');
   });
 
   test("marks only the current article section as the present location", () => {
@@ -44,7 +46,7 @@ describe("Blog navigation semantics", () => {
     expect(markup).toContain('<span class="blog-toc-label">Details</span>');
   });
 
-  test("surfaces the current section in the compact mobile summary", () => {
+  test("keeps current-section context inside the mobile drawer", () => {
     const markup = renderToStaticMarkup(
       <ArticleToc
         activeHeadingId="details"
@@ -57,6 +59,7 @@ describe("Blog navigation semantics", () => {
       />,
     );
 
-    expect(markup).toContain('<span class="blog-toc-current">Details</span>');
+    expect(markup).not.toContain("blog-toc-current");
+    expect(markup).toContain('aria-label="Open table of contents"');
   });
 });

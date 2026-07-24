@@ -4,6 +4,7 @@ import {
   BLOG_HEADER_HIDE_DISTANCE,
   BLOG_HEADER_HIDE_START,
   BLOG_HEADER_REVEAL_DISTANCE,
+  BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
   BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
   createPassiveBlogHeaderState,
@@ -18,8 +19,9 @@ describe("passive blog header", () => {
     expect(BLOG_HEADER_HIDE_AFTER).toBe(120);
     expect(BLOG_HEADER_HIDE_AFTER).toBe(BLOG_HEADER_HIDE_START + BLOG_HEADER_HIDE_DISTANCE);
     expect(BLOG_HEADER_REVEAL_DISTANCE).toBe(48);
-    expect(BLOG_HEADER_TOUCH_HIDE_DISTANCE).toBe(40);
-    expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(64);
+    expect(BLOG_HEADER_TOUCH_HIDE_DISTANCE).toBe(80);
+    expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(48);
+    expect(BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND).toBe(8);
   });
 
   test("starts visible at the top and can initialize hidden inside restored article content", () => {
@@ -117,7 +119,7 @@ describe("passive blog header", () => {
     expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
   });
 
-  test("requires 64px of upward intent on coarse touch input", () => {
+  test("requires deliberate upward intent on coarse touch input", () => {
     const hidden = createPassiveBlogHeaderState(300, true);
     const almostRevealed = updatePassiveBlogHeader(hidden, {
       hasUserScrollIntent: true,
@@ -138,31 +140,50 @@ describe("passive blog header", () => {
     expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
   });
 
-  test("requires 40px of downward intent to re-hide on coarse touch input", () => {
-    const hidden = createPassiveBlogHeaderState(400, true);
-    const revealed = updatePassiveBlogHeader(hidden, {
+  test("responds to repeated coarse-touch direction reversals without a fresh gesture", () => {
+    let state = createPassiveBlogHeaderState(600, true);
+
+    for (let cycle = 0; cycle < 3; cycle += 1) {
+      state = updatePassiveBlogHeader(state, {
+        directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+        hasUserScrollIntent: true,
+        hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+        revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+        scrollY: state.lastScrollY - BLOG_HEADER_TOUCH_REVEAL_DISTANCE - BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+      });
+      expect(state).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
+
+      state = updatePassiveBlogHeader(state, {
+        directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+        hasUserScrollIntent: true,
+        hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+        revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+        scrollY: state.lastScrollY + BLOG_HEADER_TOUCH_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+      });
+      expect(state).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
+    }
+  });
+
+  test("discards the first 8px after a coarse-touch direction reversal", () => {
+    const upward = {
+      accumulatedDistance: 24,
+      direction: "up" as const,
+      hidden: false,
+      lastScrollY: 300,
+    };
+    const reversed = updatePassiveBlogHeader(upward, {
+      directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
       hasUserScrollIntent: true,
-      revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
-      scrollY: 400 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+      scrollY: 308,
     });
-    const almostHidden = updatePassiveBlogHeader(revealed, {
+    const continued = updatePassiveBlogHeader(reversed, {
+      directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
       hasUserScrollIntent: true,
-      hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
-      scrollY: 400 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1,
-    });
-    const hiddenAgain = updatePassiveBlogHeader(almostHidden, {
-      hasUserScrollIntent: true,
-      hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
-      scrollY: 400 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+      scrollY: 309,
     });
 
-    expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
-    expect(almostHidden).toMatchObject({
-      accumulatedDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1,
-      direction: "down",
-      hidden: false,
-    });
-    expect(hiddenAgain).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
+    expect(reversed).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: false });
+    expect(continued).toMatchObject({ accumulatedDistance: 1, direction: "down", hidden: false });
   });
 
   test("reveals immediately at 32px even without the full upward threshold", () => {
