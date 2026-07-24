@@ -45,10 +45,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
   });
   const hasUserScrollIntentRef = useRef(false);
   const passiveStateRef = useRef(createPassiveBlogHeaderState());
-  const touchScrollRef = useRef<{ blocksHide: boolean; phase: TouchScrollPhase }>({
-    blocksHide: false,
-    phase: "idle",
-  });
+  const touchScrollRef = useRef<{ phase: TouchScrollPhase }>({ phase: "idle" });
   const touchSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tocNavigationIdRef = useRef<number | null>(null);
   const nextTocNavigationIdRef = useRef(0);
@@ -66,7 +63,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
       touchSettleTimerRef.current = null;
     }
 
-    touchScrollRef.current = { blocksHide: false, phase: "idle" };
+    touchScrollRef.current = { phase: "idle" };
     const navigationId = nextTocNavigationIdRef.current + 1;
     nextTocNavigationIdRef.current = navigationId;
     tocNavigationIdRef.current = navigationId;
@@ -120,7 +117,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
     const revealDistance = isCoarsePointer ? BLOG_HEADER_TOUCH_REVEAL_DISTANCE : BLOG_HEADER_REVEAL_DISTANCE;
     hasUserScrollIntentRef.current = false;
     tocNavigationIdRef.current = null;
-    touchScrollRef.current = { blocksHide: false, phase: "idle" };
+    touchScrollRef.current = { phase: "idle" };
     let motion: PassiveHeaderMotion = "instant";
     let frame = 0;
 
@@ -158,13 +155,13 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
       tocNavigationIdRef.current = null;
       hasUserScrollIntentRef.current = true;
       motion = "animated";
-      touchScrollRef.current = { blocksHide: false, phase: "active" };
+      touchScrollRef.current = { phase: "active" };
       passiveStateRef.current = createPassiveBlogHeaderState(window.scrollY, passiveStateRef.current.hidden);
     }
 
     function cancelTouchScroll() {
       cancelTouchSettle();
-      touchScrollRef.current = { blocksHide: false, phase: "idle" };
+      touchScrollRef.current = { phase: "idle" };
     }
 
     function update() {
@@ -177,9 +174,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
         const scrollY = window.scrollY;
         const activeElement = document.activeElement;
         const hasHeaderFocus = activeElement instanceof Node && Boolean(headerFrame?.contains(activeElement));
-        const previousState = passiveStateRef.current;
         const nextState = updatePassiveBlogHeader(passiveStateRef.current, {
-          allowHide: !touchScrollRef.current.blocksHide,
           directionChangeDeadband: isCoarsePointer ? BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND : 0,
           hasHeaderFocus,
           hasUserScrollIntent: tocNavigationIdRef.current === null && hasUserScrollIntentRef.current,
@@ -188,10 +183,6 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
           shouldHideWithoutIntent: tocNavigationIdRef.current !== null || scrollY >= BLOG_HEADER_HIDE_AFTER,
           scrollY,
         });
-
-        if (previousState.hidden && !nextState.hidden && touchScrollRef.current.phase !== "idle") {
-          touchScrollRef.current.blocksHide = true;
-        }
 
         passiveStateRef.current = nextState;
         setPassiveVisibility(current =>

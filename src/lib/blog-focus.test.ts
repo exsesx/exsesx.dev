@@ -20,7 +20,7 @@ describe("passive blog header", () => {
     expect(BLOG_HEADER_HIDE_AFTER).toBe(BLOG_HEADER_HIDE_START + BLOG_HEADER_HIDE_DISTANCE);
     expect(BLOG_HEADER_REVEAL_DISTANCE).toBe(48);
     expect(BLOG_HEADER_TOUCH_HIDE_DISTANCE).toBe(80);
-    expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(64);
+    expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(48);
     expect(BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND).toBe(8);
   });
 
@@ -119,7 +119,7 @@ describe("passive blog header", () => {
     expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
   });
 
-  test("requires 64px of upward intent on coarse touch input", () => {
+  test("requires deliberate upward intent on coarse touch input", () => {
     const hidden = createPassiveBlogHeaderState(300, true);
     const almostRevealed = updatePassiveBlogHeader(hidden, {
       hasUserScrollIntent: true,
@@ -140,46 +140,28 @@ describe("passive blog header", () => {
     expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
   });
 
-  test("latches a coarse-touch reveal until a fresh 80px downward gesture", () => {
-    const hidden = createPassiveBlogHeaderState(400, true);
-    const revealed = updatePassiveBlogHeader(hidden, {
-      hasUserScrollIntent: true,
-      revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
-      scrollY: 400 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
-    });
-    const reversedInSameGesture = updatePassiveBlogHeader(revealed, {
-      allowHide: false,
-      hasUserScrollIntent: true,
-      hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
-      directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
-      scrollY: 400 - BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_HIDE_DISTANCE,
-    });
-    const freshGesture = createPassiveBlogHeaderState(reversedInSameGesture.lastScrollY);
-    const almostHidden = updatePassiveBlogHeader(freshGesture, {
-      hasUserScrollIntent: true,
-      hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
-      directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
-      scrollY: freshGesture.lastScrollY + BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1,
-    });
-    const hiddenAgain = updatePassiveBlogHeader(almostHidden, {
-      hasUserScrollIntent: true,
-      hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
-      directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
-      scrollY: freshGesture.lastScrollY + BLOG_HEADER_TOUCH_HIDE_DISTANCE,
-    });
+  test("responds to repeated coarse-touch direction reversals without a fresh gesture", () => {
+    let state = createPassiveBlogHeaderState(600, true);
 
-    expect(revealed).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
-    expect(reversedInSameGesture).toMatchObject({
-      accumulatedDistance: 0,
-      direction: "down",
-      hidden: false,
-    });
-    expect(almostHidden).toMatchObject({
-      accumulatedDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1,
-      direction: "down",
-      hidden: false,
-    });
-    expect(hiddenAgain).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
+    for (let cycle = 0; cycle < 3; cycle += 1) {
+      state = updatePassiveBlogHeader(state, {
+        directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+        hasUserScrollIntent: true,
+        hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+        revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+        scrollY: state.lastScrollY - BLOG_HEADER_TOUCH_REVEAL_DISTANCE - BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+      });
+      expect(state).toMatchObject({ accumulatedDistance: 0, direction: "up", hidden: false });
+
+      state = updatePassiveBlogHeader(state, {
+        directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+        hasUserScrollIntent: true,
+        hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+        revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
+        scrollY: state.lastScrollY + BLOG_HEADER_TOUCH_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+      });
+      expect(state).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
+    }
   });
 
   test("discards the first 8px after a coarse-touch direction reversal", () => {

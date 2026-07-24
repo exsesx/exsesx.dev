@@ -245,10 +245,10 @@ describe("Blog production styles", () => {
     expect(triggerRule).toContain("height: 2.75rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(1rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.75rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 0\.75rem\)\)/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(0\.5rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.25rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 0\.75rem\)\)/,
     );
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.25rem[\s\S]*?height:\s*2\.25rem/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
     );
     expect(css).toMatch(
       /@media \(min-width: 48rem\) and \(max-width: 79\.999rem\)[\s\S]*?\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\][\s\S]*?bottom:\s*max\(3\.75rem, calc\(env\(safe-area-inset-bottom\) \+ 3\.5rem\)\)/,
@@ -259,6 +259,28 @@ describe("Blog production styles", () => {
     expect(drawerScrollRule).toContain("overscroll-behavior: contain");
     expect(css).not.toContain(".blog-toc-mobile-shell::after");
     expect(css).not.toContain(".blog-toc-mobile nav");
+  });
+
+  test("uses one restrained heading hierarchy and compact active marker across both tables of contents", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const tickRule = css.match(/\.blog-toc-tick\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const subheadingRule = css.match(/\.blog-toc-list li\[data-depth="3"\] \.blog-toc-label\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const activeRule = css.match(/\.blog-toc-list a\[aria-current="location"\]\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const activeTickRule =
+      css.match(/\.blog-toc-list a\[aria-current="location"\] \.blog-toc-tick\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const drawerHeaderRule = css.match(/\.blog-toc-drawer-header\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(desktopRule).toContain("--blog-toc-heading-size: 0.8rem");
+    expect(desktopRule).toContain("--blog-toc-subheading-size: 0.7rem");
+    expect(drawerRule).toContain("--blog-toc-heading-size: 0.84rem");
+    expect(drawerRule).toContain("--blog-toc-subheading-size: 0.76rem");
+    expect(tickRule).toContain("width: var(--toc-tick-width)");
+    expect(subheadingRule).toContain("padding-left: 0.45rem");
+    expect(activeRule).toContain("background: transparent");
+    expect(activeTickRule).toContain("background: var(--accent)");
+    expect(drawerHeaderRule).toContain("padding: 0 1rem");
   });
 
   test("updates continuous reading progress without a React render per frame", async () => {

@@ -672,15 +672,19 @@ if (!("Bun" in globalThis)) {
       }
 
       if (isMobile) {
-        await scrollWithBlogIntent(page, isMobile, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
-        await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
-
-        await page.locator("body").dispatchEvent("touchend");
-        await page.evaluate(() => window.dispatchEvent(new Event("scrollend")));
-        await page.locator("body").dispatchEvent("touchstart");
-        await scrollWithBlogIntent(page, isMobile, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
-
+        await scrollWithBlogIntent(
+          page,
+          isMobile,
+          BLOG_HEADER_TOUCH_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+        );
         await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+
+        await scrollWithBlogIntent(
+          page,
+          isMobile,
+          -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
+        );
+        await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       }
 
       if (!isMobile) {

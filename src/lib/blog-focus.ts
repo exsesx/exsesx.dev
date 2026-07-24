@@ -5,7 +5,7 @@ export const BLOG_HEADER_HIDE_DISTANCE = 24;
 export const BLOG_HEADER_HIDE_AFTER = BLOG_HEADER_HIDE_START + BLOG_HEADER_HIDE_DISTANCE;
 export const BLOG_HEADER_REVEAL_DISTANCE = 48;
 export const BLOG_HEADER_TOUCH_HIDE_DISTANCE = 80;
-export const BLOG_HEADER_TOUCH_REVEAL_DISTANCE = 64;
+export const BLOG_HEADER_TOUCH_REVEAL_DISTANCE = 48;
 export const BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND = 8;
 
 export type PassiveBlogHeaderState = {
@@ -16,7 +16,6 @@ export type PassiveBlogHeaderState = {
 };
 
 type PassiveBlogHeaderScroll = {
-  allowHide?: boolean;
   directionChangeDeadband?: number;
   hasHeaderFocus?: boolean;
   hasUserScrollIntent: boolean;
@@ -38,7 +37,6 @@ export function createPassiveBlogHeaderState(scrollY = 0, hidden = false): Passi
 export function updatePassiveBlogHeader(
   state: PassiveBlogHeaderState,
   {
-    allowHide = true,
     directionChangeDeadband = 0,
     hasHeaderFocus = false,
     hasUserScrollIntent,
@@ -74,12 +72,8 @@ export function updatePassiveBlogHeader(
     ? Math.max(0, movementDistance - directionChangeDeadband)
     : movementDistance;
   const accumulatedDistance =
-    direction === "down" && !allowHide
-      ? 0
-      : state.direction === direction
-        ? state.accumulatedDistance + effectiveMovementDistance
-        : effectiveMovementDistance;
-  const shouldHide = allowHide && !state.hidden && direction === "down" && accumulatedDistance >= hideDistance;
+    state.direction === direction ? state.accumulatedDistance + effectiveMovementDistance : effectiveMovementDistance;
+  const shouldHide = !state.hidden && direction === "down" && accumulatedDistance >= hideDistance;
   const shouldReveal = state.hidden && direction === "up" && accumulatedDistance >= revealDistance;
 
   return {

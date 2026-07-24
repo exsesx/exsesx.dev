@@ -30,6 +30,13 @@ if (!("Bun" in globalThis)) {
       await expect(githubIcon).toHaveAttribute("stroke-width", "2.2");
       await expect(themeIcon).toHaveAttribute("stroke-width", "2.2");
       const articleHeaderSurface = await readHeaderSurface(page);
+      const [backSurface, githubSurface, themeSurface] = await Promise.all([
+        readHeaderActionSurface(backButton),
+        readHeaderActionSurface(githubLink),
+        readHeaderActionSurface(themeButton),
+      ]);
+      expect(githubSurface).toEqual(backSurface);
+      expect(themeSurface).toEqual(backSurface);
 
       const [navBounds, backBounds, logoLinkBounds, logoBounds, githubBounds, themeBounds] = await Promise.all([
         nav.boundingBox(),
@@ -119,15 +126,19 @@ if (!("Bun" in globalThis)) {
       expect(dockedBoundsAfterReveal?.width).toBeCloseTo(dockedBoundsBeforeReveal?.width ?? 0, 1);
       expect(dockedBoundsAfterReveal?.height).toBeCloseTo(dockedBoundsBeforeReveal?.height ?? 0, 1);
 
-      await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
-      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      for (let cycle = 0; cycle < 3; cycle += 1) {
+        await scrollWithTouchIntent(
+          page,
+          BLOG_HEADER_TOUCH_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+        );
+        await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
 
-      await page.locator("body").dispatchEvent("touchend");
-      await page.evaluate(() => window.dispatchEvent(new Event("scrollend")));
-      await page.locator("body").dispatchEvent("touchstart");
-      await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
-
-      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+        await scrollWithTouchIntent(
+          page,
+          -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
+        );
+        await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      }
     });
 
     test("Mermaid reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
@@ -272,8 +283,8 @@ if (!("Bun" in globalThis)) {
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
       await expect(triggerFace.locator(".blog-toc-mobile-label")).toBeHidden();
       const dockedFaceBounds = await triggerFace.boundingBox();
-      expect(dockedFaceBounds?.width).toBeCloseTo(36, 0);
-      expect(dockedFaceBounds?.height).toBeCloseTo(36, 0);
+      expect(dockedFaceBounds?.width).toBeCloseTo(40, 0);
+      expect(dockedFaceBounds?.height).toBeCloseTo(40, 0);
 
       // Reproduce the touch intent retained immediately before a TOC-driven
       // upward scroll. The programmatic scroll must not consume that intent
@@ -368,6 +379,18 @@ async function readHeaderSurface(page: Page) {
       boxShadow: style.boxShadow,
       fadeDisplay: fade ? getComputedStyle(fade).display : null,
       lensBackground: before.backgroundImage,
+    };
+  });
+}
+
+async function readHeaderActionSurface(control: Locator) {
+  return control.evaluate(element => {
+    const style = getComputedStyle(element);
+
+    return {
+      backgroundColor: style.backgroundColor,
+      borderColor: style.borderColor,
+      boxShadow: style.boxShadow,
     };
   });
 }
