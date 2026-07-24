@@ -327,7 +327,12 @@ if (!("Bun" in globalThis)) {
 
       // New touch input interrupts the in-flight TOC navigation. Its upward
       // movement is immediately interpreted by the normal passive header.
-      await scrollWithTouchIntent(page, -BLOG_HEADER_TOUCH_REVEAL_DISTANCE);
+      // Account for a downward animation frame that may land before the
+      // interruption and consume the direction-change deadband.
+      await scrollWithTouchIntent(
+        page,
+        -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
+      );
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
     });
 
