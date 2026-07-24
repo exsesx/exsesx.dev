@@ -120,14 +120,26 @@ describe("semantic animation styles", () => {
   test("limits the Safari chrome sample band to coarse touch WebKit", async () => {
     const css = await readGlobalsCss();
     const sampleSelector = "html[data-chrome-sample] .site-header";
+    const hiddenArticleSelector = '[data-blog-article="true"][data-blog-passive-hidden="true"] .site-header';
+    const focusArticleSelector = '[data-blog-article="true"][data-blog-focus="true"] .site-header';
     const webkitGateIndex = css.indexOf("@supports (-webkit-touch-callout: none)");
     const coarsePointerGateIndex = css.indexOf("@media (hover: none) and (pointer: coarse)", webkitGateIndex);
+    const sampleGateEnd = css.indexOf("/* The floating glass nav", coarsePointerGateIndex);
+    const sampleGate = css.slice(webkitGateIndex, sampleGateEnd);
     const sampleRuleIndex = css.indexOf(sampleSelector);
+    const hiddenArticleRuleIndex = css.indexOf(hiddenArticleSelector);
+    const focusArticleRuleIndex = css.indexOf(focusArticleSelector);
 
     expect(ruleBody(css, ".site-header")).toContain("--safari-sample-band: 0px");
     expect(webkitGateIndex).toBeGreaterThan(-1);
     expect(coarsePointerGateIndex).toBeGreaterThan(webkitGateIndex);
+    expect(sampleGateEnd).toBeGreaterThan(coarsePointerGateIndex);
+    expect(sampleGate).toContain(sampleSelector);
+    expect(sampleGate).toContain(hiddenArticleSelector);
+    expect(sampleGate).toContain(focusArticleSelector);
     expect(sampleRuleIndex).toBeGreaterThan(coarsePointerGateIndex);
+    expect(hiddenArticleRuleIndex).toBeGreaterThan(coarsePointerGateIndex);
+    expect(focusArticleRuleIndex).toBeGreaterThan(coarsePointerGateIndex);
     expect(css.match(/html\[data-chrome-sample\] \.site-header/g)).toHaveLength(1);
   });
 

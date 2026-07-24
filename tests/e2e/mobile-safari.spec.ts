@@ -259,6 +259,7 @@ if (!("Bun" in globalThis)) {
       const drawerScroll = page.getByTestId("mobile-toc-scroll");
       await expect(drawer).toBeVisible();
       await expect(drawerScroll).toBeVisible();
+      await expect(drawer).toHaveCSS("overflow", "visible");
       await expect(drawerScroll).toHaveCSS("overscroll-behavior-y", "none");
       await expect(page.locator("html")).toHaveCSS("overscroll-behavior-y", "none");
       const drawerBleedHeight = await drawer.evaluate(element =>
@@ -296,7 +297,7 @@ if (!("Bun" in globalThis)) {
       expect(dockedTriggerBounds?.x).toBeCloseTo(16, 0);
       expect(
         (page.viewportSize()?.height ?? 0) - (dockedTriggerBounds?.y ?? 0) - (dockedTriggerBounds?.height ?? 0),
-      ).toBeCloseTo(12, 0);
+      ).toBeCloseTo(8, 0);
       await expect(triggerFace).not.toHaveCSS("backdrop-filter", "none");
 
       // Reproduce the touch intent retained immediately before a TOC-driven
