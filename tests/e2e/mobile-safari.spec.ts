@@ -236,7 +236,6 @@ if (!("Bun" in globalThis)) {
       await page.goto(BLOG_ARTICLE_PATH);
 
       const root = page.locator('[data-blog-article="true"]');
-      const html = page.locator("html");
       const trigger = page.getByTestId("mobile-toc-trigger");
       const tocShell = page.locator(".blog-toc-mobile-shell");
       await expect(trigger).toBeVisible();
@@ -281,8 +280,6 @@ if (!("Bun" in globalThis)) {
       await sectionLink.click();
 
       await expect(drawer).toBeHidden();
-      await expect(html).toHaveAttribute("data-chrome-sample", "");
-      await expect(html).not.toHaveAttribute("data-chrome-sample", "", { timeout: 1500 });
       await expect(page).toHaveURL(/#how-to-enable-agents-v2$/);
 
       const target = page.locator("#how-to-enable-agents-v2");
@@ -297,10 +294,10 @@ if (!("Bun" in globalThis)) {
       expect(dockedFaceBounds?.height).toBeCloseTo(40, 0);
       const dockedTriggerBounds = await trigger.boundingBox();
       expect(dockedTriggerBounds).not.toBeNull();
-      expect(dockedTriggerBounds?.x).toBeCloseTo(16, 0);
+      expect(dockedTriggerBounds?.x).toBeCloseTo(20, 0);
       expect(
         (page.viewportSize()?.height ?? 0) - (dockedTriggerBounds?.y ?? 0) - (dockedTriggerBounds?.height ?? 0),
-      ).toBeCloseTo(8, 0);
+      ).toBeCloseTo(20, 0);
       await expect(triggerFace).not.toHaveCSS("backdrop-filter", "none");
 
       // Reproduce the touch intent retained immediately before a TOC-driven
@@ -362,6 +359,23 @@ if (!("Bun" in globalThis)) {
 
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "hidden");
       await expect(trigger).toBeHidden();
+    });
+
+    test("iPhone 12 Pro keeps the docked table of contents close to Safari controls", async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(`${BLOG_ARTICLE_PATH}#how-to-enable-agents-v2`);
+
+      const tocShell = page.locator(".blog-toc-mobile-shell");
+      const trigger = page.getByTestId("mobile-toc-trigger");
+      await waitForScrollToSettle(page);
+
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
+      await expect(trigger).toBeVisible();
+      await expect(trigger).toHaveCSS("bottom", "20px");
+
+      const bounds = await trigger.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(20, 0);
     });
   });
 }

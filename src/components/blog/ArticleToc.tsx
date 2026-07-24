@@ -122,8 +122,6 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
       return;
     }
 
-    window.dispatchEvent(new Event("exsesx:safari-chrome-sample"));
-
     const headingId = pendingHeadingIdRef.current;
     pendingHeadingIdRef.current = null;
 
