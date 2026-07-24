@@ -605,12 +605,11 @@ html[data-season="pride"] .logo-mark-pride {
 /*
   Safari 26 samples .site-header for the TOP chrome bar (proven by diagnostic) and
   reliably samples a solid background-color (not gradients) at least 11px tall —
-  10px stops being sampled (found on device 2026-06-10). It normally keeps that
-  sampled color after the element disappears (found on device 2026-06-11), so
-  the no-flash script flashes html[data-chrome-sample] around first paint and
-  theme changes. Safari can sample again after modal chrome changes, though, so
-  Blog articles also retain the band while their reading header is hidden.
-  The fixed shell does not affect layout, and other platforms remain unchanged.
+  10px stops being sampled (found on device 2026-06-10). The chrome then KEEPS
+  the sampled color after the sampled element disappears (found on device
+  2026-06-11), so the no-flash script briefly flashes html[data-chrome-sample]
+  around first paint, theme changes, and modal close. The fixed shell does not
+  affect layout, and other platforms remain unchanged.
 */
 .site-header {
   --safari-sample-band: 0px;
@@ -622,9 +621,7 @@ html[data-season="pride"] .logo-mark-pride {
 
 @supports (-webkit-touch-callout: none) {
   @media (hover: none) and (pointer: coarse) {
-    html[data-chrome-sample] .site-header,
-    [data-blog-article="true"][data-blog-passive-hidden="true"] .site-header,
-    [data-blog-article="true"][data-blog-focus="true"] .site-header {
+    html[data-chrome-sample] .site-header {
       /* env(safe-area-inset-top) underreports in this context, hence the 11px floor.
          Coarse touch WebKit places the band behind browser chrome; keeping this
          off desktop prevents it from reading as a transient progress track. */
@@ -2297,7 +2294,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger {
   position: fixed;
-  bottom: max(0.5rem, calc(env(safe-area-inset-bottom) + 0.25rem));
+  bottom: max(0.5rem, calc(env(safe-area-inset-bottom) - 1rem));
   left: max(1rem, calc(env(safe-area-inset-left) + 1rem));
   z-index: 80;
   width: 2.75rem;

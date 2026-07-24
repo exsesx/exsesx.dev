@@ -236,6 +236,7 @@ if (!("Bun" in globalThis)) {
       await page.goto(BLOG_ARTICLE_PATH);
 
       const root = page.locator('[data-blog-article="true"]');
+      const html = page.locator("html");
       const trigger = page.getByTestId("mobile-toc-trigger");
       const tocShell = page.locator(".blog-toc-mobile-shell");
       await expect(trigger).toBeVisible();
@@ -280,6 +281,8 @@ if (!("Bun" in globalThis)) {
       await sectionLink.click();
 
       await expect(drawer).toBeHidden();
+      await expect(html).toHaveAttribute("data-chrome-sample", "");
+      await expect(html).not.toHaveAttribute("data-chrome-sample", "", { timeout: 1500 });
       await expect(page).toHaveURL(/#how-to-enable-agents-v2$/);
 
       const target = page.locator("#how-to-enable-agents-v2");

@@ -135,11 +135,11 @@ describe("semantic animation styles", () => {
     expect(coarsePointerGateIndex).toBeGreaterThan(webkitGateIndex);
     expect(sampleGateEnd).toBeGreaterThan(coarsePointerGateIndex);
     expect(sampleGate).toContain(sampleSelector);
-    expect(sampleGate).toContain(hiddenArticleSelector);
-    expect(sampleGate).toContain(focusArticleSelector);
+    expect(sampleGate).not.toContain(hiddenArticleSelector);
+    expect(sampleGate).not.toContain(focusArticleSelector);
     expect(sampleRuleIndex).toBeGreaterThan(coarsePointerGateIndex);
-    expect(hiddenArticleRuleIndex).toBeGreaterThan(coarsePointerGateIndex);
-    expect(focusArticleRuleIndex).toBeGreaterThan(coarsePointerGateIndex);
+    expect(hiddenArticleRuleIndex).toBe(-1);
+    expect(focusArticleRuleIndex).toBe(-1);
     expect(css.match(/html\[data-chrome-sample\] \.site-header/g)).toHaveLength(1);
   });
 
