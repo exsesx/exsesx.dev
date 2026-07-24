@@ -25,9 +25,16 @@ jobs:
         run: bun run typecheck
       - name: Tests
         run: bun run test
+      - name: Next.js build cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-nextjs-${{ hashFiles('bun.lock') }}-${{ hashFiles('package.json', 'src/**', 'public/**', 'next.config.mts', 'postcss.config.js', 'tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-nextjs-${{ hashFiles('bun.lock') }}-
       - name: Build
         run: bun run build
       - name: Install browser
-        run: bunx playwright install --with-deps chromium webkit
+        run: bunx playwright install --with-deps --only-shell chromium webkit
       - name: Browser tests
         run: bun run test:e2e
