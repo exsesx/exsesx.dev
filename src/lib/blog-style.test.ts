@@ -158,6 +158,16 @@ describe("Blog production styles", () => {
     expect(css).toMatch(/\.blog-figure img\s*\{[^}]*var\(--blog-rich-block-border\)/s);
   });
 
+  test("lets opt-in article figures keep their intrinsic transparent corners", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+    const intrinsicFigureRule = css.match(/\.blog-figure--intrinsic img\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(intrinsicFigureRule).toContain("border: 0");
+    expect(intrinsicFigureRule).toContain("border-radius: 0");
+    expect(intrinsicFigureRule).toContain("background: transparent");
+    expect(intrinsicFigureRule).not.toContain("box-shadow");
+  });
+
   test("vertically aligns inline source badges without a font-specific offset", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 

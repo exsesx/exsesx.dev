@@ -271,11 +271,11 @@ if (!("Bun" in globalThis)) {
       await expectPageToFitViewport(page);
 
       await Promise.all([
-        page.waitForURL("**/blog/en/codex-memories"),
+        page.waitForURL("**/blog/en/umbra-light-dark-wallpapers"),
         page.getByRole("link", { name: "Read article" }).click(),
       ]);
       await expect(
-        page.getByRole("heading", { level: 1, name: "How I use Codex Memories between coding sessions" }),
+        page.getByRole("heading", { level: 1, name: "Two wallpapers brought me back to Light Mode" }),
       ).toBeVisible();
       await expectPageToFitViewport(page);
     });

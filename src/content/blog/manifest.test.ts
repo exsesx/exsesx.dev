@@ -6,6 +6,15 @@ describe("Blog manifest", () => {
     expect(getBlogPosts("en", { includeDrafts: false })).toEqual([
       expect.objectContaining({
         locale: "en",
+        slug: "umbra-light-dark-wallpapers",
+        status: "published",
+        title: "Two wallpapers brought me back to Light Mode",
+        seoTitle: "Umbra: separate wallpapers for macOS Light and Dark Mode",
+        description:
+          "Why I chose Umbra over a Raycast workaround to keep one wallpaper for Light Mode and another for Dark Mode.",
+      }),
+      expect.objectContaining({
+        locale: "en",
         slug: "codex-memories",
         status: "published",
         title: "How I use Codex Memories between coding sessions",
@@ -23,6 +32,15 @@ describe("Blog manifest", () => {
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "uk",
+        slug: "umbra-light-dark-wallpapers",
+        status: "published",
+        title: "Дві шпалери, які повернули мене до світлої теми",
+        seoTitle: "Umbra: окремі шпалери для світлої й темної теми macOS",
+        description:
+          "Чому я вибрав Umbra замість обхідної схеми з Raycast, щоб мати окремі шпалери для світлої й темної теми.",
+      }),
       expect.objectContaining({
         locale: "uk",
         slug: "codex-memories",
@@ -46,8 +64,8 @@ describe("Blog manifest", () => {
   test("derives index reading details and the article table of contents from MDX", async () => {
     const [article] = await getBlogPostSummaries("en", { includeDrafts: false });
 
-    expect(article.readingMinutes).toBeGreaterThanOrEqual(5);
-    expect(article.headings).toContainEqual({ depth: 2, id: "the-short-version", text: "The short version" });
+    expect(article.readingMinutes).toBeGreaterThanOrEqual(3);
+    expect(article.headings).toContainEqual({ depth: 2, id: "the-pair-i-wanted", text: "The pair I wanted" });
     expect(article.headings.at(-1)).toEqual({ depth: 2, id: "sources", text: "Sources" });
   });
 
@@ -66,6 +84,17 @@ describe("Blog manifest", () => {
   });
 
   test("looks up both editions and exposes their published translation alternates", () => {
+    expect(getBlogPost("en", "umbra-light-dark-wallpapers", { includeDrafts: false })).toMatchObject({
+      locale: "en",
+      slug: "umbra-light-dark-wallpapers",
+      status: "published",
+    });
+    expect(getBlogPost("uk", "umbra-light-dark-wallpapers", { includeDrafts: false })).toMatchObject({
+      locale: "uk",
+      slug: "umbra-light-dark-wallpapers",
+      status: "published",
+    });
+    expect(getPublishedBlogLocales("umbra-light-dark-wallpapers")).toEqual(["en", "uk"]);
     expect(getBlogPost("en", "codex-memories", { includeDrafts: false })).toMatchObject({
       locale: "en",
       slug: "codex-memories",
@@ -92,6 +121,8 @@ describe("Blog manifest", () => {
 
   test("ships deterministic social images for the Blog index and every published edition", async () => {
     const articles = [
+      getBlogPost("en", "umbra-light-dark-wallpapers", { includeDrafts: false }),
+      getBlogPost("uk", "umbra-light-dark-wallpapers", { includeDrafts: false }),
       getBlogPost("en", "codex-memories", { includeDrafts: false }),
       getBlogPost("uk", "codex-memories", { includeDrafts: false }),
       getBlogPost("en", "codex-agents-v2", { includeDrafts: false }),

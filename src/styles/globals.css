@@ -3230,6 +3230,12 @@ code[data-theme] span {
   background: var(--muted);
 }
 
+.blog-figure--intrinsic img {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
 .blog-figure figcaption {
   margin-top: 0.65rem;
   color: var(--muted-foreground);
