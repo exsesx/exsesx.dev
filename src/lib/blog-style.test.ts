@@ -244,7 +244,7 @@ describe("Blog production styles", () => {
   });
 
   test("keeps the adaptive mobile table of contents compact and confines overflow to its drawer", async () => {
-    const css = await Bun.file(globalsCssUrl).text();
+    const [css, toc] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(articleTocUrl).text()]);
     const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
     const faceRule = css.match(/\.blog-toc-mobile-face\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -255,7 +255,7 @@ describe("Blog production styles", () => {
     expect(triggerRule).toContain("height: 2.75rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(1rem, calc\(env\(safe-area-inset-bottom\) \+ 1rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 1rem\)\)/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(0\.75rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.5rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 1rem\)\)/,
     );
     expect(css).toMatch(
       /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
@@ -265,6 +265,7 @@ describe("Blog production styles", () => {
     );
     expect(drawerRule).toContain("max-height: 72dvh");
     expect(drawerRule).toContain("margin-inline: auto");
+    expect(toc).toContain('className="blog-toc-drawer [--bleed:100dvh]"');
     expect(drawerScrollRule).toContain("overflow-y: auto");
     expect(drawerScrollRule).toContain("overscroll-behavior: none");
     expect(drawerScrollRule).toContain("padding: 0.25rem var(--blog-toc-drawer-inline)");
@@ -454,7 +455,11 @@ describe("Blog production styles", () => {
     expect(toc).not.toContain("liquid-glass");
     expect(triggerRule).toContain("background: transparent");
     expect(triggerRule).toContain("box-shadow: none");
-    expect(drawerRule).toContain("background: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%)");
+    expect(drawerRule).toContain(
+      "--blog-toc-drawer-surface: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%)",
+    );
+    expect(drawerRule).toContain("--drawer-bleed-background: var(--blog-toc-drawer-surface)");
+    expect(drawerRule).toContain("background: var(--blog-toc-drawer-surface)");
     expect(drawerRule).toContain("0 -16px 48px");
     expect(drawerRule).not.toContain("backdrop-filter");
   });

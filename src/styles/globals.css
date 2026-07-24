@@ -2296,7 +2296,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger {
   position: fixed;
-  bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem));
+  bottom: max(0.75rem, calc(env(safe-area-inset-bottom) + 0.5rem));
   left: max(1rem, calc(env(safe-area-inset-left) + 1rem));
   z-index: 80;
   width: 2.75rem;
@@ -2351,7 +2351,8 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-drawer {
-  --drawer-bleed-background: var(--background);
+  --blog-toc-drawer-surface: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
+  --drawer-bleed-background: var(--blog-toc-drawer-surface);
   --blog-toc-drawer-inline: 1.25rem;
   --blog-toc-heading-size: 0.84rem;
   --blog-toc-heading-weight: 760;
@@ -2366,7 +2367,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
   border-bottom: 0;
   border-radius: 1.5rem 1.5rem 0 0;
-  background: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
+  background: var(--blog-toc-drawer-surface);
   box-shadow: 0 -16px 48px color-mix(in oklab, var(--foreground) 12%, transparent);
   color: var(--foreground);
 }
