@@ -30,7 +30,6 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
   const pendingHeadingIdRef = useRef<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const copy = BLOG_UI[locale];
-  const activeHeading = headings.find(heading => heading.id === activeHeadingId);
 
   function navigateToHeading(headingId: string) {
     const heading = document.getElementById(headingId);
@@ -62,7 +61,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
         return;
       }
 
-      const triggerBottom = trigger?.getBoundingClientRect().bottom ?? 60;
+      const triggerBottom = mode === "mobile" ? 60 : (trigger?.getBoundingClientRect().bottom ?? 60);
       const chromeRemainsHidden = Boolean(
         trigger?.closest('[data-blog-passive-hidden="true"], [data-blog-focus="true"]'),
       );
@@ -161,10 +160,17 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
         onOpenChangeComplete={handleOpenChangeComplete}
         showSwipeHandle
       >
-        <DrawerTrigger ref={triggerRef} className="blog-toc-mobile-trigger" data-testid="mobile-toc-trigger">
-          <span className="blog-toc-mobile-kicker">{copy.onThisPage}</span>
-          {activeHeading ? <span className="blog-toc-current">{activeHeading.text}</span> : null}
-          <ListTree aria-hidden="true" className="blog-toc-mobile-icon" size={18} strokeWidth={2.2} />
+        <DrawerTrigger
+          ref={triggerRef}
+          aria-label={copy.openTableOfContents}
+          className="blog-toc-mobile-trigger"
+          data-testid="mobile-toc-trigger"
+        >
+          <span aria-hidden="true" className="blog-toc-mobile-face glass-frost">
+            <span className="blog-toc-mobile-accent" />
+            <ListTree className="blog-toc-mobile-icon" size={18} strokeWidth={2.2} />
+            <span className="blog-toc-mobile-label">{copy.onThisPage}</span>
+          </span>
         </DrawerTrigger>
 
         <DrawerContent
