@@ -8,6 +8,7 @@ const readingProgressUrl = new URL("../components/blog/ReadingProgress.tsx", imp
 const focusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
 const articleTocUrl = new URL("../components/blog/ArticleToc.tsx", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
+const noFlashScriptUrl = new URL("./no-flash-script.ts", import.meta.url);
 
 describe("Blog production styles", () => {
   test("uses a Shiki theme selector that survives the Next CSS minifier", async () => {
@@ -244,7 +245,11 @@ describe("Blog production styles", () => {
   });
 
   test("keeps the adaptive mobile table of contents compact and confines overflow to its drawer", async () => {
-    const [css, toc] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(articleTocUrl).text()]);
+    const [css, toc, noFlashScript] = await Promise.all([
+      Bun.file(globalsCssUrl).text(),
+      Bun.file(articleTocUrl).text(),
+      Bun.file(noFlashScriptUrl).text(),
+    ]);
     const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
     const faceRule = css.match(/\.blog-toc-mobile-face\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -255,7 +260,7 @@ describe("Blog production styles", () => {
     expect(triggerRule).toContain("height: 2.75rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(0\.5rem, calc\(env\(safe-area-inset-bottom\) \+ 0\.25rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 1rem\)\)/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(0\.5rem, calc\(env\(safe-area-inset-bottom\) - 1rem\)\)[\s\S]*?left:\s*max\(1rem, calc\(env\(safe-area-inset-left\) \+ 1rem\)\)/,
     );
     expect(css).toMatch(
       /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
@@ -271,6 +276,8 @@ describe("Blog production styles", () => {
     expect(drawerScrollRule).toContain("overscroll-behavior: none");
     expect(drawerScrollRule).toContain("padding: 0.25rem var(--blog-toc-drawer-inline)");
     expect(css).toMatch(/html:has\(\.blog-toc-drawer\[data-open\]\),[\s\S]*?overscroll-behavior:\s*none/);
+    expect(toc).toContain('window.dispatchEvent(new Event("exsesx:safari-chrome-sample"))');
+    expect(noFlashScript).toContain('window.addEventListener("exsesx:safari-chrome-sample", flashChromeSampleBand)');
     expect(css).not.toContain(".blog-toc-mobile-accent");
     expect(css).not.toContain(".blog-toc-mobile-shell::after");
     expect(css).not.toContain(".blog-toc-mobile nav");
