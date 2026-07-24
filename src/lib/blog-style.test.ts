@@ -68,9 +68,14 @@ describe("Blog production styles", () => {
     expect(stepRule).toContain("clip-path: inset(50%)");
     expect(resetRule).toContain("height: 2.75rem");
     expect(resetRule).toContain("opacity 160ms var(--ease-out)");
-    expect(chipRule).toContain("min-width: 2.75rem");
-    expect(chipRule).toContain("height: 1.875rem");
-    expect(chipRule).toContain("backdrop-filter: blur(12px) saturate(1.1)");
+    expect(chipRule).toContain("min-width: 2.25rem");
+    expect(chipRule).toContain("height: 1.5rem");
+    expect(chipRule).toContain("border: 0");
+    expect(chipRule).toContain("box-shadow: none");
+    expect(chipRule).toContain("backdrop-filter: none");
+    expect(coarseRules).toMatch(
+      /\.blog-mermaid-toolbar:has\(\.blog-mermaid-zoom-step:focus-visible\)[\s\S]*?\.blog-mermaid-zoom-step\s*\{[^}]*position:\s*static[^}]*width:\s*2\.75rem/s,
+    );
     expect(coarseRules).toMatch(
       /\.blog-mermaid-toolbar\[data-zoomed="false"\] \.blog-mermaid-reset\s*\{[^}]*opacity:\s*0[^}]*pointer-events:\s*none/s,
     );
@@ -400,7 +405,7 @@ describe("Blog production styles", () => {
     );
   });
 
-  test("gives the compact table of contents a restrained supporting frost", async () => {
+  test("gives the compact table of contents a restrained matte surface", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const triggerRule = css.match(/\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s)?.[1] ?? "";
     const hoverRule = css.match(/\.blog-toc-mobile-trigger:is\(:hover, :focus-visible\)\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -413,11 +418,10 @@ describe("Blog production styles", () => {
       css.indexOf(".blog-toc-current", increasedContrastStart),
     );
 
-    expect(triggerRule).toContain("background: color-mix(in oklab, var(--background) 72%, transparent)");
-    expect(triggerRule).toContain("inset 0 1px 0");
-    expect(triggerRule).toContain("0 10px 28px");
-    expect(triggerRule).toContain("backdrop-filter: blur(14px) saturate(1.2)");
-    expect(hoverRule).toContain("background: color-mix(in oklab, var(--background) 78%, var(--foreground) 2%)");
+    expect(triggerRule).toContain("background: color-mix(in oklab, var(--background) 96%, var(--foreground) 4%)");
+    expect(triggerRule).toContain("box-shadow: none");
+    expect(triggerRule).toContain("backdrop-filter: none");
+    expect(hoverRule).toContain("background: color-mix(in oklab, var(--background) 94%, var(--foreground) 6%)");
     expect(increasedContrastRules).toMatch(
       /\.blog-toc-mobile-trigger\s*\{[^}]*background:\s*color-mix\(in oklab, var\(--background\) 97%, var\(--foreground\) 3%\)[^}]*backdrop-filter:\s*none/s,
     );

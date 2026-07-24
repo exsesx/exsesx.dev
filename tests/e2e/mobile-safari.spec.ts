@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
   BLOG_HEADER_HIDE_START,
+  BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
   BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
 } from "../../src/lib/blog-focus";
@@ -15,35 +16,51 @@ if (!("Bun" in globalThis)) {
 
       const nav = page.locator(".site-nav-glass");
       const backButton = nav.getByRole("button", { name: "Back" });
-      const logoTile = nav.getByRole("link", { name: "Oleh Vanin home" }).locator(".logo-tile");
-      const githubIcon = nav.getByRole("link", { name: "GitHub" }).locator("svg");
-      const themeIcon = nav
-        .getByRole("button", { name: /^Theme:/ })
-        .locator("svg")
-        .first();
+      const logoLink = nav.getByRole("link", { name: "Oleh Vanin home" });
+      const logoTile = logoLink.locator(".logo-tile");
+      const githubLink = nav.getByRole("link", { name: "GitHub" });
+      const githubIcon = githubLink.locator("svg");
+      const themeButton = nav.getByRole("button", { name: /^Theme:/ });
+      const themeIcon = themeButton.locator("svg").first();
 
       await expect(nav).toBeVisible();
       await expect(backButton).toBeVisible();
       await expect(logoTile).toBeVisible();
       await expect(githubIcon).toHaveAttribute("stroke-width", "2.2");
       await expect(themeIcon).toHaveAttribute("stroke-width", "2.2");
+      await expect(nav).toHaveCSS("backdrop-filter", "none");
+      await expect(nav).toHaveCSS("border-radius", "20px");
+      await expect(nav).toHaveCSS("box-shadow", "none");
+      await expect(page.locator(".site-header-fade")).toHaveCSS("display", "none");
+      expect(await nav.evaluate(element => getComputedStyle(element, "::before").backgroundImage)).toBe("none");
 
-      const [navBounds, backBounds, logoBounds] = await Promise.all([
+      const [navBounds, backBounds, logoLinkBounds, logoBounds, githubBounds, themeBounds] = await Promise.all([
         nav.boundingBox(),
         backButton.boundingBox(),
+        logoLink.boundingBox(),
         logoTile.boundingBox(),
+        githubLink.boundingBox(),
+        themeButton.boundingBox(),
       ]);
       const viewport = page.viewportSize();
 
       expect(navBounds).not.toBeNull();
       expect(backBounds).not.toBeNull();
+      expect(logoLinkBounds).not.toBeNull();
       expect(logoBounds).not.toBeNull();
+      expect(githubBounds).not.toBeNull();
+      expect(themeBounds).not.toBeNull();
       expect(viewport).not.toBeNull();
-      expect(backBounds?.width).toBeCloseTo(40, 1);
-      expect(backBounds?.height).toBeCloseTo(40, 1);
+      expect(backBounds?.width).toBeCloseTo(44, 1);
+      expect(backBounds?.height).toBeCloseTo(44, 1);
+      expect(logoLinkBounds?.height).toBeGreaterThanOrEqual(44);
       expect(logoBounds?.width).toBeCloseTo(40, 1);
       expect(logoBounds?.height).toBeCloseTo(40, 1);
-      expect((logoBounds?.x ?? 0) - ((backBounds?.x ?? 0) + (backBounds?.width ?? 0))).toBeGreaterThanOrEqual(6);
+      expect(githubBounds?.width).toBeCloseTo(44, 1);
+      expect(githubBounds?.height).toBeCloseTo(44, 1);
+      expect(themeBounds?.width).toBeCloseTo(44, 1);
+      expect(themeBounds?.height).toBeCloseTo(44, 1);
+      expect((logoBounds?.x ?? 0) - ((backBounds?.x ?? 0) + (backBounds?.width ?? 0))).toBeGreaterThanOrEqual(2);
       expect(navBounds?.x).toBeGreaterThanOrEqual(0);
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
     });
@@ -77,14 +94,27 @@ if (!("Bun" in globalThis)) {
       await scrollWithTouchIntent(page, 640);
       await expect(toc).toBeVisible();
 
-      await scrollWithTouchIntent(page, -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE - 1));
+      await scrollWithTouchIntent(
+        page,
+        -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND - 1),
+      );
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
 
       await scrollWithTouchIntent(page, -1);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeVisible();
 
-      await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(16, 0);
+      await expect.poll(async () => readTocHeaderGap(toc)).toBeCloseTo(8, 0);
+
+      await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+
+      await page.locator("body").dispatchEvent("touchend");
+      await page.evaluate(() => window.dispatchEvent(new Event("scrollend")));
+      await page.locator("body").dispatchEvent("touchstart");
+      await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
+
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
     });
 
     test("Mermaid reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
@@ -140,12 +170,17 @@ if (!("Bun" in globalThis)) {
       await expect(resetZoom).toHaveCSS("opacity", "1");
       await expect(resetZoom).toHaveCSS("pointer-events", "auto");
       await expect(resetZoom.locator(".blog-mermaid-reset-chip")).toHaveText(/\d+%/);
+      await expect(resetZoom).toHaveCSS("border-left-width", "0px");
+      await expect(resetZoom.locator(".blog-mermaid-reset-chip")).toHaveCSS("border-style", "none");
+      await expect(resetZoom.locator(".blog-mermaid-reset-chip")).toHaveCSS("box-shadow", "none");
+      await expect(resetZoom.locator(".blog-mermaid-reset-chip")).toHaveCSS("backdrop-filter", "none");
       const [resetBounds, chipBounds] = await Promise.all([
         resetZoom.boundingBox(),
         resetZoom.locator(".blog-mermaid-reset-chip").boundingBox(),
       ]);
       expect(resetBounds?.height).toBeCloseTo(44, 0);
-      expect(chipBounds?.height).toBeCloseTo(30, 0);
+      expect(chipBounds?.height).toBeCloseTo(24, 0);
+      expect(chipBounds?.width).toBeLessThanOrEqual(40);
 
       const viewBoxBeforeTouchDrag = await svg.getAttribute("viewBox");
       await dragMermaidWithTouchPointer(viewport);
@@ -179,6 +214,10 @@ if (!("Bun" in globalThis)) {
       const root = page.locator('[data-blog-article="true"]');
       const trigger = page.getByTestId("mobile-toc-trigger");
       await expect(trigger).toBeVisible();
+      await expect(trigger).toHaveAccessibleName("On this page");
+      await expect(trigger).toHaveCSS("backdrop-filter", "none");
+      await expect(trigger).toHaveCSS("border-radius", "14px");
+      await expect(trigger).toHaveCSS("box-shadow", "none");
       const tocShell = page.locator(".blog-toc-mobile-shell");
       expect(await tocShell.evaluate(element => getComputedStyle(element, "::after").content)).toBe("none");
 

@@ -161,9 +161,15 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
         onOpenChangeComplete={handleOpenChangeComplete}
         showSwipeHandle
       >
-        <DrawerTrigger ref={triggerRef} className="blog-toc-mobile-trigger" data-testid="mobile-toc-trigger">
-          <span className="blog-toc-mobile-kicker">{copy.onThisPage}</span>
-          {activeHeading ? <span className="blog-toc-current">{activeHeading.text}</span> : null}
+        <DrawerTrigger
+          ref={triggerRef}
+          aria-label={activeHeading ? `${copy.onThisPage}: ${activeHeading.text}` : copy.onThisPage}
+          className="blog-toc-mobile-trigger"
+          data-testid="mobile-toc-trigger"
+        >
+          <span className={activeHeading ? "blog-toc-current" : "blog-toc-mobile-kicker"}>
+            {activeHeading?.text ?? copy.onThisPage}
+          </span>
           <ListTree aria-hidden="true" className="blog-toc-mobile-icon" size={18} strokeWidth={2.2} />
         </DrawerTrigger>
 
