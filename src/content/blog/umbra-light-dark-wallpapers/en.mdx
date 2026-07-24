@@ -1,0 +1,121 @@
+import raycastSettings from "../../../../public/images/blog/umbra-light-dark-wallpapers/raycast-wallpaper-settings.webp";
+import umbraPair from "../../../../public/images/blog/umbra-light-dark-wallpapers/umbra-light-dark-pair.webp";
+
+I have used Dark Mode for so long that switching my Mac back to Light Mode felt
+like a bigger change than it should have. The apps looked fine, but the desktop
+kept bothering me.
+
+The wallpaper does more for the feel of macOS than I usually notice. I wanted one image
+for Light Mode and another for Dark Mode, with the desktop following the system
+automatically. I did not need the image to change with the sun or on a schedule.
+I only wanted a pair.
+
+## The pair I wanted
+
+Raycast has a lovely
+<SourceLink href="https://www.raycast.com/wallpapers">wallpaper collection</SourceLink>.
+I kept coming back to two images from it:
+<SourceLink href="https://misc-assets.raycast.com/wallpapers/mono_light_distortion_1.heic">`mono_light_distortion_1`</SourceLink>
+and
+<SourceLink href="https://misc-assets.raycast.com/wallpapers/mono_dark_distortion_1.heic">`mono_dark_distortion_1`</SourceLink>.
+They belong together, and each has the right contrast for its appearance. The
+light one does not look washed out. The dark one does not turn the desktop into
+a bright rectangle behind every window.
+
+<Figure
+  src={umbraPair}
+  alt="Umbra showing the light and dark Raycast distortion wallpapers assigned side by side"
+  caption="My Light and Dark wallpaper pair in Umbra."
+  credit={<SourceLink href="https://www.raycast.com/wallpapers">Wallpapers by Raycast</SourceLink>}
+  frame="intrinsic"
+  priority
+/>
+
+## The options that almost worked
+
+<SourceLink href="https://equinoxmac.com/">Equinox</SourceLink> can make an
+appearance-based macOS wallpaper from two images. It is free, open source, and
+also handles solar and time-based wallpapers. That makes sense if I want to
+create and export a proper dynamic wallpaper. For this job, it felt like too
+much machinery.
+
+I was already using the
+<SourceLink href="https://www.raycast.com/koinzhang/raycast-wallpaper">Raycast Wallpaper extension</SourceLink>.
+It has exactly two commands: `Set Raycast Wallpaper` and
+`Auto Switch Raycast Wallpaper`. Both expose a `Respect System Appearance`
+setting, so saying that the extension ignores Light and Dark Mode would be
+wrong.
+
+The difference is what that setting does. The extension classifies Raycast's
+catalogue as light or dark. It can show only wallpapers for the current
+appearance, or narrow the pool before choosing one at random. The current
+<SourceLink href="https://github.com/raycast/extensions/blob/main/extensions/raycast-wallpaper/package.json">manifest</SourceLink>
+and
+<SourceLink href="https://github.com/raycast/extensions/blob/main/extensions/raycast-wallpaper/src/auto-switch-raycast-wallpaper.ts">auto-switch implementation</SourceLink>
+do not provide a persistent slot for one chosen Light wallpaper and another for
+Dark Mode.
+
+<Figure
+  src={raycastSettings}
+  alt="Raycast v2 settings for the Set Raycast Wallpaper and Auto Switch Raycast Wallpaper commands"
+  caption={
+<>
+<SourceLink href="https://www.raycast.com/new">Raycast v2 settings</SourceLink>, which I already
+use while the new version is still in development. The extension filters or rotates wallpapers
+rather than keeping a fixed pair.
+</>
+}
+  credit="My Raycast settings"
+  frame="intrinsic"
+/>
+
+I could probably build a workaround around those commands. Then I would be
+maintaining a workaround for a preference that should take two clicks.
+
+## Umbra is just right
+
+<SourceLink href="https://replay.software/umbra">Umbra</SourceLink> matches the
+way I was already thinking about the problem: one place for the Light wallpaper
+and one for the Dark wallpaper. I drop in the two images, and Umbra keeps them in
+sync with the macOS appearance. It can also toggle Dark Mode from the menu bar.
+
+That direct setup is why I kept it. Umbra has more options, including
+per-display wallpapers and better handling for HEIC files, but I do not have to
+turn my simple preference into a wallpaper project. Replay offers it as
+"pay what you like," which also makes it easy to try.
+
+## A small Replay aside
+
+Umbra was not my first app from Replay. I also use
+<SourceLink href="https://replay.software/echo">Echo</SourceLink>, its SSH and
+Mosh client for iPhone and iPad. I reach for it less now that I can
+<SourceLink href="https://openai.com/index/work-with-codex-from-anywhere/">follow Codex work from the ChatGPT mobile app</SourceLink>
+and Claude has
+<SourceLink href="https://www.anthropic.com/news/finance-agents">Dispatch</SourceLink>,
+but Echo is still a neat project. It takes a job that is easy to get wrong on a
+phone and makes it feel native.
+
+Umbra feels similarly focused. It does not ask me to change how I manage
+appearance in macOS. It handles the missing wallpaper pair and stays out of the
+way.
+
+## Why this small thing matters to me
+
+I spend hours looking at macOS, so this minor tweak is always in view. The
+desktop sits behind every window. It affects the contrast around the edges and
+is often the first thing I see when I switch tasks.
+
+That is why I like small utilities that let me make the OS mine without adding a
+new ritual. My Mac now has those two Raycast images in Umbra. Light Mode finally
+feels like a complete theme instead of a temporary setting I will switch off in
+ten minutes.
+
+## Sources
+
+- <SourceLink href="https://replay.software/umbra">Replay: Umbra</SourceLink>
+- <SourceLink href="https://replay.software/echo">Replay: Echo</SourceLink>
+- <SourceLink href="https://equinoxmac.com/">Equinox</SourceLink>
+- <SourceLink href="https://www.raycast.com/wallpapers">Raycast Wallpapers</SourceLink>
+- <SourceLink href="https://github.com/raycast/extensions/tree/main/extensions/raycast-wallpaper">Raycast Wallpaper extension source</SourceLink>
+- <SourceLink href="https://openai.com/index/work-with-codex-from-anywhere/">OpenAI: Work with Codex from anywhere</SourceLink>
+- <SourceLink href="https://www.anthropic.com/news/finance-agents">Anthropic: Dispatch in Claude Cowork</SourceLink>

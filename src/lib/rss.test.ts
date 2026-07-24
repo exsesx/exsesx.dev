@@ -8,7 +8,7 @@ describe("Blog RSS", () => {
     const xml = buildBlogRss("en", [
       {
         ...posts[0],
-        description: "Memories: local & inspectable <without another server>.",
+        description: "Wallpapers: light & dark <without a workaround>.",
       },
     ]);
 
@@ -17,9 +17,9 @@ describe("Blog RSS", () => {
       '<atom:link href="https://exsesx.dev/blog/en/rss.xml" rel="self" type="application/rss+xml"/>',
     );
     expect(xml).toContain("<language>en</language>");
-    expect(xml).toContain("https://exsesx.dev/blog/en/codex-memories");
-    expect(xml).toContain("Memories: local &amp; inspectable &lt;without another server&gt;.");
-    expect(xml).toContain("<category>Codex</category>");
+    expect(xml).toContain("https://exsesx.dev/blog/en/umbra-light-dark-wallpapers");
+    expect(xml).toContain("Wallpapers: light &amp; dark &lt;without a workaround&gt;.");
+    expect(xml).toContain("<category>macOS</category>");
     expect(xml).not.toContain("<SourceLink");
   });
 });
