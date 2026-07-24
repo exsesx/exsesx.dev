@@ -167,7 +167,6 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
           data-testid="mobile-toc-trigger"
         >
           <span aria-hidden="true" className="blog-toc-mobile-face glass-frost">
-            <span className="blog-toc-mobile-accent" />
             <ListTree className="blog-toc-mobile-icon" size={18} strokeWidth={2.2} />
             <span className="blog-toc-mobile-label">{copy.onThisPage}</span>
           </span>
