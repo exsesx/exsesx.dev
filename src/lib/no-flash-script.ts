@@ -18,8 +18,8 @@ function noFlashScript(themeColorDark: string, themeColorLight: string) {
 
   // Safari 26 keeps a sampled chrome color after the sampled element disappears
   // (found on device 2026-06-11), so flash .site-header around first paint,
-  // theme changes, and modal close, then drop it. CSS consumes this signal only
-  // on coarse touch WebKit so the sampling band never becomes persistent UI.
+  // theme changes, and bfcache restores, then drop it. CSS consumes this signal
+  // only on coarse touch WebKit so the sampling band never becomes persistent UI.
   // See html[data-chrome-sample] in globals.css.
   function flashChromeSampleBand() {
     window.clearTimeout(sampleBandTimer);
@@ -133,7 +133,6 @@ function noFlashScript(themeColorDark: string, themeColorLight: string) {
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
-  window.addEventListener("exsesx:safari-chrome-sample", flashChromeSampleBand);
   // The head-run flash above can expire before a slow first paint, and bfcache
   // restores reset the chrome — pageshow covers both.
   window.addEventListener("pageshow", flashChromeSampleBand);

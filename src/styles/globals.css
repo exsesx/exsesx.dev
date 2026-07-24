@@ -608,8 +608,8 @@ html[data-season="pride"] .logo-mark-pride {
   10px stops being sampled (found on device 2026-06-10). The chrome then KEEPS
   the sampled color after the sampled element disappears (found on device
   2026-06-11), so the no-flash script briefly flashes html[data-chrome-sample]
-  around first paint, theme changes, and modal close. The fixed shell does not
-  affect layout, and other platforms remain unchanged.
+  around first paint, theme changes, and bfcache restores. The fixed shell does
+  not affect layout, and other platforms remain unchanged.
 */
 .site-header {
   --safari-sample-band: 0px;
@@ -2294,17 +2294,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger {
   position: fixed;
-  bottom: max(0.5rem, calc(env(safe-area-inset-bottom) - 1rem));
-  left: max(1rem, calc(env(safe-area-inset-left) + 1rem));
+  bottom: max(1.25rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+  left: max(1.25rem, calc(env(safe-area-inset-left) + 0.5rem));
   z-index: 80;
   width: 2.75rem;
-}
-
-@media (min-width: 48rem) and (max-width: 79.999rem) {
-  .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
-  .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger {
-    bottom: max(3.75rem, calc(env(safe-area-inset-bottom) + 3.5rem));
-  }
 }
 
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-face,
