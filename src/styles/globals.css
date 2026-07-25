@@ -2015,7 +2015,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   position: fixed;
   inset: 0 0 auto;
   z-index: 70;
-  height: 2px;
+  height: var(--blog-reading-progress-corner, 2px);
   pointer-events: none;
 }
 
@@ -2032,6 +2032,32 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   transform: scaleX(0);
   transform-origin: left center;
   will-change: transform;
+}
+
+.blog-reading-progress-device {
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.blog-reading-progress-device path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  will-change: stroke-dashoffset;
+}
+
+.blog-reading-progress[data-device-frame="iphone"] span {
+  display: none;
+}
+
+.blog-reading-progress[data-device-frame="iphone"] .blog-reading-progress-device {
+  display: block;
 }
 
 .blog-article-meta {
@@ -3421,7 +3447,8 @@ code[data-theme] span {
     transition: none;
   }
 
-  .blog-reading-progress span {
+  .blog-reading-progress span,
+  .blog-reading-progress-device path {
     transition: none;
     will-change: auto;
   }

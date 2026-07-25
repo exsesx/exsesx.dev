@@ -58,6 +58,70 @@ if (!("Bun" in globalThis)) {
       expect(documentBounds.height).toBeLessThanOrEqual(viewport?.height ?? 0);
     });
 
+    test("reading progress follows the recognized iPhone display corners in landscape", async ({ page }) => {
+      await page.setViewportSize({ width: 874, height: 402 });
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const article = page.locator("#article-content");
+      const progress = page.locator(".blog-reading-progress");
+      const fallbackBar = progress.locator("span");
+      const deviceProgress = progress.locator(".blog-reading-progress-device");
+      const devicePath = deviceProgress.locator("path");
+
+      await article.evaluate(element => {
+        window.scrollTo({
+          top: window.scrollY + element.getBoundingClientRect().top + 480,
+        });
+      });
+
+      await expect(progress).toBeVisible();
+      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+      await expect(progress).toHaveAttribute("data-screen-class", "402x874");
+      await expect(fallbackBar).toBeHidden();
+      await expect(deviceProgress).toBeVisible();
+      await expect(devicePath).toHaveAttribute("pathLength", "1");
+
+      const geometry = await devicePath.evaluate(path => {
+        const svgPath = path as SVGPathElement;
+        const bounds = svgPath.getBBox();
+
+        return {
+          bounds: {
+            height: bounds.height,
+            width: bounds.width,
+            x: bounds.x,
+            y: bounds.y,
+          },
+          dashOffset: Number.parseFloat(getComputedStyle(path).strokeDashoffset),
+          length: svgPath.getTotalLength(),
+          rootHeight: svgPath.ownerSVGElement?.parentElement?.getBoundingClientRect().height ?? 0,
+        };
+      });
+
+      expect(geometry.bounds.x).toBeCloseTo(0, 1);
+      expect(geometry.bounds.y).toBeCloseTo(0, 1);
+      expect(geometry.bounds.width).toBeCloseTo(874, 1);
+      expect(geometry.bounds.height).toBeCloseTo(101.37, 1);
+      expect(geometry.rootHeight).toBeCloseTo(101.37, 1);
+      expect(geometry.length).toBeGreaterThan(874);
+      expect(geometry.dashOffset).toBeGreaterThan(0);
+      expect(geometry.dashOffset).toBeLessThan(1);
+
+      const dashOffsetBeforeScroll = geometry.dashOffset;
+      await page.evaluate(() => {
+        window.scrollBy({ top: 640 });
+      });
+      await expect
+        .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
+        .toBeLessThan(dashOffsetBeforeScroll);
+
+      await page.setViewportSize({ width: 402, height: 874 });
+      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
+      await expect(progress).toHaveCSS("height", "2px");
+      await expect(fallbackBar).toBeVisible();
+      await expect(deviceProgress).toBeHidden();
+    });
+
     test("header actions fit without crowding Back and the logo", async ({ page }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
