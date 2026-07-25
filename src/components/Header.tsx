@@ -75,91 +75,94 @@ export default function Header() {
   }
 
   return (
-    <header lang="en" className="site-header fixed inset-x-0 top-0 z-50" data-safari-chrome-sample>
-      <div aria-hidden="true" className="site-header-fade" style={{ viewTransitionName: "persistent-nav-fade" }} />
-      <div
-        ref={navFrameRef}
-        aria-hidden={isReadingHeaderHidden ? "true" : undefined}
-        className="site-header-nav-frame"
-        inert={isReadingHeaderHidden ? true : undefined}
-        onFocusCapture={revealHeader}
-        style={{ viewTransitionName: "persistent-nav" }}
-      >
-        <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full px-2 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between sm:gap-3 sm:px-3">
-          <div
-            className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1.5 sm:gap-x-0" : "gap-x-0"}`}
-          >
-            <NavBackButton active={isBackButtonActive} />
-            <Link
-              href="/"
-              {...suppressEntryMotionProps}
-              className="site-nav-brand-link flex min-w-0 items-center rounded-full px-0 py-1 text-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent sm:px-2"
-              aria-label="Oleh Vanin home"
-              onClick={event => handleNavLinkClick(event, "/")}
-              onPointerDown={event => {
-                if (shouldPreviewNavChange(event)) {
-                  setVisualActiveNavHref("/");
-                }
-              }}
+    <>
+      <div aria-hidden="true" className="safari-chrome-sample" data-safari-chrome-sample />
+      <header lang="en" className="site-header fixed inset-x-0 top-0 z-50">
+        <div aria-hidden="true" className="site-header-fade" style={{ viewTransitionName: "persistent-nav-fade" }} />
+        <div
+          ref={navFrameRef}
+          aria-hidden={isReadingHeaderHidden ? "true" : undefined}
+          className="site-header-nav-frame"
+          inert={isReadingHeaderHidden ? true : undefined}
+          onFocusCapture={revealHeader}
+          style={{ viewTransitionName: "persistent-nav" }}
+        >
+          <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full px-2 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between sm:gap-3 sm:px-3">
+            <div
+              className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1.5 sm:gap-x-0" : "gap-x-0"}`}
             >
-              <span className="logo-tile grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15">
-                <LogoMark className="size-8" />
-              </span>
-              <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
-                <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
-                <span className="mt-1 text-[11px] font-bold tracking-normal text-muted-foreground">exsesx.dev</span>
-              </span>
-            </Link>
-          </div>
+              <NavBackButton active={isBackButtonActive} />
+              <Link
+                href="/"
+                {...suppressEntryMotionProps}
+                className="site-nav-brand-link flex min-w-0 items-center rounded-full px-0 py-1 text-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent sm:px-2"
+                aria-label="Oleh Vanin home"
+                onClick={event => handleNavLinkClick(event, "/")}
+                onPointerDown={event => {
+                  if (shouldPreviewNavChange(event)) {
+                    setVisualActiveNavHref("/");
+                  }
+                }}
+              >
+                <span className="logo-tile grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15">
+                  <LogoMark className="size-8" />
+                </span>
+                <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
+                  <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
+                  <span className="mt-1 text-[11px] font-bold tracking-normal text-muted-foreground">exsesx.dev</span>
+                </span>
+              </Link>
+            </div>
 
-          <div
-            className="site-nav-switcher relative grid grid-cols-[2.5rem_2.5rem_2.5rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-3"
-            {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
-          >
-            <span
-              aria-hidden="true"
-              className="site-nav-active-pill absolute inset-y-1 left-1 z-0 rounded-full"
+            <div
+              className="site-nav-switcher relative grid grid-cols-[2.5rem_2.5rem_2.5rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-3"
               {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
-            />
-            {navigation.map(item => {
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href as Route}
-                  {...suppressEntryMotionProps}
-                  aria-label={item.label}
-                  aria-current={activeNavHref === item.href ? "page" : undefined}
-                  className={navActionBaseClassName}
-                  onClick={event => handleNavLinkClick(event, item.href)}
-                  onPointerDown={event => {
-                    if (shouldPreviewNavChange(event)) {
-                      setVisualActiveNavHref(item.href);
-                    }
-                  }}
-                >
-                  <Icon data-icon="inline-start" strokeWidth={2.3} />
-                  <span className="hidden sm:inline">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="site-nav-actions flex items-center justify-end gap-1 sm:gap-2">
-            <a
-              href={SITE_PROFILE.links.github}
-              className={cn(buttonVariants({ variant: "glass", size: "icon" }), "md:w-auto md:gap-2 md:px-4 md:pl-3")}
             >
-              <GithubIcon data-icon="inline-start" strokeWidth={2.2} />
-              <span className="sr-only md:not-sr-only">GitHub</span>
-            </a>
-            <span className="site-nav-theme inline-flex">
-              <ThemeSwitcher />
-            </span>
-          </div>
-        </nav>
-      </div>
-    </header>
+              <span
+                aria-hidden="true"
+                className="site-nav-active-pill absolute inset-y-1 left-1 z-0 rounded-full"
+                {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
+              />
+              {navigation.map(item => {
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href as Route}
+                    {...suppressEntryMotionProps}
+                    aria-label={item.label}
+                    aria-current={activeNavHref === item.href ? "page" : undefined}
+                    className={navActionBaseClassName}
+                    onClick={event => handleNavLinkClick(event, item.href)}
+                    onPointerDown={event => {
+                      if (shouldPreviewNavChange(event)) {
+                        setVisualActiveNavHref(item.href);
+                      }
+                    }}
+                  >
+                    <Icon data-icon="inline-start" strokeWidth={2.3} />
+                    <span className="hidden sm:inline">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="site-nav-actions flex items-center justify-end gap-1 sm:gap-2">
+              <a
+                href={SITE_PROFILE.links.github}
+                className={cn(buttonVariants({ variant: "glass", size: "icon" }), "md:w-auto md:gap-2 md:px-4 md:pl-3")}
+              >
+                <GithubIcon data-icon="inline-start" strokeWidth={2.2} />
+                <span className="sr-only md:not-sr-only">GitHub</span>
+              </a>
+              <span className="site-nav-theme inline-flex">
+                <ThemeSwitcher />
+              </span>
+            </div>
+          </nav>
+        </div>
+      </header>
+    </>
   );
 }

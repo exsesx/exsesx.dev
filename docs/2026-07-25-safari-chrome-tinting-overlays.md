@@ -811,3 +811,62 @@ The mobile WebKit regression test asserts that the sample hold spans portal moun
 that the sampled background tracks the selected theme, and that the band returns to its dormant
 state after the tail. The full mobile Safari contract suite also covers the short landscape
 viewport and the 20px launcher offset.
+
+---
+
+# Second implementation follow-up (2026-07-25): crop the candidate, not the sample
+
+The lifecycle-held pass fixed the drawer-close tint failure, but Simulator review exposed its
+design cost: the whole 11px qualifying box was painted inside the page while the drawer was open
+and throughout the close tail. That reads as a solid bar over the article, even though it does not
+take layout space. The earlier implementation and its 20px TOC offset are superseded by this
+follow-up.
+
+## Decision
+
+Safari's two relevant constants suggest a narrower compromise:
+
+- `thinBorderWidth = 10` means the candidate's border box must remain at least 11px tall;
+- `sampleRectThickness = 2` means only the two-pixel slice touching the viewport edge needs to
+  contain the sample color.
+
+The sampler is now a dedicated fixed element instead of the header shell. Its border box remains
+11px tall, but `top: -9px` shifts nine pixels above the viewport so at most two pixels intersect the
+visible page. The real navigation stays at `top: 0` and is no longer moved or resized for sampling.
+
+The candidate remains mounted on coarse-touch WebKit. That removes the timer, drawer event,
+reference counting, and guessed resize/orientation lifecycle list. Theme changes still update
+`--safari-chrome-color`; every fixed-container recompute can find the same qualifying element.
+
+Simulator probing found that changing only the candidate's background color does not invalidate
+Safari's cached fixed edge. Theme changes therefore apply a one-painted-frame geometry pulse from
+11px at `top: -9px` to 12px at `top: -10px`. Both states expose exactly two pixels, but the
+one-pixel border-box change forces WebKit to resample the new color. `pageshow` uses the same
+invisible pulse for bfcache restores.
+
+This is still a reverse-engineered WebKit workaround. The key on-device question is whether a
+partially offscreen 11px fixed box continues to qualify while covering the full two-pixel sample
+rectangle. If a real device rejects it, the honest fallback is to remove the sampler and accept
+Safari's native transparent chrome rather than restore the visible 11px band.
+
+An 11px candidate at `top: -11px` was tested in the iOS 26.5 Simulator. It was completely
+invisible, but Safari retained the previous dark tint after switching the page to light, including
+after opening the drawer forced a fixed-container recompute. Merely touching the viewport edge is
+not enough; the candidate must cover the two-pixel sample rectangle. `top: -9px` is therefore the
+maximum concealment supported by the observed algorithm.
+
+## TOC placement
+
+The docked launcher now uses `bottom: 0.5rem` (8px). The previous 1.25rem value was technically
+applied, but the resulting 20px CSS gap still read as roughly 32–40px against Safari's floating
+toolbar in the Simulator screenshot. Eight pixels makes the move visible while preserving a clear
+separation from the browser control.
+
+## Regression contract
+
+- the CSS candidate remains 11px tall on coarse-touch WebKit but begins at `top: -9px`;
+- its refresh state becomes 12px tall at `top: -10px`, preserving the same two-pixel intersection;
+- its visible intersection with the page is at most two pixels throughout drawer and theme
+  lifecycles;
+- the docked TOC launcher resolves to an 8px viewport offset;
+- portrait and short-landscape drawer coverage remains unchanged.

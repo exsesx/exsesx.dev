@@ -278,30 +278,25 @@ if (!("Bun" in globalThis)) {
       expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth);
     });
 
-    test("keeps the Safari chrome sample alive across theme and drawer recomputes", async ({ page }) => {
+    test("keeps the Safari chrome sample unobtrusive across theme and drawer recomputes", async ({ page }) => {
       await page.addInitScript(() => {
         localStorage.setItem("exsesx:color-scheme", JSON.stringify("light"));
       });
       await page.goto(BLOG_ARTICLE_PATH);
 
       const root = page.locator("html");
-      const sample = page.locator("header[data-safari-chrome-sample]");
+      const sample = page.locator("[data-safari-chrome-sample]");
       const trigger = page.getByTestId("mobile-toc-trigger");
       const drawer = page.getByTestId("mobile-toc-drawer");
       const drawerPortal = page.locator('[data-slot="drawer-portal"]');
 
-      await root.evaluate(element => {
-        delete (element as HTMLElement).dataset.chromeSample;
-      });
-
+      await expectSafariChromeSampleToQualify(sample);
       await trigger.click();
       await expect(drawer).toBeVisible();
-      await expect(root).toHaveAttribute("data-chrome-sample", "");
       await expectSafariChromeSampleToQualify(sample);
 
       await drawer.getByRole("button", { name: "Close table of contents" }).click();
       await expect(drawerPortal).toHaveCount(0);
-      await expect(root).toHaveAttribute("data-chrome-sample", "");
       await expectSafariChromeSampleToQualify(sample);
 
       const lightSampleColor = await sample.evaluate(element => getComputedStyle(element).backgroundColor);
@@ -315,6 +310,7 @@ if (!("Bun" in globalThis)) {
       await expectSafariChromeSampleToQualify(sample);
 
       await page.waitForTimeout(1_100);
+      await expectSafariChromeSampleToQualify(sample);
       await expect(root).not.toHaveAttribute("data-chrome-sample");
     });
 
@@ -377,7 +373,7 @@ if (!("Bun" in globalThis)) {
       expect(dockedTriggerBounds?.x).toBeCloseTo(20, 0);
       expect(
         (page.viewportSize()?.height ?? 0) - (dockedTriggerBounds?.y ?? 0) - (dockedTriggerBounds?.height ?? 0),
-      ).toBeCloseTo(20, 0);
+      ).toBeCloseTo(8, 0);
       await expect(triggerFace).not.toHaveCSS("backdrop-filter", "none");
 
       // Reproduce the touch intent retained immediately before a TOC-driven
@@ -456,11 +452,11 @@ if (!("Bun" in globalThis)) {
 
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
       await expect(trigger).toBeVisible();
-      await expect(trigger).toHaveCSS("bottom", "20px");
+      await expect(trigger).toHaveCSS("bottom", "8px");
 
       const bounds = await trigger.boundingBox();
       expect(bounds).not.toBeNull();
-      expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(20, 0);
+      expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(8, 0);
     });
   });
 }
@@ -475,6 +471,9 @@ async function expectSafariChromeSampleToQualify(sample: Locator) {
       height: Number.parseFloat(sampleStyle.height),
       opacity: sampleStyle.opacity,
       position: sampleStyle.position,
+      visibleHeight:
+        Math.max(0, Math.min(window.innerHeight, element.getBoundingClientRect().bottom)) -
+        Math.max(0, element.getBoundingClientRect().top),
       rootBackgroundColor: rootStyle.backgroundColor,
       supportsCoarseTouchWebKit:
         CSS.supports("-webkit-touch-callout", "none") && matchMedia("(hover: none) and (pointer: coarse)").matches,
@@ -485,6 +484,7 @@ async function expectSafariChromeSampleToQualify(sample: Locator) {
 
   if (surface.supportsCoarseTouchWebKit) {
     expect(surface.height).toBeGreaterThanOrEqual(11);
+    expect(surface.visibleHeight).toBeLessThanOrEqual(2);
   }
   expect(surface.position).toBe("fixed");
   expect(surface.opacity).toBe("1");

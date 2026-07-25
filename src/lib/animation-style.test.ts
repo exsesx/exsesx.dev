@@ -117,20 +117,21 @@ describe("semantic animation styles", () => {
     expect(css).not.toContain("transition-duration: 380ms");
   });
 
-  test("limits the Safari chrome sample band to coarse touch WebKit", async () => {
+  test("limits the Safari chrome sample edge to coarse touch WebKit without exposing the 11px candidate", async () => {
     const css = await readGlobalsCss();
-    const sampleSelector = "html[data-chrome-sample] .site-header";
+    const sampleSelector = ".safari-chrome-sample";
     const hiddenArticleSelector = '[data-blog-article="true"][data-blog-passive-hidden="true"] .site-header';
     const focusArticleSelector = '[data-blog-article="true"][data-blog-focus="true"] .site-header';
     const webkitGateIndex = css.indexOf("@supports (-webkit-touch-callout: none)");
     const coarsePointerGateIndex = css.indexOf("@media (hover: none) and (pointer: coarse)", webkitGateIndex);
     const sampleGateEnd = css.indexOf("/* The floating glass nav", coarsePointerGateIndex);
     const sampleGate = css.slice(webkitGateIndex, sampleGateEnd);
-    const sampleRuleIndex = css.indexOf(sampleSelector);
+    const sampleRuleIndex = css.indexOf(sampleSelector, coarsePointerGateIndex);
     const hiddenArticleRuleIndex = css.indexOf(hiddenArticleSelector);
     const focusArticleRuleIndex = css.indexOf(focusArticleSelector);
 
-    expect(ruleBody(css, ".site-header")).toContain("--safari-sample-band: 0px");
+    expect(ruleBody(css, sampleSelector)).toContain("top: -9px");
+    expect(ruleBody(css, sampleSelector)).toContain("height: 0");
     expect(webkitGateIndex).toBeGreaterThan(-1);
     expect(coarsePointerGateIndex).toBeGreaterThan(webkitGateIndex);
     expect(sampleGateEnd).toBeGreaterThan(coarsePointerGateIndex);
@@ -140,7 +141,12 @@ describe("semantic animation styles", () => {
     expect(sampleRuleIndex).toBeGreaterThan(coarsePointerGateIndex);
     expect(hiddenArticleRuleIndex).toBe(-1);
     expect(focusArticleRuleIndex).toBe(-1);
-    expect(css.match(/html\[data-chrome-sample\] \.site-header/g)).toHaveLength(1);
+    expect(sampleGate).toMatch(/\.safari-chrome-sample\s*\{[\s\S]*?height:\s*11px/);
+    expect(sampleGate).toMatch(
+      /html\[data-chrome-sample-refresh\] \.safari-chrome-sample\s*\{[\s\S]*?top:\s*-10px;[\s\S]*?height:\s*12px/,
+    );
+    expect(css.match(/\.safari-chrome-sample\s*\{/g)).toHaveLength(3);
+    expect(css).not.toContain("html[data-chrome-sample]");
   });
 
   test("keeps the docked mobile TOC close to Safari controls", async () => {
@@ -151,7 +157,7 @@ describe("semantic animation styles", () => {
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger`,
     );
 
-    expect(dockedLauncher).toContain("bottom: 1.25rem");
+    expect(dockedLauncher).toContain("bottom: 0.5rem");
     expect(dockedLauncher).not.toContain("env(safe-area-inset-bottom");
     expect(dockedLauncher).toContain("transition: bottom 0.2s ease");
   });

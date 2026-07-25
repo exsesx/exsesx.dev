@@ -603,29 +603,39 @@ html[data-season="pride"] .logo-mark-pride {
 }
 
 /*
-  Safari 26 samples .site-header for the TOP chrome bar (proven by diagnostic) and
-  reliably samples a solid background-color (not gradients) at least 11px tall —
-  10px stops being sampled (found on device 2026-06-10). The chrome then KEEPS
-  the sampled color after the sampled element disappears (found on device
-  2026-06-11), so the no-flash script briefly flashes html[data-chrome-sample]
-  around first paint, theme changes, and bfcache restores. The fixed shell does
-  not affect layout, and other platforms remain unchanged.
+  Safari 26 requires a fixed, solid candidate taller than its 10px thin-border
+  cutoff, but samples only the 2px slice at the viewport edge. Keep an 11px
+  candidate shifted 9px above the viewport: WebKit can sample the full edge
+  slice while at most 2px intersects the visible page. Keeping it mounted avoids
+  drawer- and viewport-lifecycle resampling choreography.
 */
-.site-header {
-  --safari-sample-band: 0px;
-  height: var(--safari-sample-band);
-  isolation: isolate;
+.safari-chrome-sample {
+  position: fixed;
+  top: -9px;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  height: 0;
+  pointer-events: none;
   background-color: var(--safari-chrome-color);
+  transition: none;
+}
+
+.site-header {
+  height: 0;
+  isolation: isolate;
   transition: none;
 }
 
 @supports (-webkit-touch-callout: none) {
   @media (hover: none) and (pointer: coarse) {
-    html[data-chrome-sample] .site-header {
-      /* env(safe-area-inset-top) underreports in this context, hence the 11px floor.
-         Coarse touch WebKit places the band behind browser chrome; keeping this
-         off desktop prevents it from reading as a transient progress track. */
-      --safari-sample-band: max(env(safe-area-inset-top), 11px);
+    .safari-chrome-sample {
+      height: 11px;
+    }
+
+    html[data-chrome-sample-refresh] .safari-chrome-sample {
+      top: -10px;
+      height: 12px;
     }
   }
 }
@@ -2335,7 +2345,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger {
   position: fixed;
-  bottom: 1.25rem;
+  bottom: 0.5rem;
   left: max(1.25rem, env(safe-area-inset-left, 0px));
   z-index: 80;
   width: 2.75rem;
