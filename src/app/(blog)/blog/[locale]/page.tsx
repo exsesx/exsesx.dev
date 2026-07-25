@@ -47,7 +47,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
       <main
         id="main-content"
         tabIndex={-1}
-        className="blog-index mx-auto w-full max-w-6xl px-4 pb-20 pt-28 sm:px-6 lg:pt-32"
+        className="blog-index page-safe-inline mx-auto w-full max-w-6xl pb-20 pt-28 lg:pt-32"
       >
         <header className="motion-rise grid gap-8 pb-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>

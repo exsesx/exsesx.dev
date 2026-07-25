@@ -42,7 +42,7 @@ describe("mobile navigation styles", () => {
 
     expect(css).not.toMatch(/@media \((?:min|max)-width: (?:639|640)px\)/);
     expect(css.match(/@variant max-sm/g)).toHaveLength(5);
-    expect(css.match(/@variant sm/g)).toHaveLength(2);
+    expect(css.match(/@variant sm/g)).toHaveLength(3);
   });
 
   test("keeps the active nav pill positioned when reduced motion removes animation", async () => {

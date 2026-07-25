@@ -24,7 +24,7 @@ export default function Projects() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static site data.
         dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
       />
-      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-7xl px-4 pb-16 pt-28 sm:px-6 lg:pt-32">
+      <main id="main-content" tabIndex={-1} className="page-safe-inline mx-auto w-full max-w-7xl pb-16 pt-28 lg:pt-32">
         <section className="grid gap-5 lg:grid-cols-[minmax(0,0.78fr)_minmax(18rem,0.32fr)] lg:items-end">
           <div className="motion-rise">
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Featured projects</p>

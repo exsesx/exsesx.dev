@@ -2066,6 +2066,18 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   border-radius: 0.15rem;
 }
 
+.page-safe-inline {
+  padding-left: calc(1rem + env(safe-area-inset-left));
+  padding-right: calc(1rem + env(safe-area-inset-right));
+}
+
+@variant sm {
+  .page-safe-inline {
+    padding-left: calc(1.5rem + env(safe-area-inset-left));
+    padding-right: calc(1.5rem + env(safe-area-inset-right));
+  }
+}
+
 .blog-article-grid {
   display: grid;
   max-width: 69rem;

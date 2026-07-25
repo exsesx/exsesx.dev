@@ -65,7 +65,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
       <main
         id="main-content"
         tabIndex={-1}
-        className="blog-article mx-auto w-full max-w-6xl px-4 pb-20 pt-28 sm:px-6 lg:pt-32"
+        className="blog-article page-safe-inline mx-auto w-full max-w-6xl pb-20 pt-28 lg:pt-32"
       >
         <header className="mx-auto max-w-4xl pb-9">
           <div className="flex flex-wrap items-center justify-between gap-4">
