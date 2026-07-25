@@ -68,16 +68,22 @@ if (!("Bun" in globalThis)) {
       const deviceProgress = progress.locator(".blog-reading-progress-device");
       const devicePath = deviceProgress.locator("path");
 
-      await article.evaluate(element => {
-        window.scrollTo({
-          top: window.scrollY + element.getBoundingClientRect().top + 480,
-        });
-      });
-
-      await expect(progress).toBeVisible();
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
       await expect(progress).toHaveAttribute("data-device-orientation", "landscape");
       await expect(progress).toHaveAttribute("data-screen-class", "402x874");
+      await expect(devicePath).toHaveAttribute("d", /^M 0 201 /);
+
+      await article.evaluate(element => {
+        const root = document.documentElement;
+        const previousScrollBehavior = root.style.scrollBehavior;
+
+        root.style.scrollBehavior = "auto";
+        window.scrollTo(0, window.scrollY + element.getBoundingClientRect().top + 480);
+        root.style.scrollBehavior = previousScrollBehavior;
+      });
+
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+      await expect(progress).toBeVisible();
       await expect(fallbackBar).toBeHidden();
       await expect(deviceProgress).toBeVisible();
       await expect(devicePath).toHaveAttribute("pathLength", "1");
