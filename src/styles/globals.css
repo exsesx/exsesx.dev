@@ -763,24 +763,16 @@ html[data-season="pride"] .logo-mark-pride {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  [data-blog-article="true"] .site-header-nav-frame {
-    will-change: opacity, transform;
-    transform: translate3d(0, var(--blog-header-touch-offset, 0%), 0) scale(1);
-    transition:
-      opacity 240ms var(--ease-out),
-      transform 280ms var(--ease-weight),
-      visibility 0s linear;
-  }
-
-  [data-blog-article="true"] .site-header-nav-frame[data-blog-touch-tracking="true"] {
+  [data-blog-article="true"] .site-header-nav-frame[data-blog-header-spring="true"] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
     transition: none;
   }
 
   [data-blog-article="true"] .site-header-fade {
-    will-change: opacity;
-    transition:
-      opacity 240ms var(--ease-out),
-      visibility 0s linear;
+    visibility: visible;
+    transition: opacity 120ms var(--ease-out);
   }
 
   :is(
@@ -789,11 +781,16 @@ html[data-season="pride"] .logo-mark-pride {
       [data-blog-article="true"][data-blog-passive-hidden="true"],
       [data-blog-article="true"][data-blog-focus="true"]
     )
-    .site-header-nav-frame {
-    transition:
-      opacity 220ms var(--ease-out),
-      transform 280ms var(--ease-out),
-      visibility 0s linear 280ms;
+    .site-header-nav-frame[data-blog-header-spring="true"] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: none;
+  }
+
+  [data-blog-article="true"][data-blog-passive-hidden="true"]
+    .site-header-nav-frame[data-blog-header-spring="true"][data-blog-header-spring-settled] {
+    visibility: hidden;
   }
 
   :is(
@@ -803,9 +800,8 @@ html[data-season="pride"] .logo-mark-pride {
       [data-blog-article="true"][data-blog-focus="true"]
     )
     .site-header-fade {
-    transition:
-      opacity 220ms var(--ease-out),
-      visibility 0s linear 220ms;
+    visibility: visible;
+    transition: opacity 120ms var(--ease-out);
   }
 }
 

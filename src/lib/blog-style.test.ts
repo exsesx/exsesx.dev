@@ -426,20 +426,17 @@ describe("Blog production styles", () => {
     expect(visibleFadeRule).not.toContain("transform");
     expect(hiddenFadeRule).not.toContain("transform");
     expect(coarseTouchRules).toMatch(
-      /\[data-blog-article="true"\] \.site-header-nav-frame\s*\{[^}]*will-change:\s*opacity, transform[^}]*transform:\s*translate3d\(0, var\(--blog-header-touch-offset, 0%\), 0\) scale\(1\)[^}]*opacity 240ms var\(--ease-out\)[^}]*transform 280ms var\(--ease-weight\)/s,
+      /\[data-blog-article="true"\] \.site-header-nav-frame\[data-blog-header-spring="true"\]\s*\{[^}]*opacity:\s*1[^}]*visibility:\s*visible[^}]*transform:\s*none[^}]*transition:\s*none/s,
     );
     expect(coarseTouchRules).toMatch(
-      /\.site-header-nav-frame\[data-blog-touch-tracking="true"\]\s*\{[^}]*transition:\s*none/s,
+      /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\]\s*\.site-header-nav-frame\[data-blog-header-spring="true"\]\[data-blog-header-spring-settled\]\s*\{[^}]*visibility:\s*hidden/s,
     );
     expect(coarseTouchRules).toMatch(
-      /\[data-blog-article="true"\] \.site-header-fade\s*\{[^}]*will-change:\s*opacity[^}]*opacity 240ms var\(--ease-out\)/s,
+      /\[data-blog-article="true"\] \.site-header-fade\s*\{[^}]*visibility:\s*visible[^}]*transition:\s*opacity 120ms var\(--ease-out\)/s,
     );
-    expect(coarseTouchRules).toMatch(
-      /\.site-header-nav-frame\s*\{[^}]*opacity 220ms var\(--ease-out\)[^}]*transform 280ms var\(--ease-out\)[^}]*visibility 0s linear 280ms/s,
-    );
-    expect(coarseTouchRules).toMatch(
-      /\.site-header-fade\s*\{[^}]*opacity 220ms var\(--ease-out\)[^}]*visibility 0s linear 220ms/s,
-    );
+    expect(coarseTouchRules).not.toContain("--blog-header-touch-offset");
+    expect(coarseTouchRules).not.toContain("data-blog-touch-tracking");
+    expect(coarseTouchRules).not.toContain("will-change");
     expect(css).toMatch(
       /\[data-blog-article="true"\]\[data-blog-header-motion="instant"\] \.site-header-nav-frame,[\s\S]*?\.site-header-fade\s*\{\s*transition:\s*none/s,
     );

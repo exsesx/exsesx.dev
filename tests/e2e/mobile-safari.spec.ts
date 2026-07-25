@@ -119,7 +119,7 @@ if (!("Bun" in globalThis)) {
       expect(await readHeaderSurface(page)).toEqual(articleHeaderSurface);
     });
 
-    test("passive Blog header uses deliberate coarse-touch intent independently from the TOC launcher", async ({
+    test("passive Blog header uses responsive coarse-touch intent independently from the TOC launcher", async ({
       page,
     }) => {
       await page.goto(BLOG_ARTICLE_PATH);
@@ -135,25 +135,18 @@ if (!("Bun" in globalThis)) {
       await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE / 2);
 
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
-      const trackedTransform = await headerFrame.evaluate(element => {
+      const waitingTransform = await headerFrame.evaluate(element => {
         const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
 
         return {
-          height: element.getBoundingClientRect().height,
           scale: matrix.a,
           translateY: matrix.m42,
         };
       });
-      expect(trackedTransform.scale).toBeCloseTo(1, 3);
-      expect(trackedTransform.translateY).toBeCloseTo(-trackedTransform.height / 2, 1);
+      expect(waitingTransform.scale).toBeCloseTo(1, 3);
+      expect(waitingTransform.translateY).toBeCloseTo(0, 1);
 
       await page.locator("body").dispatchEvent("touchend");
-      await expect(headerFrame).not.toHaveAttribute("data-blog-touch-tracking", "true");
-      await expect
-        .poll(async () =>
-          headerFrame.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42),
-        )
-        .toBeCloseTo(0, 1);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
 
       await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
@@ -197,6 +190,34 @@ if (!("Bun" in globalThis)) {
         );
         await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       }
+    });
+
+    test("rapid coarse-touch reversals retarget one spring and settle at the latest endpoint", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const headerFrame = page.locator(".site-header-nav-frame");
+
+      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE);
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await scrollWithTouchIntent(
+        page,
+        -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
+      );
+      await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND);
+      await scrollWithTouchIntent(
+        page,
+        -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
+      );
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toHaveAttribute("data-blog-header-spring", "true");
+      await expect(headerFrame).not.toHaveAttribute("data-blog-header-spring-settled");
+      await expect
+        .poll(async () =>
+          headerFrame.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42),
+        )
+        .toBeCloseTo(0, 1);
     });
 
     test("Mermaid reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
