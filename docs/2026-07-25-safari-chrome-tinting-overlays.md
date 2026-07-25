@@ -767,3 +767,47 @@ hypothesis; `thinBorderWidth = 10` as the source of the 11px floor; `opacity: 0`
 - `Source/WebKit/WebProcess/WebPage/WebPage.h:2199, 3287` — the update flag
 - `Source/WebCore/page/Page.cpp:5483-5503, 5515-5518` — retention path, wholesale reassignment
 - `Source/WebCore/page/LocalFrameView.cpp:2364-2373, 2486-2500, 2661` — edge-midpoint hit test
+
+---
+
+# Implementation follow-up (2026-07-25): lifecycle-held sampling
+
+The white cross-theme flash was judged more damaging than the residual platform risk, so the
+implementation deliberately takes the refined form of Option A.
+
+## Decision
+
+The 11px band is not permanent and is not flashed only after close. Every shared Base UI Drawer
+now acquires a reference-counted sampling hold before its fixed portal mounts, keeps the band
+qualifying throughout the open and exit states, and releases it only from
+`onOpenChangeComplete(false)`. Release leaves the existing 1000ms sampling tail.
+
+This closes the visible-frame gap in the simpler close-only heuristic: the live, solid,
+non-animating sample source is already present when WebKit observes both the fixed-object addition
+and removal. Theme changes, `pageshow`, `resize`, and `orientationchange` use the same controller;
+a timed flash cannot remove the band while any drawer still owns a hold.
+
+The CSS gate remains coarse-touch WebKit-only, so desktop layout and the hidden reading header are
+unchanged after the sampling tail. This is still not a supported Safari API and cannot promise
+coverage for an unknown future WebKit recompute trigger.
+
+## Simulator and automated verification
+
+Verified on the iPhone 17 Pro Simulator with iOS 26.5 against `localhost:3000`:
+
+- light and dark theme changes retinted the top chrome without a cross-theme flash;
+- closing the TOC retained the correct tint after the drawer portal unmounted and after the 1000ms
+  tail expired;
+- portrait and both landscape orientations preserved the safe inline article geometry;
+- the landscape drawer remained usable in the short viewport;
+- the docked TOC launcher cleared the rounded corner and moved closer to Safari controls.
+
+The docked launcher now uses a constant `bottom: 1.25rem`. The former
+`max(1.25rem, env(safe-area-inset-bottom))` resolved to the iPhone's larger reported bottom inset
+and lifted the launcher farther from Safari's compact controls. The landscape-aware left inset is
+unchanged.
+
+The mobile WebKit regression test asserts that the sample hold spans portal mount and unmount,
+that the sampled background tracks the selected theme, and that the band returns to its dormant
+state after the tail. The full mobile Safari contract suite also covers the short landscape
+viewport and the 20px launcher offset.

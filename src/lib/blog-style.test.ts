@@ -255,7 +255,7 @@ describe("Blog production styles", () => {
     expect(triggerRule).toContain("height: 2.75rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(1\.25rem, env\(safe-area-inset-bottom, 0px\)\)[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\)[\s\S]*?transition:\s*bottom 0\.2s ease/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*1\.25rem[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\)[\s\S]*?transition:\s*bottom 0\.2s ease/,
     );
     expect(css).toMatch(
       /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
@@ -282,7 +282,7 @@ describe("Blog production styles", () => {
     const drawerScrollRule = css.match(/\.blog-toc-drawer-scroll\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?bottom:\s*max\(1\.25rem, env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\);[\s\S]*?transition:\s*bottom 0\.2s ease;/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?bottom:\s*1\.25rem;[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\);[\s\S]*?transition:\s*bottom 0\.2s ease;/,
     );
     expect(toc).not.toContain("mobileOpen");
     expect(toc).toContain("pendingHeadingIdRef");

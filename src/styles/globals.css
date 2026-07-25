@@ -2335,7 +2335,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger {
   position: fixed;
-  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  bottom: 1.25rem;
   left: max(1.25rem, env(safe-area-inset-left, 0px));
   z-index: 80;
   width: 2.75rem;

@@ -278,6 +278,46 @@ if (!("Bun" in globalThis)) {
       expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth);
     });
 
+    test("keeps the Safari chrome sample alive across theme and drawer recomputes", async ({ page }) => {
+      await page.addInitScript(() => {
+        localStorage.setItem("exsesx:color-scheme", JSON.stringify("light"));
+      });
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator("html");
+      const sample = page.locator("header[data-safari-chrome-sample]");
+      const trigger = page.getByTestId("mobile-toc-trigger");
+      const drawer = page.getByTestId("mobile-toc-drawer");
+      const drawerPortal = page.locator('[data-slot="drawer-portal"]');
+
+      await root.evaluate(element => {
+        delete (element as HTMLElement).dataset.chromeSample;
+      });
+
+      await trigger.click();
+      await expect(drawer).toBeVisible();
+      await expect(root).toHaveAttribute("data-chrome-sample", "");
+      await expectSafariChromeSampleToQualify(sample);
+
+      await drawer.getByRole("button", { name: "Close table of contents" }).click();
+      await expect(drawerPortal).toHaveCount(0);
+      await expect(root).toHaveAttribute("data-chrome-sample", "");
+      await expectSafariChromeSampleToQualify(sample);
+
+      const lightSampleColor = await sample.evaluate(element => getComputedStyle(element).backgroundColor);
+      await page.getByRole("button", { name: "Theme: Light" }).click();
+      await page.getByRole("menuitemradio", { name: "Dark" }).click();
+
+      await expect(root).toHaveClass(/dark/);
+      await expect
+        .poll(() => sample.evaluate(element => getComputedStyle(element).backgroundColor))
+        .not.toBe(lightSampleColor);
+      await expectSafariChromeSampleToQualify(sample);
+
+      await page.waitForTimeout(1_100);
+      await expect(root).not.toHaveAttribute("data-chrome-sample");
+    });
+
     test("mobile table of contents keeps an upward selection current after retained touch intent", async ({ page }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
@@ -423,6 +463,34 @@ if (!("Bun" in globalThis)) {
       expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(20, 0);
     });
   });
+}
+
+async function expectSafariChromeSampleToQualify(sample: Locator) {
+  const surface = await sample.evaluate(element => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const sampleStyle = getComputedStyle(element);
+
+    return {
+      backgroundColor: sampleStyle.backgroundColor,
+      height: Number.parseFloat(sampleStyle.height),
+      opacity: sampleStyle.opacity,
+      position: sampleStyle.position,
+      rootBackgroundColor: rootStyle.backgroundColor,
+      supportsCoarseTouchWebKit:
+        CSS.supports("-webkit-touch-callout", "none") && matchMedia("(hover: none) and (pointer: coarse)").matches,
+      transitionDuration: sampleStyle.transitionDuration,
+      visibility: sampleStyle.visibility,
+    };
+  });
+
+  if (surface.supportsCoarseTouchWebKit) {
+    expect(surface.height).toBeGreaterThanOrEqual(11);
+  }
+  expect(surface.position).toBe("fixed");
+  expect(surface.opacity).toBe("1");
+  expect(surface.visibility).toBe("visible");
+  expect(surface.transitionDuration).toBe("0s");
+  expect(surface.backgroundColor).toBe(surface.rootBackgroundColor);
 }
 
 async function scrollWithTouchIntent(page: Page, deltaY: number) {

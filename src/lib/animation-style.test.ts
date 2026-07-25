@@ -143,6 +143,19 @@ describe("semantic animation styles", () => {
     expect(css.match(/html\[data-chrome-sample\] \.site-header/g)).toHaveLength(1);
   });
 
+  test("keeps the docked mobile TOC close to Safari controls", async () => {
+    const css = await readGlobalsCss();
+    const dockedLauncher = ruleBody(
+      css,
+      `.blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
+.blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger`,
+    );
+
+    expect(dockedLauncher).toContain("bottom: 1.25rem");
+    expect(dockedLauncher).not.toContain("env(safe-area-inset-bottom");
+    expect(dockedLauncher).toContain("transition: bottom 0.2s ease");
+  });
+
   test("preserves non-spatial feedback for reduced motion", async () => {
     const css = await readGlobalsCss();
     const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce) {\n  ::view-transition-old(*)");

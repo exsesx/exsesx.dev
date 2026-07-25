@@ -5,6 +5,8 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+const SAFARI_CHROME_SAMPLE_HOLD_EVENT = "exsesx:safari-chrome-sample-hold";
+
 type DrawerContextProps = {
   hasSnapPoints: boolean;
   modal: DrawerPrimitive.Root.Props["modal"];
@@ -26,6 +28,8 @@ function useDrawer() {
 
 function Drawer({
   modal = true,
+  onOpenChange,
+  onOpenChangeComplete,
   showSwipeHandle = false,
   snapPoints,
   swipeDirection = "down",
@@ -33,17 +37,71 @@ function Drawer({
 }: DrawerPrimitive.Root.Props & {
   showSwipeHandle?: boolean;
 }) {
+  const sampleHoldId = React.useId();
+  const sampleHeldRef = React.useRef(false);
   const hasSnapPoints = snapPoints != null && snapPoints.length > 0;
   const contextValue = React.useMemo(
     () => ({ hasSnapPoints, modal, showSwipeHandle, swipeDirection }),
     [hasSnapPoints, modal, showSwipeHandle, swipeDirection],
   );
+  const setSafariChromeSampleHold = React.useCallback(
+    (active: boolean) => {
+      if (sampleHeldRef.current === active) {
+        return;
+      }
+
+      sampleHeldRef.current = active;
+      window.dispatchEvent(
+        new CustomEvent(SAFARI_CHROME_SAMPLE_HOLD_EVENT, {
+          detail: { active, id: sampleHoldId },
+        }),
+      );
+    },
+    [sampleHoldId],
+  );
+
+  React.useEffect(
+    () => () => {
+      if (sampleHeldRef.current) {
+        sampleHeldRef.current = false;
+        window.dispatchEvent(
+          new CustomEvent(SAFARI_CHROME_SAMPLE_HOLD_EVENT, {
+            detail: { active: false, id: sampleHoldId },
+          }),
+        );
+      }
+    },
+    [sampleHoldId],
+  );
+
+  function handleOpenChange(open: boolean, eventDetails: DrawerPrimitive.Root.ChangeEventDetails) {
+    if (open) {
+      setSafariChromeSampleHold(true);
+    }
+
+    onOpenChange?.(open, eventDetails);
+  }
+
+  function handleOpenChangeComplete(open: boolean) {
+    if (open) {
+      onOpenChangeComplete?.(true);
+      return;
+    }
+
+    try {
+      onOpenChangeComplete?.(false);
+    } finally {
+      setSafariChromeSampleHold(false);
+    }
+  }
 
   return (
     <DrawerContext.Provider value={contextValue}>
       <DrawerPrimitive.Root
         data-slot="drawer"
         modal={modal}
+        onOpenChange={handleOpenChange}
+        onOpenChangeComplete={handleOpenChangeComplete}
         snapPoints={snapPoints}
         swipeDirection={swipeDirection}
         {...props}
