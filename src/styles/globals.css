@@ -3365,6 +3365,15 @@ code[data-theme] span {
   background: var(--muted);
 }
 
+.blog-figure-image--dark,
+html.dark .blog-figure-image--light {
+  display: none;
+}
+
+html.dark .blog-figure-image--dark {
+  display: block;
+}
+
 .blog-figure--intrinsic img {
   border: 0;
   border-radius: 0;

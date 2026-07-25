@@ -174,6 +174,13 @@ describe("Blog production styles", () => {
     expect(intrinsicFigureRule).not.toContain("box-shadow");
   });
 
+  test("switches appearance-specific Blog figures with the document theme", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+
+    expect(css).toMatch(/\.blog-figure-image--dark,\s*html\.dark \.blog-figure-image--light\s*\{[^}]*display:\s*none/s);
+    expect(css).toMatch(/html\.dark \.blog-figure-image--dark\s*\{[^}]*display:\s*block/s);
+  });
+
   test("vertically aligns inline source badges without a font-specific offset", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 

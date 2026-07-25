@@ -6,6 +6,15 @@ describe("Blog manifest", () => {
     expect(getBlogPosts("en", { includeDrafts: false })).toEqual([
       expect.objectContaining({
         locale: "en",
+        slug: "safari-26-invisible-tint-sampler",
+        status: "published",
+        title: "The invisible 11px element that fixed Safari 26 tinting",
+        seoTitle: "Safari 26 toolbar tinting with an invisible 11px WebKit sampler",
+        description:
+          "How I traced Safari 26 toolbar tinting through WebKit and hid a reliable theme-aware sampler with background-clip: text.",
+      }),
+      expect.objectContaining({
+        locale: "en",
         slug: "umbra-light-dark-wallpapers",
         status: "published",
         title: "Two wallpapers brought me back to Light Mode",
@@ -32,6 +41,15 @@ describe("Blog manifest", () => {
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "uk",
+        slug: "safari-26-invisible-tint-sampler",
+        status: "published",
+        title: "Невидимий 11-піксельний семплер для Safari 26",
+        seoTitle: "Тонування панелей Safari 26 через невидимий 11-піксельний семплер WebKit",
+        description:
+          "Як я розібрав механізм тонування панелей Safari 26 у коді WebKit і сховав надійний семплер теми через background-clip: text.",
+      }),
       expect.objectContaining({
         locale: "uk",
         slug: "umbra-light-dark-wallpapers",
@@ -64,8 +82,12 @@ describe("Blog manifest", () => {
   test("derives index reading details and the article table of contents from MDX", async () => {
     const [article] = await getBlogPostSummaries("en", { includeDrafts: false });
 
-    expect(article.readingMinutes).toBeGreaterThanOrEqual(3);
-    expect(article.headings).toContainEqual({ depth: 2, id: "the-pair-i-wanted", text: "The pair I wanted" });
+    expect(article.readingMinutes).toBeGreaterThanOrEqual(5);
+    expect(article.headings).toContainEqual({
+      depth: 2,
+      id: "the-problem-was-bigger-than-theme-color",
+      text: "The problem was bigger than theme-color",
+    });
     expect(article.headings.at(-1)).toEqual({ depth: 2, id: "sources", text: "Sources" });
   });
 
@@ -84,6 +106,17 @@ describe("Blog manifest", () => {
   });
 
   test("looks up both editions and exposes their published translation alternates", () => {
+    expect(getBlogPost("en", "safari-26-invisible-tint-sampler", { includeDrafts: false })).toMatchObject({
+      locale: "en",
+      slug: "safari-26-invisible-tint-sampler",
+      status: "published",
+    });
+    expect(getBlogPost("uk", "safari-26-invisible-tint-sampler", { includeDrafts: false })).toMatchObject({
+      locale: "uk",
+      slug: "safari-26-invisible-tint-sampler",
+      status: "published",
+    });
+    expect(getPublishedBlogLocales("safari-26-invisible-tint-sampler")).toEqual(["en", "uk"]);
     expect(getBlogPost("en", "umbra-light-dark-wallpapers", { includeDrafts: false })).toMatchObject({
       locale: "en",
       slug: "umbra-light-dark-wallpapers",
@@ -121,6 +154,8 @@ describe("Blog manifest", () => {
 
   test("ships deterministic social images for the Blog index and every published edition", async () => {
     const articles = [
+      getBlogPost("en", "safari-26-invisible-tint-sampler", { includeDrafts: false }),
+      getBlogPost("uk", "safari-26-invisible-tint-sampler", { includeDrafts: false }),
       getBlogPost("en", "umbra-light-dark-wallpapers", { includeDrafts: false }),
       getBlogPost("uk", "umbra-light-dark-wallpapers", { includeDrafts: false }),
       getBlogPost("en", "codex-memories", { includeDrafts: false }),

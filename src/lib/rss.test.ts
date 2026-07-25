@@ -1,13 +1,18 @@
 import { describe, expect, test } from "bun:test";
-import { getBlogPosts } from "@/content/blog/manifest";
+import { getBlogPost } from "@/content/blog/manifest";
 import { buildBlogRss } from "./rss";
 
 describe("Blog RSS", () => {
   test("builds an excerpt-only localized feed with escaped XML", () => {
-    const posts = getBlogPosts("en", { includeDrafts: false });
+    const post = getBlogPost("en", "umbra-light-dark-wallpapers", { includeDrafts: false });
+
+    if (!post) {
+      throw new Error("Expected the published English Umbra article fixture");
+    }
+
     const xml = buildBlogRss("en", [
       {
-        ...posts[0],
+        ...post,
         description: "Wallpapers: light & dark <without a workaround>.",
       },
     ]);
