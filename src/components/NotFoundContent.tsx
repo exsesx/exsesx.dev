@@ -9,7 +9,7 @@ export default function NotFoundContent() {
       id="main-content"
       tabIndex={-1}
       lang="en"
-      className="mx-auto flex min-h-[calc(100svh-8rem)] w-full max-w-7xl flex-col justify-center px-4 pb-20 pt-28 sm:px-6 lg:pt-32"
+      className="page-safe-inline mx-auto flex min-h-[calc(100svh-8rem)] w-full max-w-7xl flex-col justify-center pb-20 pt-28 lg:pt-32"
     >
       <section className="max-w-3xl">
         <p className="motion-rise flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-accent">
