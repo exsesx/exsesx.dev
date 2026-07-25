@@ -328,28 +328,29 @@ describe("Blog production styles", () => {
     expect(source).not.toContain("useState(");
   });
 
-  test("morphs reading progress between the line and device frame without layout animation", async () => {
+  test("draws the device frame in from its origin instead of scaling it open", async () => {
     const [css, source] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(readingProgressUrl).text()]);
     const shellRule = css.match(/\.blog-reading-progress-device-shell\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const deviceShellRule =
-      css.match(
-        /\.blog-reading-progress\[data-device-frame="iphone"\] \.blog-reading-progress-device-shell\s*\{([^}]*)\}/s,
-      )?.[1] ?? "";
+    const pathRule = css.match(/\.blog-reading-progress-device path\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const drawingRule = css.match(/\.blog-reading-progress-device path\[data-drawing\]\s*\{([^}]*)\}/s)?.[1] ?? "";
     const readingProgressStart = css.indexOf(".blog-reading-progress-device-shell");
     const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce)", readingProgressStart);
     const reducedMotionRules = css.slice(reducedMotionStart, css.indexOf(".blog-article-meta", reducedMotionStart));
 
     expect(source).toContain('<div className="blog-reading-progress-device-shell">');
-    expect(source).toContain('"--blog-reading-progress-line-scale"');
+    expect(source).toContain('progressPathElement.style.strokeDashoffset = "1"');
+    expect(source).toContain('progressPathElement.dataset.drawing = "true"');
     expect(source).not.toContain('progressSvgElement?.removeAttribute("viewBox")');
     expect(source).not.toContain('progressPathElement.removeAttribute("d")');
-    expect(shellRule).toContain("transform: scaleY(var(--blog-reading-progress-line-scale, 0.01))");
-    expect(shellRule).toContain("transform-origin: top center");
+
+    expect(shellRule).not.toContain("scaleY");
     expect(shellRule).toContain("opacity var(--duration-exit) var(--ease-out)");
-    expect(shellRule).toContain("transform var(--duration-ui) var(--ease-in-out)");
-    expect(deviceShellRule).toContain("transform: scaleY(1)");
-    expect(reducedMotionRules).toContain(".blog-reading-progress-device-shell");
-    expect(reducedMotionRules).toContain("transform: none");
+    expect(pathRule).toContain("transition: none");
+    expect(drawingRule).toContain("stroke-dashoffset var(--duration-progress-draw) var(--ease-out)");
+    expect(css).toContain("--duration-progress-draw:");
+
+    expect(reducedMotionRules).toContain(".blog-reading-progress-device path[data-drawing]");
+    expect(reducedMotionRules).toContain("transition: none");
     expect(reducedMotionRules).not.toContain("transition: all");
   });
 

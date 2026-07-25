@@ -161,33 +161,51 @@ if (!("Bun" in globalThis)) {
         .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
         .toBeLessThan(dashOffsetBeforeScroll);
 
-      await deviceShell.evaluate(element => {
-        element.dataset.transitionProperties = "";
-        element.addEventListener("transitionrun", event => {
-          if (event.target !== element) {
-            return;
-          }
+      await article.evaluate(element => {
+        const root = document.documentElement;
+        const previousScrollBehavior = root.style.scrollBehavior;
 
-          element.dataset.transitionProperties =
-            `${element.dataset.transitionProperties ?? ""} ${(event as TransitionEvent).propertyName}`.trim();
-        });
+        root.style.scrollBehavior = "auto";
+        window.scrollTo(0, window.scrollY + element.getBoundingClientRect().height * 0.6);
+        root.style.scrollBehavior = previousScrollBehavior;
       });
+      await expect
+        .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
+        .toBeLessThan(0.5);
 
       await page.setViewportSize({ width: 874, height: 330 });
       await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
-      await expect.poll(() => deviceShell.getAttribute("data-transition-properties")).toContain("transform");
       await expect(progress).toHaveCSS("height", "3px");
       await expect(fallbackBar).toBeVisible();
       await expect(deviceProgress).toBeHidden();
 
-      await deviceShell.evaluate(element => {
-        element.dataset.transitionProperties = "";
+      await devicePath.evaluate(path => {
+        path.dataset.drawFrom = "";
+        path.addEventListener("transitionrun", event => {
+          if ((event as TransitionEvent).propertyName !== "stroke-dashoffset") {
+            return;
+          }
+
+          const transition = path
+            .getAnimations()
+            .find(animation => (animation as CSSTransition).transitionProperty === "stroke-dashoffset");
+          const keyframes = (transition?.effect as KeyframeEffect | undefined)?.getKeyframes();
+
+          path.dataset.drawFrom ||= String(keyframes?.[0]?.strokeDashoffset ?? "");
+        });
       });
+
       await page.setViewportSize({ width: 874, height: 402 });
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
-      await expect.poll(() => deviceShell.getAttribute("data-transition-properties")).toContain("transform");
       await expect(fallbackBar).toBeHidden();
       await expect(deviceProgress).toBeVisible();
+
+      await expect
+        .poll(async () => Number.parseFloat((await devicePath.getAttribute("data-draw-from")) ?? "0"))
+        .toBeGreaterThan(0.9);
+      await expect
+        .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
+        .toBeLessThan(0.5);
       await expect
         .poll(() => deviceShell.evaluate(element => element.getBoundingClientRect().height))
         .toBeCloseTo(402, 1);
