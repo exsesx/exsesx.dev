@@ -81,7 +81,7 @@ export default function HomePage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-20 pt-28 sm:px-6 lg:pt-32"
+        className="page-safe-inline mx-auto flex w-full max-w-7xl flex-col pb-20 pt-28 lg:pt-32"
       >
         <section className="hero-viewport grid min-w-0 items-center gap-10 pb-8 lg:grid-cols-[1.04fr_0.96fr] lg:pb-12">
           <div className="min-w-0 max-w-4xl">

@@ -118,7 +118,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     <main
       id="main-content"
       tabIndex={-1}
-      className="mx-auto w-full max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:pt-28"
+      className="page-safe-inline mx-auto w-full max-w-7xl pb-16 pt-24 lg:pt-28"
       {...getBackTransitionTypeProps(projectTransitionType)}
     >
       <section className="grid gap-8 lg:grid-cols-[0.48fr_0.52fr] lg:items-stretch">

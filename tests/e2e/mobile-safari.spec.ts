@@ -12,6 +12,52 @@ const MERMAID_ARTICLE_PATH = "/blog/en/codex-memories";
 
 if (!("Bun" in globalThis)) {
   test.describe("iPhone 17 Pro Safari contracts", () => {
+    test("404 clears the header and fills a short landscape viewport without document overflow", async ({ page }) => {
+      await page.setViewportSize({ width: 956, height: 402 });
+      await page.goto("/this-route-does-not-exist");
+      await page.locator("html").evaluate(element => {
+        element.style.fontSize = "112.5%";
+      });
+
+      const main = page.locator("#main-content");
+      const backdrop = page.locator(".kinetic-backdrop");
+      const header = page.locator(".site-nav-glass");
+      const errorLabel = page.getByText("Error 404", { exact: true });
+      const viewportMeta = page.locator('meta[name="viewport"]');
+      await expect(main).toBeVisible();
+      await expect(backdrop).toBeVisible();
+      await expect(header).toBeVisible();
+      await expect(errorLabel).toBeVisible();
+      await expect(viewportMeta).toHaveAttribute("content", /viewport-fit=cover/);
+
+      const [mainBounds, backdropBounds, headerBounds, errorLabelBounds, documentBounds] = await Promise.all([
+        main.boundingBox(),
+        backdrop.boundingBox(),
+        header.boundingBox(),
+        errorLabel.boundingBox(),
+        page.evaluate(() => ({
+          height: document.documentElement.scrollHeight,
+          width: document.documentElement.scrollWidth,
+        })),
+      ]);
+      const viewport = page.viewportSize();
+
+      expect(mainBounds).not.toBeNull();
+      expect(backdropBounds).not.toBeNull();
+      expect(headerBounds).not.toBeNull();
+      expect(errorLabelBounds).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      expect(
+        (errorLabelBounds?.y ?? 0) - ((headerBounds?.y ?? 0) + (headerBounds?.height ?? 0)),
+      ).toBeGreaterThanOrEqual(12);
+      expect(mainBounds?.width).toBeCloseTo(viewport?.width ?? 0, 0);
+      expect(mainBounds?.height).toBeLessThanOrEqual(viewport?.height ?? 0);
+      expect(backdropBounds?.width).toBeCloseTo(viewport?.width ?? 0, 0);
+      expect(backdropBounds?.height).toBeCloseTo(viewport?.height ?? 0, 0);
+      expect(documentBounds.width).toBeLessThanOrEqual(viewport?.width ?? 0);
+      expect(documentBounds.height).toBeLessThanOrEqual(viewport?.height ?? 0);
+    });
+
     test("header actions fit without crowding Back and the logo", async ({ page }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 

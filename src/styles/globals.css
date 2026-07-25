@@ -2066,6 +2066,47 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   border-radius: 0.15rem;
 }
 
+.page-safe-inline {
+  padding-left: calc(1rem + env(safe-area-inset-left));
+  padding-right: calc(1rem + env(safe-area-inset-right));
+}
+
+@variant sm {
+  .page-safe-inline {
+    padding-left: calc(1.5rem + env(safe-area-inset-left));
+    padding-right: calc(1.5rem + env(safe-area-inset-right));
+  }
+}
+
+@media (max-height: 32rem) and (orientation: landscape) {
+  .not-found-shell {
+    min-height: 0;
+    height: 100dvh;
+    justify-content: flex-start;
+    padding-top: calc(6rem + env(safe-area-inset-top));
+    padding-bottom: 0.75rem;
+  }
+
+  .not-found-title {
+    font-size: clamp(2.25rem, 7vw, 3.5rem);
+  }
+
+  .not-found-signal {
+    height: 1.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .not-found-copy {
+    margin-top: 1rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .not-found-actions {
+    margin-top: 0.75rem;
+  }
+}
+
 .blog-article-grid {
   display: grid;
   max-width: 69rem;
