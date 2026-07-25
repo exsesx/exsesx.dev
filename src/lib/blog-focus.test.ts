@@ -13,15 +13,15 @@ import {
 } from "./blog-focus";
 
 describe("passive blog header", () => {
-  test("uses the confirmed hide and deliberate-reveal thresholds", () => {
+  test("uses responsive coarse-touch thresholds with a small reversal deadband", () => {
     expect(BLOG_HEADER_HIDE_START).toBe(96);
     expect(BLOG_HEADER_HIDE_DISTANCE).toBe(24);
     expect(BLOG_HEADER_HIDE_AFTER).toBe(120);
     expect(BLOG_HEADER_HIDE_AFTER).toBe(BLOG_HEADER_HIDE_START + BLOG_HEADER_HIDE_DISTANCE);
     expect(BLOG_HEADER_REVEAL_DISTANCE).toBe(48);
-    expect(BLOG_HEADER_TOUCH_HIDE_DISTANCE).toBe(80);
-    expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(48);
-    expect(BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND).toBe(8);
+    expect(BLOG_HEADER_TOUCH_HIDE_DISTANCE).toBe(24);
+    expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(16);
+    expect(BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND).toBe(4);
   });
 
   test("starts visible at the top and can initialize hidden inside restored article content", () => {
@@ -164,7 +164,7 @@ describe("passive blog header", () => {
     }
   });
 
-  test("discards the first 8px after a coarse-touch direction reversal", () => {
+  test("discards the first 4px after a coarse-touch direction reversal", () => {
     const upward = {
       accumulatedDistance: 24,
       direction: "up" as const,
@@ -174,12 +174,12 @@ describe("passive blog header", () => {
     const reversed = updatePassiveBlogHeader(upward, {
       directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
       hasUserScrollIntent: true,
-      scrollY: 308,
+      scrollY: 304,
     });
     const continued = updatePassiveBlogHeader(reversed, {
       directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
       hasUserScrollIntent: true,
-      scrollY: 309,
+      scrollY: 305,
     });
 
     expect(reversed).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: false });
@@ -266,6 +266,30 @@ describe("passive blog header", () => {
     });
 
     expect(stationary).toBe(down);
+  });
+
+  test("clamps Safari rubber-band positions before detecting direction", () => {
+    const atBottom = createPassiveBlogHeaderState(1_020, true, 1_000);
+    const bottomOverscroll = updatePassiveBlogHeader(atBottom, {
+      hasUserScrollIntent: true,
+      maxScrollY: 1_000,
+      scrollY: 1_080,
+    });
+    const upwardReading = updatePassiveBlogHeader(bottomOverscroll, {
+      hasUserScrollIntent: true,
+      maxScrollY: 1_000,
+      scrollY: 980,
+    });
+    const atTop = createPassiveBlogHeaderState(-40, false, 1_000);
+
+    expect(atBottom.lastScrollY).toBe(1_000);
+    expect(bottomOverscroll).toBe(atBottom);
+    expect(upwardReading).toMatchObject({
+      accumulatedDistance: 20,
+      direction: "up",
+      lastScrollY: 980,
+    });
+    expect(atTop.lastScrollY).toBe(0);
   });
 
   test("reveals immediately while focus is inside the header", () => {

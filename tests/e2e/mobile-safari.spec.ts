@@ -119,7 +119,7 @@ if (!("Bun" in globalThis)) {
       expect(await readHeaderSurface(page)).toEqual(articleHeaderSurface);
     });
 
-    test("passive Blog header uses deliberate coarse-touch intent independently from the TOC launcher", async ({
+    test("passive Blog header uses responsive coarse-touch intent independently from the TOC launcher", async ({
       page,
     }) => {
       await page.goto(BLOG_ARTICLE_PATH);
@@ -132,19 +132,24 @@ if (!("Bun" in globalThis)) {
 
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "inline");
-      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1);
+      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE / 2);
 
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
-      const visibleTransform = await headerFrame.evaluate(element => {
+      const waitingTransform = await headerFrame.evaluate(element => {
         const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
 
-        return { scale: matrix.a, translateY: matrix.m42 };
+        return {
+          scale: matrix.a,
+          translateY: matrix.m42,
+        };
       });
-      expect(visibleTransform.scale).toBeCloseTo(1, 3);
-      expect(visibleTransform.translateY).toBeCloseTo(0, 1);
+      expect(waitingTransform.scale).toBeCloseTo(1, 3);
+      expect(waitingTransform.translateY).toBeCloseTo(0, 1);
 
-      await scrollWithTouchIntent(page, 1);
+      await page.locator("body").dispatchEvent("touchend");
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
 
+      await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeHidden();
       await expect(title).toBeInViewport();
@@ -185,6 +190,108 @@ if (!("Bun" in globalThis)) {
         );
         await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
       }
+    });
+
+    test("rapid coarse-touch reversals retarget one spring and settle at the latest endpoint", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const headerFrame = page.locator(".site-header-nav-frame");
+
+      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE);
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await scrollWithTouchIntent(
+        page,
+        -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
+      );
+      await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND);
+      await scrollWithTouchIntent(
+        page,
+        -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
+      );
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect(headerFrame).toHaveAttribute("data-blog-header-spring", "true");
+      await expect(headerFrame).not.toHaveAttribute("data-blog-header-spring-settled");
+      await expect
+        .poll(async () =>
+          headerFrame.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42),
+        )
+        .toBeCloseTo(0, 1);
+    });
+
+    test("rapid upward touch gestures preserve enough intent to reacquire the header", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const body = page.locator("body");
+
+      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE);
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await body.dispatchEvent("touchend");
+
+      for (let gesture = 0; gesture < 2; gesture += 1) {
+        await body.dispatchEvent("touchstart");
+        await body.dispatchEvent("touchmove");
+        await page.evaluate(() => window.scrollBy({ behavior: "instant", top: -10 }));
+        await body.dispatchEvent("touchend");
+        await page.evaluate(
+          () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+        );
+      }
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+    });
+
+    test("theme selection restores pointer focus without pinning the passive header", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const themeButton = page.locator('button[aria-label^="Theme:"]');
+      const themeMenu = page.getByRole("menu");
+      const nextMode = await page
+        .locator("html")
+        .evaluate(element => (element.classList.contains("dark") ? "Light" : "Dark"));
+
+      await themeButton.click();
+      await page.getByRole("menuitemradio", { name: nextMode }).click();
+      await expect(themeMenu).toBeHidden();
+      await page.evaluate(
+        () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      );
+      await page.locator("body").dispatchEvent("touchmove");
+      expect(
+        await themeButton.evaluate((element, distance) => {
+          (element as HTMLElement).focus();
+          window.scrollBy({ behavior: "instant", top: distance });
+
+          return element.matches(":focus-visible");
+        }, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE),
+      ).toBe(false);
+
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+    });
+
+    test("focus-visible header controls remain protected from scroll dismissal", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const themeButton = page.locator('button[aria-label^="Theme:"]');
+
+      await page.keyboard.press("Tab");
+      expect(
+        await themeButton.evaluate(element => {
+          (element as HTMLElement).focus();
+
+          return element.matches(":focus-visible");
+        }),
+      ).toBe(true);
+      await page.evaluate(
+        distance => window.scrollBy({ behavior: "instant", top: distance }),
+        BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+      );
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
     });
 
     test("Mermaid reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
