@@ -386,7 +386,9 @@ describe("Blog production styles", () => {
   test("keeps Safari's sample edge independent while hiding only reading distractions", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 
-    expect(css).toMatch(/\.safari-chrome-sample\s*\{[^}]*top:\s*-9px/s);
+    expect(css).toMatch(
+      /\.safari-chrome-sample\s*\{[^}]*top:\s*0;[^}]*background-clip:\s*text;[^}]*-webkit-background-clip:\s*text/s,
+    );
     expect(css).not.toMatch(/\[data-blog-focus="true"\][^{]*\.safari-chrome-sample/);
     expect(css).toContain('[data-blog-focus="true"] .kinetic-backdrop > *');
     expect(css).toContain('[data-blog-focus="true"] .hotkeys-corner-hint');

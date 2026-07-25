@@ -117,7 +117,7 @@ describe("semantic animation styles", () => {
     expect(css).not.toContain("transition-duration: 380ms");
   });
 
-  test("limits the Safari chrome sample edge to coarse touch WebKit without exposing the 11px candidate", async () => {
+  test("keeps the Safari chrome sample paintless and eligible only on coarse touch WebKit", async () => {
     const css = await readGlobalsCss();
     const sampleSelector = ".safari-chrome-sample";
     const hiddenArticleSelector = '[data-blog-article="true"][data-blog-passive-hidden="true"] .site-header';
@@ -130,8 +130,22 @@ describe("semantic animation styles", () => {
     const hiddenArticleRuleIndex = css.indexOf(hiddenArticleSelector);
     const focusArticleRuleIndex = css.indexOf(focusArticleSelector);
 
-    expect(ruleBody(css, sampleSelector)).toContain("top: -9px");
-    expect(ruleBody(css, sampleSelector)).toContain("height: 0");
+    const sampleRule = ruleBody(css, sampleSelector);
+
+    expect(sampleRule).toContain("top: 0");
+    expect(sampleRule).toContain("right: 0");
+    expect(sampleRule).toContain("left: 0");
+    expect(sampleRule).toContain("z-index: 2147483647");
+    expect(sampleRule).toContain("height: 0");
+    expect(sampleRule).toContain("border: 0");
+    expect(sampleRule).toContain("outline: 0");
+    expect(sampleRule).toContain("background-clip: text");
+    expect(sampleRule).toContain("-webkit-background-clip: text");
+    expect(sampleRule).toContain("box-shadow: none");
+    expect(sampleRule).not.toContain("backdrop-filter");
+    expect(sampleRule).not.toContain("clip-path");
+    expect(sampleRule).not.toContain("opacity:");
+    expect(sampleRule).not.toContain("visibility:");
     expect(webkitGateIndex).toBeGreaterThan(-1);
     expect(coarsePointerGateIndex).toBeGreaterThan(webkitGateIndex);
     expect(sampleGateEnd).toBeGreaterThan(coarsePointerGateIndex);
@@ -143,8 +157,9 @@ describe("semantic animation styles", () => {
     expect(focusArticleRuleIndex).toBe(-1);
     expect(sampleGate).toMatch(/\.safari-chrome-sample\s*\{[\s\S]*?height:\s*11px/);
     expect(sampleGate).toMatch(
-      /html\[data-chrome-sample-refresh\] \.safari-chrome-sample\s*\{[\s\S]*?top:\s*-10px;[\s\S]*?height:\s*12px/,
+      /html\[data-chrome-sample-refresh\] \.safari-chrome-sample\s*\{[\s\S]*?top:\s*0;[\s\S]*?height:\s*12px/,
     );
+    expect(css).toMatch(/@media print\s*\{\s*\[data-safari-chrome-sample\]\s*\{\s*display:\s*none/);
     expect(css.match(/\.safari-chrome-sample\s*\{/g)).toHaveLength(3);
     expect(css).not.toContain("html[data-chrome-sample]");
   });

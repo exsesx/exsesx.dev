@@ -11,6 +11,17 @@ chrome untinted, verified against WebKit source, Base UI source on disk, and Web
 > for any load-bearing claim. Where I am reasoning rather than quoting, the text says
 > **INFERENCE** explicitly.
 
+> **2026-07-25 implementation update.** The visible permanent-band recommendation below is
+> superseded by
+> [`2026-07-25-webkit-fixed-edge-sampler-visibility.md`](./2026-07-25-webkit-fixed-edge-sampler-visibility.md).
+> The candidate must remain at `top: 0`: WebKit contracts the viewport by 4px before probing the
+> top edge, so moving an 11px element to `top: -9px` or `top: -11px` misses the probe or falls
+> back to pixel sampling. The implemented candidate stays 11/12px tall and full-width but uses
+> `background-clip: text` on a structurally empty element. WebKit can read its computed opaque
+> background while the empty text mask paints no band. It must also outrank the later fixed
+> header and all overlays: WebKit takes one frontmost hit at the probe, so equal stacking levels
+> can make an otherwise eligible sampler lose by DOM order.
+
 ---
 
 ## The question

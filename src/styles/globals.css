@@ -603,21 +603,28 @@ html[data-season="pride"] .logo-mark-pride {
 }
 
 /*
-  Safari 26 requires a fixed, solid candidate taller than its 10px thin-border
-  cutoff, but samples only the 2px slice at the viewport edge. Keep an 11px
-  candidate shifted 9px above the viewport: WebKit can sample the full edge
-  slice while at most 2px intersects the visible page. Keeping it mounted avoids
-  drawer- and viewport-lifecycle resampling choreography.
+  Safari 26 requires a fixed candidate taller than its 10px thin-border cutoff
+  and spanning the viewport edge. Its color sampler reads background-color
+  independently from the final paint, so clipping the empty box's background to
+  text keeps the full 11px candidate eligible without drawing a visible band.
+  The sampler must also be the frontmost fixed hit at WebKit's edge probe;
+  keeping it mounted above every visual overlay survives drawer and viewport
+  lifecycle recomputes.
 */
 .safari-chrome-sample {
   position: fixed;
-  top: -9px;
+  top: 0;
   right: 0;
   left: 0;
-  z-index: 50;
+  z-index: 2147483647;
   height: 0;
+  border: 0;
+  outline: 0;
   pointer-events: none;
   background-color: var(--safari-chrome-color);
+  background-clip: text;
+  -webkit-background-clip: text;
+  box-shadow: none;
   transition: none;
 }
 
@@ -634,9 +641,15 @@ html[data-season="pride"] .logo-mark-pride {
     }
 
     html[data-chrome-sample-refresh] .safari-chrome-sample {
-      top: -10px;
+      top: 0;
       height: 12px;
     }
+  }
+}
+
+@media print {
+  [data-safari-chrome-sample] {
+    display: none;
   }
 }
 
@@ -668,11 +681,11 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
-/* real element (not ::before) so it can carry its own view-transition-name;
-   inside the root snapshot it would pop above the page after transitions */
+/* Real element (not ::before) so it can carry its own view-transition-name;
+   the paintless Safari sampler stays above it in the fixed hit-test stack. */
 .site-header-fade {
   position: absolute;
-  /* Soft fade behind the nav; the flashed sample band paints over its top. */
+  /* Soft fade behind the nav. */
   inset: 0 0 -1.8rem;
   z-index: -1;
   pointer-events: none;

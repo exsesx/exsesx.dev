@@ -278,7 +278,9 @@ if (!("Bun" in globalThis)) {
       expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth);
     });
 
-    test("keeps the Safari chrome sample unobtrusive across theme and drawer recomputes", async ({ page }) => {
+    test("keeps the Safari chrome sample paintless and frontmost across theme and drawer recomputes", async ({
+      page,
+    }) => {
       await page.addInitScript(() => {
         localStorage.setItem("exsesx:color-scheme", JSON.stringify("light"));
       });
@@ -309,9 +311,8 @@ if (!("Bun" in globalThis)) {
         .not.toBe(lightSampleColor);
       await expectSafariChromeSampleToQualify(sample);
 
-      await page.waitForTimeout(1_100);
       await expectSafariChromeSampleToQualify(sample);
-      await expect(root).not.toHaveAttribute("data-chrome-sample");
+      await expect(root).not.toHaveAttribute("data-chrome-sample-refresh");
     });
 
     test("mobile table of contents keeps an upward selection current after retained touch intent", async ({ page }) => {
@@ -465,29 +466,45 @@ async function expectSafariChromeSampleToQualify(sample: Locator) {
   const surface = await sample.evaluate(element => {
     const rootStyle = getComputedStyle(document.documentElement);
     const sampleStyle = getComputedStyle(element);
+    const headerStyle = getComputedStyle(document.querySelector<HTMLElement>(".site-header")!);
+    const bounds = element.getBoundingClientRect();
 
     return {
+      backdropFilter: sampleStyle.backdropFilter,
+      backgroundClip: sampleStyle.backgroundClip,
       backgroundColor: sampleStyle.backgroundColor,
+      clipPath: sampleStyle.clipPath,
+      filter: sampleStyle.filter,
       height: Number.parseFloat(sampleStyle.height),
+      headerZIndex: Number.parseInt(headerStyle.zIndex, 10),
       opacity: sampleStyle.opacity,
       position: sampleStyle.position,
-      visibleHeight:
-        Math.max(0, Math.min(window.innerHeight, element.getBoundingClientRect().bottom)) -
-        Math.max(0, element.getBoundingClientRect().top),
       rootBackgroundColor: rootStyle.backgroundColor,
       supportsCoarseTouchWebKit:
         CSS.supports("-webkit-touch-callout", "none") && matchMedia("(hover: none) and (pointer: coarse)").matches,
+      textContent: element.textContent,
+      top: bounds.top,
       transitionDuration: sampleStyle.transitionDuration,
       visibility: sampleStyle.visibility,
+      viewportWidth: window.innerWidth,
+      width: bounds.width,
+      zIndex: Number.parseInt(sampleStyle.zIndex, 10),
     };
   });
 
   if (surface.supportsCoarseTouchWebKit) {
     expect(surface.height).toBeGreaterThanOrEqual(11);
-    expect(surface.visibleHeight).toBeLessThanOrEqual(2);
+    expect(surface.top).toBeCloseTo(0, 0);
+    expect(surface.width / surface.viewportWidth).toBeGreaterThanOrEqual(0.9);
   }
+  expect(surface.backdropFilter).toBe("none");
+  expect(surface.backgroundClip).toBe("text");
+  expect(surface.clipPath).toBe("none");
+  expect(surface.filter).toBe("none");
   expect(surface.position).toBe("fixed");
   expect(surface.opacity).toBe("1");
+  expect(surface.zIndex).toBeGreaterThan(surface.headerZIndex);
+  expect(surface.textContent).toBe("");
   expect(surface.visibility).toBe("visible");
   expect(surface.transitionDuration).toBe("0s");
   expect(surface.backgroundColor).toBe(surface.rootBackgroundColor);

@@ -17,8 +17,8 @@ function noFlashScript(themeColorDark: string, themeColorLight: string) {
   var sampleRefreshFrame = 0;
 
   // A color-only change does not invalidate Safari 26's cached fixed edge.
-  // Pulse the candidate from 11px/-9px to 12px/-10px for one painted frame:
-  // its border box changes, but exactly 2px remains inside the viewport.
+  // Pulse the paintless candidate from 11px to 12px for one painted frame so
+  // its eligible border box changes without exposing a band at the top edge.
   function refreshSafariChromeSample() {
     window.cancelAnimationFrame(sampleRefreshFrame);
     element.dataset.chromeSampleRefresh = "";
