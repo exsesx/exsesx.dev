@@ -132,10 +132,10 @@ if (!("Bun" in globalThis)) {
 
       await expect(root).toHaveAttribute("data-blog-header-motion", "instant");
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "inline");
-      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE - 1);
+      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE / 2);
 
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
-      const visibleTransform = await headerFrame.evaluate(element => {
+      const trackedTransform = await headerFrame.evaluate(element => {
         const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
 
         return {
@@ -144,12 +144,19 @@ if (!("Bun" in globalThis)) {
           translateY: matrix.m42,
         };
       });
-      expect(visibleTransform.scale).toBeCloseTo(1, 3);
-      expect(visibleTransform.translateY).toBeLessThanOrEqual(-visibleTransform.height * 0.95);
-      expect(visibleTransform.translateY).toBeGreaterThanOrEqual(-visibleTransform.height);
+      expect(trackedTransform.scale).toBeCloseTo(1, 3);
+      expect(trackedTransform.translateY).toBeCloseTo(-trackedTransform.height / 2, 1);
 
-      await scrollWithTouchIntent(page, 1);
+      await page.locator("body").dispatchEvent("touchend");
+      await expect(headerFrame).not.toHaveAttribute("data-blog-touch-tracking", "true");
+      await expect
+        .poll(async () =>
+          headerFrame.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42),
+        )
+        .toBeCloseTo(0, 1);
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
 
+      await scrollWithTouchIntent(page, BLOG_HEADER_TOUCH_HIDE_DISTANCE);
       await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
       await expect(headerFrame).toBeHidden();
       await expect(title).toBeInViewport();

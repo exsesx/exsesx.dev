@@ -203,7 +203,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
 
         if (isCoarsePointer && headerFrame) {
           const shouldTrackTouchHide =
-            touchScrollRef.current.phase !== "idle" &&
+            touchScrollRef.current.phase === "active" &&
             hasUserScrollIntent &&
             !nextState.hidden &&
             nextState.direction === "down" &&
@@ -261,6 +261,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
         return;
       }
 
+      resetTouchTracking();
       touchScrollRef.current = {
         ...touchScrollRef.current,
         phase: "settling",
