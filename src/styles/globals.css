@@ -2080,9 +2080,11 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 @media (max-height: 32rem) and (orientation: landscape) {
   .not-found-shell {
-    min-height: 100svh;
-    padding-top: calc(4.5rem + env(safe-area-inset-top));
-    padding-bottom: 1.5rem;
+    min-height: 0;
+    height: 100dvh;
+    justify-content: flex-start;
+    padding-top: calc(6rem + env(safe-area-inset-top));
+    padding-bottom: 0.75rem;
   }
 
   .not-found-title {
@@ -2101,7 +2103,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 
   .not-found-actions {
-    margin-top: 1.25rem;
+    margin-top: 0.75rem;
   }
 }
 
