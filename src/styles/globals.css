@@ -2078,6 +2078,33 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
+@media (max-height: 32rem) and (orientation: landscape) {
+  .not-found-shell {
+    min-height: 100svh;
+    padding-top: calc(4.5rem + env(safe-area-inset-top));
+    padding-bottom: 1.5rem;
+  }
+
+  .not-found-title {
+    font-size: clamp(2.25rem, 7vw, 3.5rem);
+  }
+
+  .not-found-signal {
+    height: 1.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .not-found-copy {
+    margin-top: 1rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .not-found-actions {
+    margin-top: 1.25rem;
+  }
+}
+
 .blog-article-grid {
   display: grid;
   max-width: 69rem;
