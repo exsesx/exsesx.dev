@@ -18,8 +18,10 @@ if (!("Bun" in globalThis)) {
 
       const main = page.locator("#main-content");
       const backdrop = page.locator(".kinetic-backdrop");
+      const viewportMeta = page.locator('meta[name="viewport"]');
       await expect(main).toBeVisible();
       await expect(backdrop).toBeVisible();
+      await expect(viewportMeta).toHaveAttribute("content", /viewport-fit=cover/);
 
       const [mainBounds, backdropBounds, documentBounds] = await Promise.all([
         main.boundingBox(),
