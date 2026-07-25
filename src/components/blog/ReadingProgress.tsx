@@ -72,16 +72,17 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
         progressRootElement.dataset.deviceFrame = "iphone";
         progressRootElement.dataset.deviceOrientation = deviceProgress.orientation;
         progressRootElement.dataset.screenClass = deviceProgress.screenClass;
-        progressRootElement.style.setProperty("--blog-reading-progress-height", `${deviceProgress.pathHeight}px`);
+        progressRootElement.style.setProperty(
+          "--blog-reading-progress-device-height",
+          `${deviceProgress.pathHeight}px`,
+        );
+        progressRootElement.style.setProperty("--blog-reading-progress-line-scale", `${3 / deviceProgress.pathHeight}`);
         progressSvgElement.setAttribute("viewBox", `0 0 ${deviceProgress.pathWidth} ${deviceProgress.pathHeight}`);
         progressPathElement.setAttribute("d", deviceProgress.path);
       } else {
         delete progressRootElement.dataset.deviceFrame;
         delete progressRootElement.dataset.deviceOrientation;
         delete progressRootElement.dataset.screenClass;
-        progressRootElement.style.removeProperty("--blog-reading-progress-height");
-        progressSvgElement?.removeAttribute("viewBox");
-        progressPathElement.removeAttribute("d");
       }
 
       renderProgress();
@@ -109,10 +110,12 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
   return (
     <div ref={progressRootRef} className="blog-reading-progress" aria-hidden="true" hidden>
       <span ref={progressBarRef} />
-      <svg className="blog-reading-progress-device" focusable="false">
-        <title>Reading progress</title>
-        <path ref={progressPathRef} pathLength="1" />
-      </svg>
+      <div className="blog-reading-progress-device-shell">
+        <svg className="blog-reading-progress-device" focusable="false">
+          <title>Reading progress</title>
+          <path ref={progressPathRef} pathLength="1" />
+        </svg>
+      </div>
     </div>
   );
 }

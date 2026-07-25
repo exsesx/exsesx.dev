@@ -328,6 +328,31 @@ describe("Blog production styles", () => {
     expect(source).not.toContain("useState(");
   });
 
+  test("morphs reading progress between the line and device frame without layout animation", async () => {
+    const [css, source] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(readingProgressUrl).text()]);
+    const shellRule = css.match(/\.blog-reading-progress-device-shell\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const deviceShellRule =
+      css.match(
+        /\.blog-reading-progress\[data-device-frame="iphone"\] \.blog-reading-progress-device-shell\s*\{([^}]*)\}/s,
+      )?.[1] ?? "";
+    const readingProgressStart = css.indexOf(".blog-reading-progress-device-shell");
+    const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce)", readingProgressStart);
+    const reducedMotionRules = css.slice(reducedMotionStart, css.indexOf(".blog-article-meta", reducedMotionStart));
+
+    expect(source).toContain('<div className="blog-reading-progress-device-shell">');
+    expect(source).toContain('"--blog-reading-progress-line-scale"');
+    expect(source).not.toContain('progressSvgElement?.removeAttribute("viewBox")');
+    expect(source).not.toContain('progressPathElement.removeAttribute("d")');
+    expect(shellRule).toContain("transform: scaleY(var(--blog-reading-progress-line-scale, 0.01))");
+    expect(shellRule).toContain("transform-origin: top center");
+    expect(shellRule).toContain("opacity var(--duration-exit) var(--ease-out)");
+    expect(shellRule).toContain("transform var(--duration-ui) var(--ease-in-out)");
+    expect(deviceShellRule).toContain("transform: scaleY(1)");
+    expect(reducedMotionRules).toContain(".blog-reading-progress-device-shell");
+    expect(reducedMotionRules).toContain("transform: none");
+    expect(reducedMotionRules).not.toContain("transition: all");
+  });
+
   test("keeps the reading-progress surface non-painting until its first measured commit", async () => {
     const [css, source] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(readingProgressUrl).text()]);
     const markup = renderToStaticMarkup(createElement(ReadingProgress, { articleId: "article-content" }));

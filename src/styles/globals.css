@@ -2015,7 +2015,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   position: fixed;
   inset: 0 0 auto;
   z-index: 70;
-  height: var(--blog-reading-progress-height, 3px);
+  height: 3px;
   pointer-events: none;
 }
 
@@ -2024,18 +2024,41 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-reading-progress span {
+  position: absolute;
+  inset: 0 0 auto;
   display: block;
   width: 100%;
-  height: 100%;
+  height: 3px;
   background: var(--accent);
   box-shadow: 0 0 10px color-mix(in oklab, var(--accent) 62%, transparent);
+  opacity: 1;
   transform: scaleX(0);
   transform-origin: left center;
-  will-change: transform;
+  visibility: visible;
+  transition:
+    opacity var(--duration-enter) var(--ease-out),
+    visibility 0s linear;
+  will-change: transform, opacity;
+}
+
+.blog-reading-progress-device-shell {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: var(--blog-reading-progress-device-height, 3px);
+  opacity: 0;
+  transform: scaleY(var(--blog-reading-progress-line-scale, 0.01));
+  transform-origin: top center;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-exit) var(--ease-out),
+    transform var(--duration-ui) var(--ease-in-out),
+    visibility 0s linear var(--duration-ui);
+  will-change: transform, opacity;
 }
 
 .blog-reading-progress-device {
-  display: none;
+  display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
@@ -2053,11 +2076,49 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-reading-progress[data-device-frame="iphone"] span {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-exit) var(--ease-out),
+    visibility 0s linear var(--duration-exit);
 }
 
-.blog-reading-progress[data-device-frame="iphone"] .blog-reading-progress-device {
-  display: block;
+.blog-reading-progress[data-device-frame="iphone"] .blog-reading-progress-device-shell {
+  opacity: 1;
+  transform: scaleY(1);
+  visibility: visible;
+  transition:
+    opacity var(--duration-enter) var(--ease-out),
+    transform var(--duration-ui) var(--ease-in-out),
+    visibility 0s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-reading-progress span {
+    transition:
+      opacity var(--duration-exit) linear,
+      visibility 0s linear;
+  }
+
+  .blog-reading-progress-device-shell {
+    transform: none;
+    transition:
+      opacity var(--duration-exit) linear,
+      visibility 0s linear var(--duration-exit);
+  }
+
+  .blog-reading-progress[data-device-frame="iphone"] span {
+    transition:
+      opacity var(--duration-exit) linear,
+      visibility 0s linear var(--duration-exit);
+  }
+
+  .blog-reading-progress[data-device-frame="iphone"] .blog-reading-progress-device-shell {
+    transform: none;
+    transition:
+      opacity var(--duration-exit) linear,
+      visibility 0s linear;
+  }
 }
 
 .blog-article-meta {

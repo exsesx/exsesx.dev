@@ -65,6 +65,7 @@ if (!("Bun" in globalThis)) {
       const article = page.locator("#article-content");
       const progress = page.locator(".blog-reading-progress");
       const fallbackBar = progress.locator("span");
+      const deviceShell = progress.locator(".blog-reading-progress-device-shell");
       const deviceProgress = progress.locator(".blog-reading-progress-device");
       const devicePath = deviceProgress.locator("path");
 
@@ -159,6 +160,37 @@ if (!("Bun" in globalThis)) {
       await expect
         .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
         .toBeLessThan(dashOffsetBeforeScroll);
+
+      await deviceShell.evaluate(element => {
+        element.dataset.transitionProperties = "";
+        element.addEventListener("transitionrun", event => {
+          if (event.target !== element) {
+            return;
+          }
+
+          element.dataset.transitionProperties =
+            `${element.dataset.transitionProperties ?? ""} ${(event as TransitionEvent).propertyName}`.trim();
+        });
+      });
+
+      await page.setViewportSize({ width: 874, height: 330 });
+      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
+      await expect.poll(() => deviceShell.getAttribute("data-transition-properties")).toContain("transform");
+      await expect(progress).toHaveCSS("height", "3px");
+      await expect(fallbackBar).toBeVisible();
+      await expect(deviceProgress).toBeHidden();
+
+      await deviceShell.evaluate(element => {
+        element.dataset.transitionProperties = "";
+      });
+      await page.setViewportSize({ width: 874, height: 402 });
+      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+      await expect.poll(() => deviceShell.getAttribute("data-transition-properties")).toContain("transform");
+      await expect(fallbackBar).toBeHidden();
+      await expect(deviceProgress).toBeVisible();
+      await expect
+        .poll(() => deviceShell.evaluate(element => element.getBoundingClientRect().height))
+        .toBeCloseTo(402, 1);
 
       await page.setViewportSize({ width: 402, height: 874 });
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
