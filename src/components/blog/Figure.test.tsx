@@ -5,6 +5,14 @@ import Figure from "./Figure";
 
 const testImage: StaticImageData = {
   src: "/test-image.webp",
+  blurDataURL: "data:image/webp;base64,light",
+  height: 560,
+  width: 1000,
+};
+
+const darkTestImage: StaticImageData = {
+  src: "/test-image-dark.webp",
+  blurDataURL: "data:image/webp;base64,dark",
   height: 560,
   width: 1000,
 };
@@ -15,11 +23,32 @@ describe("Figure", () => {
 
     expect(markup).toContain('class="blog-figure"');
     expect(markup).not.toContain("blog-figure--intrinsic");
+    expect(markup).not.toContain("blog-figure-image--light");
+    expect(markup).not.toContain("blog-figure-image--dark");
   });
 
   test("opts into the image's intrinsic transparent corners", () => {
     const markup = renderToStaticMarkup(<Figure src={testImage} alt="Test image" frame="intrinsic" />);
 
     expect(markup).toContain('class="blog-figure blog-figure--intrinsic"');
+  });
+
+  test("preserves preloading for a priority figure with one source", () => {
+    const markup = renderToStaticMarkup(<Figure src={testImage} alt="Test image" priority />);
+
+    expect(markup).toContain('rel="preload"');
+  });
+
+  test("renders appearance-specific image sources when a dark image is provided", () => {
+    const markup = renderToStaticMarkup(<Figure src={testImage} darkSrc={darkTestImage} alt="Test image" priority />);
+
+    expect(markup).toContain("test-image.webp");
+    expect(markup).toContain("test-image-dark.webp");
+    expect(markup).toContain("blog-figure-image--light");
+    expect(markup).toContain("blog-figure-image--dark");
+    expect(markup.match(/rel="preload"/g)).toHaveLength(2);
+    expect(markup.match(/loading="eager"/g)).toHaveLength(2);
+    expect(markup).toContain("data:image/webp;base64,light");
+    expect(markup).toContain("data:image/webp;base64,dark");
   });
 });
