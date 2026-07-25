@@ -221,7 +221,10 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
     function update() {
       const scrollY = window.scrollY;
       const activeElement = document.activeElement;
-      const hasHeaderFocus = activeElement instanceof Node && Boolean(headerFrame?.contains(activeElement));
+      const hasHeaderFocus =
+        activeElement instanceof Element &&
+        activeElement.matches(":focus-visible") &&
+        Boolean(headerFrame?.contains(activeElement));
       const previousState = passiveStateRef.current;
       const nextState = updatePassiveBlogHeader(previousState, {
         directionChangeDeadband: isCoarsePointer ? BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND : 0,

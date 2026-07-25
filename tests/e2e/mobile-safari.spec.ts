@@ -243,6 +243,57 @@ if (!("Bun" in globalThis)) {
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
     });
 
+    test("theme selection restores pointer focus without pinning the passive header", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const themeButton = page.locator('button[aria-label^="Theme:"]');
+      const themeMenu = page.getByRole("menu");
+      const nextMode = await page
+        .locator("html")
+        .evaluate(element => (element.classList.contains("dark") ? "Light" : "Dark"));
+
+      await themeButton.click();
+      await page.getByRole("menuitemradio", { name: nextMode }).click();
+      await expect(themeMenu).toBeHidden();
+      await page.evaluate(
+        () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      );
+      await page.locator("body").dispatchEvent("touchmove");
+      expect(
+        await themeButton.evaluate((element, distance) => {
+          (element as HTMLElement).focus();
+          window.scrollBy({ behavior: "instant", top: distance });
+
+          return element.matches(":focus-visible");
+        }, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE),
+      ).toBe(false);
+
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+    });
+
+    test("focus-visible header controls remain protected from scroll dismissal", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const themeButton = page.locator('button[aria-label^="Theme:"]');
+
+      await page.keyboard.press("Tab");
+      expect(
+        await themeButton.evaluate(element => {
+          (element as HTMLElement).focus();
+
+          return element.matches(":focus-visible");
+        }),
+      ).toBe(true);
+      await page.evaluate(
+        distance => window.scrollBy({ behavior: "instant", top: distance }),
+        BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE,
+      );
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+    });
+
     test("Mermaid reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
       await page.goto(MERMAID_ARTICLE_PATH);
 
