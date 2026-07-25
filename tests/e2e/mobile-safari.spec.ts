@@ -220,6 +220,29 @@ if (!("Bun" in globalThis)) {
         .toBeCloseTo(0, 1);
     });
 
+    test("rapid upward touch gestures preserve enough intent to reacquire the header", async ({ page }) => {
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator('[data-blog-article="true"]');
+      const body = page.locator("body");
+
+      await scrollWithTouchIntent(page, BLOG_HEADER_HIDE_START + BLOG_HEADER_TOUCH_HIDE_DISTANCE);
+      await expect(root).toHaveAttribute("data-blog-passive-hidden", "true");
+      await body.dispatchEvent("touchend");
+
+      for (let gesture = 0; gesture < 2; gesture += 1) {
+        await body.dispatchEvent("touchstart");
+        await body.dispatchEvent("touchmove");
+        await page.evaluate(() => window.scrollBy({ behavior: "instant", top: -10 }));
+        await body.dispatchEvent("touchend");
+        await page.evaluate(
+          () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+        );
+      }
+
+      await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
+    });
+
     test("Mermaid reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
       await page.goto(MERMAID_ARTICLE_PATH);
 

@@ -15,7 +15,6 @@ import {
 import { BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE, BLOG_FOCUS_BOOTSTRAP_EVENT } from "@/lib/blog-focus-bootstrap";
 
 const SCROLL_INTENT_KEYS = new Set(["ArrowDown", "ArrowUp", "End", "Home", "PageDown", "PageUp", " "]);
-const TOUCH_SCROLL_FALLBACK_DELAY = 160;
 const HEADER_SPRING_ACTIVE_ATTRIBUTE = "data-blog-header-spring";
 const HEADER_SPRING_SETTLED_ATTRIBUTE = "data-blog-header-spring-settled";
 const HEADER_SPRING_CONFIG = {
@@ -63,12 +62,9 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
     motion: "instant",
     pathname: "",
   });
-  const hasUserScrollIntentRef = useRef(false);
   const headerFrameRef = useRef<HTMLElement | null>(null);
   const headerHiddenTargetRef = useRef(false);
-  const isTouchingRef = useRef(false);
   const passiveStateRef = useRef(createPassiveBlogHeaderState());
-  const touchFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tocNavigationIdRef = useRef<number | null>(null);
   const nextTocNavigationIdRef = useRef(0);
   const prefersReducedMotion = useReducedMotion();
@@ -150,15 +146,9 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
   }, [pathname, setHeaderMotionTarget]);
 
   const beginTocNavigation = useCallback(() => {
-    if (touchFallbackTimerRef.current !== null) {
-      clearTimeout(touchFallbackTimerRef.current);
-      touchFallbackTimerRef.current = null;
-    }
-
     const navigationId = nextTocNavigationIdRef.current + 1;
     nextTocNavigationIdRef.current = navigationId;
     tocNavigationIdRef.current = navigationId;
-    hasUserScrollIntentRef.current = false;
 
     const nextState = updatePassiveBlogHeader(passiveStateRef.current, {
       hasUserScrollIntent: false,
@@ -178,7 +168,6 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
         }
 
         tocNavigationIdRef.current = null;
-        hasUserScrollIntentRef.current = false;
         passiveStateRef.current = createPassiveBlogHeaderState(
           window.scrollY,
           passiveStateRef.current.hidden,
@@ -221,56 +210,15 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
       setHeaderMotionTarget(passiveStateRef.current.hidden, "instant");
     }
 
-    hasUserScrollIntentRef.current = false;
     tocNavigationIdRef.current = null;
     let motion: PassiveHeaderMotion = "instant";
 
-    function cancelTouchFallback() {
-      if (touchFallbackTimerRef.current === null) {
-        return;
-      }
-
-      clearTimeout(touchFallbackTimerRef.current);
-      touchFallbackTimerRef.current = null;
-    }
-
-    function completeScrollIntent() {
-      if (isTouchingRef.current) {
-        return;
-      }
-
-      cancelTouchFallback();
-      hasUserScrollIntentRef.current = false;
-      passiveStateRef.current = createPassiveBlogHeaderState(
-        window.scrollY,
-        passiveStateRef.current.hidden,
-        readMaxScrollY(),
-      );
-    }
-
-    function scheduleTouchFallback() {
-      cancelTouchFallback();
-      touchFallbackTimerRef.current = setTimeout(completeScrollIntent, TOUCH_SCROLL_FALLBACK_DELAY);
-    }
-
-    function beginTouchIntent() {
-      cancelTouchFallback();
-      isTouchingRef.current = true;
+    function beginAnimatedScroll() {
       tocNavigationIdRef.current = null;
-      hasUserScrollIntentRef.current = true;
       motion = "animated";
-      passiveStateRef.current = createPassiveBlogHeaderState(
-        window.scrollY,
-        passiveStateRef.current.hidden,
-        readMaxScrollY(),
-      );
     }
 
     function update() {
-      if (touchFallbackTimerRef.current !== null) {
-        scheduleTouchFallback();
-      }
-
       const scrollY = window.scrollY;
       const activeElement = document.activeElement;
       const hasHeaderFocus = activeElement instanceof Node && Boolean(headerFrame?.contains(activeElement));
@@ -278,7 +226,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
       const nextState = updatePassiveBlogHeader(previousState, {
         directionChangeDeadband: isCoarsePointer ? BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND : 0,
         hasHeaderFocus,
-        hasUserScrollIntent: tocNavigationIdRef.current === null && hasUserScrollIntentRef.current,
+        hasUserScrollIntent: tocNavigationIdRef.current === null,
         hideDistance,
         maxScrollY: readMaxScrollY(),
         revealDistance,
@@ -300,30 +248,17 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
       }
 
       if (SCROLL_INTENT_KEYS.has(event.key)) {
-        cancelTouchFallback();
         tocNavigationIdRef.current = null;
-        hasUserScrollIntentRef.current = true;
         motion = "instant";
       }
     }
 
     function handleTouchStart() {
-      beginTouchIntent();
+      beginAnimatedScroll();
     }
 
     function handleTouchMove() {
-      if (!isTouchingRef.current) {
-        beginTouchIntent();
-      }
-
-      tocNavigationIdRef.current = null;
-      hasUserScrollIntentRef.current = true;
-      motion = "animated";
-    }
-
-    function handleTouchEnd() {
-      isTouchingRef.current = false;
-      scheduleTouchFallback();
+      beginAnimatedScroll();
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -331,19 +266,13 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
       const isScrollbarLane = event.clientX >= document.documentElement.clientWidth - 1;
 
       if (isMiddleButton || isScrollbarLane) {
-        cancelTouchFallback();
-        tocNavigationIdRef.current = null;
-        hasUserScrollIntentRef.current = true;
-        motion = "animated";
+        beginAnimatedScroll();
       }
     }
 
     function handleWheel(event: WheelEvent) {
       if (event.deltaY !== 0) {
-        cancelTouchFallback();
-        tocNavigationIdRef.current = null;
-        hasUserScrollIntentRef.current = true;
-        motion = "animated";
+        beginAnimatedScroll();
       }
     }
 
@@ -361,28 +290,20 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
     }
 
     window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("scrollend", completeScrollIntent);
     window.addEventListener("pointerdown", handlePointerDown, { capture: true });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
-    window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
     window.addEventListener("wheel", handleWheel, { passive: true });
     window.addEventListener("keydown", handleKeyboardIntent, { capture: true });
 
     return () => {
-      cancelTouchFallback();
-      isTouchingRef.current = false;
       resizeObserver?.disconnect();
       resetHeaderMotion();
       window.removeEventListener(BLOG_FOCUS_BOOTSTRAP_EVENT, synchronizePassiveVisibility);
       window.removeEventListener("scroll", update);
-      window.removeEventListener("scrollend", completeScrollIntent);
       window.removeEventListener("pointerdown", handlePointerDown, { capture: true });
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
-      window.removeEventListener("touchcancel", handleTouchEnd);
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("keydown", handleKeyboardIntent, { capture: true });
     };
