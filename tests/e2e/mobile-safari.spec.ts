@@ -138,10 +138,15 @@ if (!("Bun" in globalThis)) {
       const visibleTransform = await headerFrame.evaluate(element => {
         const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
 
-        return { scale: matrix.a, translateY: matrix.m42 };
+        return {
+          height: element.getBoundingClientRect().height,
+          scale: matrix.a,
+          translateY: matrix.m42,
+        };
       });
       expect(visibleTransform.scale).toBeCloseTo(1, 3);
-      expect(visibleTransform.translateY).toBeCloseTo(0, 1);
+      expect(visibleTransform.translateY).toBeLessThanOrEqual(-visibleTransform.height * 0.95);
+      expect(visibleTransform.translateY).toBeGreaterThanOrEqual(-visibleTransform.height);
 
       await scrollWithTouchIntent(page, 1);
 

@@ -764,13 +764,20 @@ html[data-season="pride"] .logo-mark-pride {
 
 @media (hover: none) and (pointer: coarse) {
   [data-blog-article="true"] .site-header-nav-frame {
+    will-change: opacity, transform;
+    transform: translate3d(0, var(--blog-header-touch-offset, 0%), 0) scale(1);
     transition:
       opacity 240ms var(--ease-out),
-      transform 300ms var(--ease-weight),
+      transform 280ms var(--ease-weight),
       visibility 0s linear;
   }
 
+  [data-blog-article="true"] .site-header-nav-frame[data-blog-touch-tracking="true"] {
+    transition: none;
+  }
+
   [data-blog-article="true"] .site-header-fade {
+    will-change: opacity;
     transition:
       opacity 240ms var(--ease-out),
       visibility 0s linear;

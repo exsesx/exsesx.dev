@@ -426,10 +426,13 @@ describe("Blog production styles", () => {
     expect(visibleFadeRule).not.toContain("transform");
     expect(hiddenFadeRule).not.toContain("transform");
     expect(coarseTouchRules).toMatch(
-      /\[data-blog-article="true"\] \.site-header-nav-frame\s*\{[^}]*opacity 240ms var\(--ease-out\)[^}]*transform 300ms var\(--ease-weight\)/s,
+      /\[data-blog-article="true"\] \.site-header-nav-frame\s*\{[^}]*will-change:\s*opacity, transform[^}]*transform:\s*translate3d\(0, var\(--blog-header-touch-offset, 0%\), 0\) scale\(1\)[^}]*opacity 240ms var\(--ease-out\)[^}]*transform 280ms var\(--ease-weight\)/s,
     );
     expect(coarseTouchRules).toMatch(
-      /\[data-blog-article="true"\] \.site-header-fade\s*\{[^}]*opacity 240ms var\(--ease-out\)/s,
+      /\.site-header-nav-frame\[data-blog-touch-tracking="true"\]\s*\{[^}]*transition:\s*none/s,
+    );
+    expect(coarseTouchRules).toMatch(
+      /\[data-blog-article="true"\] \.site-header-fade\s*\{[^}]*will-change:\s*opacity[^}]*opacity 240ms var\(--ease-out\)/s,
     );
     expect(coarseTouchRules).toMatch(
       /\.site-header-nav-frame\s*\{[^}]*opacity 220ms var\(--ease-out\)[^}]*transform 280ms var\(--ease-out\)[^}]*visibility 0s linear 280ms/s,

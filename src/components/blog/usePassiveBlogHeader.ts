@@ -16,6 +16,8 @@ import { BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE, BLOG_FOCUS_BOOTSTRAP_EVENT } from "@/li
 
 const SCROLL_INTENT_KEYS = new Set(["ArrowDown", "ArrowUp", "End", "Home", "PageDown", "PageUp", " "]);
 const TOUCH_SCROLL_SETTLE_DELAY = 160;
+const TOUCH_HEADER_OFFSET_PROPERTY = "--blog-header-touch-offset";
+const TOUCH_HEADER_TRACKING_ATTRIBUTE = "data-blog-touch-tracking";
 
 type PassiveHeaderMotion = "animated" | "instant";
 type TouchScrollPhase = "active" | "idle" | "settling";
@@ -44,6 +46,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
     pathname: "",
   });
   const hasUserScrollIntentRef = useRef(false);
+  const headerFrameRef = useRef<HTMLElement | null>(null);
   const passiveStateRef = useRef(createPassiveBlogHeaderState());
   const touchScrollRef = useRef<{ phase: TouchScrollPhase }>({ phase: "idle" });
   const touchSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,10 +55,16 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
   const isPassiveHeaderHidden =
     isBlogArticle && !isFocusMode && passiveVisibility.pathname === pathname && passiveVisibility.hidden;
 
+  const resetTouchTracking = useCallback(() => {
+    headerFrameRef.current?.removeAttribute(TOUCH_HEADER_TRACKING_ATTRIBUTE);
+    headerFrameRef.current?.style.removeProperty(TOUCH_HEADER_OFFSET_PROPERTY);
+  }, []);
+
   const revealHeader = useCallback(() => {
+    resetTouchTracking();
     passiveStateRef.current = revealPassiveBlogHeader(passiveStateRef.current, window.scrollY);
     setPassiveVisibility({ hidden: false, motion: "instant", pathname });
-  }, [pathname]);
+  }, [pathname, resetTouchTracking]);
 
   const beginTocNavigation = useCallback(() => {
     if (touchSettleTimerRef.current !== null) {
@@ -64,6 +73,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
     }
 
     touchScrollRef.current = { phase: "idle" };
+    resetTouchTracking();
     const navigationId = nextTocNavigationIdRef.current + 1;
     nextTocNavigationIdRef.current = navigationId;
     tocNavigationIdRef.current = navigationId;
@@ -90,12 +100,13 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
       },
       isActive: () => tocNavigationIdRef.current === navigationId,
     };
-  }, [isBlogArticle, isFocusMode, pathname]);
+  }, [isBlogArticle, isFocusMode, pathname, resetTouchTracking]);
 
   useLayoutEffect(() => {
     const bootstrapElement = document.documentElement;
 
     function synchronizePassiveVisibility() {
+      resetTouchTracking();
       const scrollY = window.scrollY;
       const bootstrapStartsHidden = bootstrapElement.dataset[BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE] === "hidden";
       const startsPastHidePoint = isBlogArticle && (bootstrapStartsHidden || scrollY >= BLOG_HEADER_HIDE_AFTER);
@@ -112,6 +123,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
     }
 
     const headerFrame = document.querySelector<HTMLElement>(".site-header-nav-frame");
+    headerFrameRef.current = headerFrame;
     const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
     const hideDistance = isCoarsePointer ? BLOG_HEADER_TOUCH_HIDE_DISTANCE : BLOG_HEADER_HIDE_DISTANCE;
     const revealDistance = isCoarsePointer ? BLOG_HEADER_TOUCH_REVEAL_DISTANCE : BLOG_HEADER_REVEAL_DISTANCE;
@@ -141,6 +153,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
         ...touchScrollRef.current,
         phase: "idle",
       };
+      resetTouchTracking();
       hasUserScrollIntentRef.current = false;
       passiveStateRef.current = createPassiveBlogHeaderState(window.scrollY, passiveStateRef.current.hidden);
     }
@@ -152,6 +165,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
 
     function beginTouchScroll() {
       cancelTouchSettle();
+      resetTouchTracking();
       tocNavigationIdRef.current = null;
       hasUserScrollIntentRef.current = true;
       motion = "animated";
@@ -161,6 +175,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
 
     function cancelTouchScroll() {
       cancelTouchSettle();
+      resetTouchTracking();
       touchScrollRef.current = { phase: "idle" };
     }
 
@@ -174,15 +189,36 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
         const scrollY = window.scrollY;
         const activeElement = document.activeElement;
         const hasHeaderFocus = activeElement instanceof Node && Boolean(headerFrame?.contains(activeElement));
-        const nextState = updatePassiveBlogHeader(passiveStateRef.current, {
+        const previousState = passiveStateRef.current;
+        const hasUserScrollIntent = tocNavigationIdRef.current === null && hasUserScrollIntentRef.current;
+        const nextState = updatePassiveBlogHeader(previousState, {
           directionChangeDeadband: isCoarsePointer ? BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND : 0,
           hasHeaderFocus,
-          hasUserScrollIntent: tocNavigationIdRef.current === null && hasUserScrollIntentRef.current,
+          hasUserScrollIntent,
           hideDistance,
           revealDistance,
           shouldHideWithoutIntent: tocNavigationIdRef.current !== null || scrollY >= BLOG_HEADER_HIDE_AFTER,
           scrollY,
         });
+
+        if (isCoarsePointer && headerFrame) {
+          const shouldTrackTouchHide =
+            touchScrollRef.current.phase !== "idle" &&
+            hasUserScrollIntent &&
+            !nextState.hidden &&
+            nextState.direction === "down" &&
+            nextState.accumulatedDistance > 0;
+
+          if (shouldTrackTouchHide) {
+            const hideProgress = Math.min(nextState.accumulatedDistance / hideDistance, 1);
+            headerFrame.setAttribute(TOUCH_HEADER_TRACKING_ATTRIBUTE, "true");
+            headerFrame.style.setProperty(TOUCH_HEADER_OFFSET_PROPERTY, `${(-hideProgress * 100).toFixed(3)}%`);
+          } else if (!previousState.hidden && nextState.hidden) {
+            headerFrame.removeAttribute(TOUCH_HEADER_TRACKING_ATTRIBUTE);
+          } else {
+            resetTouchTracking();
+          }
+        }
 
         passiveStateRef.current = nextState;
         setPassiveVisibility(current =>
@@ -270,6 +306,10 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
     return () => {
       cancelAnimationFrame(frame);
       cancelTouchSettle();
+      resetTouchTracking();
+      if (headerFrameRef.current === headerFrame) {
+        headerFrameRef.current = null;
+      }
       window.removeEventListener(BLOG_FOCUS_BOOTSTRAP_EVENT, synchronizePassiveVisibility);
       window.removeEventListener("scroll", update);
       window.removeEventListener("scrollend", handleScrollEnd);
@@ -281,7 +321,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("keydown", handleKeyboardIntent, { capture: true });
     };
-  }, [isBlogArticle, isFocusMode, pathname, revealHeader]);
+  }, [isBlogArticle, isFocusMode, pathname, resetTouchTracking, revealHeader]);
 
   useLayoutEffect(() => {
     const bootstrapElement = document.documentElement;
