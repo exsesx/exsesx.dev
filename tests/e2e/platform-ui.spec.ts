@@ -272,11 +272,14 @@ if (!("Bun" in globalThis)) {
       await expectPageToFitViewport(page);
 
       await Promise.all([
-        page.waitForURL("**/blog/en/umbra-light-dark-wallpapers"),
+        page.waitForURL("**/blog/en/safari-26-invisible-tint-sampler"),
         page.getByRole("link", { name: "Read article" }).click(),
       ]);
       await expect(
-        page.getByRole("heading", { level: 1, name: "Two wallpapers brought me back to Light Mode" }),
+        page.getByRole("heading", {
+          level: 1,
+          name: "The invisible 11px element that fixed Safari 26 tinting",
+        }),
       ).toBeVisible();
       await expectPageToFitViewport(page);
     });

@@ -44,7 +44,7 @@ describe("glass tier contracts", () => {
     expect(css).toMatch(
       /@media \(prefers-reduced-transparency: reduce\)[\s\S]*?\.glass-frost,[\s\S]*?\.hero-surface-panel[\s\S]*?backdrop-filter:\s*none/,
     );
-    expect(css).toMatch(/\.site-header\s*\{[\s\S]*?background-color:\s*var\(--safari-chrome-color\)/);
+    expect(css).toMatch(/\.safari-chrome-sample\s*\{[\s\S]*?background-color:\s*var\(--safari-chrome-color\)/);
   });
 
   test("classifies large heroes as rim-lit panels and small surfaces as frost", async () => {

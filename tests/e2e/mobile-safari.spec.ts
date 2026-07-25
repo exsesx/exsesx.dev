@@ -278,6 +278,43 @@ if (!("Bun" in globalThis)) {
       expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth);
     });
 
+    test("keeps the Safari chrome sample paintless and frontmost across theme and drawer recomputes", async ({
+      page,
+    }) => {
+      await page.addInitScript(() => {
+        localStorage.setItem("exsesx:color-scheme", JSON.stringify("light"));
+      });
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const root = page.locator("html");
+      const sample = page.locator("[data-safari-chrome-sample]");
+      const trigger = page.getByTestId("mobile-toc-trigger");
+      const drawer = page.getByTestId("mobile-toc-drawer");
+      const drawerPortal = page.locator('[data-slot="drawer-portal"]');
+
+      await expectSafariChromeSampleToQualify(sample);
+      await trigger.click();
+      await expect(drawer).toBeVisible();
+      await expectSafariChromeSampleToQualify(sample);
+
+      await drawer.getByRole("button", { name: "Close table of contents" }).click();
+      await expect(drawerPortal).toHaveCount(0);
+      await expectSafariChromeSampleToQualify(sample);
+
+      const lightSampleColor = await sample.evaluate(element => getComputedStyle(element).backgroundColor);
+      await page.getByRole("button", { name: "Theme: Light" }).click();
+      await page.getByRole("menuitemradio", { name: "Dark" }).click();
+
+      await expect(root).toHaveClass(/dark/);
+      await expect
+        .poll(() => sample.evaluate(element => getComputedStyle(element).backgroundColor))
+        .not.toBe(lightSampleColor);
+      await expectSafariChromeSampleToQualify(sample);
+
+      await expectSafariChromeSampleToQualify(sample);
+      await expect(root).not.toHaveAttribute("data-chrome-sample-refresh");
+    });
+
     test("mobile table of contents keeps an upward selection current after retained touch intent", async ({ page }) => {
       await page.goto(BLOG_ARTICLE_PATH);
 
@@ -337,7 +374,7 @@ if (!("Bun" in globalThis)) {
       expect(dockedTriggerBounds?.x).toBeCloseTo(20, 0);
       expect(
         (page.viewportSize()?.height ?? 0) - (dockedTriggerBounds?.y ?? 0) - (dockedTriggerBounds?.height ?? 0),
-      ).toBeCloseTo(20, 0);
+      ).toBeCloseTo(8, 0);
       await expect(triggerFace).not.toHaveCSS("backdrop-filter", "none");
 
       // Reproduce the touch intent retained immediately before a TOC-driven
@@ -416,13 +453,61 @@ if (!("Bun" in globalThis)) {
 
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
       await expect(trigger).toBeVisible();
-      await expect(trigger).toHaveCSS("bottom", "20px");
+      await expect(trigger).toHaveCSS("bottom", "8px");
 
       const bounds = await trigger.boundingBox();
       expect(bounds).not.toBeNull();
-      expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(20, 0);
+      expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(8, 0);
     });
   });
+}
+
+async function expectSafariChromeSampleToQualify(sample: Locator) {
+  const surface = await sample.evaluate(element => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const sampleStyle = getComputedStyle(element);
+    const headerStyle = getComputedStyle(document.querySelector<HTMLElement>(".site-header")!);
+    const bounds = element.getBoundingClientRect();
+
+    return {
+      backdropFilter: sampleStyle.backdropFilter,
+      backgroundClip: sampleStyle.backgroundClip,
+      backgroundColor: sampleStyle.backgroundColor,
+      clipPath: sampleStyle.clipPath,
+      filter: sampleStyle.filter,
+      height: Number.parseFloat(sampleStyle.height),
+      headerZIndex: Number.parseInt(headerStyle.zIndex, 10),
+      opacity: sampleStyle.opacity,
+      position: sampleStyle.position,
+      rootBackgroundColor: rootStyle.backgroundColor,
+      supportsCoarseTouchWebKit:
+        CSS.supports("-webkit-touch-callout", "none") && matchMedia("(hover: none) and (pointer: coarse)").matches,
+      textContent: element.textContent,
+      top: bounds.top,
+      transitionDuration: sampleStyle.transitionDuration,
+      visibility: sampleStyle.visibility,
+      viewportWidth: window.innerWidth,
+      width: bounds.width,
+      zIndex: Number.parseInt(sampleStyle.zIndex, 10),
+    };
+  });
+
+  if (surface.supportsCoarseTouchWebKit) {
+    expect(surface.height).toBeGreaterThanOrEqual(11);
+    expect(surface.top).toBeCloseTo(0, 0);
+    expect(surface.width / surface.viewportWidth).toBeGreaterThanOrEqual(0.9);
+  }
+  expect(surface.backdropFilter).toBe("none");
+  expect(surface.backgroundClip).toBe("text");
+  expect(surface.clipPath).toBe("none");
+  expect(surface.filter).toBe("none");
+  expect(surface.position).toBe("fixed");
+  expect(surface.opacity).toBe("1");
+  expect(surface.zIndex).toBeGreaterThan(surface.headerZIndex);
+  expect(surface.textContent).toBe("");
+  expect(surface.visibility).toBe("visible");
+  expect(surface.transitionDuration).toBe("0s");
+  expect(surface.backgroundColor).toBe(surface.rootBackgroundColor);
 }
 
 async function scrollWithTouchIntent(page: Page, deltaY: number) {

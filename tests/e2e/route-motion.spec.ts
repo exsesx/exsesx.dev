@@ -576,6 +576,7 @@ if (!("Bun" in globalThis)) {
       const errors = collectRuntimeErrors(page);
       await page.goto("/projects");
       const backButton = page.getByRole("button", { name: "Back", includeHidden: true });
+      const chromeSample = page.locator("[data-safari-chrome-sample]");
       const initial = await measureHeaderGeometry(page);
 
       await expect(backButton).toBeDisabled();
@@ -602,10 +603,8 @@ if (!("Bun" in globalThis)) {
 
       expect(active.back.width).toBeGreaterThanOrEqual(39.9);
       expect(active.back.height).toBeGreaterThanOrEqual(40);
-      await expect(page.locator("header[data-safari-chrome-sample]")).toHaveAttribute(
-        "data-safari-chrome-sample",
-        "true",
-      );
+      await expect(chromeSample).toHaveAttribute("data-safari-chrome-sample", "true");
+      await expect(page.locator(".site-header")).not.toHaveAttribute("data-safari-chrome-sample");
       expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
       expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
 
@@ -631,10 +630,7 @@ if (!("Bun" in globalThis)) {
       expect(await backButton.getAttribute("aria-hidden")).toBeNull();
       await expect(backButton).toHaveCSS("opacity", "1");
       expect(reducedActive.back.layoutWidth).toBeGreaterThanOrEqual(40);
-      await expect(page.locator("header[data-safari-chrome-sample]")).toHaveAttribute(
-        "data-safari-chrome-sample",
-        "true",
-      );
+      await expect(chromeSample).toHaveAttribute("data-safari-chrome-sample", "true");
       expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
       expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
       const reducedDurations = await backButton.evaluate(element =>

@@ -14,19 +14,20 @@ function noFlashScript(themeColorDark: string, themeColorLight: string) {
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
   var themeColorMeta: HTMLMetaElement | null = null;
-  var sampleBandTimer = 0;
+  var sampleRefreshFrame = 0;
 
-  // Safari 26 keeps a sampled chrome color after the sampled element disappears
-  // (found on device 2026-06-11), so flash .site-header around first paint,
-  // theme changes, and bfcache restores, then drop it. CSS consumes this signal
-  // only on coarse touch WebKit so the sampling band never becomes persistent UI.
-  // See html[data-chrome-sample] in globals.css.
-  function flashChromeSampleBand() {
-    window.clearTimeout(sampleBandTimer);
-    element.dataset.chromeSample = "";
-    sampleBandTimer = window.setTimeout(() => {
-      delete element.dataset.chromeSample;
-    }, 1000);
+  // A color-only change does not invalidate Safari 26's cached fixed edge.
+  // Pulse the paintless candidate from 11px to 12px for one painted frame so
+  // its eligible border box changes without exposing a band at the top edge.
+  function refreshSafariChromeSample() {
+    window.cancelAnimationFrame(sampleRefreshFrame);
+    element.dataset.chromeSampleRefresh = "";
+    sampleRefreshFrame = window.requestAnimationFrame(() => {
+      sampleRefreshFrame = window.requestAnimationFrame(() => {
+        delete element.dataset.chromeSampleRefresh;
+        sampleRefreshFrame = 0;
+      });
+    });
   }
 
   // Own the theme-color meta instead of touching React's: React hoists head
@@ -61,7 +62,7 @@ function noFlashScript(themeColorDark: string, themeColorLight: string) {
     element.style.backgroundColor = color;
     element.style.colorScheme = scheme;
     syncThemeColorMeta();
-    flashChromeSampleBand();
+    refreshSafariChromeSample();
   }
 
   function getStoredMode() {
@@ -133,9 +134,7 @@ function noFlashScript(themeColorDark: string, themeColorLight: string) {
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);
   window.addEventListener("exsesx:theme-change", applyTheme);
-  // The head-run flash above can expire before a slow first paint, and bfcache
-  // restores reset the chrome — pageshow covers both.
-  window.addEventListener("pageshow", flashChromeSampleBand);
+  window.addEventListener("pageshow", refreshSafariChromeSample);
 
   if (mql.addEventListener) {
     mql.addEventListener("change", applyTheme);

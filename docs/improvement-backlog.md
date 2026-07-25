@@ -10,11 +10,11 @@ Each item is independent. Read the **invariants** section before touching anythi
 
 ## Invariants — do not regress these
 
-1. **Safari 26 chrome tinting.** The solid `.site-header` band, `--safari-chrome-color`, the two
-   synchronized paint paths (noflash script in `layout.tsx` + `paintSafariChromeSamples` in
-   `ThemeSwitcher.tsx`), and static rendering of `/` and `/projects` are all load-bearing.
-   Read `docs/safari-tinting-handoff.md` and the postmortem before touching the header, theme,
-   or anything near `backdrop-filter` on sampled elements.
+1. **Safari 26 chrome tinting.** The empty `.safari-chrome-sample`, its 11px/12px geometry pulse,
+   maximum author `z-index`, `background-clip: text`, `--safari-chrome-color`, the synchronized
+   no-flash and `ThemeSwitcher` paint paths, and static rendering of `/` and `/projects` are all
+   load-bearing. Read `docs/2026-07-25-safari-26-chrome-tinting.md` before touching the header,
+   theme, or anything near `backdrop-filter` on sampled elements.
 2. **`backdrop-filter` prefix handling.** Never hand-write `-webkit-backdrop-filter` next to the
    standard property: LightningCSS collapses the pair and emits only the `-webkit-` form, which
    Chrome rejects — Chrome silently loses all glass blur. Standard property only; the pipeline

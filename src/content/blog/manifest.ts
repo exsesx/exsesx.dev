@@ -4,10 +4,16 @@ import { BLOG_LOCALES } from "@/lib/blog";
 import codexAgentsV2 from "./codex-agents-v2/post";
 import codexMemories from "./codex-memories/post";
 import { analyzeMdxSource } from "./reading";
+import safari26InvisibleTintSampler from "./safari-26-invisible-tint-sampler/post";
 import type { AnalyzedBlogPostSummary, BlogLocale, BlogPost, BlogPostEntry, BlogPostSummary } from "./types";
 import umbraLightDarkWallpapers from "./umbra-light-dark-wallpapers/post";
 
-const posts: readonly BlogPost[] = [umbraLightDarkWallpapers, codexMemories, codexAgentsV2];
+const posts: readonly BlogPost[] = [
+  safari26InvisibleTintSampler,
+  umbraLightDarkWallpapers,
+  codexMemories,
+  codexAgentsV2,
+];
 
 type BlogPostQueryOptions = {
   includeDrafts?: boolean;

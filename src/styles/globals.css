@@ -603,30 +603,53 @@ html[data-season="pride"] .logo-mark-pride {
 }
 
 /*
-  Safari 26 samples .site-header for the TOP chrome bar (proven by diagnostic) and
-  reliably samples a solid background-color (not gradients) at least 11px tall —
-  10px stops being sampled (found on device 2026-06-10). The chrome then KEEPS
-  the sampled color after the sampled element disappears (found on device
-  2026-06-11), so the no-flash script briefly flashes html[data-chrome-sample]
-  around first paint, theme changes, and bfcache restores. The fixed shell does
-  not affect layout, and other platforms remain unchanged.
+  Safari 26 requires a fixed candidate taller than its 10px thin-border cutoff
+  and spanning the viewport edge. Its color sampler reads background-color
+  independently from the final paint, so clipping the empty box's background to
+  text keeps the full 11px candidate eligible without drawing a visible band.
+  The sampler must also be the frontmost fixed hit at WebKit's edge probe;
+  keeping it mounted above every visual overlay survives drawer and viewport
+  lifecycle recomputes.
 */
-.site-header {
-  --safari-sample-band: 0px;
-  height: var(--safari-sample-band);
-  isolation: isolate;
+.safari-chrome-sample {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2147483647;
+  height: 0;
+  border: 0;
+  outline: 0;
+  pointer-events: none;
   background-color: var(--safari-chrome-color);
+  background-clip: text;
+  -webkit-background-clip: text;
+  box-shadow: none;
+  transition: none;
+}
+
+.site-header {
+  height: 0;
+  isolation: isolate;
   transition: none;
 }
 
 @supports (-webkit-touch-callout: none) {
   @media (hover: none) and (pointer: coarse) {
-    html[data-chrome-sample] .site-header {
-      /* env(safe-area-inset-top) underreports in this context, hence the 11px floor.
-         Coarse touch WebKit places the band behind browser chrome; keeping this
-         off desktop prevents it from reading as a transient progress track. */
-      --safari-sample-band: max(env(safe-area-inset-top), 11px);
+    .safari-chrome-sample {
+      height: 11px;
     }
+
+    html[data-chrome-sample-refresh] .safari-chrome-sample {
+      top: 0;
+      height: 12px;
+    }
+  }
+}
+
+@media print {
+  [data-safari-chrome-sample] {
+    display: none;
   }
 }
 
@@ -658,11 +681,11 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
-/* real element (not ::before) so it can carry its own view-transition-name;
-   inside the root snapshot it would pop above the page after transitions */
+/* Real element (not ::before) so it can carry its own view-transition-name;
+   the paintless Safari sampler stays above it in the fixed hit-test stack. */
 .site-header-fade {
   position: absolute;
-  /* Soft fade behind the nav; the flashed sample band paints over its top. */
+  /* Soft fade behind the nav. */
   inset: 0 0 -1.8rem;
   z-index: -1;
   pointer-events: none;
@@ -2335,7 +2358,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger {
   position: fixed;
-  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  bottom: 0.5rem;
   left: max(1.25rem, env(safe-area-inset-left, 0px));
   z-index: 80;
   width: 2.75rem;
@@ -2502,6 +2525,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   font-weight: 900;
   line-height: 1.15;
   text-wrap: balance;
+}
+
+.blog-prose :where(h2, h3):has(code) {
+  line-height: 1.45;
 }
 
 .blog-prose h2 {

@@ -188,6 +188,12 @@ describe("Blog production styles", () => {
     expect(css).not.toMatch(/\.source-link-host\s*\{[^}]*vertical-align:\s*0\.12em/s);
   });
 
+  test("gives multiline Blog headings with inline code enough leading", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+
+    expect(css).toMatch(/\.blog-prose :where\(h2, h3\):has\(code\)\s*\{[^}]*line-height:\s*1\.45/s);
+  });
+
   test("uses contrast and surface feedback instead of underlining Blog links", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const blogCss = css.slice(css.indexOf("/* Blog"));
@@ -262,7 +268,7 @@ describe("Blog production styles", () => {
     expect(triggerRule).toContain("height: 2.75rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*max\(1\.25rem, env\(safe-area-inset-bottom, 0px\)\)[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\)[\s\S]*?transition:\s*bottom 0\.2s ease/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*0\.5rem[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\)[\s\S]*?transition:\s*bottom 0\.2s ease/,
     );
     expect(css).toMatch(
       /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-face,[\s\S]*?width:\s*2\.5rem[\s\S]*?height:\s*2\.5rem/,
@@ -289,7 +295,7 @@ describe("Blog production styles", () => {
     const drawerScrollRule = css.match(/\.blog-toc-drawer-scroll\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(css).toMatch(
-      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?bottom:\s*max\(1\.25rem, env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\);[\s\S]*?transition:\s*bottom 0\.2s ease;/,
+      /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\] \.blog-toc-mobile-trigger,[\s\S]*?bottom:\s*0\.5rem;[\s\S]*?left:\s*max\(1\.25rem, env\(safe-area-inset-left, 0px\)\);[\s\S]*?transition:\s*bottom 0\.2s ease;/,
     );
     expect(toc).not.toContain("mobileOpen");
     expect(toc).toContain("pendingHeadingIdRef");
@@ -390,10 +396,13 @@ describe("Blog production styles", () => {
     expect(css).not.toMatch(/\[data-blog-passive-hidden="true"\][^{]*\.blog-article/);
   });
 
-  test("keeps Safari's header sample shell while hiding only reading distractions", async () => {
+  test("keeps Safari's sample edge independent while hiding only reading distractions", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 
-    expect(css).toMatch(/\.site-header\s*\{[^}]*--safari-sample-band/s);
+    expect(css).toMatch(
+      /\.safari-chrome-sample\s*\{[^}]*top:\s*0;[^}]*background-clip:\s*text;[^}]*-webkit-background-clip:\s*text/s,
+    );
+    expect(css).not.toMatch(/\[data-blog-focus="true"\][^{]*\.safari-chrome-sample/);
     expect(css).toContain('[data-blog-focus="true"] .kinetic-backdrop > *');
     expect(css).toContain('[data-blog-focus="true"] .hotkeys-corner-hint');
     expect(css).toContain('[data-blog-focus="true"] .site-version-tag');
