@@ -2044,7 +2044,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 .blog-reading-progress-device path {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 3;
+  stroke-width: 6;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   stroke-linecap: round;

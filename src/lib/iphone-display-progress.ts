@@ -192,8 +192,6 @@ export function resolveIPhoneDisplayProgress({
   screenWidth,
   userAgent,
   visualViewportHeight,
-  visualViewportOffsetLeft,
-  visualViewportOffsetTop,
   visualViewportScale,
   visualViewportWidth,
   viewportHeight,
@@ -222,8 +220,6 @@ export function resolveIPhoneDisplayProgress({
     Math.abs(viewportHeight - expectedHeight) <= FULL_DISPLAY_TOLERANCE &&
     Math.abs(visualViewportWidth - expectedWidth) <= FULL_DISPLAY_TOLERANCE &&
     Math.abs(visualViewportHeight - expectedHeight) <= FULL_DISPLAY_TOLERANCE &&
-    Math.abs(visualViewportOffsetLeft) <= FULL_DISPLAY_TOLERANCE &&
-    Math.abs(visualViewportOffsetTop) <= FULL_DISPLAY_TOLERANCE &&
     Math.abs(visualViewportScale - 1) <= UNZOOMED_TOLERANCE;
 
   if (!hasFullDisplayViewport) {

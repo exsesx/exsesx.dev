@@ -73,6 +73,39 @@ if (!("Bun" in globalThis)) {
       await expect(progress).toHaveAttribute("data-screen-class", "402x874");
       await expect(devicePath).toHaveAttribute("d", /^M 0 201 /);
 
+      const simulatedElasticOverscroll = await page.evaluate(async () => {
+        const viewport = window.visualViewport;
+
+        if (!viewport) {
+          return false;
+        }
+
+        Object.defineProperty(viewport, "offsetTop", {
+          configurable: true,
+          get: () => -24,
+        });
+        viewport.dispatchEvent(new Event("scroll"));
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+        return true;
+      });
+
+      expect(simulatedElasticOverscroll).toBe(true);
+      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+
+      await page.evaluate(async () => {
+        const viewport = window.visualViewport;
+
+        if (!viewport) {
+          return;
+        }
+
+        Reflect.deleteProperty(viewport, "offsetTop");
+        viewport.dispatchEvent(new Event("scroll"));
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+      });
+
       await article.evaluate(element => {
         const root = document.documentElement;
         const previousScrollBehavior = root.style.scrollBehavior;
@@ -117,7 +150,7 @@ if (!("Bun" in globalThis)) {
       expect(geometry.path).toMatch(/ L 0 201$/);
       expect(geometry.dashOffset).toBeGreaterThan(0);
       expect(geometry.dashOffset).toBeLessThan(1);
-      expect(geometry.strokeWidth).toBe("3px");
+      expect(geometry.strokeWidth).toBe("6px");
 
       const dashOffsetBeforeScroll = geometry.dashOffset;
       await page.evaluate(() => {

@@ -66,13 +66,18 @@ describe("iPhone display reading progress", () => {
     expect(resolveProgress({ viewportHeight: 500, viewportWidth: 500 })).toBeNull();
   });
 
-  test("keeps the straight fallback while browser chrome shortens or offsets the visible viewport", () => {
+  test("keeps the straight fallback while browser chrome shortens the visible viewport or zooms it", () => {
     expect(resolveProgress({ viewportHeight: 330, visualViewportHeight: 330 })).toBeNull();
     expect(resolveProgress({ visualViewportHeight: 330 })).toBeNull();
     expect(resolveProgress({ visualViewportWidth: 800 })).toBeNull();
-    expect(resolveProgress({ visualViewportOffsetLeft: 12 })).toBeNull();
-    expect(resolveProgress({ visualViewportOffsetTop: 12 })).toBeNull();
+    expect(resolveProgress({ visualViewportHeight: 330, visualViewportOffsetTop: 12 })).toBeNull();
     expect(resolveProgress({ visualViewportScale: 1.2 })).toBeNull();
+  });
+
+  test("keeps the rounded frame through full-display elastic overscroll", () => {
+    expect(resolveProgress({ visualViewportOffsetTop: -24 })?.orientation).toBe("landscape");
+    expect(resolveProgress({ visualViewportOffsetTop: 24 })?.orientation).toBe("landscape");
+    expect(resolveProgress({ visualViewportOffsetLeft: 12 })?.orientation).toBe("landscape");
   });
 
   test("covers the measured classic, Dynamic Island, and modern display families", () => {
