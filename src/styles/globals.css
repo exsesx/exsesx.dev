@@ -2528,7 +2528,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-prose :where(h2, h3):has(code) {
-  line-height: 1.25;
+  line-height: 1.45;
 }
 
 .blog-prose h2 {

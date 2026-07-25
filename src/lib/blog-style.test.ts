@@ -191,7 +191,7 @@ describe("Blog production styles", () => {
   test("gives multiline Blog headings with inline code enough leading", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 
-    expect(css).toMatch(/\.blog-prose :where\(h2, h3\):has\(code\)\s*\{[^}]*line-height:\s*1\.25/s);
+    expect(css).toMatch(/\.blog-prose :where\(h2, h3\):has\(code\)\s*\{[^}]*line-height:\s*1\.45/s);
   });
 
   test("uses contrast and surface feedback instead of underlining Blog links", async () => {
