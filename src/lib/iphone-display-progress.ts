@@ -7,20 +7,33 @@ type DisplaySpec = {
   profile: CornerProfile;
 };
 
-type IPhoneLandscapeProgressInput = {
+type DisplayOrientation = "landscape" | "portrait";
+
+type IPhoneDisplayProgressInput = {
   devicePixelRatio: number;
   screenHeight: number;
   screenWidth: number;
   userAgent: string;
+  visualViewportHeight: number;
+  visualViewportOffsetLeft: number;
+  visualViewportOffsetTop: number;
+  visualViewportScale: number;
+  visualViewportWidth: number;
   viewportHeight: number;
   viewportWidth: number;
 };
 
-export type IPhoneLandscapeProgressPath = {
+export type IPhoneDisplayProgressPath = {
   cornerExtent: number;
+  orientation: DisplayOrientation;
+  pathHeight: number;
+  pathWidth: number;
   path: string;
   screenClass: string;
 };
+
+const FULL_DISPLAY_TOLERANCE = 8;
+const UNZOOMED_TOLERANCE = 0.01;
 
 // Source: https://developer.apple.com/accessories/dimensional-drawings/
 // Normalized from the active-display outlines in Apple's dimensional drawings.
@@ -125,25 +138,68 @@ function formatCoordinate(value: number) {
   return Number(value.toFixed(2)).toString();
 }
 
-function buildFramePath(viewportWidth: number, cornerExtent: number, profile: readonly CornerPoint[]) {
-  const leftCorner = profile.map(([x, y]) => [x * cornerExtent, y * cornerExtent] as const).reverse();
-  const rightCorner = profile.map(([x, y]) => [viewportWidth - x * cornerExtent, y * cornerExtent] as const);
-  const points = [...leftCorner, [viewportWidth - cornerExtent, 0] as const, ...rightCorner.slice(1)];
+function buildFramePoints(
+  viewportWidth: number,
+  viewportHeight: number,
+  cornerExtent: number,
+  profile: readonly CornerPoint[],
+  orientation: DisplayOrientation,
+) {
+  const topLeft = profile.map(([x, y]) => [x * cornerExtent, y * cornerExtent] as const).reverse();
+  const topRight = profile.map(([x, y]) => [viewportWidth - x * cornerExtent, y * cornerExtent] as const);
+  const bottomRight = profile.map(
+    ([x, y]) => [viewportWidth - y * cornerExtent, viewportHeight - x * cornerExtent] as const,
+  );
+  const bottomLeft = profile.map(([x, y]) => [x * cornerExtent, viewportHeight - y * cornerExtent] as const);
 
+  if (orientation === "landscape") {
+    return [
+      [0, viewportHeight / 2] as const,
+      ...topLeft,
+      [viewportWidth - cornerExtent, 0] as const,
+      ...topRight.slice(1),
+      [viewportWidth, viewportHeight - cornerExtent] as const,
+      ...bottomRight.slice(1),
+      [cornerExtent, viewportHeight] as const,
+      ...bottomLeft.slice(1),
+      [0, viewportHeight / 2] as const,
+    ];
+  }
+
+  return [
+    [viewportWidth / 2, 0] as const,
+    [viewportWidth - cornerExtent, 0] as const,
+    ...topRight.slice(1),
+    [viewportWidth, viewportHeight - cornerExtent] as const,
+    ...bottomRight.slice(1),
+    [cornerExtent, viewportHeight] as const,
+    ...bottomLeft.slice(1),
+    [0, cornerExtent] as const,
+    ...topLeft.slice(1),
+    [viewportWidth / 2, 0] as const,
+  ];
+}
+
+function buildFramePath(points: readonly CornerPoint[]) {
   return points
     .map(([x, y], index) => `${index === 0 ? "M" : "L"} ${formatCoordinate(x)} ${formatCoordinate(y)}`)
     .join(" ");
 }
 
-export function resolveIPhoneLandscapeProgress({
+export function resolveIPhoneDisplayProgress({
   devicePixelRatio,
   screenHeight,
   screenWidth,
   userAgent,
+  visualViewportHeight,
+  visualViewportOffsetLeft,
+  visualViewportOffsetTop,
+  visualViewportScale,
+  visualViewportWidth,
   viewportHeight,
   viewportWidth,
-}: IPhoneLandscapeProgressInput): IPhoneLandscapeProgressPath | null {
-  if (!/\biPhone\b/.test(userAgent) || Math.round(devicePixelRatio) !== 3 || viewportWidth <= viewportHeight) {
+}: IPhoneDisplayProgressInput): IPhoneDisplayProgressPath | null {
+  if (!/\biPhone\b/.test(userAgent) || Math.round(devicePixelRatio) !== 3 || viewportWidth === viewportHeight) {
     return null;
   }
 
@@ -156,9 +212,38 @@ export function resolveIPhoneLandscapeProgress({
     return null;
   }
 
+  const screenShortSide = Math.min(screenWidth, screenHeight);
+  const screenLongSide = Math.max(screenWidth, screenHeight);
+  const orientation: DisplayOrientation = viewportWidth > viewportHeight ? "landscape" : "portrait";
+  const expectedWidth = orientation === "landscape" ? screenLongSide : screenShortSide;
+  const expectedHeight = orientation === "landscape" ? screenShortSide : screenLongSide;
+  const hasFullDisplayViewport =
+    Math.abs(viewportWidth - expectedWidth) <= FULL_DISPLAY_TOLERANCE &&
+    Math.abs(viewportHeight - expectedHeight) <= FULL_DISPLAY_TOLERANCE &&
+    Math.abs(visualViewportWidth - expectedWidth) <= FULL_DISPLAY_TOLERANCE &&
+    Math.abs(visualViewportHeight - expectedHeight) <= FULL_DISPLAY_TOLERANCE &&
+    Math.abs(visualViewportOffsetLeft) <= FULL_DISPLAY_TOLERANCE &&
+    Math.abs(visualViewportOffsetTop) <= FULL_DISPLAY_TOLERANCE &&
+    Math.abs(visualViewportScale - 1) <= UNZOOMED_TOLERANCE;
+
+  if (!hasFullDisplayViewport) {
+    return null;
+  }
+
+  const points = buildFramePoints(
+    viewportWidth,
+    viewportHeight,
+    displaySpec.cornerExtent,
+    CORNER_PROFILES[displaySpec.profile],
+    orientation,
+  );
+
   return {
     cornerExtent: displaySpec.cornerExtent,
-    path: buildFramePath(viewportWidth, displaySpec.cornerExtent, CORNER_PROFILES[displaySpec.profile]),
+    orientation,
+    path: buildFramePath(points),
+    pathHeight: viewportHeight,
+    pathWidth: viewportWidth,
     screenClass,
   };
 }

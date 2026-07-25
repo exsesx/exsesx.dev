@@ -2015,7 +2015,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   position: fixed;
   inset: 0 0 auto;
   z-index: 70;
-  height: var(--blog-reading-progress-corner, 2px);
+  height: var(--blog-reading-progress-height, 3px);
   pointer-events: none;
 }
 
@@ -2044,7 +2044,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 .blog-reading-progress-device path {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 2;
+  stroke-width: 3;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   stroke-linecap: round;

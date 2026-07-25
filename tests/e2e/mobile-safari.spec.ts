@@ -58,7 +58,7 @@ if (!("Bun" in globalThis)) {
       expect(documentBounds.height).toBeLessThanOrEqual(viewport?.height ?? 0);
     });
 
-    test("reading progress follows the recognized iPhone display corners in landscape", async ({ page }) => {
+    test("reading progress circles recognized iPhone displays in both orientations", async ({ page }) => {
       await page.setViewportSize({ width: 874, height: 402 });
       await page.goto(BLOG_ARTICLE_PATH);
 
@@ -76,6 +76,7 @@ if (!("Bun" in globalThis)) {
 
       await expect(progress).toBeVisible();
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+      await expect(progress).toHaveAttribute("data-device-orientation", "landscape");
       await expect(progress).toHaveAttribute("data-screen-class", "402x874");
       await expect(fallbackBar).toBeHidden();
       await expect(deviceProgress).toBeVisible();
@@ -93,19 +94,24 @@ if (!("Bun" in globalThis)) {
             y: bounds.y,
           },
           dashOffset: Number.parseFloat(getComputedStyle(path).strokeDashoffset),
+          path: path.getAttribute("d"),
           length: svgPath.getTotalLength(),
           rootHeight: svgPath.ownerSVGElement?.parentElement?.getBoundingClientRect().height ?? 0,
+          strokeWidth: getComputedStyle(path).strokeWidth,
         };
       });
 
       expect(geometry.bounds.x).toBeCloseTo(0, 1);
       expect(geometry.bounds.y).toBeCloseTo(0, 1);
       expect(geometry.bounds.width).toBeCloseTo(874, 1);
-      expect(geometry.bounds.height).toBeCloseTo(101.37, 1);
-      expect(geometry.rootHeight).toBeCloseTo(101.37, 1);
-      expect(geometry.length).toBeGreaterThan(874);
+      expect(geometry.bounds.height).toBeCloseTo(402, 1);
+      expect(geometry.rootHeight).toBeCloseTo(402, 1);
+      expect(geometry.length).toBeGreaterThan(2200);
+      expect(geometry.path).toMatch(/^M 0 201 /);
+      expect(geometry.path).toMatch(/ L 0 201$/);
       expect(geometry.dashOffset).toBeGreaterThan(0);
       expect(geometry.dashOffset).toBeLessThan(1);
+      expect(geometry.strokeWidth).toBe("3px");
 
       const dashOffsetBeforeScroll = geometry.dashOffset;
       await page.evaluate(() => {
@@ -116,8 +122,39 @@ if (!("Bun" in globalThis)) {
         .toBeLessThan(dashOffsetBeforeScroll);
 
       await page.setViewportSize({ width: 402, height: 874 });
+      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+      await expect(progress).toHaveAttribute("data-device-orientation", "portrait");
+      await expect(fallbackBar).toBeHidden();
+      await expect(deviceProgress).toBeVisible();
+
+      const portraitGeometry = await devicePath.evaluate(path => {
+        const svgPath = path as SVGPathElement;
+        const bounds = svgPath.getBBox();
+
+        return {
+          bounds: {
+            height: bounds.height,
+            width: bounds.width,
+            x: bounds.x,
+            y: bounds.y,
+          },
+          path: path.getAttribute("d"),
+          rootHeight: svgPath.ownerSVGElement?.parentElement?.getBoundingClientRect().height ?? 0,
+        };
+      });
+
+      expect(portraitGeometry.bounds.x).toBeCloseTo(0, 1);
+      expect(portraitGeometry.bounds.y).toBeCloseTo(0, 1);
+      expect(portraitGeometry.bounds.width).toBeCloseTo(402, 1);
+      expect(portraitGeometry.bounds.height).toBeCloseTo(874, 1);
+      expect(portraitGeometry.rootHeight).toBeCloseTo(874, 1);
+      expect(portraitGeometry.path).toMatch(/^M 201 0 /);
+      expect(portraitGeometry.path).toMatch(/ L 201 0$/);
+
+      await page.setViewportSize({ width: 402, height: 780 });
       await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
-      await expect(progress).toHaveCSS("height", "2px");
+      await expect(progress).not.toHaveAttribute("data-device-orientation");
+      await expect(progress).toHaveCSS("height", "3px");
       await expect(fallbackBar).toBeVisible();
       await expect(deviceProgress).toBeHidden();
     });
