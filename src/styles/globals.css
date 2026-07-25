@@ -2527,6 +2527,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   text-wrap: balance;
 }
 
+.blog-prose :where(h2, h3):has(code) {
+  line-height: 1.25;
+}
+
 .blog-prose h2 {
   margin-top: 3.75rem;
   margin-bottom: 1rem;

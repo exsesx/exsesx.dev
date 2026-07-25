@@ -188,6 +188,12 @@ describe("Blog production styles", () => {
     expect(css).not.toMatch(/\.source-link-host\s*\{[^}]*vertical-align:\s*0\.12em/s);
   });
 
+  test("gives multiline Blog headings with inline code enough leading", async () => {
+    const css = await Bun.file(globalsCssUrl).text();
+
+    expect(css).toMatch(/\.blog-prose :where\(h2, h3\):has\(code\)\s*\{[^}]*line-height:\s*1\.25/s);
+  });
+
   test("uses contrast and surface feedback instead of underlining Blog links", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const blogCss = css.slice(css.indexOf("/* Blog"));

@@ -1,6 +1,5 @@
 import finalSimulatorPass from "../../../../public/images/blog/safari-26-invisible-tint-sampler/final-simulator-pass.webp";
 import finalSimulatorPassDark from "../../../../public/images/blog/safari-26-invisible-tint-sampler/final-simulator-pass-dark.webp";
-import julyReproduction from "../../../../public/images/blog/safari-26-invisible-tint-sampler/july-reproduction.webp";
 import safariWebInspector from "../../../../public/images/blog/safari-26-invisible-tint-sampler/safari-web-inspector.webp";
 
 Сторінка вже була темною. Safari залишався світлим.
@@ -42,9 +41,10 @@ import safariWebInspector from "../../../../public/images/blog/safari-26-invisib
 16:26. Остаточний знімок у Simulator з’явився о 21:21, майже через п’ять годин.
 
 <Figure
-  src={julyReproduction}
-  alt="Стаття Блогу у світлій темі в Safari на iPhone 17 Pro Simulator о 16:26 під час липневого відтворення помилки тонування"
-  caption="16:26, 25 липня: початок останньої сесії налагодження, а не всієї історії з Safari."
+  src={finalSimulatorPass}
+  darkSrc={finalSimulatorPassDark}
+  alt="Сторінка Блогу з відповідним кольором елементів Safari у світлій і темній темах в iPhone 17 Pro Simulator о 21:21"
+  caption="21:21, 25 липня: остаточна перевірка обох тем у Simulator, де сторінка й елементи Safari знову належать до однієї візуальної сцени."
   credit="iPhone 17 Pro Simulator, iOS 26.5"
   frame="intrinsic"
 />
@@ -304,15 +304,6 @@ function refreshSafariChromeSample() {
 - відновлення сторінки через `pageshow`;
 - перевірку настільного Chrome та його адаптивного режиму на регресії макета;
 - попередню збірку на справжньому iPhone.
-
-<Figure
-  src={finalSimulatorPass}
-  darkSrc={finalSimulatorPassDark}
-  alt="Сторінка Блогу з відповідним кольором елементів Safari у світлій і темній темах в iPhone 17 Pro Simulator о 21:21"
-  caption="21:21, 25 липня: остаточна перевірка обох тем у Simulator, де сторінка й елементи Safari знову належать до однієї візуальної сцени."
-  credit="iPhone 17 Pro Simulator, iOS 26.5"
-  frame="intrinsic"
-/>
 
 Це не перетворює внутрішню евристику WebKit на публічний API браузера. Safari
 може змінити геометрію перевірки, порогові значення чи порядок малювання. Тому

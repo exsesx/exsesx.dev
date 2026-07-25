@@ -1,6 +1,5 @@
 import finalSimulatorPass from "../../../../public/images/blog/safari-26-invisible-tint-sampler/final-simulator-pass.webp";
 import finalSimulatorPassDark from "../../../../public/images/blog/safari-26-invisible-tint-sampler/final-simulator-pass-dark.webp";
-import julyReproduction from "../../../../public/images/blog/safari-26-invisible-tint-sampler/july-reproduction.webp";
 import safariWebInspector from "../../../../public/images/blog/safari-26-invisible-tint-sampler/safari-web-inspector.webp";
 
 The page was already dark. Safari was not.
@@ -41,9 +40,10 @@ started the final debugging session with the drawer failure reproduced at 16:26.
 The final Simulator capture was at 21:21, almost five hours later.
 
 <Figure
-  src={julyReproduction}
-  alt="Light-themed Blog article in Safari on the iPhone 17 Pro Simulator at 16:26 during the July tinting reproduction"
-  caption="16:26 on July 25: the start of the final debugging session, not the start of the Safari problem."
+  src={finalSimulatorPass}
+  darkSrc={finalSimulatorPassDark}
+  alt="Blog page with matching Safari chrome in light and dark mode on the iPhone 17 Pro Simulator at 21:21"
+  caption="21:21 on July 25: the final Simulator pass in both themes, with the page and Safari chrome back in one visual world."
   credit="iPhone 17 Pro Simulator, iOS 26.5"
   frame="intrinsic"
 />
@@ -299,15 +299,6 @@ The final pass covered the transitions that had broken earlier versions:
 - restore the page through `pageshow`;
 - inspect desktop Chrome and Chrome responsive mode for layout regressions;
 - test the preview branch on a real iPhone.
-
-<Figure
-  src={finalSimulatorPass}
-  darkSrc={finalSimulatorPassDark}
-  alt="Blog page with matching Safari chrome in light and dark mode on the iPhone 17 Pro Simulator at 21:21"
-  caption="21:21 on July 25: the final Simulator pass in both themes, with the page and Safari chrome back in one visual world."
-  credit="iPhone 17 Pro Simulator, iOS 26.5"
-  frame="intrinsic"
-/>
 
 This does not turn an internal WebKit heuristic into a public browser API.
 Safari can change the probe geometry, thresholds, or paint ordering later. The
