@@ -3421,6 +3421,7 @@ code[data-theme] span {
   .blog-mermaid-toolbar .blog-mermaid-reset:focus-visible {
     border-left-width: 0;
     background: transparent;
+    backdrop-filter: none;
   }
 
   .blog-mermaid-reset-chip {
