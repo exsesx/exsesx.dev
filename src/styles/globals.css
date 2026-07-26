@@ -64,6 +64,7 @@
   --duration-popover-exit: 150ms;
   --duration-exit: 90ms;
   --duration-enter: 140ms;
+  --duration-floating-control-enter: 220ms;
   --duration-progress-retract: 280ms;
   --duration-move: 280ms;
   /* Liquid glass: the rim is drawn with layered inset shadows (a crisp top
@@ -2476,10 +2477,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-mobile-shell[data-toc-launcher-entering="true"] .blog-toc-mobile-trigger {
-  animation: blog-toc-launcher-enter var(--duration-enter) var(--ease-out);
+  animation: blog-floating-control-enter var(--duration-floating-control-enter) var(--ease-out);
 }
 
-@keyframes blog-toc-launcher-enter {
+@keyframes blog-floating-control-enter {
   from {
     opacity: 0;
     transform: scale(0.94);
@@ -2499,8 +2500,8 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   opacity: 1;
   transform: scale(1);
   transition:
-    opacity var(--duration-enter) var(--ease-out),
-    transform var(--duration-enter) var(--ease-out),
+    opacity var(--duration-floating-control-enter) var(--ease-out),
+    transform var(--duration-floating-control-enter) var(--ease-out),
     visibility 0s linear;
 }
 

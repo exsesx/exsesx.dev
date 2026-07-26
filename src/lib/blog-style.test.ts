@@ -7,6 +7,7 @@ const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const readingProgressUrl = new URL("../components/blog/ReadingProgress.tsx", import.meta.url);
 const focusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
 const articleTocUrl = new URL("../components/blog/ArticleToc.tsx", import.meta.url);
+const mobileTocLauncherUrl = new URL("../components/blog/useMobileTocLauncher.ts", import.meta.url);
 const scrollToTopUrl = new URL("../components/blog/BlogScrollToTop.tsx", import.meta.url);
 const articleWithTocUrl = new URL("../components/blog/ArticleWithToc.tsx", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
@@ -315,11 +316,12 @@ describe("Blog production styles", () => {
   });
 
   test("mirrors the floating table of contents treatment for scroll-to-top across viewports", async () => {
-    const [css, source, article, hotkeys] = await Promise.all([
+    const [css, source, article, hotkeys, mobileTocLauncher] = await Promise.all([
       Bun.file(globalsCssUrl).text(),
       Bun.file(scrollToTopUrl).text(),
       Bun.file(articleWithTocUrl).text(),
       Bun.file(hotkeysUrl).text(),
+      Bun.file(mobileTocLauncherUrl).text(),
     ]);
     const buttonRule = css.match(/\.blog-scroll-top\s*\{([^}]*)\}/s)?.[1] ?? "";
     const mobileButtonRule = css.match(/@variant max-md\s*\{[\s\S]*?\.blog-scroll-top\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -343,8 +345,20 @@ describe("Blog production styles", () => {
     expect(mobileButtonRule).toContain("bottom: 0.5rem");
     expect(mobileTocRule).toContain("left: max(1.25rem, env(safe-area-inset-left, 0px))");
     expect(mobileTocRule).toContain("bottom: 0.5rem");
+    expect(css).toContain("--duration-floating-control-enter: 220ms");
+    expect(css).toContain(
+      "animation: blog-floating-control-enter var(--duration-floating-control-enter) var(--ease-out)",
+    );
+    expect(css).toMatch(
+      /@keyframes blog-floating-control-enter\s*\{[\s\S]*?opacity:\s*0;[\s\S]*?scale\(0\.94\)[\s\S]*?opacity:\s*1;[\s\S]*?scale\(1\)/,
+    );
+    expect(css).not.toContain("blog-toc-launcher-enter");
+    expect(mobileTocLauncher).toContain("const TOC_LAUNCHER_ENTER_CLEANUP_MS = 240");
+    expect(mobileTocLauncher).toContain("}, TOC_LAUNCHER_ENTER_CLEANUP_MS)");
     expect(buttonRule).toContain("z-index: 80");
     expect(buttonRule).toContain("width: 2.75rem");
+    expect(buttonRule).toContain("opacity var(--duration-floating-control-enter) var(--ease-out)");
+    expect(buttonRule).toContain("transform var(--duration-floating-control-enter) var(--ease-out)");
     expect(faceRule).toContain("width: 2.5rem");
     expect(faceRule).toContain("height: 2.5rem");
     expect(css).toMatch(

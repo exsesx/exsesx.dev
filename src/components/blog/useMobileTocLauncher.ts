@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef } from "react";
 
 const COMPACT_ARTICLE_LAYOUT_QUERY = "(max-width: 79.999rem)";
 const ARTICLE_END_CLEARANCE = 80;
+const TOC_LAUNCHER_ENTER_CLEANUP_MS = 240;
 
 export type MobileTocLauncherState = "inline" | "docked" | "hidden";
 
@@ -65,7 +66,7 @@ export function useMobileTocLauncher() {
           shell.dataset.tocLauncherEntering = "true";
           entranceTimer = window.setTimeout(() => {
             delete shell.dataset.tocLauncherEntering;
-          }, 180);
+          }, TOC_LAUNCHER_ENTER_CLEANUP_MS);
         }
 
         shell.dataset.tocLauncherState = nextState;
