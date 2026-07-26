@@ -604,6 +604,9 @@ if (!("Bun" in globalThis)) {
       await expect(resetZoom).toBeEnabled();
       await expect(resetZoom).toHaveCSS("opacity", "1");
       await expect(resetZoom).toHaveCSS("pointer-events", "auto");
+      await expect(resetZoom).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+      await resetZoom.hover();
+      await expect(resetZoom).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
       await expect(resetZoom.locator(".blog-mermaid-reset-chip")).toHaveText(/\d+%/);
       await expect(resetZoom).toHaveCSS("border-left-width", "0px");
       await expect(resetZoom.locator(".blog-mermaid-reset-chip")).toHaveCSS("border-style", "none");

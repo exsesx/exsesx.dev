@@ -3415,8 +3415,12 @@ code[data-theme] span {
       visibility 0s linear;
   }
 
-  .blog-mermaid-toolbar .blog-mermaid-reset {
+  .blog-mermaid-toolbar .blog-mermaid-reset,
+  .blog-mermaid-toolbar .blog-mermaid-reset:hover,
+  .blog-mermaid-toolbar .blog-mermaid-reset:active,
+  .blog-mermaid-toolbar .blog-mermaid-reset:focus-visible {
     border-left-width: 0;
+    background: transparent;
   }
 
   .blog-mermaid-reset-chip {
