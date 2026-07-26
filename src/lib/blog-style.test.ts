@@ -341,6 +341,39 @@ describe("Blog production styles", () => {
     expect(source).not.toContain("useState(");
   });
 
+  test("draws the device frame in from its origin instead of scaling it open", async () => {
+    const [css, source] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(readingProgressUrl).text()]);
+    const shellRule = css.match(/\.blog-reading-progress-device-shell\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const pathRule = css.match(/\.blog-reading-progress-device path\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(source).toContain('<div className="blog-reading-progress-device-shell">');
+    expect(source).toContain('progressPathElement.style.strokeDashoffset = "1"');
+    expect(source).toContain('progressPathElement.dataset.drawing = "in"');
+    expect(source).toContain("1 - readProgress() * eased");
+    expect(source).toContain("const DRAW_IN_REVEAL_MS = 90");
+    expect(source).toContain("const DRAW_IN_DURATION_MS = 450");
+    expect(source).toContain("const DRAW_OUT_DURATION_MS = 280");
+    expect(source).toContain('progressPathElement.dataset.drawing = "out"');
+    expect(source).toContain("startOffset + (1 - startOffset) * eased");
+    expect(source).toContain("deviceFrameAnimationGeneration");
+    expect(source).toContain("prefersReducedMotion.matches");
+    expect(source).toContain('prefersReducedMotion.addEventListener("change", handleReducedMotionChange)');
+    expect(source).not.toContain("transitioncancel");
+    expect(source).not.toContain("getBoundingClientRect()\n");
+    expect(source).not.toContain("dataset.drawCount");
+    expect(source).not.toContain("dataset.drawFrom");
+    expect(source).not.toContain('progressSvgElement?.removeAttribute("viewBox")');
+    expect(source).not.toContain('progressPathElement.removeAttribute("d")');
+
+    expect(shellRule).not.toContain("scaleY");
+    expect(shellRule).toContain("opacity var(--duration-progress-retract) var(--ease-in-out)");
+    expect(shellRule).toContain("visibility 0s linear var(--duration-progress-retract)");
+    expect(pathRule).toContain("transition: none");
+    expect(css).not.toContain("--duration-progress-draw");
+    expect(css).toContain("--duration-progress-retract: 280ms");
+    expect(css).not.toContain("transition: all");
+  });
+
   test("keeps the reading-progress surface non-painting until its first measured commit", async () => {
     const [css, source] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(readingProgressUrl).text()]);
     const markup = renderToStaticMarkup(createElement(ReadingProgress, { articleId: "article-content" }));
