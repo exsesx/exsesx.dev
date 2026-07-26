@@ -332,26 +332,28 @@ describe("Blog production styles", () => {
     const [css, source] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(readingProgressUrl).text()]);
     const shellRule = css.match(/\.blog-reading-progress-device-shell\s*\{([^}]*)\}/s)?.[1] ?? "";
     const pathRule = css.match(/\.blog-reading-progress-device path\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const drawingRule = css.match(/\.blog-reading-progress-device path\[data-drawing\]\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const readingProgressStart = css.indexOf(".blog-reading-progress-device-shell");
-    const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce)", readingProgressStart);
-    const reducedMotionRules = css.slice(reducedMotionStart, css.indexOf(".blog-article-meta", reducedMotionStart));
 
     expect(source).toContain('<div className="blog-reading-progress-device-shell">');
     expect(source).toContain('progressPathElement.style.strokeDashoffset = "1"');
     expect(source).toContain('progressPathElement.dataset.drawing = "true"');
+    expect(source).toContain("1 - readProgress() * eased");
+    expect(source).toContain("const DRAW_IN_REVEAL_MS = 90");
+    expect(source).toContain("const DRAW_IN_DURATION_MS = 450");
+    expect(source).toContain("drawInGeneration");
+    expect(source).toContain("prefersReducedMotion.matches");
+    expect(source).toContain('prefersReducedMotion.addEventListener("change", handleReducedMotionChange)');
+    expect(source).not.toContain("transitioncancel");
+    expect(source).not.toContain("getBoundingClientRect()\n");
+    expect(source).not.toContain("dataset.drawCount");
+    expect(source).not.toContain("dataset.drawFrom");
     expect(source).not.toContain('progressSvgElement?.removeAttribute("viewBox")');
     expect(source).not.toContain('progressPathElement.removeAttribute("d")');
 
     expect(shellRule).not.toContain("scaleY");
     expect(shellRule).toContain("opacity var(--duration-exit) var(--ease-out)");
     expect(pathRule).toContain("transition: none");
-    expect(drawingRule).toContain("stroke-dashoffset var(--duration-progress-draw) var(--ease-out)");
-    expect(css).toContain("--duration-progress-draw:");
-
-    expect(reducedMotionRules).toContain(".blog-reading-progress-device path[data-drawing]");
-    expect(reducedMotionRules).toContain("transition: none");
-    expect(reducedMotionRules).not.toContain("transition: all");
+    expect(css).not.toContain("--duration-progress-draw");
+    expect(css).not.toContain("transition: all");
   });
 
   test("keeps the reading-progress surface non-painting until its first measured commit", async () => {

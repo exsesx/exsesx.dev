@@ -3,7 +3,12 @@
 import { useLayoutEffect, useRef } from "react";
 import { resolveIPhoneDisplayProgress } from "../../lib/iphone-display-progress";
 
-const DRAW_IN_SETTLE_GRACE_MS = 60;
+const DRAW_IN_DURATION_MS = 450;
+const DRAW_IN_REVEAL_MS = 90;
+
+function easeOutDraw(progress: number) {
+  return 1 - (1 - progress) ** 3;
+}
 
 type ReadingProgressProps = {
   articleId: string;
@@ -30,15 +35,21 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     const progressPathElement = progressPath;
     const progressSvgElement = progressPathElement.ownerSVGElement;
     const visualViewport = window.visualViewport;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
     let measurementFrame = 0;
-    let drawInTimeout = 0;
+    let drawInFrame = 0;
+    let drawInGeneration = 0;
     let articleTop = 0;
     let readableDistance = 1;
     let cssOwnsDashOffset = false;
 
+    function readProgress() {
+      return Math.min(1, Math.max(0, (window.scrollY - articleTop) / readableDistance));
+    }
+
     function renderProgress() {
-      const nextProgress = Math.min(1, Math.max(0, (window.scrollY - articleTop) / readableDistance));
+      const nextProgress = readProgress();
 
       progressBarElement.style.transform = `scaleX(${nextProgress})`;
 
@@ -50,34 +61,54 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     }
 
     function endDeviceFrameDrawIn() {
+      drawInGeneration += 1;
+      cancelAnimationFrame(drawInFrame);
+      drawInFrame = 0;
+      delete progressPathElement.dataset.drawing;
+
       if (!cssOwnsDashOffset) {
         return;
       }
 
-      window.clearTimeout(drawInTimeout);
-      delete progressPathElement.dataset.drawing;
       cssOwnsDashOffset = false;
       renderProgress();
     }
 
     function restartDeviceFrameDrawIn() {
-      const drawnProgress = Math.min(1, Math.max(0, (window.scrollY - articleTop) / readableDistance));
-
-      if (drawnProgress <= 0) {
+      if (readProgress() <= 0 || prefersReducedMotion.matches) {
+        endDeviceFrameDrawIn();
         return;
       }
 
-      window.clearTimeout(drawInTimeout);
+      const generation = drawInGeneration + 1;
+
+      drawInGeneration = generation;
+      cancelAnimationFrame(drawInFrame);
       cssOwnsDashOffset = true;
-      delete progressPathElement.dataset.drawing;
-      progressPathElement.style.strokeDashoffset = "1";
-      progressPathElement.getBoundingClientRect();
-
       progressPathElement.dataset.drawing = "true";
-      const drawDuration = Number.parseFloat(getComputedStyle(progressPathElement).transitionDuration) * 1000;
-      progressPathElement.style.strokeDashoffset = `${1 - drawnProgress}`;
+      progressPathElement.style.strokeDashoffset = "1";
 
-      drawInTimeout = window.setTimeout(endDeviceFrameDrawIn, drawDuration + DRAW_IN_SETTLE_GRACE_MS);
+      const startedAt = performance.now();
+
+      const advanceDraw = () => {
+        if (generation !== drawInGeneration) {
+          return;
+        }
+
+        const elapsed = performance.now() - startedAt - DRAW_IN_REVEAL_MS;
+        const eased = easeOutDraw(Math.min(1, Math.max(0, elapsed) / DRAW_IN_DURATION_MS));
+
+        progressPathElement.style.strokeDashoffset = `${1 - readProgress() * eased}`;
+
+        if (eased < 1) {
+          drawInFrame = requestAnimationFrame(advanceDraw);
+          return;
+        }
+
+        endDeviceFrameDrawIn();
+      };
+
+      drawInFrame = requestAnimationFrame(advanceDraw);
     }
 
     function update() {
@@ -136,16 +167,15 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
       renderProgress();
     }
 
-    function handleDrawInEnd(event: TransitionEvent) {
-      if (event.target === progressPathElement && event.propertyName === "stroke-dashoffset") {
-        endDeviceFrameDrawIn();
-      }
-    }
-
     const resizeObserver = new ResizeObserver(scheduleMeasure);
     resizeObserver.observe(articleElement);
-    progressPathElement.addEventListener("transitionend", handleDrawInEnd);
-    progressPathElement.addEventListener("transitioncancel", handleDrawInEnd);
+    const handleReducedMotionChange = () => {
+      if (prefersReducedMotion.matches) {
+        endDeviceFrameDrawIn();
+      }
+    };
+
+    prefersReducedMotion.addEventListener("change", handleReducedMotionChange);
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", scheduleMeasure);
     visualViewport?.addEventListener("resize", scheduleMeasure);
@@ -155,10 +185,9 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(measurementFrame);
-      window.clearTimeout(drawInTimeout);
+      cancelAnimationFrame(drawInFrame);
       resizeObserver.disconnect();
-      progressPathElement.removeEventListener("transitionend", handleDrawInEnd);
-      progressPathElement.removeEventListener("transitioncancel", handleDrawInEnd);
+      prefersReducedMotion.removeEventListener("change", handleReducedMotionChange);
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", scheduleMeasure);
       visualViewport?.removeEventListener("resize", scheduleMeasure);

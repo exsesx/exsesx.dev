@@ -180,32 +180,88 @@ if (!("Bun" in globalThis)) {
       await expect(deviceProgress).toBeHidden();
 
       await devicePath.evaluate(path => {
-        path.dataset.drawFrom = "";
-        path.addEventListener("transitionrun", event => {
-          if ((event as TransitionEvent).propertyName !== "stroke-dashoffset") {
+        path.dataset.observedDrawStarts = "0";
+        path.dataset.observedOriginOffsets = "";
+
+        const observer = new MutationObserver(() => {
+          if (path.dataset.drawing !== "true") {
             return;
           }
 
-          const transition = path
-            .getAnimations()
-            .find(animation => (animation as CSSTransition).transitionProperty === "stroke-dashoffset");
-          const keyframes = (transition?.effect as KeyframeEffect | undefined)?.getKeyframes();
+          path.dataset.observedDrawStarts = `${Number(path.dataset.observedDrawStarts ?? 0) + 1}`;
+          path.dataset.observedOriginOffsets =
+            `${path.dataset.observedOriginOffsets ?? ""},${getComputedStyle(path).strokeDashoffset}`.replace(/^,/, "");
+        });
 
-          path.dataset.drawFrom ||= String(keyframes?.[0]?.strokeDashoffset ?? "");
+        observer.observe(path, {
+          attributeFilter: ["data-drawing"],
+          attributes: true,
         });
       });
+
+      const observedDrawStarts = async () => Number((await devicePath.getAttribute("data-observed-draw-starts")) ?? 0);
 
       await page.setViewportSize({ width: 874, height: 402 });
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
       await expect(fallbackBar).toBeHidden();
       await expect(deviceProgress).toBeVisible();
 
-      await expect
-        .poll(async () => Number.parseFloat((await devicePath.getAttribute("data-draw-from")) ?? "0"))
-        .toBeGreaterThan(0.9);
+      await expect.poll(observedDrawStarts).toBeGreaterThan(0);
+      const observedOriginOffsets =
+        (await devicePath.getAttribute("data-observed-origin-offsets"))?.split(",").map(Number.parseFloat) ?? [];
+
+      expect(observedOriginOffsets).not.toHaveLength(0);
+      expect(observedOriginOffsets.every(offset => offset > 0.99)).toBe(true);
+      await expect(devicePath).not.toHaveAttribute("data-drawing", "true");
       await expect
         .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
         .toBeLessThan(0.5);
+
+      const drawStartsBeforeInterruption = await observedDrawStarts();
+      await page.setViewportSize({ width: 874, height: 330 });
+      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
+      await page.setViewportSize({ width: 874, height: 402 });
+      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+      await expect.poll(observedDrawStarts).toBeGreaterThan(drawStartsBeforeInterruption);
+
+      const drawStartsBeforeRestart = await observedDrawStarts();
+      await page.setViewportSize({ width: 874, height: 330 });
+      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
+      await page.setViewportSize({ width: 874, height: 402 });
+      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+      await expect.poll(observedDrawStarts).toBeGreaterThan(drawStartsBeforeRestart);
+      await expect(devicePath).not.toHaveAttribute("data-drawing", "true");
+      await expect
+        .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
+        .toBeLessThan(0.5);
+
+      const drawStartsBeforeLiveScroll = await observedDrawStarts();
+      await page.setViewportSize({ width: 874, height: 330 });
+      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
+      await page.setViewportSize({ width: 874, height: 402 });
+      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+      await expect.poll(observedDrawStarts).toBeGreaterThan(drawStartsBeforeLiveScroll);
+      await page.evaluate(() => {
+        window.scrollBy({ top: 900 });
+      });
+      await expect(devicePath).not.toHaveAttribute("data-drawing", "true");
+
+      const settledOffset = await devicePath.evaluate(path =>
+        Number.parseFloat(getComputedStyle(path).strokeDashoffset),
+      );
+      const liveProgress = await page.evaluate(() => {
+        const article = document.getElementById("article-content");
+
+        if (!article) {
+          return 0;
+        }
+
+        const top = window.scrollY + article.getBoundingClientRect().top;
+
+        return Math.min(1, Math.max(0, (window.scrollY - top) / Math.max(article.offsetHeight - innerHeight, 1)));
+      });
+
+      expect(settledOffset).toBeCloseTo(1 - liveProgress, 1);
       await expect
         .poll(() => deviceShell.evaluate(element => element.getBoundingClientRect().height))
         .toBeCloseTo(402, 1);
