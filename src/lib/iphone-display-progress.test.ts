@@ -37,22 +37,15 @@ describe("iPhone display reading progress", () => {
     expect(progress?.path).toEndWith("L 0 300.63 L 0 201");
   });
 
-  test("traces a full clockwise portrait frame from top center back to top center", () => {
-    const progress = resolveProgress({
-      visualViewportHeight: 874,
-      visualViewportWidth: 402,
-      viewportHeight: 874,
-      viewportWidth: 402,
-    });
-
-    expect(progress?.orientation).toBe("portrait");
-    expect(progress?.pathWidth).toBe(402);
-    expect(progress?.pathHeight).toBe(874);
-    expect(progress?.path).toStartWith("M 201 0 L 300.63 0");
-    expect(progress?.path).toContain("L 402 772.63");
-    expect(progress?.path).toContain("L 101.37 874");
-    expect(progress?.path).toContain("L 0 101.37");
-    expect(progress?.path).toEndWith("L 101.37 0 L 201 0");
+  test("keeps the straight fallback in portrait, including a full-display viewport", () => {
+    expect(
+      resolveProgress({
+        visualViewportHeight: 874,
+        visualViewportWidth: 402,
+        viewportHeight: 874,
+        viewportWidth: 402,
+      }),
+    ).toBeNull();
   });
 
   test("normalizes screen orientation before matching the display", () => {
