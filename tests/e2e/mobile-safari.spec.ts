@@ -828,7 +828,7 @@ if (!("Bun" in globalThis)) {
       await expect(button).toHaveAttribute("data-scroll-top-state", "visible");
       await expect(button).toBeVisible();
       await expect(button).toHaveAccessibleName("Scroll to top");
-      await expect(button).toHaveCSS("bottom", "8px");
+      await expect(button).toHaveCSS("bottom", "16px");
 
       const [buttonBounds, faceBounds] = await Promise.all([button.boundingBox(), face.boundingBox()]);
       const viewport = page.viewportSize();
@@ -840,7 +840,7 @@ if (!("Bun" in globalThis)) {
       expect(faceBounds?.width).toBeCloseTo(40, 0);
       expect(faceBounds?.height).toBeCloseTo(40, 0);
       expect((viewport?.width ?? 0) - (buttonBounds?.x ?? 0) - (buttonBounds?.width ?? 0)).toBeCloseTo(20, 0);
-      expect((viewport?.height ?? 0) - (buttonBounds?.y ?? 0) - (buttonBounds?.height ?? 0)).toBeCloseTo(8, 0);
+      expect((viewport?.height ?? 0) - (buttonBounds?.y ?? 0) - (buttonBounds?.height ?? 0)).toBeCloseTo(16, 0);
 
       await setPageScrollY(page, viewportHeight * 0.5);
       await expect(button).toBeVisible();
@@ -868,7 +868,9 @@ if (!("Bun" in globalThis)) {
       await expect(main).not.toBeFocused();
     });
 
-    test("iPhone 12 Pro keeps the docked table of contents close to Safari controls", async ({ page }) => {
+    test("iPhone 12 Pro keeps the docked table of contents clear without a bottom safe-area inset", async ({
+      page,
+    }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(`${BLOG_ARTICLE_PATH}#how-to-enable-agents-v2`);
 
@@ -878,11 +880,11 @@ if (!("Bun" in globalThis)) {
 
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
       await expect(trigger).toBeVisible();
-      await expect(trigger).toHaveCSS("bottom", "8px");
+      await expect(trigger).toHaveCSS("bottom", "16px");
 
       const bounds = await trigger.boundingBox();
       expect(bounds).not.toBeNull();
-      expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(8, 0);
+      expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(16, 0);
     });
   });
 }

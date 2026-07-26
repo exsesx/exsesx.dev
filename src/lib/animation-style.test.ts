@@ -164,7 +164,7 @@ describe("semantic animation styles", () => {
     expect(css).not.toContain("html[data-chrome-sample]");
   });
 
-  test("keeps the docked mobile TOC close to Safari controls", async () => {
+  test("keeps the docked mobile TOC clear of embedded browser controls", async () => {
     const css = await readGlobalsCss();
     const dockedLauncher = ruleBody(
       css,
@@ -172,8 +172,7 @@ describe("semantic animation styles", () => {
 .blog-toc-mobile-shell[data-toc-launcher-state="hidden"] .blog-toc-mobile-trigger`,
     );
 
-    expect(dockedLauncher).toContain("bottom: 0.5rem");
-    expect(dockedLauncher).not.toContain("env(safe-area-inset-bottom");
+    expect(dockedLauncher).toContain("bottom: max(1rem, env(safe-area-inset-bottom, 0px))");
     expect(dockedLauncher).toContain("transition: bottom 0.2s ease");
   });
 
