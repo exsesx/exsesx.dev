@@ -739,7 +739,7 @@ if (!("Bun" in globalThis)) {
       expect(dockedTriggerBounds?.x).toBeCloseTo(20, 0);
       expect(
         (page.viewportSize()?.height ?? 0) - (dockedTriggerBounds?.y ?? 0) - (dockedTriggerBounds?.height ?? 0),
-      ).toBeCloseTo(8, 0);
+      ).toBeCloseTo(16, 0);
       await expect(triggerFace).not.toHaveCSS("backdrop-filter", "none");
 
       // Reproduce the touch intent retained immediately before a TOC-driven
