@@ -64,6 +64,7 @@
   --duration-popover-exit: 150ms;
   --duration-exit: 90ms;
   --duration-enter: 140ms;
+  --duration-floating-control-enter: 220ms;
   --duration-progress-retract: 280ms;
   --duration-move: 280ms;
   /* Liquid glass: the rim is drawn with layered inset shadows (a crisp top
@@ -2476,10 +2477,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-mobile-shell[data-toc-launcher-entering="true"] .blog-toc-mobile-trigger {
-  animation: blog-toc-launcher-enter var(--duration-enter) var(--ease-out);
+  animation: blog-floating-control-enter var(--duration-floating-control-enter) var(--ease-out);
 }
 
-@keyframes blog-toc-launcher-enter {
+@keyframes blog-floating-control-enter {
   from {
     opacity: 0;
     transform: scale(0.94);
@@ -2489,6 +2490,53 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.blog-scroll-top {
+  position: fixed;
+  z-index: 80;
+  width: 2.75rem;
+  visibility: visible;
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity var(--duration-floating-control-enter) var(--ease-out),
+    transform var(--duration-floating-control-enter) var(--ease-out),
+    visibility 0s linear;
+}
+
+@variant max-md {
+  .blog-scroll-top {
+    right: max(1.25rem, env(safe-area-inset-right, 0px));
+    bottom: 0.5rem;
+  }
+}
+
+.blog-scroll-top-face {
+  width: 2.5rem;
+  height: 2.5rem;
+  justify-content: center;
+  padding: 0;
+}
+
+.blog-scroll-top-icon {
+  color: var(--foreground);
+}
+
+.blog-scroll-top[data-scroll-top-state="hidden"]:not([data-scroll-top-focus-pending="true"]),
+[data-blog-focus-toast="true"] .blog-scroll-top {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity var(--duration-exit) var(--ease-out),
+    transform var(--duration-exit) var(--ease-out),
+    visibility 0s linear var(--duration-exit);
+}
+
+.blog-scroll-top[data-scroll-top-motion="instant"][data-scroll-top-state] {
+  transition: none;
 }
 
 .blog-toc-drawer {
@@ -3568,6 +3616,12 @@ html.dark .blog-figure-image--dark {
 
   .blog-toc-mobile-shell[data-toc-launcher-entering="true"] .blog-toc-mobile-trigger {
     animation: none;
+  }
+
+  .blog-scroll-top,
+  .blog-scroll-top[data-scroll-top-state="hidden"]:not([data-scroll-top-focus-pending="true"]),
+  [data-blog-focus-toast="true"] .blog-scroll-top {
+    transition: none;
   }
 
   .blog-read-link svg,

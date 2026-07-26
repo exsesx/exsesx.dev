@@ -7,7 +7,11 @@ const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const readingProgressUrl = new URL("../components/blog/ReadingProgress.tsx", import.meta.url);
 const focusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
 const articleTocUrl = new URL("../components/blog/ArticleToc.tsx", import.meta.url);
+const mobileTocLauncherUrl = new URL("../components/blog/useMobileTocLauncher.ts", import.meta.url);
+const scrollToTopUrl = new URL("../components/blog/BlogScrollToTop.tsx", import.meta.url);
+const articleWithTocUrl = new URL("../components/blog/ArticleWithToc.tsx", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
+const hotkeysUrl = new URL("../components/Hotkeys.tsx", import.meta.url);
 
 describe("Blog production styles", () => {
   test("uses a Shiki theme selector that survives the Next CSS minifier", async () => {
@@ -311,6 +315,61 @@ describe("Blog production styles", () => {
     expect(css).not.toContain("html:has(.blog-toc-drawer[data-open])");
   });
 
+  test("mirrors the floating table of contents treatment for scroll-to-top across viewports", async () => {
+    const [css, source, article, hotkeys, mobileTocLauncher] = await Promise.all([
+      Bun.file(globalsCssUrl).text(),
+      Bun.file(scrollToTopUrl).text(),
+      Bun.file(articleWithTocUrl).text(),
+      Bun.file(hotkeysUrl).text(),
+      Bun.file(mobileTocLauncherUrl).text(),
+    ]);
+    const buttonRule = css.match(/\.blog-scroll-top\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const mobileButtonRule = css.match(/@variant max-md\s*\{[\s\S]*?\.blog-scroll-top\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const mobileTocRule =
+      css.match(
+        /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\][\s\S]*?\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s,
+      )?.[1] ?? "";
+    const faceRule = css.match(/\.blog-scroll-top-face\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(article).toContain("<BlogScrollToTop locale={locale} />");
+    expect(source).toContain('className="blog-toc-mobile-trigger blog-scroll-top fixed bottom-4 right-4"');
+    expect(hotkeys).toContain("fixed bottom-4 left-4");
+    expect(source).toContain('className="blog-toc-mobile-face blog-scroll-top-face glass-frost"');
+    expect(source).toContain("window.scrollTo({ behavior, top: 0 })");
+    expect(source).toContain("main.focus({ preventScroll: true })");
+    expect(source).not.toContain('href="#top"');
+    expect(buttonRule).toContain("position: fixed");
+    expect(buttonRule).not.toContain("right:");
+    expect(buttonRule).not.toContain("bottom:");
+    expect(mobileButtonRule).toContain("right: max(1.25rem, env(safe-area-inset-right, 0px))");
+    expect(mobileButtonRule).toContain("bottom: 0.5rem");
+    expect(mobileTocRule).toContain("left: max(1.25rem, env(safe-area-inset-left, 0px))");
+    expect(mobileTocRule).toContain("bottom: 0.5rem");
+    expect(css).toContain("--duration-floating-control-enter: 220ms");
+    expect(css).toContain(
+      "animation: blog-floating-control-enter var(--duration-floating-control-enter) var(--ease-out)",
+    );
+    expect(css).toMatch(
+      /@keyframes blog-floating-control-enter\s*\{[\s\S]*?opacity:\s*0;[\s\S]*?scale\(0\.94\)[\s\S]*?opacity:\s*1;[\s\S]*?scale\(1\)/,
+    );
+    expect(css).not.toContain("blog-toc-launcher-enter");
+    expect(mobileTocLauncher).toContain("const TOC_LAUNCHER_ENTER_CLEANUP_MS = 240");
+    expect(mobileTocLauncher).toContain("}, TOC_LAUNCHER_ENTER_CLEANUP_MS)");
+    expect(buttonRule).toContain("z-index: 80");
+    expect(buttonRule).toContain("width: 2.75rem");
+    expect(buttonRule).toContain("opacity var(--duration-floating-control-enter) var(--ease-out)");
+    expect(buttonRule).toContain("transform var(--duration-floating-control-enter) var(--ease-out)");
+    expect(faceRule).toContain("width: 2.5rem");
+    expect(faceRule).toContain("height: 2.5rem");
+    expect(css).toMatch(
+      /\[data-blog-focus-toast="true"\] \.blog-scroll-top\s*\{[^}]*visibility:\s*hidden;[^}]*pointer-events:\s*none/s,
+    );
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-scroll-top,[\s\S]*?transition:\s*none/s,
+    );
+    expect(css).not.toMatch(/@media \(min-width:[^}]*\{[^}]*\.blog-scroll-top/);
+  });
+
   test("uses one restrained heading hierarchy and compact active marker across both tables of contents", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -411,6 +470,8 @@ describe("Blog production styles", () => {
     expect(provider).toContain("showFocusToast(copy.focusModeOn)");
     expect(provider).toContain("showFocusToast(copy.focusModeOff)");
     expect(provider).toContain("closeToast(BLOG_FOCUS_TOAST_ID)");
+    expect(provider).toContain("toasts.some(toast => toast.id === BLOG_FOCUS_TOAST_ID)");
+    expect(provider).toContain('data-blog-focus-toast={isFocusToastActive ? "true" : undefined}');
     expect(provider).toContain('<Toast.Viewport className="blog-focus-toast-viewport">');
     expect(provider).toContain('<Toast.Title className="blog-focus-toast-title" />');
     expect(provider).not.toContain("setAnnouncement");

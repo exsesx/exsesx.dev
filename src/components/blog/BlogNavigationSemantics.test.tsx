@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import ArticleToc from "./ArticleToc";
 import BlogLocaleSwitcher from "./BlogLocaleSwitcher";
+import BlogScrollToTop from "./BlogScrollToTop";
 
 describe("Blog navigation semantics", () => {
   test("localizes the language switcher landmark", () => {
@@ -61,5 +62,17 @@ describe("Blog navigation semantics", () => {
 
     expect(markup).not.toContain("blog-toc-current");
     expect(markup).toContain('aria-label="Open table of contents"');
+  });
+
+  test("exposes a localized scroll-to-top action without a fragment link", () => {
+    const englishMarkup = renderToStaticMarkup(<BlogScrollToTop locale="en" />);
+    const ukrainianMarkup = renderToStaticMarkup(<BlogScrollToTop locale="uk" />);
+
+    expect(englishMarkup).toContain('aria-label="Scroll to top"');
+    expect(ukrainianMarkup).toContain('aria-label="На початок сторінки"');
+    expect(englishMarkup).toContain('data-scroll-top-state="hidden"');
+    expect(englishMarkup).toContain('class="blog-toc-mobile-face blog-scroll-top-face glass-frost"');
+    expect(englishMarkup).not.toContain('href="#top"');
+    expect(englishMarkup).not.toContain("title=");
   });
 });

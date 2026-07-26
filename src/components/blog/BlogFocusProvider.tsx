@@ -45,6 +45,7 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
   const [focusState, setFocusState] = useState({ active: false, pathname });
   const { add: addToast, close: closeToast, toasts } = Toast.useToastManager();
   const isFocusMode = isBlogArticle && focusState.pathname === pathname && focusState.active;
+  const isFocusToastActive = toasts.some(toast => toast.id === BLOG_FOCUS_TOAST_ID);
   const { beginTocNavigation, isPassiveHeaderHidden, passiveVisibility, revealHeader } = usePassiveBlogHeader({
     isBlogArticle,
     isFocusMode,
@@ -121,6 +122,7 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
         className="relative isolate min-h-full w-full overflow-x-clip text-foreground transition-colors duration-300"
         data-blog-article={isBlogArticle ? "true" : undefined}
         data-blog-focus={isFocusMode ? "true" : undefined}
+        data-blog-focus-toast={isFocusToastActive ? "true" : undefined}
         data-blog-header-motion={
           isBlogArticle && passiveVisibility.pathname === pathname && passiveVisibility.motion === "instant"
             ? "instant"
