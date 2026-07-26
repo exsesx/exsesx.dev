@@ -58,9 +58,8 @@ This work spans three recorded stages:
   the 21:21 Simulator capture. Source tracing led to the permanent empty
   `background-clip: text` sampler, followed by the real-device preview check.
 
-The recorded history therefore spans exactly seven weeks. The July 25
-investigation was the final intensive pass, not the beginning of the Safari
-problem.
+The work was spread across multiple weeks. The July 25 investigation was the
+final intensive pass, not the beginning of the Safari problem.
 
 ## What Safari is doing
 
