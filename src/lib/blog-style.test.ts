@@ -335,11 +335,14 @@ describe("Blog production styles", () => {
 
     expect(source).toContain('<div className="blog-reading-progress-device-shell">');
     expect(source).toContain('progressPathElement.style.strokeDashoffset = "1"');
-    expect(source).toContain('progressPathElement.dataset.drawing = "true"');
+    expect(source).toContain('progressPathElement.dataset.drawing = "in"');
     expect(source).toContain("1 - readProgress() * eased");
     expect(source).toContain("const DRAW_IN_REVEAL_MS = 90");
     expect(source).toContain("const DRAW_IN_DURATION_MS = 450");
-    expect(source).toContain("drawInGeneration");
+    expect(source).toContain("const DRAW_OUT_DURATION_MS = 280");
+    expect(source).toContain('progressPathElement.dataset.drawing = "out"');
+    expect(source).toContain("startOffset + (1 - startOffset) * eased");
+    expect(source).toContain("deviceFrameAnimationGeneration");
     expect(source).toContain("prefersReducedMotion.matches");
     expect(source).toContain('prefersReducedMotion.addEventListener("change", handleReducedMotionChange)');
     expect(source).not.toContain("transitioncancel");
@@ -350,9 +353,11 @@ describe("Blog production styles", () => {
     expect(source).not.toContain('progressPathElement.removeAttribute("d")');
 
     expect(shellRule).not.toContain("scaleY");
-    expect(shellRule).toContain("opacity var(--duration-exit) var(--ease-out)");
+    expect(shellRule).toContain("opacity var(--duration-progress-retract) var(--ease-in-out)");
+    expect(shellRule).toContain("visibility 0s linear var(--duration-progress-retract)");
     expect(pathRule).toContain("transition: none");
     expect(css).not.toContain("--duration-progress-draw");
+    expect(css).toContain("--duration-progress-retract: 280ms");
     expect(css).not.toContain("transition: all");
   });
 

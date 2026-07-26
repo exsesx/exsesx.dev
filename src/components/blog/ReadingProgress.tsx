@@ -5,10 +5,17 @@ import { resolveIPhoneDisplayProgress } from "../../lib/iphone-display-progress"
 
 const DRAW_IN_DURATION_MS = 450;
 const DRAW_IN_REVEAL_MS = 90;
+const DRAW_OUT_DURATION_MS = 280;
 
 function easeOutDraw(progress: number) {
   return 1 - (1 - progress) ** 3;
 }
+
+function easeInOutDraw(progress: number) {
+  return progress * progress * (3 - 2 * progress);
+}
+
+type DeviceFrameAnimation = "drawing-in" | "drawing-out" | "idle";
 
 type ReadingProgressProps = {
   articleId: string;
@@ -38,11 +45,11 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
     let measurementFrame = 0;
-    let drawInFrame = 0;
-    let drawInGeneration = 0;
+    let deviceFrameAnimationFrame = 0;
+    let deviceFrameAnimationGeneration = 0;
     let articleTop = 0;
     let readableDistance = 1;
-    let cssOwnsDashOffset = false;
+    let deviceFrameAnimation: DeviceFrameAnimation = "idle";
 
     function readProgress() {
       return Math.min(1, Math.max(0, (window.scrollY - articleTop) / readableDistance));
@@ -53,45 +60,48 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
 
       progressBarElement.style.transform = `scaleX(${nextProgress})`;
 
-      if (!cssOwnsDashOffset) {
+      if (deviceFrameAnimation === "idle") {
         progressPathElement.style.strokeDashoffset = `${1 - nextProgress}`;
       }
 
       progressRootElement.hidden = nextProgress <= 0;
     }
 
-    function endDeviceFrameDrawIn() {
-      drawInGeneration += 1;
-      cancelAnimationFrame(drawInFrame);
-      drawInFrame = 0;
+    function endDeviceFrameAnimation(syncProgress = true) {
+      deviceFrameAnimationGeneration += 1;
+      cancelAnimationFrame(deviceFrameAnimationFrame);
+      deviceFrameAnimationFrame = 0;
       delete progressPathElement.dataset.drawing;
 
-      if (!cssOwnsDashOffset) {
+      if (deviceFrameAnimation === "idle") {
         return;
       }
 
-      cssOwnsDashOffset = false;
-      renderProgress();
+      deviceFrameAnimation = "idle";
+
+      if (syncProgress) {
+        renderProgress();
+      }
     }
 
     function restartDeviceFrameDrawIn() {
       if (readProgress() <= 0 || prefersReducedMotion.matches) {
-        endDeviceFrameDrawIn();
+        endDeviceFrameAnimation();
         return;
       }
 
-      const generation = drawInGeneration + 1;
+      const generation = deviceFrameAnimationGeneration + 1;
 
-      drawInGeneration = generation;
-      cancelAnimationFrame(drawInFrame);
-      cssOwnsDashOffset = true;
-      progressPathElement.dataset.drawing = "true";
+      deviceFrameAnimationGeneration = generation;
+      cancelAnimationFrame(deviceFrameAnimationFrame);
+      deviceFrameAnimation = "drawing-in";
+      progressPathElement.dataset.drawing = "in";
       progressPathElement.style.strokeDashoffset = "1";
 
       const startedAt = performance.now();
 
       const advanceDraw = () => {
-        if (generation !== drawInGeneration) {
+        if (generation !== deviceFrameAnimationGeneration) {
           return;
         }
 
@@ -101,14 +111,61 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
         progressPathElement.style.strokeDashoffset = `${1 - readProgress() * eased}`;
 
         if (eased < 1) {
-          drawInFrame = requestAnimationFrame(advanceDraw);
+          deviceFrameAnimationFrame = requestAnimationFrame(advanceDraw);
           return;
         }
 
-        endDeviceFrameDrawIn();
+        endDeviceFrameAnimation();
       };
 
-      drawInFrame = requestAnimationFrame(advanceDraw);
+      deviceFrameAnimationFrame = requestAnimationFrame(advanceDraw);
+    }
+
+    function restartDeviceFrameDrawOut() {
+      if (readProgress() <= 0 || prefersReducedMotion.matches) {
+        endDeviceFrameAnimation();
+        return;
+      }
+
+      const startOffset = Math.min(
+        1,
+        Math.max(0, Number.parseFloat(progressPathElement.style.strokeDashoffset || "1")),
+      );
+
+      if (startOffset >= 1) {
+        endDeviceFrameAnimation(false);
+        return;
+      }
+
+      const generation = deviceFrameAnimationGeneration + 1;
+
+      deviceFrameAnimationGeneration = generation;
+      cancelAnimationFrame(deviceFrameAnimationFrame);
+      deviceFrameAnimation = "drawing-out";
+      progressPathElement.dataset.drawing = "out";
+
+      const startedAt = performance.now();
+
+      const retractDraw = () => {
+        if (generation !== deviceFrameAnimationGeneration) {
+          return;
+        }
+
+        const elapsed = performance.now() - startedAt;
+        const eased = easeInOutDraw(Math.min(1, elapsed / DRAW_OUT_DURATION_MS));
+
+        progressPathElement.style.strokeDashoffset = `${startOffset + (1 - startOffset) * eased}`;
+
+        if (eased < 1) {
+          deviceFrameAnimationFrame = requestAnimationFrame(retractDraw);
+          return;
+        }
+
+        progressPathElement.style.strokeDashoffset = "1";
+        endDeviceFrameAnimation(false);
+      };
+
+      deviceFrameAnimationFrame = requestAnimationFrame(retractDraw);
     }
 
     function update() {
@@ -161,7 +218,11 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
         delete progressRootElement.dataset.deviceOrientation;
         delete progressRootElement.dataset.screenClass;
 
-        endDeviceFrameDrawIn();
+        if (wasDeviceFrame) {
+          restartDeviceFrameDrawOut();
+        } else if (deviceFrameAnimation !== "drawing-out") {
+          endDeviceFrameAnimation();
+        }
       }
 
       renderProgress();
@@ -171,7 +232,7 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     resizeObserver.observe(articleElement);
     const handleReducedMotionChange = () => {
       if (prefersReducedMotion.matches) {
-        endDeviceFrameDrawIn();
+        endDeviceFrameAnimation();
       }
     };
 
@@ -185,7 +246,7 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(measurementFrame);
-      cancelAnimationFrame(drawInFrame);
+      cancelAnimationFrame(deviceFrameAnimationFrame);
       resizeObserver.disconnect();
       prefersReducedMotion.removeEventListener("change", handleReducedMotionChange);
       window.removeEventListener("scroll", update);

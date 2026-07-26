@@ -173,33 +173,73 @@ if (!("Bun" in globalThis)) {
         .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
         .toBeLessThan(0.5);
 
-      await page.setViewportSize({ width: 874, height: 330 });
-      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
-      await expect(progress).toHaveCSS("height", "3px");
-      await expect(fallbackBar).toBeVisible();
-      await expect(deviceProgress).toBeHidden();
-
       await devicePath.evaluate(path => {
         path.dataset.observedDrawStarts = "0";
         path.dataset.observedOriginOffsets = "";
+        path.dataset.observedRetractStarts = "0";
+        path.dataset.observedRetractStartOffsets = "";
+        path.dataset.observedRetractEndOffsets = "";
 
-        const observer = new MutationObserver(() => {
-          if (path.dataset.drawing !== "true") {
-            return;
+        const observer = new MutationObserver(records => {
+          const drawing = path.dataset.drawing;
+
+          if (drawing === "in") {
+            path.dataset.observedDrawStarts = `${Number(path.dataset.observedDrawStarts ?? 0) + 1}`;
+            path.dataset.observedOriginOffsets =
+              `${path.dataset.observedOriginOffsets ?? ""},${getComputedStyle(path).strokeDashoffset}`.replace(
+                /^,/,
+                "",
+              );
+          } else if (drawing === "out") {
+            path.dataset.observedRetractStarts = `${Number(path.dataset.observedRetractStarts ?? 0) + 1}`;
+            path.dataset.observedRetractStartOffsets =
+              `${path.dataset.observedRetractStartOffsets ?? ""},${getComputedStyle(path).strokeDashoffset}`.replace(
+                /^,/,
+                "",
+              );
           }
 
-          path.dataset.observedDrawStarts = `${Number(path.dataset.observedDrawStarts ?? 0) + 1}`;
-          path.dataset.observedOriginOffsets =
-            `${path.dataset.observedOriginOffsets ?? ""},${getComputedStyle(path).strokeDashoffset}`.replace(/^,/, "");
+          if (drawing === undefined && records.some(record => record.oldValue === "out")) {
+            path.dataset.observedRetractEndOffsets =
+              `${path.dataset.observedRetractEndOffsets ?? ""},${getComputedStyle(path).strokeDashoffset}`.replace(
+                /^,/,
+                "",
+              );
+          }
         });
 
         observer.observe(path, {
           attributeFilter: ["data-drawing"],
+          attributeOldValue: true,
           attributes: true,
         });
       });
 
       const observedDrawStarts = async () => Number((await devicePath.getAttribute("data-observed-draw-starts")) ?? 0);
+      const observedRetractStarts = async () =>
+        Number((await devicePath.getAttribute("data-observed-retract-starts")) ?? 0);
+
+      const offsetBeforeFallback = await devicePath.evaluate(path =>
+        Number.parseFloat(getComputedStyle(path).strokeDashoffset),
+      );
+      const retractStartsBeforeFallback = await observedRetractStarts();
+      await page.setViewportSize({ width: 874, height: 330 });
+      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
+      await expect.poll(observedRetractStarts).toBeGreaterThan(retractStartsBeforeFallback);
+      await expect(progress).toHaveCSS("height", "3px");
+      await expect(fallbackBar).toBeVisible();
+      await expect(deviceProgress).toBeHidden();
+      await expect(devicePath).not.toHaveAttribute("data-drawing");
+
+      const observedRetractStartOffsets =
+        (await devicePath.getAttribute("data-observed-retract-start-offsets"))?.split(",").map(Number.parseFloat) ?? [];
+      const observedRetractEndOffsets =
+        (await devicePath.getAttribute("data-observed-retract-end-offsets"))?.split(",").map(Number.parseFloat) ?? [];
+
+      expect(observedRetractStartOffsets).not.toHaveLength(0);
+      expect(observedRetractStartOffsets.at(-1)).toBeCloseTo(offsetBeforeFallback, 1);
+      expect(observedRetractEndOffsets).not.toHaveLength(0);
+      expect(observedRetractEndOffsets.at(-1)).toBeGreaterThan(0.99);
 
       await page.setViewportSize({ width: 874, height: 402 });
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
@@ -212,14 +252,16 @@ if (!("Bun" in globalThis)) {
 
       expect(observedOriginOffsets).not.toHaveLength(0);
       expect(observedOriginOffsets.every(offset => offset > 0.99)).toBe(true);
-      await expect(devicePath).not.toHaveAttribute("data-drawing", "true");
+      await expect(devicePath).not.toHaveAttribute("data-drawing");
       await expect
         .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
         .toBeLessThan(0.5);
 
       const drawStartsBeforeInterruption = await observedDrawStarts();
+      const retractStartsBeforeInterruption = await observedRetractStarts();
       await page.setViewportSize({ width: 874, height: 330 });
       await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
+      await expect.poll(observedRetractStarts).toBeGreaterThan(retractStartsBeforeInterruption);
       await page.setViewportSize({ width: 874, height: 402 });
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
       await expect.poll(observedDrawStarts).toBeGreaterThan(drawStartsBeforeInterruption);
@@ -230,7 +272,7 @@ if (!("Bun" in globalThis)) {
       await page.setViewportSize({ width: 874, height: 402 });
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
       await expect.poll(observedDrawStarts).toBeGreaterThan(drawStartsBeforeRestart);
-      await expect(devicePath).not.toHaveAttribute("data-drawing", "true");
+      await expect(devicePath).not.toHaveAttribute("data-drawing");
       await expect
         .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
         .toBeLessThan(0.5);
@@ -244,7 +286,7 @@ if (!("Bun" in globalThis)) {
       await page.evaluate(() => {
         window.scrollBy({ top: 900 });
       });
-      await expect(devicePath).not.toHaveAttribute("data-drawing", "true");
+      await expect(devicePath).not.toHaveAttribute("data-drawing");
 
       const settledOffset = await devicePath.evaluate(path =>
         Number.parseFloat(getComputedStyle(path).strokeDashoffset),
