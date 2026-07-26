@@ -2493,8 +2493,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-scroll-top {
   position: fixed;
-  right: max(1.25rem, env(safe-area-inset-right, 0px));
-  bottom: 0.5rem;
   z-index: 80;
   width: 2.75rem;
   visibility: visible;
@@ -2504,6 +2502,13 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
     opacity var(--duration-enter) var(--ease-out),
     transform var(--duration-enter) var(--ease-out),
     visibility 0s linear;
+}
+
+@variant max-md {
+  .blog-scroll-top {
+    right: max(1.25rem, env(safe-area-inset-right, 0px));
+    bottom: 0.5rem;
+  }
 }
 
 .blog-scroll-top-face {

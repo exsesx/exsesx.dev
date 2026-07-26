@@ -10,6 +10,7 @@ const articleTocUrl = new URL("../components/blog/ArticleToc.tsx", import.meta.u
 const scrollToTopUrl = new URL("../components/blog/BlogScrollToTop.tsx", import.meta.url);
 const articleWithTocUrl = new URL("../components/blog/ArticleWithToc.tsx", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
+const hotkeysUrl = new URL("../components/Hotkeys.tsx", import.meta.url);
 
 describe("Blog production styles", () => {
   test("uses a Shiki theme selector that survives the Next CSS minifier", async () => {
@@ -314,23 +315,34 @@ describe("Blog production styles", () => {
   });
 
   test("mirrors the floating table of contents treatment for scroll-to-top across viewports", async () => {
-    const [css, source, article] = await Promise.all([
+    const [css, source, article, hotkeys] = await Promise.all([
       Bun.file(globalsCssUrl).text(),
       Bun.file(scrollToTopUrl).text(),
       Bun.file(articleWithTocUrl).text(),
+      Bun.file(hotkeysUrl).text(),
     ]);
     const buttonRule = css.match(/\.blog-scroll-top\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const mobileButtonRule = css.match(/@variant max-md\s*\{[\s\S]*?\.blog-scroll-top\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const mobileTocRule =
+      css.match(
+        /\.blog-toc-mobile-shell\[data-toc-launcher-state="docked"\][\s\S]*?\.blog-toc-mobile-trigger\s*\{([^}]*)\}/s,
+      )?.[1] ?? "";
     const faceRule = css.match(/\.blog-scroll-top-face\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(article).toContain("<BlogScrollToTop locale={locale} />");
-    expect(source).toContain('className="blog-toc-mobile-trigger blog-scroll-top"');
+    expect(source).toContain('className="blog-toc-mobile-trigger blog-scroll-top fixed bottom-4 right-4"');
+    expect(hotkeys).toContain("fixed bottom-4 left-4");
     expect(source).toContain('className="blog-toc-mobile-face blog-scroll-top-face glass-frost"');
     expect(source).toContain("window.scrollTo({ behavior, top: 0 })");
     expect(source).toContain("main.focus({ preventScroll: true })");
     expect(source).not.toContain('href="#top"');
     expect(buttonRule).toContain("position: fixed");
-    expect(buttonRule).toContain("right: max(1.25rem, env(safe-area-inset-right, 0px))");
-    expect(buttonRule).toContain("bottom: 0.5rem");
+    expect(buttonRule).not.toContain("right:");
+    expect(buttonRule).not.toContain("bottom:");
+    expect(mobileButtonRule).toContain("right: max(1.25rem, env(safe-area-inset-right, 0px))");
+    expect(mobileButtonRule).toContain("bottom: 0.5rem");
+    expect(mobileTocRule).toContain("left: max(1.25rem, env(safe-area-inset-left, 0px))");
+    expect(mobileTocRule).toContain("bottom: 0.5rem");
     expect(buttonRule).toContain("z-index: 80");
     expect(buttonRule).toContain("width: 2.75rem");
     expect(faceRule).toContain("width: 2.5rem");
