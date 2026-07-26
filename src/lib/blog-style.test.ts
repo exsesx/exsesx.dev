@@ -7,6 +7,8 @@ const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const readingProgressUrl = new URL("../components/blog/ReadingProgress.tsx", import.meta.url);
 const focusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
 const articleTocUrl = new URL("../components/blog/ArticleToc.tsx", import.meta.url);
+const scrollToTopUrl = new URL("../components/blog/BlogScrollToTop.tsx", import.meta.url);
+const articleWithTocUrl = new URL("../components/blog/ArticleWithToc.tsx", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 
 describe("Blog production styles", () => {
@@ -311,6 +313,37 @@ describe("Blog production styles", () => {
     expect(css).not.toContain("html:has(.blog-toc-drawer[data-open])");
   });
 
+  test("mirrors the floating table of contents treatment for scroll-to-top across viewports", async () => {
+    const [css, source, article] = await Promise.all([
+      Bun.file(globalsCssUrl).text(),
+      Bun.file(scrollToTopUrl).text(),
+      Bun.file(articleWithTocUrl).text(),
+    ]);
+    const buttonRule = css.match(/\.blog-scroll-top\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const faceRule = css.match(/\.blog-scroll-top-face\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+    expect(article).toContain("<BlogScrollToTop locale={locale} />");
+    expect(source).toContain('className="blog-toc-mobile-trigger blog-scroll-top"');
+    expect(source).toContain('className="blog-toc-mobile-face blog-scroll-top-face glass-frost"');
+    expect(source).toContain("window.scrollTo({ behavior, top: 0 })");
+    expect(source).toContain("main.focus({ preventScroll: true })");
+    expect(source).not.toContain('href="#top"');
+    expect(buttonRule).toContain("position: fixed");
+    expect(buttonRule).toContain("right: max(1.25rem, env(safe-area-inset-right, 0px))");
+    expect(buttonRule).toContain("bottom: 0.5rem");
+    expect(buttonRule).toContain("z-index: 80");
+    expect(buttonRule).toContain("width: 2.75rem");
+    expect(faceRule).toContain("width: 2.5rem");
+    expect(faceRule).toContain("height: 2.5rem");
+    expect(css).toMatch(
+      /\[data-blog-focus-toast="true"\] \.blog-scroll-top\s*\{[^}]*visibility:\s*hidden;[^}]*pointer-events:\s*none/s,
+    );
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-scroll-top,[\s\S]*?transition:\s*none/s,
+    );
+    expect(css).not.toMatch(/@media \(min-width:[^}]*\{[^}]*\.blog-scroll-top/);
+  });
+
   test("uses one restrained heading hierarchy and compact active marker across both tables of contents", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
@@ -411,6 +444,8 @@ describe("Blog production styles", () => {
     expect(provider).toContain("showFocusToast(copy.focusModeOn)");
     expect(provider).toContain("showFocusToast(copy.focusModeOff)");
     expect(provider).toContain("closeToast(BLOG_FOCUS_TOAST_ID)");
+    expect(provider).toContain("toasts.some(toast => toast.id === BLOG_FOCUS_TOAST_ID)");
+    expect(provider).toContain('data-blog-focus-toast={isFocusToastActive ? "true" : undefined}');
     expect(provider).toContain('<Toast.Viewport className="blog-focus-toast-viewport">');
     expect(provider).toContain('<Toast.Title className="blog-focus-toast-title" />');
     expect(provider).not.toContain("setAnnouncement");

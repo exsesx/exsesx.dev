@@ -6,6 +6,7 @@ import type { BlogLocale } from "@/lib/blog";
 import { resolveActiveHeadingId } from "@/lib/blog-scroll-spy";
 import ArticleToc from "./ArticleToc";
 import { BlogLocaleProvider } from "./BlogLocaleContext";
+import BlogScrollToTop from "./BlogScrollToTop";
 import { useMobileTocLauncher } from "./useMobileTocLauncher";
 
 const ACTIVE_HEADING_OFFSET = 144;
@@ -41,6 +42,8 @@ export function ArticleWithToc({ children, headings, locale }: ArticleWithTocPro
           </article>
         </BlogLocaleProvider>
       </div>
+
+      <BlogScrollToTop locale={locale} />
     </>
   );
 }

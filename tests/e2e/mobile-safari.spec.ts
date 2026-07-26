@@ -808,6 +808,66 @@ if (!("Bun" in globalThis)) {
       await expect(trigger).toBeHidden();
     });
 
+    test("scroll-to-top mirrors the floating launcher and restores keyboard focus at the page top", async ({
+      page,
+    }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto(BLOG_ARTICLE_PATH);
+
+      const main = page.locator("#main-content");
+      const button = page.getByTestId("blog-scroll-top");
+      const face = button.locator(".blog-scroll-top-face");
+      const viewportHeight = await page.evaluate(() => window.visualViewport?.height ?? window.innerHeight);
+
+      await expect(button).toHaveAttribute("aria-label", "Scroll to top");
+      await expect(button).toHaveAttribute("data-scroll-top-state", "hidden");
+      await expect(button).toBeHidden();
+
+      await setPageScrollY(page, viewportHeight);
+
+      await expect(button).toHaveAttribute("data-scroll-top-state", "visible");
+      await expect(button).toBeVisible();
+      await expect(button).toHaveAccessibleName("Scroll to top");
+      await expect(button).toHaveCSS("bottom", "8px");
+
+      const [buttonBounds, faceBounds] = await Promise.all([button.boundingBox(), face.boundingBox()]);
+      const viewport = page.viewportSize();
+
+      expect(buttonBounds).not.toBeNull();
+      expect(faceBounds).not.toBeNull();
+      expect(buttonBounds?.width).toBeCloseTo(44, 0);
+      expect(buttonBounds?.height).toBeCloseTo(44, 0);
+      expect(faceBounds?.width).toBeCloseTo(40, 0);
+      expect(faceBounds?.height).toBeCloseTo(40, 0);
+      expect((viewport?.width ?? 0) - (buttonBounds?.x ?? 0) - (buttonBounds?.width ?? 0)).toBeCloseTo(20, 0);
+      expect((viewport?.height ?? 0) - (buttonBounds?.y ?? 0) - (buttonBounds?.height ?? 0)).toBeCloseTo(8, 0);
+
+      await setPageScrollY(page, viewportHeight * 0.5);
+      await expect(button).toBeVisible();
+
+      await setPageScrollY(page, viewportHeight * 0.24);
+      await expect(button).toBeHidden();
+
+      await setPageScrollY(page, viewportHeight);
+      await button.focus();
+      await page.keyboard.press("Enter");
+
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(1);
+      await expect(main).toBeFocused();
+      await expect(button).toBeHidden();
+      await expect(page).toHaveURL(new RegExp(`${BLOG_ARTICLE_PATH}$`));
+
+      await setPageScrollY(page, viewportHeight);
+      const backLink = page.getByRole("link", { name: "Back to Blog" }).first();
+      await backLink.evaluate(element => element.focus({ preventScroll: true }));
+      await expect(backLink).toBeFocused();
+      await button.click();
+
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(1);
+      await expect(button).not.toBeFocused();
+      await expect(main).not.toBeFocused();
+    });
+
     test("iPhone 12 Pro keeps the docked table of contents close to Safari controls", async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(`${BLOG_ARTICLE_PATH}#how-to-enable-agents-v2`);
@@ -825,6 +885,15 @@ if (!("Bun" in globalThis)) {
       expect((page.viewportSize()?.height ?? 0) - (bounds?.y ?? 0) - (bounds?.height ?? 0)).toBeCloseTo(8, 0);
     });
   });
+}
+
+async function setPageScrollY(page: Page, top: number) {
+  await page.evaluate(scrollTop => {
+    window.scrollTo({ behavior: "instant" as ScrollBehavior, top: scrollTop });
+  }, top);
+  await page.evaluate(
+    () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+  );
 }
 
 async function expectSafariChromeSampleToQualify(sample: Locator) {

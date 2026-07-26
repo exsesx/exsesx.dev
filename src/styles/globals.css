@@ -2491,6 +2491,48 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   }
 }
 
+.blog-scroll-top {
+  position: fixed;
+  right: max(1.25rem, env(safe-area-inset-right, 0px));
+  bottom: 0.5rem;
+  z-index: 80;
+  width: 2.75rem;
+  visibility: visible;
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity var(--duration-enter) var(--ease-out),
+    transform var(--duration-enter) var(--ease-out),
+    visibility 0s linear;
+}
+
+.blog-scroll-top-face {
+  width: 2.5rem;
+  height: 2.5rem;
+  justify-content: center;
+  padding: 0;
+}
+
+.blog-scroll-top-icon {
+  color: var(--foreground);
+}
+
+.blog-scroll-top[data-scroll-top-state="hidden"]:not([data-scroll-top-focus-pending="true"]),
+[data-blog-focus-toast="true"] .blog-scroll-top {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity var(--duration-exit) var(--ease-out),
+    transform var(--duration-exit) var(--ease-out),
+    visibility 0s linear var(--duration-exit);
+}
+
+.blog-scroll-top[data-scroll-top-motion="instant"][data-scroll-top-state] {
+  transition: none;
+}
+
 .blog-toc-drawer {
   --blog-toc-drawer-surface: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
   --drawer-bleed-background: var(--blog-toc-drawer-surface);
@@ -3568,6 +3610,12 @@ html.dark .blog-figure-image--dark {
 
   .blog-toc-mobile-shell[data-toc-launcher-entering="true"] .blog-toc-mobile-trigger {
     animation: none;
+  }
+
+  .blog-scroll-top,
+  .blog-scroll-top[data-scroll-top-state="hidden"]:not([data-scroll-top-focus-pending="true"]),
+  [data-blog-focus-toast="true"] .blog-scroll-top {
+    transition: none;
   }
 
   .blog-read-link svg,

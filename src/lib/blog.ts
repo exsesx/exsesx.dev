@@ -27,6 +27,7 @@ export const BLOG_UI = {
     exitFocus: "Exit focus",
     focusModeOn: "Focus mode activated",
     focusModeOff: "Focus mode deactivated",
+    scrollToTop: "Scroll to top",
     codeBlock: {
       copied: "Code copied",
       copy: "Copy code",
@@ -68,6 +69,7 @@ export const BLOG_UI = {
     exitFocus: "Вийти з фокусу",
     focusModeOn: "Режим фокусу увімкнено",
     focusModeOff: "Режим фокусу вимкнено",
+    scrollToTop: "На початок сторінки",
     codeBlock: {
       copied: "Код скопійовано",
       copy: "Копіювати код",
