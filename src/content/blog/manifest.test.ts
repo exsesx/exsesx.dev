@@ -37,7 +37,8 @@ describe("Blog manifest", () => {
         status: "published",
         title: "Codex Agents V2 in 0.145.0",
         seoTitle: "Codex Agents V2 in 0.145.0: what changed and how to enable it",
-        description: "What changed from V1, how to enable it, and the configuration details worth knowing.",
+        description:
+          "In Codex 0.145.0, enabling multi_agent_v2 forces V2 while model metadata can select it; V2 adds task trees and explicit context forking in one shared workspace.",
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
@@ -74,7 +75,8 @@ describe("Blog manifest", () => {
         status: "published",
         title: "Codex Agents V2 у версії 0.145.0",
         seoTitle: "Codex Agents V2 у версії 0.145.0: що змінилося та як їх увімкнути",
-        description: "Що змінилося порівняно з V1, як увімкнути V2 і які деталі конфігурації варто знати.",
+        description:
+          "У Codex 0.145.0 V2 можна примусово вибрати через multi_agent_v2; Codex також може вибрати цей режим за метаданими моделі. V2 має дерево завдань, явне успадкування контексту й спільний робочий простір.",
       }),
     ]);
   });
@@ -85,8 +87,8 @@ describe("Blog manifest", () => {
     expect(article.readingMinutes).toBeGreaterThanOrEqual(5);
     expect(article.headings).toContainEqual({
       depth: 2,
-      id: "the-problem-was-bigger-than-theme-color",
-      text: "The problem was bigger than theme-color",
+      id: "safari-sampled-the-viewport-edge",
+      text: "Safari sampled the viewport edge",
     });
     expect(article.headings.at(-1)).toEqual({ depth: 2, id: "sources", text: "Sources" });
   });
@@ -97,10 +99,10 @@ describe("Blog manifest", () => {
       Bun.file(new URL("./codex-memories/uk.mdx", import.meta.url)).text(),
     ]);
 
-    expect(english).toContain('gate --> pipeline["Phase 1: extract tasks');
+    expect(english).toContain('gate --> pipeline["Phase 1: extract task memories');
     expect(english).toContain('gate --> skip["Skip this pass"]');
     expect(english).not.toMatch(/gate -->\|(?:Yes|No)\|/);
-    expect(ukrainian).toContain('gate --> pipeline["Фаза 1: виділити пам’ять');
+    expect(ukrainian).toContain('gate --> pipeline["Фаза 1: сформувати записи пам’яті');
     expect(ukrainian).toContain('gate --> skip["Пропустити запуск"]');
     expect(ukrainian).not.toMatch(/gate -->\|(?:Так|Ні)\|/);
   });

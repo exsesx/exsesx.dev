@@ -7,7 +7,8 @@ export default defineBlogPost({
     en: {
       title: "Codex Agents V2 in 0.145.0",
       seoTitle: "Codex Agents V2 in 0.145.0: what changed and how to enable it",
-      description: "What changed from V1, how to enable it, and the configuration details worth knowing.",
+      description:
+        "In Codex 0.145.0, enabling multi_agent_v2 forces V2 while model metadata can select it; V2 adds task trees and explicit context forking in one shared workspace.",
       publishedAt: "2026-07-22T12:00:00+02:00",
       status: "published",
       sourcePath: "src/content/blog/codex-agents-v2/en.mdx",
@@ -20,7 +21,8 @@ export default defineBlogPost({
     uk: {
       title: "Codex Agents V2 у версії 0.145.0",
       seoTitle: "Codex Agents V2 у версії 0.145.0: що змінилося та як їх увімкнути",
-      description: "Що змінилося порівняно з V1, як увімкнути V2 і які деталі конфігурації варто знати.",
+      description:
+        "У Codex 0.145.0 V2 можна примусово вибрати через multi_agent_v2; Codex також може вибрати цей режим за метаданими моделі. V2 має дерево завдань, явне успадкування контексту й спільний робочий простір.",
       publishedAt: "2026-07-22T12:00:00+02:00",
       status: "published",
       sourcePath: "src/content/blog/codex-agents-v2/uk.mdx",

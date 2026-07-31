@@ -44,7 +44,7 @@ The final Simulator capture was at 21:21, almost five hours later.
   src={finalSimulatorPass}
   darkSrc={finalSimulatorPassDark}
   alt="Blog page with matching Safari chrome in light and dark mode on the iPhone 17 Pro Simulator at 21:21"
-  caption="21:21 on July 25: the final Simulator pass in both themes, with the page and Safari chrome back in one visual world."
+  caption="21:21 on July 25: the final Simulator pass in both themes, with matching colors on the page and Safari chrome."
   credit="iPhone 17 Pro Simulator, iOS 26.5"
   frame="intrinsic"
 />
@@ -57,7 +57,7 @@ wanted, but readers got an element they should never have had to see.
 The work from the first recorded investigation to the invisible sampler
 stretched across weeks.
 
-## The problem was bigger than `theme-color`
+## Safari sampled the viewport edge
 
 The HTML standard describes
 <SourceLink href="https://html.spec.whatwg.org/multipage/semantics.html#meta-theme-color">`theme-color` as a suggested color</SourceLink>
@@ -65,10 +65,11 @@ for the page's surrounding UI. It is still useful metadata, and I kept it as a
 fallback. It was not enough to control the Liquid Glass area around a fixed page
 surface in my Safari 26 tests.
 
-That behavior is intentional, at least in broad terms. In
+In
 <SourceLink href="https://bugs.webkit.org/show_bug.cgi?id=301756">WebKit bug 301756</SourceLink>,
-WebKit engineer Wenson Hsieh explains that Safari extends a solid color near an
-obscured viewport edge when a `fixed` or `sticky` element is attached there.
+WebKit engineer Wenson Hsieh explains the intended behavior: Safari extends a
+solid color near an obscured viewport edge when a `fixed` or `sticky` element is
+attached there.
 Without that extension, scrolling could reveal a gap between the page surface
 and Safari's controls. The softer blur on iPhone makes the gap especially
 obvious.
@@ -84,12 +85,11 @@ which covered backdrop colors around modal dialogs. The
 explicitly sample the fixed-container edge before opening a dialog, while it is
 open, and after it closes.
 
-Safari was not merely reading one meta tag. It was resolving which page surface
-owned the viewport edge.
+Safari determined the tint from the page surface at the viewport edge.
 
 ## The fixes that almost worked
 
-The failed versions were useful because each one removed a wrong assumption.
+Each failed version helped me rule out one wrong assumption.
 
 | Attempt                                         | What happened                                                                 |
 | ----------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -115,11 +115,11 @@ color while the page painted no visible pixels?
 
 ## The Simulator made the loop bearable
 
-I did not deploy every CSS guess to Vercel and then open it on my phone. Safari
-in the macOS Simulator loaded `localhost:3000`, and Safari Web Inspector attached
-to that exact page. I could edit the CSS, refresh, inspect computed styles,
-switch the theme, open and close the drawer, and rotate the simulated phone
-without leaving the development loop.
+Safari in the macOS Simulator loaded `localhost:3000`, and Safari Web Inspector
+attached to that exact page. I could edit the CSS, refresh, inspect computed
+styles, switch the theme, open and close the drawer, and rotate the simulated
+phone without deploying every CSS guess to Vercel or leaving the local
+development loop.
 
 <Figure
   src={safariWebInspector}
@@ -130,14 +130,14 @@ without leaving the development loop.
   frame="intrinsic"
 />
 
-The Simulator was not a substitute for a real iPhone. It was the fast filter for
-bad ideas. Once a version survived the full local matrix, I pushed a preview and
-used the real device as the final check. That made this kind of Safari work much
-faster than a deploy, test, adjust, and redeploy cycle.
+I used the Simulator to filter out bad ideas, then pushed a preview once a
+version survived the full local matrix. I still used a real iPhone for the final
+check. This was much faster than deploying, testing, adjusting, and redeploying
+after every CSS guess.
 
 ## What WebKit checks at the edge
 
-The answer was in `LocalFrameView::fixedContainerEdges`. I traced the current
+I found the answer in `LocalFrameView::fixedContainerEdges`. I traced the current
 implementation at a pinned WebKit revision rather than guessing from screenshots.
 
 For each obscured viewport edge, WebKit constructs a narrow probe, contracts it
@@ -164,11 +164,11 @@ The
 and
 <SourceLink href="https://github.com/WebKit/WebKit/blob/0b1757694dabeeb50887ecb95dc800f36ebddf79/Source/WebCore/page/LocalFrameView.cpp#L2417-L2482">candidate checks</SourceLink>
 explain the trial-and-error result. Eleven pixels is not a safe-area inset or a
-visual spacing choice. It is the first integer CSS height above the cutoff.
+visual spacing choice. It is the smallest integer CSS height above the cutoff.
 
-What mattered was how WebKit gets the color. The edge sampler reads the
-renderer's computed `background-color`. Normal page painting later applies
-background clipping in a different path.
+WebKit gets the color and paints the background through separate code paths. The
+edge sampler reads the renderer's computed `background-color`. Normal page
+painting applies background clipping later.
 
 ```mermaid
 flowchart LR
@@ -181,8 +181,6 @@ hit --> painter["Normal paint path"]
 painter --> emptyClip["Empty text clip"]
 emptyClip --> paintless["No visible page pixels"]
 ```
-
-The sampler can use one path for Safari's color and another for its own paint.
 
 ## The empty text clip
 
@@ -237,11 +235,11 @@ visible colored pixels.
 
 The
 <SourceLink href="https://github.com/WebKit/WebKit/blob/0b1757694dabeeb50887ecb95dc800f36ebddf79/Source/WebCore/rendering/BackgroundPainter.cpp#L383-L450">WebKit background painter</SourceLink>
-handles text clipping separately from the fixed-edge eligibility code. This is
-the seam the solution uses.
+handles text clipping separately from the fixed-edge eligibility code. I use
+that separation in the sampler.
 
-The huge `z-index` is not what makes the element invisible. It makes the empty
-sampler win the single frontmost edge hit even while a drawer or dialog is open.
+The empty text clip leaves no visible pixels. The huge `z-index` keeps the empty
+sampler as the frontmost edge hit even while a drawer or dialog is open.
 `pointer-events: none` keeps it out of interaction, while `aria-hidden` and the
 empty DOM node keep it out of the accessibility experience.
 
@@ -309,11 +307,11 @@ its dimensions above the current cutoff, do not add borders, shadows, pseudo
 content, or transitions, and retain `theme-color` as the standards-based
 fallback.
 
-I still call this a hack. It relies on a private browser heuristic and a seam
-between style inspection and painting. But users cannot see it, Safari now
-follows every state that broke the earlier versions, and the tint no longer
-breaks the page's immersion. After weeks of iteration and almost five hours in
-the final session, I am satisfied with that result.
+I still call this a hack because it relies on a private browser heuristic and
+separate paths for style inspection and painting. Users cannot see the sampler,
+and Safari now keeps the tint consistent through every state that broke the
+earlier versions. After weeks of iteration and almost five hours in the final
+session, I am satisfied with that result.
 
 ## Sources
 

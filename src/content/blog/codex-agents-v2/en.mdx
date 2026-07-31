@@ -27,16 +27,15 @@ show how the feature override and model preference combine.
   behave.
 - `0.145.0` includes updates to agent roles, model defaults, cold resume, and TUI
   navigation.
-- The agents still share one working directory and filesystem. V2 is coordination,
-  not worktree isolation.
-- `max_concurrent_threads_per_session = 8` allows **eight spawned-agent threads
-  across the session tree, plus the root: nine open thread slots in total**.
+- All agents share one working directory and filesystem instead of isolated
+  worktrees.
+- `max_concurrent_threads_per_session` counts spawned-agent threads across the
+  whole session tree.
 
 ## What changed from V1
 
-The agent count is not the interesting part. V2 gives each branch of work a name
-and a place in the task tree, then defines how those branches communicate. The
-tagged
+V2 gives each branch of work a name and a place in the task tree, then defines
+how those branches communicate. The tagged
 <SourceLink href="https://github.com/openai/codex/blob/rust-v0.145.0/codex-rs/core/src/tools/handlers/multi_agents_spec.rs">V1 and V2 tool definitions</SourceLink>
 show the difference.
 
@@ -49,7 +48,7 @@ show the difference.
 | TUI ownership    | Spawned V1 threads accept direct input               | Parent-owned V2 threads are inspectable but read-only                            |
 | Configuration    | Legacy flat-agent behavior                           | Per-spawn choices, shared defaults, and durable named roles                      |
 
-### A task tree instead of a flat pool
+### The V2 task tree
 
 Every V2 spawn requires a lowercase `task_name`. Codex resolves it to a canonical
 path below the spawning agent. A child can spawn another child, and the paths
@@ -65,10 +64,9 @@ flowchart TD
   class root focus
 ```
 
-That hierarchy becomes useful when a task has nested subproblems. The root might
-delegate release research, and that agent can pass a focused source audit to its
-own child. The root can still address either one by its canonical path, while
-`list_agents` can narrow the view by path prefix.
+The root can delegate release research, and that agent can pass a focused source
+audit to its own child. The root can still address either one by its canonical
+path, while `list_agents` can narrow the view by path prefix.
 
 ### Context forking is explicit
 
@@ -95,15 +93,15 @@ The two message operations do different jobs:
 - `followup_task` gives an existing agent more work and triggers a turn when it is
   idle.
 
-A message can carry information without turning into another assignment. Agents
-can wait for mailbox updates, be interrupted, or be listed by task path. The
+Agents can wait for mailbox updates, be interrupted, or be listed by task path.
+The
 <SourceLink href="https://github.com/openai/codex/blob/rust-v0.145.0/codex-rs/core/src/tools/handlers/multi_agents_spec.rs">tagged collaboration tool schema</SourceLink>
 defines these semantics.
 
 ### Roles survive a cold resume
 
-Named roles are more practical in V2. A role can provide human-facing guidance,
-a role-specific config layer, and nickname candidates:
+A named role can provide human-facing guidance, a role-specific config layer,
+and nickname candidates:
 
 ```toml title="~/.codex/config.toml"
 [agents.researcher]
@@ -119,12 +117,12 @@ reasoning effort, and permissions.
 <SourceLink href="https://github.com/openai/codex/pull/33657">PR #33657</SourceLink>
 documents the fix.
 
-### Child threads are deliberately read-only
+### Parent-owned V2 child threads are view-only
 
-In the TUI, I can open and inspect a parent-owned V2 child, but direct input is
-rejected. Communication goes through its parent using the V2 tools. That is an
-intentional ownership rule, not a missing composer feature. Codex preserves
-drafts and queued input while the thread is open for inspection.
+In the TUI, Codex opens a parent-owned V2 child in view-only mode. I can inspect
+the thread, while its parent handles communication through the V2 tools. Codex
+uses that restriction to enforce thread ownership and preserves drafts and queued
+input while the child is open for inspection.
 <SourceLink href="https://github.com/openai/codex/pull/33841">PR #33841</SourceLink>
 explains the rationale and tests both writable V1 threads and view-only V2 threads.
 
@@ -143,13 +141,11 @@ The CLI can write the same setting:
 codex features enable multi_agent_v2
 ```
 
-After changing the backend selection, I start a fresh task before testing V2. I do
-not use the removed `multi_agent_mode` compatibility flag; it is a no-op in this
-release.
+After changing the backend selection, I start a fresh task before testing V2.
+The removed `multi_agent_mode` compatibility flag is a no-op in this release, so
+I leave it unset.
 
 ### My working configuration
-
-Here is the exact configuration I use:
 
 ```toml title="~/.codex/config.toml"
 [agents]
@@ -164,8 +160,8 @@ multi_agent_v2 = true
 multi-agent tools default to enabled, and an enabled V2 flag takes precedence. I
 also do not set `default_subagent_model` or `default_subagent_reasoning_effort`, so
 this configuration does not force every spawned agent onto a particular model or
-effort. Those optional defaults only apply when a spawn does not select its own
-values.
+effort. Those optional defaults apply only when a spawn does not select a model
+or reasoning effort.
 <SourceLink href="https://github.com/openai/codex/blob/rust-v0.145.0/codex-rs/core/config.schema.json">The tagged configuration schema</SourceLink>
 is the authoritative reference for these fields.
 
@@ -205,15 +201,13 @@ the tool surface shows what the active task can use.
 
 ## High versus Ultra reasoning
 
-Agents V2 works with both High and Ultra reasoning. The difference is when Codex
-is encouraged to delegate. At High, I ask explicitly when I want parallel agents.
-Ultra enables proactive multi-agent behavior, although Codex can still keep a
-small or tightly coupled task with one agent.
+Agents V2 works with both High and Ultra reasoning. At High, I explicitly ask
+Codex to use parallel agents. At Ultra, Codex can delegate proactively, though it
+may keep a small or tightly coupled task with one agent.
 
-The old `multiAgentMode` setting is deprecated and ignored; the tagged app-server
-documentation identifies Ultra reasoning as the source of proactive delegation.
+The old `multiAgentMode` setting is deprecated and ignored.
 <SourceLink href="https://github.com/openai/codex/blob/rust-v0.145.0/codex-rs/app-server/README.md">The app-server protocol reference</SourceLink>
-states this directly.
+identifies Ultra reasoning as the source of proactive delegation.
 
 At High, a prompt can be as simple as:
 
@@ -222,17 +216,15 @@ Use Agents V2 where the work is independent. Delegate source research,
 implementation, and verification, then integrate the result in the root task.
 ```
 
-Ultra can delegate proactively, but it does not have to. The concurrency setting
-only caps open threads; it does not say how many Codex should use. Clear task
-boundaries matter more than whether the ceiling is six or eight.
+Clear task boundaries matter more than whether the concurrency ceiling is six or
+eight.
 
 ## The shared-workspace caveat
 
-V2 agents share a workspace instead of getting separate worktrees. The injected
-guidance is explicit: every agent uses the same container, filesystem, and current
-working directory, and sees edits immediately.
+V2 agents share a workspace instead of getting separate worktrees.
 <SourceLink href="https://github.com/openai/codex/blob/rust-v0.145.0/codex-rs/core/src/config/mod.rs">The tagged configuration implementation</SourceLink>
-contains that guidance.
+states that every agent uses the same container, filesystem, and current working
+directory, and sees edits immediately.
 
 <Callout title="Coordinate writers" variant="warning">
   Two agents editing the same file can still collide. I give agents separate files
@@ -240,26 +232,28 @@ contains that guidance.
   integration and broad verification to the root agent.
 </Callout>
 
-I treat Agents V2 as an orchestration upgrade. Task paths, selective context,
-mailboxes, and durable roles make concurrent work easier to track, but I still
-have to split the work along safe boundaries.
+I use Agents V2 to coordinate concurrent work. Task paths, selective context,
+mailboxes, and durable roles make that work easier to track, but I still have to
+split it along safe boundaries.
 
-## Is V2 worth enabling?
+## When I enable V2
 
-For broad repository work, yes. In `0.145.0`, the feature is stable, and I think
-the surrounding changes justify a serious trial. The explicit task tree is the
-main improvement for me. Choosing how much history each child receives also helps,
-as does separating information from new work.
+I enable V2 for broad repository work when several tasks can proceed
+independently. In `0.145.0`, the feature's `stable` status and the changes to task
+trees, roles, resume, and navigation give me enough reason to test it seriously.
+The explicit task tree is the main improvement for me. Choosing how much history
+each child receives also helps, as does separating information from new work.
 
-I would not claim speed, cost, or quality improvements from the architecture alone.
-Those claims need measurements on real tasks. I also would not use agents merely to
-fill eight slots. For a small change, one capable root agent is often the better
-choice. When research, implementation, tests, and review can proceed independently,
-V2 gives them a much clearer coordination structure.
+I cannot infer speed, cost, or quality improvements from the architecture alone.
+Those claims need measurements on real tasks. I also do not spawn agents merely
+to fill eight slots. For a small change, one capable root agent is often the
+better choice. When research, implementation, tests, and review can proceed
+independently, V2 gives them a clearer coordination structure.
 
-My minimal setup has worked cleanly so far. I turn on the flag when I want to force
-V2, start a fresh task, and check the exposed tools. I only raise the concurrency
-limit when I can draw clean boundaries between the pieces of work.
+The minimal setup has been enough for my work so far. When I want to force V2, I
+turn on the flag, start a fresh task, and check the exposed tools. I raise the
+concurrency limit only when I can draw clean boundaries between the pieces of
+work.
 
 ## Sources
 

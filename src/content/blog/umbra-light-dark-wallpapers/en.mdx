@@ -46,12 +46,9 @@ I was already using the
 <SourceLink href="https://www.raycast.com/koinzhang/raycast-wallpaper">Raycast Wallpaper extension</SourceLink>.
 It has exactly two commands: `Set Raycast Wallpaper` and
 `Auto Switch Raycast Wallpaper`. Both expose a `Respect System Appearance`
-setting, so saying that the extension ignores Light and Dark Mode would be
-wrong.
-
-The difference is what that setting does. The extension classifies Raycast's
-catalogue as light or dark. It can show only wallpapers for the current
-appearance, or narrow the pool before choosing one at random. The current
+setting. The extension classifies Raycast's catalogue as light or dark, then
+uses those labels to show only wallpapers for the current appearance or narrow
+the pool before choosing one at random. The current
 <SourceLink href="https://github.com/raycast/extensions/blob/main/extensions/raycast-wallpaper/package.json">manifest</SourceLink>
 and
 <SourceLink href="https://github.com/raycast/extensions/blob/main/extensions/raycast-wallpaper/src/auto-switch-raycast-wallpaper.ts">auto-switch implementation</SourceLink>
@@ -73,8 +70,8 @@ rather than keeping a fixed pair.
   frame="intrinsic"
 />
 
-I could probably build a workaround around those commands. Then I would be
-maintaining a workaround for a preference that should take two clicks.
+I could build around those commands, but then I would have to maintain my own
+setup for a preference that should take two clicks.
 
 ## Umbra is just right
 
@@ -83,36 +80,34 @@ way I was already thinking about the problem: one place for the Light wallpaper
 and one for the Dark wallpaper. I drop in the two images, and Umbra keeps them in
 sync with the macOS appearance. It can also toggle Dark Mode from the menu bar.
 
-That direct setup is why I kept it. Umbra has more options, including
-per-display wallpapers and better handling for HEIC files, but I do not have to
-turn my simple preference into a wallpaper project. Replay offers it as
-"pay what you like," which also makes it easy to try.
+I kept Umbra for its direct setup. It also supports per-display wallpapers and
+handles HEIC files. I can leave those options alone and keep my fixed pair
+simple. Replay offers it as "pay what you like."
 
 ## A small Replay aside
 
-Umbra was not my first app from Replay. I also use
+Before Umbra, I was already using another Replay app:
 <SourceLink href="https://replay.software/echo">Echo</SourceLink>, its SSH and
-Mosh client for iPhone and iPad. I reach for it less now that I can
+Mosh client for iPhone and iPad. I reach for Echo less now that I can
 <SourceLink href="https://openai.com/index/work-with-codex-from-anywhere/">follow Codex work from the ChatGPT mobile app</SourceLink>
 and Claude has
-<SourceLink href="https://www.anthropic.com/news/finance-agents">Dispatch</SourceLink>,
-but Echo is still a neat project. It takes a job that is easy to get wrong on a
-phone and makes it feel native.
+<SourceLink href="https://www.anthropic.com/news/finance-agents">Dispatch</SourceLink>.
+I still like it: Echo makes SSH and Mosh feel native on a phone, where that kind
+of interface is easy to get wrong.
 
-Umbra feels similarly focused. It does not ask me to change how I manage
-appearance in macOS. It handles the missing wallpaper pair and stays out of the
-way.
+Umbra has the same narrow focus. It fits the way I already manage appearance in
+macOS and adds the wallpaper pair I was missing.
 
 ## Why this small thing matters to me
 
-I spend hours looking at macOS, so this minor tweak is always in view. The
-desktop sits behind every window. It affects the contrast around the edges and
-is often the first thing I see when I switch tasks.
+I spend hours looking at macOS, and the desktop remains visible around many of
+my windows. It changes the contrast at their edges, and I often see it when I
+switch tasks.
 
-That is why I like small utilities that let me make the OS mine without adding a
-new ritual. My Mac now has those two Raycast images in Umbra. Light Mode finally
-feels like a complete theme instead of a temporary setting I will switch off in
-ten minutes.
+I like small utilities that let me make the OS mine without adding a new ritual.
+My Mac now has those two Raycast images in Umbra. Light Mode finally feels like
+a complete theme instead of a temporary setting I will switch off in ten
+minutes.
 
 ## Sources
 
