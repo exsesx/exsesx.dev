@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -19,20 +18,16 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary-hover: var(--secondary-hover);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-inverse-hover: var(--inverse-hover);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
-  --color-input: var(--input);
   --color-ring: var(--ring);
   --shadow-menu: var(--menu-shadow);
   --shadow-panel: var(--panel-shadow);
   --shadow-project-card: var(--project-card-shadow);
-  --shadow-project-cta: var(--project-cta-shadow);
 }
 
 :root {
@@ -92,20 +87,16 @@
   --primary-foreground: #f3f7fd;
   --secondary: color-mix(in oklab, #fbfdff 74%, white);
   --secondary-foreground: #1c2638;
-  --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
   --muted: color-mix(in oklab, #fbfdff 66%, #dbe3ee);
   --muted-foreground: #51607a;
   --accent: #2440ff;
   --accent-foreground: #f3f7fd;
-  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--ring) 18%);
   --destructive: #be123c;
   --border: color-mix(in oklab, #0b1423 12%, transparent);
-  --input: color-mix(in oklab, #0b1423 10%, transparent);
   --ring: #3d5afe;
   --menu-shadow: 0 22px 70px rgba(11, 20, 35, 0.16);
   --panel-shadow: 0 24px 70px rgba(11, 20, 35, 0.1);
   --project-card-shadow: 0 28px 80px rgba(11, 20, 35, 0.1);
-  --project-cta-shadow: 0 28px 80px rgba(11, 20, 35, 0.18);
 }
 
 .dark {
@@ -126,20 +117,16 @@
   --primary-foreground: #0b1423;
   --secondary: color-mix(in oklab, #ffffff 8%, transparent);
   --secondary-foreground: #e8eef8;
-  --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
   --muted: color-mix(in oklab, #ffffff 7%, transparent);
   --muted-foreground: #94a3b8;
   --accent: #5ce1ff;
   --accent-foreground: #0a101c;
-  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--ring) 18%);
   --destructive: #fb7185;
   --border: color-mix(in oklab, #ffffff 12%, transparent);
-  --input: color-mix(in oklab, #ffffff 14%, transparent);
   --ring: #5ce1ff;
   --menu-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
   --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
   --project-card-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
-  --project-cta-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
 }
 
 html,
@@ -703,37 +690,6 @@ html[data-season="pride"] .logo-mark-pride {
   transition:
     opacity 180ms var(--ease-out),
     visibility 0s linear;
-}
-
-:is(
-    html[data-blog-focus-bootstrap="pending"],
-    html[data-blog-focus-bootstrap="hidden"],
-    [data-blog-passive-hidden="true"],
-    [data-blog-focus="true"]
-  )
-  .site-header-nav-frame {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translate3d(0, calc(-100% - 1.5rem), 0) scale(0.985);
-  transition:
-    opacity 160ms var(--ease-out),
-    transform 200ms var(--ease-in-out),
-    visibility 0s linear 200ms;
-}
-
-:is(
-    html[data-blog-focus-bootstrap="pending"],
-    html[data-blog-focus-bootstrap="hidden"],
-    [data-blog-passive-hidden="true"],
-    [data-blog-focus="true"]
-  )
-  .site-header-fade {
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 160ms var(--ease-out),
-    visibility 0s linear 160ms;
 }
 
 /* Article reading keeps the nav at one physical size. The visible rule also
@@ -2961,11 +2917,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   background: color-mix(in oklab, var(--accent) 7%, var(--blog-rich-block-surface));
 }
 
-.blog-callout[data-variant="tip"] {
-  border-color: color-mix(in oklab, #22c55e 32%, var(--blog-rich-block-border));
-  background: color-mix(in oklab, #22c55e 7%, var(--blog-rich-block-surface));
-}
-
 .blog-callout[data-variant="warning"] {
   border-color: color-mix(in oklab, #f59e0b 38%, var(--blog-rich-block-border));
   background: color-mix(in oklab, #f59e0b 8%, var(--blog-rich-block-surface));
@@ -2974,10 +2925,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-callout-icon {
   align-self: center;
   color: var(--accent);
-}
-
-.blog-callout[data-variant="tip"] .blog-callout-icon {
-  color: #16a34a;
 }
 
 .blog-callout[data-variant="warning"] .blog-callout-icon {
@@ -3501,12 +3448,6 @@ code[data-theme] span {
   font-weight: 750;
 }
 
-.blog-figure img {
-  border: 1px solid var(--blog-rich-block-border);
-  border-radius: var(--blog-rich-block-radius);
-  background: var(--muted);
-}
-
 .blog-figure-image--dark,
 html.dark .blog-figure-image--light {
   display: none;
@@ -3514,12 +3455,6 @@ html.dark .blog-figure-image--light {
 
 html.dark .blog-figure-image--dark {
   display: block;
-}
-
-.blog-figure--intrinsic img {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
 }
 
 .blog-figure figcaption {
@@ -3652,7 +3587,6 @@ html.dark .blog-figure-image--dark {
   }
 
   [data-slot="tooltip-content"] {
-    animation: none;
     transition: none;
   }
 }

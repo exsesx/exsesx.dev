@@ -6,12 +6,7 @@ export type ArticleHeading = {
   text: string;
 };
 
-export type MdxSourceAnalysis = {
-  headings: ArticleHeading[];
-  readingMinutes: number;
-};
-
-export function analyzeMdxSource(source: string): MdxSourceAnalysis {
+export function analyzeMdxSource(source: string) {
   const prose = source
     .replace(/^```[^\n]*\n[\s\S]*?^```\s*$/gm, " ")
     .replace(/^import\s.+$/gm, " ")

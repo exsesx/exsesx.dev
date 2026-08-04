@@ -6,11 +6,6 @@ import { rootMetadata, rootViewport } from "@/lib/metadata";
 import "@/styles/monolisa.css";
 import "@/styles/globals.css";
 
-type BlogRootLayoutProps = Readonly<{
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
-}>;
-
 export const metadata: Metadata = rootMetadata;
 export const viewport: Viewport = rootViewport;
 export const dynamicParams = false;
@@ -19,7 +14,7 @@ export function generateStaticParams() {
   return BLOG_LOCALES.map(locale => ({ locale }));
 }
 
-export default async function BlogRootLayout({ children, params }: BlogRootLayoutProps) {
+export default async function BlogRootLayout({ children, params }: LayoutProps<"/blog/[locale]">) {
   const { locale } = await params;
 
   if (!isBlogLocale(locale)) {

@@ -2,13 +2,9 @@ import { getBlogPosts } from "@/content/blog/manifest";
 import { isBlogLocale } from "@/lib/blog";
 import { buildBlogRss } from "@/lib/rss";
 
-type BlogFeedRouteContext = {
-  params: Promise<{ locale: string }>;
-};
-
 export const dynamic = "force-static";
 
-export async function GET(_request: Request, { params }: BlogFeedRouteContext) {
+export async function GET(_request: Request, { params }: RouteContext<"/blog/[locale]/rss.xml">) {
   const { locale } = await params;
 
   if (!isBlogLocale(locale)) {

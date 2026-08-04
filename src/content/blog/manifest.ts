@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { BLOG_LOCALES } from "@/lib/blog";
+import { BLOG_LOCALES, type BlogLocale } from "@/lib/blog";
 import codexAgentsV2 from "./codex-agents-v2/post";
 import codexMemories from "./codex-memories/post";
 import { analyzeMdxSource } from "./reading";
 import safari26InvisibleTintSampler from "./safari-26-invisible-tint-sampler/post";
-import type { AnalyzedBlogPostSummary, BlogLocale, BlogPost, BlogPostEntry, BlogPostSummary } from "./types";
+import type { BlogPost, BlogPostEntry, BlogPostSummary } from "./types";
 import umbraLightDarkWallpapers from "./umbra-light-dark-wallpapers/post";
 
 const posts: readonly BlogPost[] = [
@@ -31,7 +31,7 @@ export function getBlogPosts(
         return [];
       }
 
-      const { load: _load, sourcePath: _sourcePath, ...summary } = entry;
+      const { load: _load, ...summary } = entry;
 
       return [summary];
     })
@@ -68,27 +68,18 @@ export function getAllBlogPosts(options: BlogPostQueryOptions = {}): BlogPostSum
   );
 }
 
-export async function analyzeBlogPost(article: BlogPostEntry) {
-  const source = await readFile(path.join(process.cwd(), article.sourcePath), "utf8");
+export async function analyzeBlogPost({ locale, slug }: { locale: BlogLocale; slug: string }) {
+  const source = await readFile(path.join(process.cwd(), "src/content/blog", slug, `${locale}.mdx`), "utf8");
 
   return analyzeMdxSource(source);
 }
 
-export async function getBlogPostSummaries(
-  locale: BlogLocale,
-  options: BlogPostQueryOptions = {},
-): Promise<AnalyzedBlogPostSummary[]> {
+export async function getBlogPostSummaries(locale: BlogLocale, options: BlogPostQueryOptions = {}) {
   return Promise.all(
     getBlogPosts(locale, options).map(async summary => {
-      const article = getBlogPost(locale, summary.slug, options);
-
-      if (!article) {
-        throw new Error(`Missing Blog entry for ${locale}/${summary.slug}`);
-      }
-
       return {
         ...summary,
-        ...(await analyzeBlogPost(article)),
+        ...(await analyzeBlogPost(summary)),
       };
     }),
   );

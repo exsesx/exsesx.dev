@@ -11,9 +11,7 @@ export default defineBlogPost({
         "How I traced Safari 26 toolbar tinting through WebKit and hid a reliable theme-aware sampler with background-clip: text.",
       publishedAt: "2026-07-25T21:21:00+02:00",
       status: "published",
-      sourcePath: "src/content/blog/safari-26-invisible-tint-sampler/en.mdx",
       socialImage: {
-        path: "/images/og/blog/safari-26-invisible-tint-sampler-en.png",
         alt: "Safari 26 toolbar tinting article by Oleh Vanin",
       },
       load: () => import("./en.mdx"),
@@ -25,9 +23,7 @@ export default defineBlogPost({
         "Як я розібрав механізм тонування панелей Safari 26 у коді WebKit і сховав надійний семплер теми через background-clip: text.",
       publishedAt: "2026-07-25T21:21:00+02:00",
       status: "published",
-      sourcePath: "src/content/blog/safari-26-invisible-tint-sampler/uk.mdx",
       socialImage: {
-        path: "/images/og/blog/safari-26-invisible-tint-sampler-uk.png",
         alt: "Стаття Олега Ваніна про тонування панелей Safari 26",
       },
       load: () => import("./uk.mdx"),

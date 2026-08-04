@@ -53,7 +53,7 @@ bun run start
 - `src/components` — shared UI and interactive client boundaries
 - `src/lib` — project data and behavior contracts for routing, motion, themes, hotkeys, and security policy
 - `src/styles` — global design tokens, native motion, View Transition, and tiered glass rules
-- `scripts` — committed asset generators exposed as `bun run generate:favicons` and `bun run generate:social-images`; Next.js serves native metadata routes from `src/app/robots.ts` and `src/app/sitemap.ts`
+- `scripts` — maintenance checks and the committed favicon generator; Next.js serves native robots, sitemap, and Open Graph image routes from `src/app`
 - `tests/e2e` — Playwright contracts for route motion, shared controls, media behavior, and metadata routes
 - `docs` — implementation invariants, Safari handoff notes, and postmortems
 

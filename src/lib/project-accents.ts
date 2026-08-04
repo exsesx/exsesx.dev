@@ -106,7 +106,3 @@ export const PROJECT_ACCENT_CLASSES: Record<ProjectAccent, ProjectAccentClasses>
     },
   },
 };
-
-export function getProjectAccentClasses(accent: ProjectAccent) {
-  return PROJECT_ACCENT_CLASSES[accent];
-}

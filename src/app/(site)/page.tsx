@@ -285,7 +285,7 @@ export default function HomePage() {
           </div>
           <div className="grid items-stretch gap-6 lg:grid-cols-3">
             {featuredProjects.map(project => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard key={project.slug} project={project} />
             ))}
           </div>
         </section>

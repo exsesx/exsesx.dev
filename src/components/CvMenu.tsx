@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SITE_PROFILE } from "@/lib/site-profile";
 import { cn } from "@/lib/utils";
-import { type CvSecondaryAction, getCvSecondaryAction } from "./cv-actions";
 
 const RESUME_PDF_URL = SITE_PROFILE.resume.path;
 const RESUME_PDF_DOWNLOAD_URL = `${RESUME_PDF_URL}?download=1`;
@@ -43,14 +42,18 @@ function canShareResumePdf() {
 }
 
 function getClientSecondaryAction() {
-  return getCvSecondaryAction({
-    canShareFiles: canShareResumePdf(),
-    maxTouchPoints: navigator.maxTouchPoints,
-    userAgent: navigator.userAgent,
-  });
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+
+  if (!isIOS) {
+    return "download";
+  }
+
+  return canShareResumePdf() ? "share" : "none";
 }
 
-function getServerSecondaryAction(): CvSecondaryAction {
+function getServerSecondaryAction() {
   return "download";
 }
 
@@ -219,7 +222,7 @@ function CvMenu() {
               />
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] sm:w-52">
+            <DropdownMenuContent className="w-56 max-w-[calc(100vw-2rem)] sm:w-52">
               <DropdownMenuGroup>
                 <DropdownMenuLinkItem href={RESUME_PDF_URL} rel="noopener noreferrer" target="_blank">
                   <FileText size={16} strokeWidth={2.3} />

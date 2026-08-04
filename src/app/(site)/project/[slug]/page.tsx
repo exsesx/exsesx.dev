@@ -10,9 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { createPageMetadata, createProjectSocialImage } from "@/lib/metadata";
-import { getBackTransitionTypeProps, ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
-import { getProjectAccentClasses } from "@/lib/project-accents";
+import { createPageMetadata } from "@/lib/metadata";
+import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { PROJECT_ACCENT_CLASSES } from "@/lib/project-accents";
 import {
   getAdjacentProjects,
   getProjectBySlug,
@@ -52,7 +52,6 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
     title,
     description,
     path: getProjectPath(project),
-    image: createProjectSocialImage(project.slug, project.name),
   });
 }
 
@@ -62,7 +61,7 @@ function ProjectMedia({ project, preload = false }: { project: Project; preload?
 
   return (
     <ViewTransition
-      name={`project-media-${project.id}`}
+      name={`project-media-project-${project.slug}`}
       share={{ [projectTransitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
       default="none"
     >
@@ -109,9 +108,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   const { previousProject, nextProject } = getAdjacentProjects(project);
   const projectTransitionType = getProjectTransitionType(project);
-  const accentClasses = getProjectAccentClasses(project.accent);
+  const accentClasses = PROJECT_ACCENT_CLASSES[project.accent];
   const adjacentProjects = [previousProject, nextProject].filter(
-    (projectItem): projectItem is Project => projectItem !== undefined && projectItem.id !== project.id,
+    (projectItem): projectItem is Project => projectItem !== undefined && projectItem.slug !== project.slug,
   );
 
   return (
@@ -119,7 +118,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       id="main-content"
       tabIndex={-1}
       className="page-safe-inline mx-auto w-full max-w-7xl pb-16 pt-24 lg:pt-28"
-      {...getBackTransitionTypeProps(projectTransitionType)}
+      data-back-transition-type={projectTransitionType}
     >
       <section className="grid gap-8 lg:grid-cols-[0.48fr_0.52fr] lg:items-stretch">
         <div className="motion-rise flex flex-col gap-6">
@@ -295,7 +294,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
         <div className="grid items-stretch gap-5 md:grid-cols-2">
           {adjacentProjects.map(projectItem => (
-            <ProjectCard key={projectItem.id} project={projectItem} density="compact" />
+            <ProjectCard key={projectItem.slug} project={projectItem} density="compact" />
           ))}
         </div>
       </section>

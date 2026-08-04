@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createMermaidPalette, getMermaidConfig, MERMAID_SITE_TOKENS, type MermaidThemeTokens } from "./mermaid-theme";
+import { createMermaidPalette, getMermaidConfig, type MermaidThemeTokens } from "./mermaid-theme";
 
 const lightTokens: MermaidThemeTokens = {
   accent: { a: 1, b: 255, g: 64, r: 36 },
@@ -29,19 +29,6 @@ const darkTokens: MermaidThemeTokens = {
 
 describe("Mermaid theme configuration", () => {
   test("derives its identity from the site's semantic CSS tokens", () => {
-    expect(MERMAID_SITE_TOKENS).toEqual({
-      accent: "--accent",
-      accentText: "--accent-foreground",
-      background: "--background",
-      border: "--border",
-      card: "--card",
-      fontFamily: "--font-mono",
-      line: "--muted-foreground",
-      muted: "--muted",
-      secondary: "--secondary",
-      text: "--foreground",
-    });
-
     const light = createMermaidPalette(lightTokens);
     const dark = createMermaidPalette(darkTokens);
 

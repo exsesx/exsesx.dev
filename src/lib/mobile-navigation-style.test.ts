@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getBackTransitionTypeProps, MOTION_ATTRIBUTES, ROUTE_TRANSITION_TYPES } from "./motion-contract";
+import { MOTION_ATTRIBUTES, ROUTE_TRANSITION_TYPES } from "./motion-contract";
 
 const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
@@ -102,12 +102,6 @@ describe("mobile navigation styles", () => {
 
     expect(reducedMotionRule).toMatch(/transition-duration:\s*0ms/);
     expect(reducedMotionRule).toMatch(/transition-delay:\s*0ms/);
-  });
-
-  test("names the back chip's morph transition attribute for TS writers", () => {
-    expect(getBackTransitionTypeProps("project-transition-project-quicklizard")).toEqual({
-      [MOTION_ATTRIBUTES.backTransitionType]: "project-transition-project-quicklizard",
-    });
   });
 
   test("keeps the back chip out of view-transition snapshot layers", async () => {

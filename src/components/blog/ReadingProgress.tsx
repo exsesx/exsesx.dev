@@ -46,7 +46,6 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     let frame = 0;
     let measurementFrame = 0;
     let deviceFrameAnimationFrame = 0;
-    let deviceFrameAnimationGeneration = 0;
     let articleTop = 0;
     let readableDistance = 1;
     let deviceFrameAnimation: DeviceFrameAnimation = "idle";
@@ -68,7 +67,6 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     }
 
     function endDeviceFrameAnimation(syncProgress = true) {
-      deviceFrameAnimationGeneration += 1;
       cancelAnimationFrame(deviceFrameAnimationFrame);
       deviceFrameAnimationFrame = 0;
       delete progressPathElement.dataset.drawing;
@@ -90,9 +88,6 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
         return;
       }
 
-      const generation = deviceFrameAnimationGeneration + 1;
-
-      deviceFrameAnimationGeneration = generation;
       cancelAnimationFrame(deviceFrameAnimationFrame);
       deviceFrameAnimation = "drawing-in";
       progressPathElement.dataset.drawing = "in";
@@ -101,10 +96,6 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
       const startedAt = performance.now();
 
       const advanceDraw = () => {
-        if (generation !== deviceFrameAnimationGeneration) {
-          return;
-        }
-
         const elapsed = performance.now() - startedAt - DRAW_IN_REVEAL_MS;
         const eased = easeOutDraw(Math.min(1, Math.max(0, elapsed) / DRAW_IN_DURATION_MS));
 
@@ -137,9 +128,6 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
         return;
       }
 
-      const generation = deviceFrameAnimationGeneration + 1;
-
-      deviceFrameAnimationGeneration = generation;
       cancelAnimationFrame(deviceFrameAnimationFrame);
       deviceFrameAnimation = "drawing-out";
       progressPathElement.dataset.drawing = "out";
@@ -147,10 +135,6 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
       const startedAt = performance.now();
 
       const retractDraw = () => {
-        if (generation !== deviceFrameAnimationGeneration) {
-          return;
-        }
-
         const elapsed = performance.now() - startedAt;
         const eased = easeInOutDraw(Math.min(1, elapsed / DRAW_OUT_DURATION_MS));
 

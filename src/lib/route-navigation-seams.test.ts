@@ -40,10 +40,8 @@ describe("route navigation seams", () => {
     )?.[0];
 
     expect(previousLink).toContain(`transitionTypes={[ROUTE_TRANSITION_TYPES.navBack]}`);
-    expect(previousLink).not.toContain("getProjectRouteTransitionTypes");
     expect(previousLink).not.toContain("getProjectTransitionType");
     expect(nextLink).toContain(`transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}`);
-    expect(nextLink).not.toContain("getProjectRouteTransitionTypes");
     expect(nextLink).not.toContain("getProjectTransitionType");
   });
 });

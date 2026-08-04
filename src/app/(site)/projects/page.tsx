@@ -2,7 +2,7 @@ import { Layers3 } from "lucide-react";
 import type { Metadata } from "next";
 import ProjectCard from "@/components/ProjectCard";
 import { CardContent, Card as UiCard } from "@/components/ui/card";
-import { createPageMetadata, projectsSocialImage } from "@/lib/metadata";
+import { createPageMetadata } from "@/lib/metadata";
 import { projects } from "@/lib/projects";
 import { buildProjectsStructuredData, serializeStructuredData } from "@/lib/structured-data";
 
@@ -11,7 +11,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Featured product engineering work by Oleh Vanin across AI, enterprise IT, pricing, fintech, education, commerce, utilities, and digital asset products.",
   path: "/projects",
-  image: projectsSocialImage,
 });
 
 export default function Projects() {
@@ -51,7 +50,7 @@ export default function Projects() {
 
         <section className="mt-8 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
           {projects.map((project, index) => (
-            <ProjectCard key={project.id} project={project} density="compact" preloadMedia={index === 0} />
+            <ProjectCard key={project.slug} project={project} density="compact" preloadMedia={index === 0} />
           ))}
         </section>
       </main>

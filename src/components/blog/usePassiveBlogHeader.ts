@@ -4,10 +4,8 @@ import { useMotionValueEvent, useReducedMotion, useSpring } from "motion/react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
   BLOG_HEADER_HIDE_AFTER,
-  BLOG_HEADER_HIDE_DISTANCE,
   BLOG_HEADER_REVEAL_DISTANCE,
   BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
-  BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
   createPassiveBlogHeaderState,
   updatePassiveBlogHeader,
@@ -201,7 +199,6 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
 
     const headerFrame = document.querySelector<HTMLElement>(".site-header-nav-frame");
     const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
-    const hideDistance = isCoarsePointer ? BLOG_HEADER_TOUCH_HIDE_DISTANCE : BLOG_HEADER_HIDE_DISTANCE;
     const revealDistance = isCoarsePointer ? BLOG_HEADER_TOUCH_REVEAL_DISTANCE : BLOG_HEADER_REVEAL_DISTANCE;
     headerFrameRef.current = headerFrame;
 
@@ -230,7 +227,6 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
         directionChangeDeadband: isCoarsePointer ? BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND : 0,
         hasHeaderFocus,
         hasUserScrollIntent: tocNavigationIdRef.current === null,
-        hideDistance,
         maxScrollY: readMaxScrollY(),
         revealDistance,
         shouldHideWithoutIntent: tocNavigationIdRef.current !== null || scrollY >= BLOG_HEADER_HIDE_AFTER,

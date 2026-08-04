@@ -1,4 +1,3 @@
-import type { Route } from "next";
 import { isBlogLocale } from "./blog";
 
 export type PrimaryNavHref = "/" | "/projects" | "/blog/en";
@@ -49,10 +48,6 @@ export function isBlogIndexRoutePath(routePath: string) {
 
 export function isProjectsIndexRoutePath(routePath: string) {
   return getRoutePathname(routePath) === "/projects";
-}
-
-export function getProjectsHref() {
-  return "/projects" as Route;
 }
 
 function getRoutePathname(routePath: string) {

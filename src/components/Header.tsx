@@ -8,7 +8,6 @@ import type { MouseEvent, PointerEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { MOTION_ATTRIBUTES, suppressEntryMotionProps } from "@/lib/motion-contract";
 import { attachNavCondense } from "@/lib/nav-condense";
-import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { getPrimaryNavHref, isBlogPostPath, isProjectDetailPath, type PrimaryNavHref } from "@/lib/routes";
 import { SITE_PROFILE } from "@/lib/site-profile";
 import { cn } from "@/lib/utils";
@@ -68,7 +67,7 @@ export default function Header() {
       setVisualActiveNavHref(href);
     }
 
-    if (shouldScrollToTopForNavClick({ pathname, href, scrollY: window.scrollY })) {
+    if (pathname === href && window.scrollY > 0) {
       event.preventDefault();
       scrollToPageTop();
     }
