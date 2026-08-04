@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { getBlogPost, getBlogPosts } from "@/content/blog/manifest";
+import { SOCIAL_IMAGE_VERSION } from "./social-image-version";
 import {
   buildBlogIndexStructuredData,
   buildBlogPostingStructuredData,
@@ -45,6 +46,7 @@ describe("buildHomeStructuredData", () => {
       "@id": "https://exsesx.dev/#website",
       name: "exsesx.dev",
       url: "https://exsesx.dev",
+      image: `https://exsesx.dev/social-image?v=${SOCIAL_IMAGE_VERSION}`,
     });
     expect(website?.publisher).toEqual({ "@id": "https://exsesx.dev/#person" });
   });
@@ -93,6 +95,7 @@ describe("Blog structured data", () => {
       headline: "Codex Agents V2 in 0.145.0: what changed and how to enable it",
       inLanguage: "en",
       datePublished: "2026-07-22T12:00:00+02:00",
+      image: `https://exsesx.dev/blog/en/codex-agents-v2/social-image?v=${SOCIAL_IMAGE_VERSION}`,
       author: {
         "@type": "Person",
         "@id": "https://exsesx.dev/#person",

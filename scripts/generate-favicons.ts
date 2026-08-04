@@ -2,8 +2,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
-// Rasterizes the favicon SVGs into the PNG + ICO set in public/favicon.
-// The PNG set uses the light-circle variant (favicon-dark.svg), matching the
+// Rasterizes the favicon SVGs into the PNG set in public/favicon and root ICO.
+// The outputs use the light-circle variant (favicon-dark.svg), matching the
 // original assets; favicon.ico embeds 16px + 32px PNGs.
 const faviconDir = path.join(process.cwd(), "public/favicon");
 const publicDir = path.join(process.cwd(), "public");
@@ -61,7 +61,6 @@ async function main() {
   );
 
   const ico = buildIco(icoImages);
-  await writeFile(path.join(faviconDir, "favicon.ico"), ico);
   await writeFile(path.join(publicDir, "favicon.ico"), ico);
 }
 

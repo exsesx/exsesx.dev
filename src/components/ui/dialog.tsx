@@ -3,50 +3,23 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { cn } from "@/lib/utils";
 
-function Dialog(props: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog-root" {...props} />;
-}
-
-function DialogTrigger(props: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
-}
+const Dialog = DialogPrimitive.Root;
+const DialogTrigger = DialogPrimitive.Trigger;
+const DialogTitle = DialogPrimitive.Title;
+const DialogClose = DialogPrimitive.Close;
 
 function DialogContent({
-  backdropClassName,
   className,
-  viewportClassName,
   ...props
-}: Omit<DialogPrimitive.Popup.Props, "className"> & {
-  backdropClassName?: string;
-  className?: string;
-  viewportClassName?: string;
-}) {
+}: Omit<DialogPrimitive.Popup.Props, "className"> & { className?: string }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Backdrop
-        data-slot="dialog-backdrop"
-        className={cn("dialog-backdrop fixed inset-0 z-[90]", backdropClassName)}
-      />
-      <DialogPrimitive.Viewport
-        data-slot="dialog-viewport"
-        className={cn("fixed inset-0 z-[90] grid place-items-center overflow-y-auto p-4 sm:p-6", viewportClassName)}
-      >
+      <DialogPrimitive.Backdrop className="dialog-backdrop fixed inset-0 z-[90]" />
+      <DialogPrimitive.Viewport className="fixed inset-0 z-[90] grid place-items-center overflow-y-auto p-4 sm:p-6">
         <DialogPrimitive.Popup data-slot="dialog-content" className={cn("w-full outline-none", className)} {...props} />
       </DialogPrimitive.Viewport>
     </DialogPrimitive.Portal>
   );
 }
 
-function DialogTitle(props: DialogPrimitive.Title.Props) {
-  return <DialogPrimitive.Title data-slot="dialog-title" {...props} />;
-}
-
-function DialogDescription(props: DialogPrimitive.Description.Props) {
-  return <DialogPrimitive.Description data-slot="dialog-description" {...props} />;
-}
-
-function DialogClose(props: DialogPrimitive.Close.Props) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
-}
-
-export { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger };
+export { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger };

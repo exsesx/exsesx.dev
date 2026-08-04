@@ -1,13 +1,5 @@
 import type { ComponentType } from "react";
 import type { BlogLocale } from "@/lib/blog";
-import type { ArticleHeading } from "./reading";
-
-export type { BlogLocale } from "@/lib/blog";
-export type BlogPostStatus = "draft" | "published";
-
-export type BlogMdxModule = {
-  default: ComponentType;
-};
 
 export type BlogEdition = {
   title: string;
@@ -15,13 +7,11 @@ export type BlogEdition = {
   description: string;
   publishedAt: string;
   updatedAt?: string;
-  status: BlogPostStatus;
-  sourcePath: string;
+  status: "draft" | "published";
   socialImage: {
-    path: string;
     alt: string;
   };
-  load: () => Promise<BlogMdxModule>;
+  load: () => Promise<{ default: ComponentType }>;
 };
 
 export type BlogPost = {
@@ -30,7 +20,7 @@ export type BlogPost = {
   editions: { en: BlogEdition } & Partial<Record<BlogLocale, BlogEdition>>;
 };
 
-export type BlogPostSummary = Omit<BlogEdition, "load" | "sourcePath"> & {
+export type BlogPostSummary = Omit<BlogEdition, "load"> & {
   locale: BlogLocale;
   slug: string;
   tags: readonly string[];
@@ -40,11 +30,6 @@ export type BlogPostEntry = BlogEdition & {
   locale: BlogLocale;
   slug: string;
   tags: readonly string[];
-};
-
-export type AnalyzedBlogPostSummary = BlogPostSummary & {
-  headings: ArticleHeading[];
-  readingMinutes: number;
 };
 
 export function defineBlogPost<const TPost extends BlogPost>(post: TPost) {

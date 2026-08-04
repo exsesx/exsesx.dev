@@ -5,7 +5,6 @@ import {
   BLOG_HEADER_HIDE_START,
   BLOG_HEADER_REVEAL_DISTANCE,
   BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
-  BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
   createPassiveBlogHeaderState,
   revealPassiveBlogHeader,
@@ -19,7 +18,6 @@ describe("passive blog header", () => {
     expect(BLOG_HEADER_HIDE_AFTER).toBe(120);
     expect(BLOG_HEADER_HIDE_AFTER).toBe(BLOG_HEADER_HIDE_START + BLOG_HEADER_HIDE_DISTANCE);
     expect(BLOG_HEADER_REVEAL_DISTANCE).toBe(48);
-    expect(BLOG_HEADER_TOUCH_HIDE_DISTANCE).toBe(24);
     expect(BLOG_HEADER_TOUCH_REVEAL_DISTANCE).toBe(16);
     expect(BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND).toBe(4);
   });
@@ -147,7 +145,6 @@ describe("passive blog header", () => {
       state = updatePassiveBlogHeader(state, {
         directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
         hasUserScrollIntent: true,
-        hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
         revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
         scrollY: state.lastScrollY - BLOG_HEADER_TOUCH_REVEAL_DISTANCE - BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
       });
@@ -156,9 +153,8 @@ describe("passive blog header", () => {
       state = updatePassiveBlogHeader(state, {
         directionChangeDeadband: BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
         hasUserScrollIntent: true,
-        hideDistance: BLOG_HEADER_TOUCH_HIDE_DISTANCE,
         revealDistance: BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
-        scrollY: state.lastScrollY + BLOG_HEADER_TOUCH_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
+        scrollY: state.lastScrollY + BLOG_HEADER_HIDE_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND,
       });
       expect(state).toMatchObject({ accumulatedDistance: 0, direction: "down", hidden: true });
     }

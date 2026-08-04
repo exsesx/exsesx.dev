@@ -24,7 +24,6 @@ const withMDX = createMDX({
 });
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
   reactCompiler: true,
   typedRoutes: true,
   poweredByHeader: false,

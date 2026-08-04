@@ -8,7 +8,7 @@ type SourceLinkProps = {
 };
 
 export default function SourceLink({ children, href }: SourceLinkProps) {
-  const hostname = getHostname(href);
+  const hostname = new URL(href).hostname.replace(/^www\./, "");
   const HostIcon = hostname === "github.com" ? GithubIcon : Globe2;
 
   return (
@@ -29,12 +29,4 @@ export default function SourceLink({ children, href }: SourceLinkProps) {
       </span>
     </a>
   );
-}
-
-function getHostname(href: string) {
-  try {
-    return new URL(href).hostname.replace(/^www\./, "");
-  } catch {
-    return "source";
-  }
 }

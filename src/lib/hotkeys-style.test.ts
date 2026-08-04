@@ -16,9 +16,7 @@ describe("hotkey loading and motion contracts", () => {
     expect(loader).toMatch(/dynamic\(\(\) => import\("\.\/Hotkeys"\),\s*\{\s*ssr:\s*false/);
     expect(loader).toMatch(/useState\(false\)/);
     expect(loader).not.toMatch(/if \(!isEnabled\) \{\s*return null;\s*\}/);
-    expect(loader).toMatch(
-      /shouldEnableHotkeys\(\{\s*hasHover:\s*hoverQuery\.matches,\s*hasCoarsePointer:\s*coarsePointerQuery\.matches/,
-    );
+    expect(loader).toMatch(/setIsEnabled\(hoverQuery\.matches \|\| !coarsePointerQuery\.matches\)/);
     expect(loader).toContain('window.matchMedia("(min-width: 768px)")');
     expect(loader.match(/addEventListener\("change", handleChange\)/g)).toHaveLength(3);
     expect(loader.match(/removeEventListener\("change", handleChange\)/g)).toHaveLength(3);

@@ -8,11 +8,7 @@ import { BLOG_UI, formatBlogDate, getBlogPostPath, isBlogLocale } from "@/lib/bl
 import { createBlogIndexMetadata } from "@/lib/metadata";
 import { buildBlogIndexStructuredData, serializeStructuredData } from "@/lib/structured-data";
 
-type BlogIndexPageProps = {
-  params: Promise<{ locale: string }>;
-};
-
-export async function generateMetadata({ params }: BlogIndexPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/blog/[locale]">): Promise<Metadata> {
   const { locale } = await params;
 
   if (!isBlogLocale(locale)) {
@@ -24,7 +20,7 @@ export async function generateMetadata({ params }: BlogIndexPageProps): Promise<
   return createBlogIndexMetadata(locale, hasPublishedPosts);
 }
 
-export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
+export default async function BlogIndexPage({ params }: PageProps<"/blog/[locale]">) {
   const { locale } = await params;
 
   if (!isBlogLocale(locale)) {

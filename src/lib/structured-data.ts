@@ -1,8 +1,9 @@
 import type { BlogPostEntry, BlogPostSummary } from "@/content/blog/types";
 import { type BlogLocale, getBlogIndexPath, getBlogPostPath } from "./blog";
-import { defaultSocialImage, siteName, siteUrl } from "./metadata";
+import { siteName, siteUrl } from "./metadata";
 import { getProjectPath, projects, specialties } from "./projects";
 import { SITE_PROFILE } from "./site-profile";
+import { versionSocialImageUrl } from "./social-image-version";
 
 type JsonObject = Record<string, unknown>;
 
@@ -55,7 +56,7 @@ export function buildHomeStructuredData() {
         url: siteUrl,
         description: "Personal portfolio of Oleh Vanin, a senior full-stack engineer and AI engineer based in Poland.",
         publisher: { "@id": personId },
-        image: defaultSocialImage.url,
+        image: versionSocialImageUrl(`${siteUrl}/social-image`),
       },
     ],
   } as const;
@@ -102,7 +103,7 @@ export function buildBlogPostingStructuredData(article: BlogPostEntry) {
     inLanguage: article.locale,
     datePublished: article.publishedAt,
     dateModified: article.updatedAt ?? article.publishedAt,
-    image: absoluteUrl(article.socialImage.path),
+    image: versionSocialImageUrl(`${url}/social-image`),
     keywords: article.tags,
     mainEntityOfPage: url,
     isPartOf: {

@@ -7,14 +7,7 @@ export interface HotkeyShortcut<TAction extends string = string> {
   action: TAction;
 }
 
-export interface HotkeyInputCapabilities {
-  hasHover: boolean;
-  hasCoarsePointer: boolean;
-}
-
 export type HotkeyRouteAction = "home" | "projects" | "blog";
-
-export type { NavbarHotkeyDirection };
 
 export type HotkeyState<TAction extends string = string> = {
   isModalOpen: boolean;
@@ -47,14 +40,6 @@ type HotkeyDecisionOptions<TAction extends string> = {
   shortcuts: readonly HotkeyShortcut<TAction>[];
   state: HotkeyState<TAction>;
 };
-
-export function shouldEnableHotkeys(capabilities: HotkeyInputCapabilities) {
-  return capabilities.hasHover || !capabilities.hasCoarsePointer;
-}
-
-export function getNavbarHotkeyRoute(pathname: string, direction: NavbarHotkeyDirection) {
-  return getAdjacentPrimaryNavHref(pathname, direction);
-}
 
 export function getHotkeyDecision<TAction extends string>({
   input,
@@ -116,7 +101,7 @@ export function getHotkeyDecision<TAction extends string>({
     const navbarDirection = getNavbarHotkeyDirection(input.key);
 
     if (navbarDirection) {
-      const href = getNavbarHotkeyRoute(input.pathname, navbarDirection);
+      const href = getAdjacentPrimaryNavHref(input.pathname, navbarDirection);
 
       return {
         action: (href === "/" ? "home" : href === "/projects" ? "projects" : "blog") as TAction,
@@ -174,10 +159,6 @@ export function getHotkeyDecision<TAction extends string>({
     },
     preventDefault: true,
   };
-}
-
-export function getHotkeySequenceKey(action: string, key: string, index: number) {
-  return `${action}-${index}-${key}`;
 }
 
 function keepState<TAction extends string>(state: HotkeyState<TAction>): HotkeyDecision<TAction> {

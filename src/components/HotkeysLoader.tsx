@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { shouldEnableHotkeys } from "@/lib/hotkeys";
 
 const Hotkeys = dynamic(() => import("./Hotkeys"), {
   ssr: false,
@@ -18,12 +17,7 @@ export default function HotkeysLoader() {
     const desktopQuery = window.matchMedia("(min-width: 768px)");
 
     function handleChange() {
-      setIsEnabled(
-        shouldEnableHotkeys({
-          hasHover: hoverQuery.matches,
-          hasCoarsePointer: coarsePointerQuery.matches,
-        }),
-      );
+      setIsEnabled(hoverQuery.matches || !coarsePointerQuery.matches);
       setIsDesktopViewport(desktopQuery.matches);
     }
 

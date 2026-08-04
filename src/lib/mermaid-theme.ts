@@ -1,18 +1,5 @@
 import type { MermaidConfig } from "mermaid";
 
-export const MERMAID_SITE_TOKENS = {
-  accent: "--accent",
-  accentText: "--accent-foreground",
-  background: "--background",
-  border: "--border",
-  card: "--card",
-  fontFamily: "--font-mono",
-  line: "--muted-foreground",
-  muted: "--muted",
-  secondary: "--secondary",
-  text: "--foreground",
-} as const;
-
 export type RgbaColor = {
   a: number;
   b: number;
@@ -139,16 +126,16 @@ export function readMermaidThemeTokens(): MermaidThemeTokens {
   const readColor = (token: string) => resolveCssColor(styles.getPropertyValue(token).trim(), context);
 
   return {
-    accent: readColor(MERMAID_SITE_TOKENS.accent),
-    accentText: readColor(MERMAID_SITE_TOKENS.accentText),
-    background: readColor(MERMAID_SITE_TOKENS.background),
-    border: readColor(MERMAID_SITE_TOKENS.border),
-    card: readColor(MERMAID_SITE_TOKENS.card),
-    fontFamily: styles.getPropertyValue(MERMAID_SITE_TOKENS.fontFamily).trim(),
-    line: readColor(MERMAID_SITE_TOKENS.line),
-    muted: readColor(MERMAID_SITE_TOKENS.muted),
-    secondary: readColor(MERMAID_SITE_TOKENS.secondary),
-    text: readColor(MERMAID_SITE_TOKENS.text),
+    accent: readColor("--accent"),
+    accentText: readColor("--accent-foreground"),
+    background: readColor("--background"),
+    border: readColor("--border"),
+    card: readColor("--card"),
+    fontFamily: styles.getPropertyValue("--font-mono").trim(),
+    line: readColor("--muted-foreground"),
+    muted: readColor("--muted"),
+    secondary: readColor("--secondary"),
+    text: readColor("--foreground"),
   };
 }
 

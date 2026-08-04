@@ -48,32 +48,24 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
     }
 
     const trigger = triggerRef.current;
-    const isNavigatingUp = heading.getBoundingClientRect().top < 0;
-    const tocNavigation = mode === "mobile" ? beginTocNavigation() : null;
-    const reserveVisibleHeader = mode !== "mobile" && isNavigatingUp && !trigger?.closest('[data-blog-focus="true"]');
-    const topOffset = getHeadingOffset(trigger, reserveVisibleHeader);
+    const tocNavigation = beginTocNavigation();
+    const topOffset = getHeadingOffset(trigger);
     const top = Math.max(0, window.scrollY + heading.getBoundingClientRect().top - topOffset);
     const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
     const settleHeading = () => {
-      if (tocNavigation && !tocNavigation.isActive()) {
+      if (!tocNavigation.isActive()) {
         return;
       }
 
-      const triggerBottom = mode === "mobile" ? 60 : (trigger?.getBoundingClientRect().bottom ?? 60);
-      const chromeRemainsHidden = Boolean(
-        trigger?.closest('[data-blog-passive-hidden="true"], [data-blog-focus="true"]'),
-      );
-      const reserveSettledHeader = reserveVisibleHeader && !chromeRemainsHidden;
-      const settledOffset = Math.max(triggerBottom + 16, reserveSettledHeader ? getHeadingOffset(trigger, true) : 76);
-      const correction = heading.getBoundingClientRect().top - settledOffset;
+      const correction = heading.getBoundingClientRect().top - 76;
 
       if (Math.abs(correction) > 1) {
         window.scrollBy({ behavior: "auto", top: correction });
       }
 
       focusHeading(heading);
-      tocNavigation?.complete();
+      tocNavigation.complete();
     };
 
     if (behavior === "auto") {
@@ -142,7 +134,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
 
   if (mode === "mobile") {
     return (
-      <Drawer actionsRef={drawerActionsRef} onOpenChangeComplete={handleOpenChangeComplete} showSwipeHandle>
+      <Drawer actionsRef={drawerActionsRef} onOpenChangeComplete={handleOpenChangeComplete}>
         <DrawerTrigger
           ref={triggerRef}
           aria-label={copy.openTableOfContents}
@@ -196,7 +188,7 @@ function focusHeading(heading: HTMLElement) {
   }
 }
 
-function getHeadingOffset(trigger: HTMLButtonElement | null, reserveVisibleHeader: boolean) {
+function getHeadingOffset(trigger: HTMLButtonElement | null) {
   if (!trigger) {
     return 76;
   }
@@ -204,23 +196,9 @@ function getHeadingOffset(trigger: HTMLButtonElement | null, reserveVisibleHeade
   const shell = trigger.closest<HTMLElement>(".blog-toc-mobile-shell");
   const shellStyle = shell ? window.getComputedStyle(shell) : null;
   const stickyTop = shellStyle ? Number.parseFloat(shellStyle.top) : 0;
-  const visibleTop = shellStyle
-    ? cssLengthToPixels(shellStyle.getPropertyValue("--blog-toc-visible-top"), document.documentElement)
-    : 0;
   const triggerHeight = trigger.getBoundingClientRect().height;
-  const reservedTop = reserveVisibleHeader ? Math.max(stickyTop, visibleTop) : stickyTop;
 
-  return Math.max((Number.isFinite(reservedTop) ? reservedTop : 0) + triggerHeight + 16, 76);
-}
-
-function cssLengthToPixels(value: string, root: HTMLElement) {
-  const parsed = Number.parseFloat(value);
-
-  if (!Number.isFinite(parsed)) {
-    return 0;
-  }
-
-  return value.trim().endsWith("rem") ? parsed * Number.parseFloat(window.getComputedStyle(root).fontSize) : parsed;
+  return Math.max((Number.isFinite(stickyTop) ? stickyTop : 0) + triggerHeight + 16, 76);
 }
 
 function once(callback: () => void) {

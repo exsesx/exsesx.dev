@@ -2,7 +2,6 @@ import type { Route } from "next";
 import type { StaticImageData } from "next/image";
 
 export interface Project {
-  id: string;
   slug: string;
   name: string;
   role: string;
@@ -37,7 +36,6 @@ export interface Project {
 
 export const projects: Project[] = [
   {
-    id: "project-controlup",
     slug: "controlup",
     name: "ControlUp",
     role: "Senior Full Stack / AI Engineer",
@@ -68,7 +66,6 @@ export const projects: Project[] = [
     },
   },
   {
-    id: "project-quicklizard",
     slug: "quicklizard",
     name: "Quicklizard",
     role: "Senior Full Stack Developer",
@@ -101,7 +98,6 @@ export const projects: Project[] = [
     },
   },
   {
-    id: "project-tso-chinese",
     slug: "tso-chinese",
     name: "Tso Chinese",
     role: "Commerce systems",
@@ -133,7 +129,6 @@ export const projects: Project[] = [
     },
   },
   {
-    id: "project-clear-street-bank",
     slug: "clear-street-bank",
     name: "Clear Street Bank",
     role: "Fintech engineering",
@@ -164,7 +159,6 @@ export const projects: Project[] = [
     },
   },
   {
-    id: "project-coinmena",
     slug: "coinmena",
     name: "CoinMENA",
     role: "Crypto product",
@@ -196,7 +190,6 @@ export const projects: Project[] = [
     },
   },
   {
-    id: "project-this-is-language",
     slug: "this-is-language",
     name: "This is Language",
     role: "Platform work",
@@ -227,7 +220,6 @@ export const projects: Project[] = [
     },
   },
   {
-    id: "project-huddle",
     slug: "huddle",
     name: "Huddle",
     role: "Product engineering",
@@ -265,8 +257,8 @@ export function getProjectPath(project: Pick<Project, "slug">) {
   return `/project/${project.slug}` as Route;
 }
 
-export function getProjectTransitionType(project: Pick<Project, "id">) {
-  return `project-transition-${project.id}`;
+export function getProjectTransitionType(project: Pick<Project, "slug">) {
+  return `project-transition-project-${project.slug}`;
 }
 
 export function getProjectBySlug(slug: string) {
@@ -274,7 +266,7 @@ export function getProjectBySlug(slug: string) {
 }
 
 export function getAdjacentProjects(project: Project) {
-  const currentIndex = projects.findIndex(item => item.id === project.id);
+  const currentIndex = projects.findIndex(item => item.slug === project.slug);
   const previousProject = projects.at(currentIndex - 1) ?? projects.at(-1);
   const nextProject = projects.at((currentIndex + 1) % projects.length);
 

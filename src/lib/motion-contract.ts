@@ -18,19 +18,6 @@ export const ROUTE_TRANSITION_TYPES = {
   navForward: "nav-forward",
 } as const;
 
-export function getBackTransitionTypeProps(transitionType: string) {
-  return {
-    [MOTION_ATTRIBUTES.backTransitionType]: transitionType,
-  } as const;
-}
-
 export const suppressEntryMotionProps = {
   [MOTION_ATTRIBUTES.suppressEntryMotion]: "",
 } as const;
-
-export function getProjectRouteTransitionTypes(
-  direction: typeof ROUTE_TRANSITION_TYPES.navBack | typeof ROUTE_TRANSITION_TYPES.navForward,
-  projectTransitionType: string,
-) {
-  return [direction, projectTransitionType];
-}

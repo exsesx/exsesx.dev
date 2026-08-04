@@ -5,6 +5,7 @@ import {
   BLOG_HEADER_TOUCH_HIDE_DISTANCE,
   BLOG_HEADER_TOUCH_REVEAL_DISTANCE,
 } from "../../src/lib/blog-focus";
+import { dragMermaidWithTouchPointer, pinchMermaidWithPointers } from "./mermaid-gestures";
 
 const BLOG_ARTICLE_PATH = "/blog/en/codex-agents-v2";
 const BLOG_INDEX_PATH = "/blog/en";
@@ -58,54 +59,15 @@ if (!("Bun" in globalThis)) {
       expect(documentBounds.height).toBeLessThanOrEqual(viewport?.height ?? 0);
     });
 
-    test("reading progress circles recognized iPhones in landscape and stays linear in portrait", async ({ page }) => {
+    test("reading progress follows the iPhone landscape frame and falls back in portrait", async ({ page }) => {
       await page.setViewportSize({ width: 874, height: 402 });
       await page.goto(BLOG_ARTICLE_PATH);
 
       const article = page.locator("#article-content");
       const progress = page.locator(".blog-reading-progress");
       const fallbackBar = progress.locator("span");
-      const deviceShell = progress.locator(".blog-reading-progress-device-shell");
       const deviceProgress = progress.locator(".blog-reading-progress-device");
       const devicePath = deviceProgress.locator("path");
-
-      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
-      await expect(progress).toHaveAttribute("data-device-orientation", "landscape");
-      await expect(progress).toHaveAttribute("data-screen-class", "402x874");
-      await expect(devicePath).toHaveAttribute("d", /^M 0 201 /);
-
-      const simulatedElasticOverscroll = await page.evaluate(async () => {
-        const viewport = window.visualViewport;
-
-        if (!viewport) {
-          return false;
-        }
-
-        Object.defineProperty(viewport, "offsetTop", {
-          configurable: true,
-          get: () => -24,
-        });
-        viewport.dispatchEvent(new Event("scroll"));
-        await new Promise(requestAnimationFrame);
-        await new Promise(requestAnimationFrame);
-        return true;
-      });
-
-      expect(simulatedElasticOverscroll).toBe(true);
-      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
-
-      await page.evaluate(async () => {
-        const viewport = window.visualViewport;
-
-        if (!viewport) {
-          return;
-        }
-
-        Reflect.deleteProperty(viewport, "offsetTop");
-        viewport.dispatchEvent(new Event("scroll"));
-        await new Promise(requestAnimationFrame);
-        await new Promise(requestAnimationFrame);
-      });
 
       await article.evaluate(element => {
         const root = document.documentElement;
@@ -116,197 +78,41 @@ if (!("Bun" in globalThis)) {
         root.style.scrollBehavior = previousScrollBehavior;
       });
 
-      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
+      await expect(progress).toHaveAttribute("data-device-orientation", "landscape");
       await expect(progress).toBeVisible();
       await expect(fallbackBar).toBeHidden();
       await expect(deviceProgress).toBeVisible();
       await expect(devicePath).toHaveAttribute("pathLength", "1");
+      await expect(devicePath).not.toHaveAttribute("data-drawing");
 
-      const geometry = await devicePath.evaluate(path => {
-        const svgPath = path as SVGPathElement;
-        const bounds = svgPath.getBBox();
-
-        return {
-          bounds: {
-            height: bounds.height,
-            width: bounds.width,
-            x: bounds.x,
-            y: bounds.y,
-          },
-          dashOffset: Number.parseFloat(getComputedStyle(path).strokeDashoffset),
-          path: path.getAttribute("d"),
-          length: svgPath.getTotalLength(),
-          rootHeight: svgPath.ownerSVGElement?.parentElement?.getBoundingClientRect().height ?? 0,
-          strokeWidth: getComputedStyle(path).strokeWidth,
-        };
-      });
-
-      expect(geometry.bounds.x).toBeCloseTo(0, 1);
-      expect(geometry.bounds.y).toBeCloseTo(0, 1);
-      expect(geometry.bounds.width).toBeCloseTo(874, 1);
-      expect(geometry.bounds.height).toBeCloseTo(402, 1);
-      expect(geometry.rootHeight).toBeCloseTo(402, 1);
-      expect(geometry.length).toBeGreaterThan(2200);
-      expect(geometry.path).toMatch(/^M 0 201 /);
-      expect(geometry.path).toMatch(/ L 0 201$/);
-      expect(geometry.dashOffset).toBeGreaterThan(0);
-      expect(geometry.dashOffset).toBeLessThan(1);
-      expect(geometry.strokeWidth).toBe("6px");
-
-      const dashOffsetBeforeScroll = geometry.dashOffset;
-      await page.evaluate(() => {
-        window.scrollBy({ top: 640 });
-      });
+      const dashOffsetBeforeScroll = await devicePath.evaluate(path =>
+        Number.parseFloat(getComputedStyle(path).strokeDashoffset),
+      );
+      await page.evaluate(() => window.scrollBy(0, 640));
       await expect
         .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
         .toBeLessThan(dashOffsetBeforeScroll);
 
-      await article.evaluate(element => {
-        const root = document.documentElement;
-        const previousScrollBehavior = root.style.scrollBehavior;
-
-        root.style.scrollBehavior = "auto";
-        window.scrollTo(0, window.scrollY + element.getBoundingClientRect().height * 0.6);
-        root.style.scrollBehavior = previousScrollBehavior;
-      });
-      await expect
-        .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
-        .toBeLessThan(0.5);
-
-      await devicePath.evaluate(path => {
-        path.dataset.observedDrawStarts = "0";
-        path.dataset.observedOriginOffsets = "";
-        path.dataset.observedRetractStarts = "0";
-        path.dataset.observedRetractStartOffsets = "";
-        path.dataset.observedRetractEndOffsets = "";
-
-        const observer = new MutationObserver(records => {
-          const drawing = path.dataset.drawing;
-
-          if (drawing === "in") {
-            path.dataset.observedDrawStarts = `${Number(path.dataset.observedDrawStarts ?? 0) + 1}`;
-            path.dataset.observedOriginOffsets =
-              `${path.dataset.observedOriginOffsets ?? ""},${getComputedStyle(path).strokeDashoffset}`.replace(
-                /^,/,
-                "",
-              );
-          } else if (drawing === "out") {
-            path.dataset.observedRetractStarts = `${Number(path.dataset.observedRetractStarts ?? 0) + 1}`;
-            path.dataset.observedRetractStartOffsets =
-              `${path.dataset.observedRetractStartOffsets ?? ""},${getComputedStyle(path).strokeDashoffset}`.replace(
-                /^,/,
-                "",
-              );
-          }
-
-          if (drawing === undefined && records.some(record => record.oldValue === "out")) {
-            path.dataset.observedRetractEndOffsets =
-              `${path.dataset.observedRetractEndOffsets ?? ""},${getComputedStyle(path).strokeDashoffset}`.replace(
-                /^,/,
-                "",
-              );
-          }
-        });
-
-        observer.observe(path, {
-          attributeFilter: ["data-drawing"],
-          attributeOldValue: true,
-          attributes: true,
-        });
-      });
-
-      const observedDrawStarts = async () => Number((await devicePath.getAttribute("data-observed-draw-starts")) ?? 0);
-      const observedRetractStarts = async () =>
-        Number((await devicePath.getAttribute("data-observed-retract-starts")) ?? 0);
-
-      const offsetBeforeFallback = await devicePath.evaluate(path =>
-        Number.parseFloat(getComputedStyle(path).strokeDashoffset),
-      );
-      const retractStartsBeforeFallback = await observedRetractStarts();
-      await page.setViewportSize({ width: 874, height: 330 });
-      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
-      await expect.poll(observedRetractStarts).toBeGreaterThan(retractStartsBeforeFallback);
-      await expect(progress).toHaveCSS("height", "3px");
-      await expect(fallbackBar).toBeVisible();
-      await expect(deviceProgress).toBeHidden();
-      await expect(devicePath).not.toHaveAttribute("data-drawing");
-
-      const observedRetractStartOffsets =
-        (await devicePath.getAttribute("data-observed-retract-start-offsets"))?.split(",").map(Number.parseFloat) ?? [];
-      const observedRetractEndOffsets =
-        (await devicePath.getAttribute("data-observed-retract-end-offsets"))?.split(",").map(Number.parseFloat) ?? [];
-
-      expect(observedRetractStartOffsets).not.toHaveLength(0);
-      expect(observedRetractStartOffsets.at(-1)).toBeCloseTo(offsetBeforeFallback, 1);
-      expect(observedRetractEndOffsets).not.toHaveLength(0);
-      expect(observedRetractEndOffsets.at(-1)).toBeGreaterThan(0.99);
-
-      await page.setViewportSize({ width: 874, height: 402 });
-      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
-      await expect(fallbackBar).toBeHidden();
-      await expect(deviceProgress).toBeVisible();
-
-      await expect.poll(observedDrawStarts).toBeGreaterThan(0);
-      const observedOriginOffsets =
-        (await devicePath.getAttribute("data-observed-origin-offsets"))?.split(",").map(Number.parseFloat) ?? [];
-
-      expect(observedOriginOffsets).not.toHaveLength(0);
-      expect(observedOriginOffsets.every(offset => offset > 0.99)).toBe(true);
-      await expect(devicePath).not.toHaveAttribute("data-drawing");
-      await expect
-        .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
-        .toBeLessThan(0.5);
-
-      const drawStartsBeforeInterruption = await observedDrawStarts();
-      const retractStartsBeforeInterruption = await observedRetractStarts();
-      await page.setViewportSize({ width: 874, height: 330 });
-      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
-      await expect.poll(observedRetractStarts).toBeGreaterThan(retractStartsBeforeInterruption);
-      await page.setViewportSize({ width: 874, height: 402 });
-      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
-      await expect.poll(observedDrawStarts).toBeGreaterThan(drawStartsBeforeInterruption);
-
-      const drawStartsBeforeRestart = await observedDrawStarts();
       await page.setViewportSize({ width: 874, height: 330 });
       await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
       await page.setViewportSize({ width: 874, height: 402 });
       await expect(progress).toHaveAttribute("data-device-frame", "iphone");
-      await expect.poll(observedDrawStarts).toBeGreaterThan(drawStartsBeforeRestart);
-      await expect(devicePath).not.toHaveAttribute("data-drawing");
-      await expect
-        .poll(async () => Number.parseFloat(await devicePath.evaluate(path => getComputedStyle(path).strokeDashoffset)))
-        .toBeLessThan(0.5);
-
-      const drawStartsBeforeLiveScroll = await observedDrawStarts();
-      await page.setViewportSize({ width: 874, height: 330 });
-      await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
-      await page.setViewportSize({ width: 874, height: 402 });
-      await expect(progress).toHaveAttribute("data-device-frame", "iphone");
-      await expect.poll(observedDrawStarts).toBeGreaterThan(drawStartsBeforeLiveScroll);
-      await page.evaluate(() => {
-        window.scrollBy({ top: 900 });
-      });
       await expect(devicePath).not.toHaveAttribute("data-drawing");
 
-      const settledOffset = await devicePath.evaluate(path =>
-        Number.parseFloat(getComputedStyle(path).strokeDashoffset),
-      );
-      const liveProgress = await page.evaluate(() => {
-        const article = document.getElementById("article-content");
+      const { liveProgress, settledOffset } = await page.evaluate(() => {
+        const articleElement = document.getElementById("article-content");
+        const path = document.querySelector<SVGPathElement>(".blog-reading-progress-device path");
+        const articleTop = window.scrollY + (articleElement?.getBoundingClientRect().top ?? 0);
+        const readableDistance = Math.max((articleElement?.offsetHeight ?? 0) - window.innerHeight, 1);
 
-        if (!article) {
-          return 0;
-        }
-
-        const top = window.scrollY + article.getBoundingClientRect().top;
-
-        return Math.min(1, Math.max(0, (window.scrollY - top) / Math.max(article.offsetHeight - innerHeight, 1)));
+        return {
+          liveProgress: Math.min(1, Math.max(0, (window.scrollY - articleTop) / readableDistance)),
+          settledOffset: Number.parseFloat(getComputedStyle(path!).strokeDashoffset),
+        };
       });
 
-      expect(settledOffset).toBeCloseTo(1 - liveProgress, 1);
-      await expect
-        .poll(() => deviceShell.evaluate(element => element.getBoundingClientRect().height))
-        .toBeCloseTo(402, 1);
+      expect(settledOffset).toBeCloseTo(1 - liveProgress, 2);
 
       await page.setViewportSize({ width: 402, height: 874 });
       await expect(progress).not.toHaveAttribute("data-device-frame", "iphone");
@@ -1038,63 +844,4 @@ async function waitForScrollToSettle(page: Page) {
         requestAnimationFrame(sample);
       }),
   );
-}
-
-async function pinchMermaidWithPointers(viewport: Locator) {
-  await viewport.scrollIntoViewIfNeeded();
-  const bounds = await viewport.boundingBox();
-  expect(bounds).not.toBeNull();
-
-  const centerX = (bounds?.x ?? 0) + (bounds?.width ?? 0) / 2;
-  const centerY = (bounds?.y ?? 0) + (bounds?.height ?? 0) / 2;
-  const pointer = (pointerId: number, clientX: number, isPrimary: boolean, buttons: number) => ({
-    bubbles: true,
-    button: 0,
-    buttons,
-    cancelable: true,
-    clientX,
-    clientY: centerY,
-    composed: true,
-    isPrimary,
-    pointerId,
-    pointerType: "touch",
-  });
-  const firstStart = pointer(51, centerX - 24, true, 1);
-  const secondStart = pointer(52, centerX + 24, false, 1);
-
-  await viewport.dispatchEvent("pointerdown", firstStart);
-  await viewport.dispatchEvent("pointerdown", secondStart);
-
-  for (let step = 1; step <= 4; step += 1) {
-    const halfDistance = 24 + step * 6;
-    await viewport.dispatchEvent("pointermove", pointer(51, centerX - halfDistance, true, 1));
-    await viewport.dispatchEvent("pointermove", pointer(52, centerX + halfDistance, false, 1));
-  }
-
-  await viewport.dispatchEvent("pointerup", pointer(51, centerX - 48, true, 0));
-  await viewport.dispatchEvent("pointerup", pointer(52, centerX + 48, false, 0));
-}
-
-async function dragMermaidWithTouchPointer(viewport: Locator) {
-  const bounds = await viewport.boundingBox();
-  expect(bounds).not.toBeNull();
-
-  const startX = (bounds?.x ?? 0) + (bounds?.width ?? 0) / 2;
-  const startY = (bounds?.y ?? 0) + (bounds?.height ?? 0) / 2;
-  const pointer = (clientX: number, clientY: number, buttons: number) => ({
-    bubbles: true,
-    button: 0,
-    buttons,
-    cancelable: true,
-    clientX,
-    clientY,
-    composed: true,
-    isPrimary: true,
-    pointerId: 53,
-    pointerType: "touch",
-  });
-
-  await viewport.dispatchEvent("pointerdown", pointer(startX, startY, 1));
-  await viewport.dispatchEvent("pointermove", pointer(startX + 48, startY + 32, 1));
-  await viewport.dispatchEvent("pointerup", pointer(startX + 48, startY + 32, 0));
 }

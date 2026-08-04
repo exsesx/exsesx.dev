@@ -6,31 +6,18 @@ const dropdownMenuItemClass =
 const dropdownMenuRadioItemClass =
   "dropdown-menu-radio-item grid cursor-pointer grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3 px-3 text-left";
 
-function DropdownMenu({ modal = false, ...props }: MenuPrimitive.Root.Props) {
-  return <MenuPrimitive.Root data-slot="dropdown-menu-root" modal={modal} {...props} />;
+function DropdownMenu(props: Omit<MenuPrimitive.Root.Props, "modal">) {
+  return <MenuPrimitive.Root {...props} data-slot="dropdown-menu-root" modal={false} />;
 }
 
 function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
-function DropdownMenuContent({
-  align = "start",
-  alignOffset = 0,
-  side = "bottom",
-  sideOffset = 8,
-  className,
-  ...props
-}: MenuPrimitive.Popup.Props & Pick<MenuPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">) {
+function DropdownMenuContent({ className, ...props }: MenuPrimitive.Popup.Props) {
   return (
     <MenuPrimitive.Portal>
-      <MenuPrimitive.Positioner
-        align={align}
-        alignOffset={alignOffset}
-        className="isolate z-50 outline-none"
-        side={side}
-        sideOffset={sideOffset}
-      >
+      <MenuPrimitive.Positioner align="end" className="isolate z-50 outline-none" sideOffset={8}>
         <MenuPrimitive.Popup
           data-slot="dropdown-menu"
           className={cn(
@@ -48,10 +35,10 @@ function DropdownMenuGroup({ ...props }: MenuPrimitive.Group.Props) {
   return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />;
 }
 
-function DropdownMenuLinkItem({ className, closeOnClick = true, ...props }: MenuPrimitive.LinkItem.Props) {
+function DropdownMenuLinkItem({ className, ...props }: Omit<MenuPrimitive.LinkItem.Props, "closeOnClick">) {
   return (
     <MenuPrimitive.LinkItem
-      closeOnClick={closeOnClick}
+      closeOnClick
       data-slot="dropdown-menu-item"
       className={cn(dropdownMenuItemClass, "flex items-center gap-2 px-3 py-3", className)}
       {...props}
@@ -59,7 +46,7 @@ function DropdownMenuLinkItem({ className, closeOnClick = true, ...props }: Menu
   );
 }
 
-function DropdownMenuItem({ className, closeOnClick = true, ...props }: MenuPrimitive.Item.Props) {
+function DropdownMenuItem({ closeOnClick = true, ...props }: Omit<MenuPrimitive.Item.Props, "className">) {
   return (
     <MenuPrimitive.Item
       closeOnClick={closeOnClick}
@@ -74,12 +61,12 @@ function DropdownMenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
   return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
 }
 
-function DropdownMenuRadioItem({ className, closeOnClick = true, ...props }: MenuPrimitive.RadioItem.Props) {
+function DropdownMenuRadioItem(props: Omit<MenuPrimitive.RadioItem.Props, "className" | "closeOnClick">) {
   return (
     <MenuPrimitive.RadioItem
-      closeOnClick={closeOnClick}
+      closeOnClick
       data-slot="dropdown-menu-item"
-      className={cn(dropdownMenuItemClass, dropdownMenuRadioItemClass, className)}
+      className={cn(dropdownMenuItemClass, dropdownMenuRadioItemClass, "w-full")}
       {...props}
     />
   );

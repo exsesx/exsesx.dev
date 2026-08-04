@@ -46,44 +46,22 @@ const themeOptions: Array<{
 ];
 const systemThemeOption = themeOptions.find(option => option.mode === "system") ?? themeOptions[0];
 
-function setMetaContent(name: string, content: string) {
-  let metas = Array.from(document.querySelectorAll<HTMLMetaElement>(`meta[name="${name}"]`));
+function setThemeColor(content: string) {
+  const [meta, ...duplicates] = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
 
-  if (metas.length === 0) {
-    if (name === "theme-color") {
-      return;
-    }
-
-    const meta = document.createElement("meta");
-    meta.name = name;
-    document.head.appendChild(meta);
-    metas = [meta];
-  }
-
-  if (name === "theme-color") {
-    for (const [index, meta] of metas.entries()) {
-      if (index > 0) {
-        meta.remove();
-        continue;
-      }
-
-      if (meta.content !== content) {
-        meta.content = content;
-      }
-
-      if (meta.hasAttribute("media")) {
-        meta.removeAttribute("media");
-      }
-    }
-
+  if (!meta) {
     return;
   }
 
-  for (const meta of metas) {
-    if (meta.content !== content) {
-      meta.content = content;
-    }
+  for (const duplicate of duplicates) {
+    duplicate.remove();
   }
+
+  if (meta.content !== content) {
+    meta.content = content;
+  }
+
+  meta.removeAttribute("media");
 }
 
 function paintSafariChromeSamples(isDark: boolean) {
@@ -130,7 +108,7 @@ export default function ThemeSwitcher() {
     root.classList.toggle("light", !isDark);
     root.dataset.themeMode = mode;
     paintSafariChromeSamples(isDark);
-    setMetaContent("theme-color", isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light);
+    setThemeColor(isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light);
   }, [isDark, mode]);
 
   useEffect(() => {
@@ -155,7 +133,7 @@ export default function ThemeSwitcher() {
         <ActiveIcon strokeWidth={2.2} />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent className="w-44">
         <DropdownMenuRadioGroup
           value={mode}
           onValueChange={value => {
@@ -170,7 +148,7 @@ export default function ThemeSwitcher() {
               const isActive = option.mode === mode;
 
               return (
-                <DropdownMenuRadioItem key={option.mode} value={option.mode} className="w-full">
+                <DropdownMenuRadioItem key={option.mode} value={option.mode}>
                   <Icon data-icon="inline-start" strokeWidth={2.2} />
                   <span className="min-w-0 flex-1 font-bold leading-none">{option.label}</span>
                   {isActive ? <Check data-icon="inline-end" strokeWidth={2.4} /> : <span aria-hidden="true" />}

@@ -10,17 +10,13 @@ import { BLOG_UI, formatBlogDate, getBlogIndexPath, isBlogLocale } from "@/lib/b
 import { createBlogArticleMetadata } from "@/lib/metadata";
 import { buildBlogPostingStructuredData, serializeStructuredData } from "@/lib/structured-data";
 
-type BlogArticlePageProps = {
-  params: Promise<{ locale: string; slug: string }>;
-};
-
 export const dynamicParams = false;
 
 export function generateStaticParams() {
   return getAllBlogPosts().map(({ locale, slug }) => ({ locale, slug }));
 }
 
-export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/blog/[locale]/[slug]">): Promise<Metadata> {
   const { locale, slug } = await params;
 
   if (!isBlogLocale(locale)) {
@@ -36,7 +32,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
   return createBlogArticleMetadata(article, getPublishedBlogLocales(slug));
 }
 
-export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
+export default async function BlogArticlePage({ params }: PageProps<"/blog/[locale]/[slug]">) {
   const { locale, slug } = await params;
 
   if (!isBlogLocale(locale)) {

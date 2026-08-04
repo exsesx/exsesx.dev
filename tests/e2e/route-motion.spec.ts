@@ -1,4 +1,4 @@
-import { expect, type Page, type TestInfo, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import sharp from "sharp";
 
 type ProbeAnimation = {
@@ -103,226 +103,200 @@ if (!("Bun" in globalThis)) {
   });
 
   test.describe("route motion contract", () => {
-    test(
-      "desktop project card morphs without a directional page slide",
-      { tag: "@desktop-only" },
-      async ({ page }, testInfo) => {
-        const errors = collectRuntimeErrors(page);
+    test("desktop project card morphs without a directional page slide", { tag: "@desktop-only" }, async ({ page }) => {
+      const errors = collectRuntimeErrors(page);
 
-        await page.goto("/projects");
-        const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
-        const href = await card.getAttribute("href");
-        expect(href).toMatch(/^\/project\//);
-        await expect(page.locator(".project-media-frame").first()).toBeVisible();
-        const expectedName = `project-media-project-${href?.split("/").at(-1)}`;
+      await page.goto("/projects");
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      const href = await card.getAttribute("href");
+      expect(href).toMatch(/^\/project\//);
+      await expect(page.locator(".project-media-frame").first()).toBeVisible();
+      const expectedName = `project-media-project-${href?.split("/").at(-1)}`;
 
-        await resetProbe(page);
-        await Promise.all([page.waitForURL(`**${href}`), card.click()]);
-        await waitForProbe(page);
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(`**${href}`), card.click()]);
+      await waitForProbe(page);
 
-        const probe = await readProbe(page);
-        expect(probe.calls).toHaveLength(1);
-        expect(probe.calls[0]?.types.filter(type => type.startsWith(projectTypePrefix))).toHaveLength(1);
-        expect(probe.calls[0]?.types).toContain("nav-forward");
-        await expect(page.locator(".project-media-frame").first()).toBeVisible();
-        expect(morphAnimations(probe).some(animation => animation.pseudoElement?.includes(expectedName))).toBe(true);
-        expect(animationNames(probe)).not.toContain("view-slide");
-        expectRuntimeClean(errors);
-        await attachFailureDiagnostics(testInfo, probe, errors);
-      },
-    );
+      const probe = await readProbe(page);
+      expect(probe.calls).toHaveLength(1);
+      expect(probe.calls[0]?.types.filter(type => type.startsWith(projectTypePrefix))).toHaveLength(1);
+      expect(probe.calls[0]?.types).toContain("nav-forward");
+      await expect(page.locator(".project-media-frame").first()).toBeVisible();
+      expect(morphAnimations(probe).some(animation => animation.pseudoElement?.includes(expectedName))).toBe(true);
+      expect(animationNames(probe)).not.toContain("view-slide");
+      expectRuntimeClean(errors);
+    });
 
-    test(
-      "desktop back restores projects intent and preserves header isolation",
-      { tag: "@desktop-only" },
-      async ({ page }, testInfo) => {
-        const errors = collectRuntimeErrors(page);
+    test("desktop back restores projects intent and preserves header isolation", { tag: "@desktop-only" }, async ({
+      page,
+    }) => {
+      const errors = collectRuntimeErrors(page);
 
-        await page.goto("/projects");
-        await page.evaluate(() => window.scrollTo(0, 520));
-        const expectedScroll = await page.evaluate(() => window.scrollY);
-        const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(2);
-        const href = await card.getAttribute("href");
-        expect(href).toMatch(/^\/project\//);
-        await Promise.all([page.waitForURL(/\/project\//), card.click()]);
-        await waitForProbe(page);
+      await page.goto("/projects");
+      await page.evaluate(() => window.scrollTo(0, 520));
+      const expectedScroll = await page.evaluate(() => window.scrollY);
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(2);
+      const href = await card.getAttribute("href");
+      expect(href).toMatch(/^\/project\//);
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
 
-        await resetProbe(page);
-        await Promise.all([page.waitForURL("**/projects"), page.getByRole("button", { name: "Back" }).click()]);
-        await waitForProbe(page);
+      await resetProbe(page);
+      await Promise.all([page.waitForURL("**/projects"), page.getByRole("button", { name: "Back" }).click()]);
+      await waitForProbe(page);
 
-        const probe = await readProbe(page);
-        expect(probe.calls[0]?.sourceProjectMediaNames).toHaveLength(1);
-        const expectedName = probe.calls[0]?.sourceProjectMediaNames[0];
-        expect(expectedName).toMatch(/^project-media-project-/);
-        expect(probe.calls[0]?.types).toContain("nav-back");
-        expect(probe.calls[0]?.types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
-        expect(morphAnimationPseudoNames(probe)).toContain(expectedName);
-        expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
-        expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
-        expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
-        expectRuntimeClean(errors);
-        await attachFailureDiagnostics(testInfo, probe, errors);
-      },
-    );
+      const probe = await readProbe(page);
+      expect(probe.calls[0]?.sourceProjectMediaNames).toHaveLength(1);
+      const expectedName = probe.calls[0]?.sourceProjectMediaNames[0];
+      expect(expectedName).toMatch(/^project-media-project-/);
+      expect(probe.calls[0]?.types).toContain("nav-back");
+      expect(probe.calls[0]?.types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
+      expect(morphAnimationPseudoNames(probe)).toContain(expectedName);
+      expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
+      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
+      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
+      expectRuntimeClean(errors);
+    });
 
-    test(
-      "persistent header navigation is lateral and includes Blog",
-      { tag: "@desktop-only" },
-      async ({ page }, testInfo) => {
-        const errors = collectRuntimeErrors(page);
+    test("persistent header navigation is lateral and includes Blog", { tag: "@desktop-only" }, async ({ page }) => {
+      const errors = collectRuntimeErrors(page);
 
-        await page.goto("/");
-        await resetProbe(page);
-        await Promise.all([
-          page.waitForURL("**/projects"),
-          page.getByRole("link", { name: "Projects", exact: true }).click(),
-        ]);
-        await waitForProbe(page);
-        const projectsProbe = await readProbe(page);
+      await page.goto("/");
+      await resetProbe(page);
+      await Promise.all([
+        page.waitForURL("**/projects"),
+        page.getByRole("link", { name: "Projects", exact: true }).click(),
+      ]);
+      await waitForProbe(page);
+      const projectsProbe = await readProbe(page);
 
-        expect(projectsProbe.calls.flatMap(call => call.types)).toEqual([]);
-        expect(animationNames(projectsProbe)).not.toContain("view-slide");
+      expect(projectsProbe.calls.flatMap(call => call.types)).toEqual([]);
+      expect(animationNames(projectsProbe)).not.toContain("view-slide");
 
-        await resetProbe(page);
-        await Promise.all([page.waitForURL(/\/$/), page.getByRole("link", { name: "Home", exact: true }).click()]);
-        await waitForProbe(page);
-        const homeProbe = await readProbe(page);
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(/\/$/), page.getByRole("link", { name: "Home", exact: true }).click()]);
+      await waitForProbe(page);
+      const homeProbe = await readProbe(page);
 
-        expect(homeProbe.calls.flatMap(call => call.types)).toEqual([]);
-        expect(animationNames(homeProbe)).not.toContain("view-slide");
+      expect(homeProbe.calls.flatMap(call => call.types)).toEqual([]);
+      expect(animationNames(homeProbe)).not.toContain("view-slide");
 
-        await resetProbe(page);
-        const blogLink = page.getByRole("link", { name: "Blog", exact: true });
-        await expect(blogLink).toHaveAttribute("href", "/blog/en");
-        await Promise.all([page.waitForURL("**/blog/en"), blogLink.click()]);
-        await waitForProbe(page);
-        const blogProbe = await readProbe(page);
+      await resetProbe(page);
+      const blogLink = page.getByRole("link", { name: "Blog", exact: true });
+      await expect(blogLink).toHaveAttribute("href", "/blog/en");
+      await Promise.all([page.waitForURL("**/blog/en"), blogLink.click()]);
+      await waitForProbe(page);
+      const blogProbe = await readProbe(page);
 
-        await expect(page.locator("html")).toHaveAttribute("lang", "en");
-        await expect(page.getByRole("link", { name: "Blog", exact: true })).toHaveAttribute("aria-current", "page");
-        await expect(page.locator(".site-nav-active-pill")).toHaveAttribute("data-active-nav", "blog");
-        expect(blogProbe.calls.flatMap(call => call.types)).toEqual([]);
-        expect(animationNames(blogProbe)).not.toContain("view-slide");
-        expectRuntimeClean(errors);
-        await attachFailureDiagnostics(
-          testInfo,
-          { calls: [...projectsProbe.calls, ...blogProbe.calls, ...homeProbe.calls] },
-          errors,
-        );
-      },
-    );
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expect(page.getByRole("link", { name: "Blog", exact: true })).toHaveAttribute("aria-current", "page");
+      await expect(page.locator(".site-nav-active-pill")).toHaveAttribute("data-active-nav", "blog");
+      expect(blogProbe.calls.flatMap(call => call.types)).toEqual([]);
+      expect(animationNames(blogProbe)).not.toContain("view-slide");
+      expectRuntimeClean(errors);
+    });
 
-    test(
-      "brand navigation keeps the logo circular while the active pill moves Home",
-      { tag: "@desktop-only" },
-      async ({ page }, testInfo) => {
-        const errors = collectRuntimeErrors(page);
-        await page.goto("/projects");
-        const brand = page.getByRole("link", { name: "Oleh Vanin home" });
-        const logo = page.locator(".logo-tile");
-        const activePill = page.locator(".site-nav-active-pill");
-        const brandBox = await brand.boundingBox();
-        const logoBox = await logo.boundingBox();
+    test("brand navigation keeps the logo circular while the active pill moves Home", { tag: "@desktop-only" }, async ({
+      page,
+    }) => {
+      const errors = collectRuntimeErrors(page);
+      await page.goto("/projects");
+      const brand = page.getByRole("link", { name: "Oleh Vanin home" });
+      const logo = page.locator(".logo-tile");
+      const activePill = page.locator(".site-nav-active-pill");
+      const brandBox = await brand.boundingBox();
+      const logoBox = await logo.boundingBox();
 
-        expect(brandBox).not.toBeNull();
-        expect(logoBox).not.toBeNull();
-        await expect(activePill).toHaveAttribute("data-active-nav", "projects");
-        await resetProbe(page);
+      expect(brandBox).not.toBeNull();
+      expect(logoBox).not.toBeNull();
+      await expect(activePill).toHaveAttribute("data-active-nav", "projects");
+      await resetProbe(page);
 
-        if (!brandBox) {
-          return;
+      if (!brandBox) {
+        return;
+      }
+
+      await page.mouse.move(brandBox.x + brandBox.width / 2, brandBox.y + brandBox.height / 2);
+      await page.mouse.down();
+
+      const pillFrames = await activePill.evaluate(async element => {
+        const frames: Array<{ activeNav: string | undefined; running: boolean; transform: string }> = [];
+        const sample = () => {
+          frames.push({
+            activeNav: element.getAttribute("data-active-nav") ?? undefined,
+            running: element.getAnimations().some(animation => animation.playState === "running"),
+            transform: getComputedStyle(element).transform,
+          });
+        };
+
+        sample();
+
+        for (let frame = 0; frame < 6; frame += 1) {
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+          sample();
         }
 
-        await page.mouse.move(brandBox.x + brandBox.width / 2, brandBox.y + brandBox.height / 2);
-        await page.mouse.down();
+        return frames;
+      });
 
-        const pillFrames = await activePill.evaluate(async element => {
-          const frames: Array<{ activeNav: string | undefined; running: boolean; transform: string }> = [];
-          const sample = () => {
-            frames.push({
-              activeNav: element.getAttribute("data-active-nav") ?? undefined,
-              running: element.getAnimations().some(animation => animation.playState === "running"),
-              transform: getComputedStyle(element).transform,
-            });
-          };
+      const transitionFrame = await page.screenshot({
+        clip: logoBox ?? { height: 40, width: 40, x: 0, y: 0 },
+      });
+      const edgeContrast = await logoCornerToTopContrast(transitionFrame);
+      const navigation = page.waitForURL(/\/$/);
 
-          sample();
+      await page.mouse.up();
+      await navigation;
+      await expect(activePill).toHaveAttribute("data-active-nav", "home");
+      await expect
+        .poll(() => activePill.evaluate(element => getComputedStyle(element).transform))
+        .toBe("matrix(1, 0, 0, 1, 0, 0)");
 
-          for (let frame = 0; frame < 6; frame += 1) {
-            await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-            sample();
-          }
+      await waitForProbe(page);
 
-          return frames;
-        });
+      expect(edgeContrast).toBeGreaterThan(36);
+      expect(pillFrames.some(frame => frame.activeNav === "home")).toBe(true);
+      expect(new Set(pillFrames.map(frame => frame.transform)).size).toBeGreaterThan(1);
+      expect(pillFrames.some(frame => frame.running)).toBe(true);
+      expectRuntimeClean(errors);
+    });
 
-        const transitionFrame = await page.screenshot({
-          clip: logoBox ?? { height: 40, width: 40, x: 0, y: 0 },
-        });
-        const edgeContrast = await logoCornerToTopContrast(transitionFrame);
-        const navigation = page.waitForURL(/\/$/);
+    test("mobile project navigation has no animated view-transition pseudos", { tag: "@mobile-only" }, async ({
+      page,
+    }) => {
+      const errors = collectRuntimeErrors(page);
 
-        await page.mouse.up();
-        await navigation;
-        await expect(activePill).toHaveAttribute("data-active-nav", "home");
-        await expect
-          .poll(() => activePill.evaluate(element => getComputedStyle(element).transform))
-          .toBe("matrix(1, 0, 0, 1, 0, 0)");
+      await page.goto("/projects");
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
 
-        await waitForProbe(page);
+      const probe = await readProbe(page);
+      expect(nonZeroAnimations(probe)).toEqual([]);
+      expectRuntimeClean(errors);
+    });
 
-        expect(edgeContrast).toBeGreaterThan(36);
-        expect(pillFrames.some(frame => frame.activeNav === "home")).toBe(true);
-        expect(new Set(pillFrames.map(frame => frame.transform)).size).toBeGreaterThan(1);
-        expect(pillFrames.some(frame => frame.running)).toBe(true);
-        expectRuntimeClean(errors);
-        await attachFailureDiagnostics(testInfo, await readProbe(page), errors);
-      },
-    );
+    test("reduced-motion project navigation has no animated view-transition pseudos", { tag: "@desktop-only" }, async ({
+      page,
+    }) => {
+      const errors = collectRuntimeErrors(page);
 
-    test(
-      "mobile project navigation has no animated view-transition pseudos",
-      { tag: "@mobile-only" },
-      async ({ page }, testInfo) => {
-        const errors = collectRuntimeErrors(page);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/projects");
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
 
-        await page.goto("/projects");
-        const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
-        await resetProbe(page);
-        await Promise.all([page.waitForURL(/\/project\//), card.click()]);
-        await waitForProbe(page);
-
-        const probe = await readProbe(page);
-        expect(nonZeroAnimations(probe)).toEqual([]);
-        expectRuntimeClean(errors);
-        await attachFailureDiagnostics(testInfo, probe, errors);
-      },
-    );
-
-    test(
-      "reduced-motion project navigation has no animated view-transition pseudos",
-      { tag: "@desktop-only" },
-      async ({ page }, testInfo) => {
-        const errors = collectRuntimeErrors(page);
-
-        await page.emulateMedia({ reducedMotion: "reduce" });
-        await page.goto("/projects");
-        const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
-        await resetProbe(page);
-        await Promise.all([page.waitForURL(/\/project\//), card.click()]);
-        await waitForProbe(page);
-
-        const probe = await readProbe(page);
-        expect(nonZeroAnimations(probe)).toEqual([]);
-        expectRuntimeClean(errors);
-        await attachFailureDiagnostics(testInfo, probe, errors);
-      },
-    );
+      const probe = await readProbe(page);
+      expect(nonZeroAnimations(probe)).toEqual([]);
+      expectRuntimeClean(errors);
+    });
   });
 
   test.describe("adjacent project navigation", { tag: "@desktop-only" }, () => {
-    test("Previous carries direction without project identity", async ({ page }, testInfo) => {
+    test("Previous carries direction without project identity", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await openDetailWithBothControls(page);
       const link = page.getByRole("link", { name: "Previous", exact: true });
@@ -336,10 +310,9 @@ if (!("Bun" in globalThis)) {
       expect(probe.calls).toEqual([]);
       expect(morphAnimations(probe)).toEqual([]);
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, probe, errors);
     });
 
-    test("Next carries direction without project identity", async ({ page }, testInfo) => {
+    test("Next carries direction without project identity", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await openDetailWithBothControls(page);
       const link = page.getByRole("link", { name: "Next", exact: true });
@@ -353,10 +326,9 @@ if (!("Bun" in globalThis)) {
       expect(probe.calls).toEqual([]);
       expect(morphAnimations(probe)).toEqual([]);
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, probe, errors);
     });
 
-    test("an adjacent project card keeps its shared-media identity", async ({ page }, testInfo) => {
+    test("an adjacent project card keeps its shared-media identity", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await openDetailWithBothControls(page);
       const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
@@ -373,12 +345,11 @@ if (!("Bun" in globalThis)) {
       expect(types.filter(type => type.startsWith(projectTypePrefix))).toHaveLength(1);
       expect(morphAnimations(probe).some(animation => animation.pseudoElement?.includes(expectedName))).toBe(true);
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, probe, errors);
     });
   });
 
   test.describe("route intent seams", { tag: "@desktop-only" }, () => {
-    test("404 Back home crosses the global root cleanly", async ({ page }, testInfo) => {
+    test("404 Back home crosses the global root cleanly", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await page.goto("/missing-route-for-motion-contract");
       errors.console.length = 0;
@@ -387,10 +358,9 @@ if (!("Bun" in globalThis)) {
 
       await expect(page.locator("main")).toBeVisible();
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, await readProbe(page), errors);
     });
 
-    test("Back button applies prepared scroll and transition intent", async ({ page }, testInfo) => {
+    test("Back button applies prepared scroll and transition intent", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await page.goto("/projects");
       await page.evaluate(() => window.scrollTo(0, 520));
@@ -409,10 +379,9 @@ if (!("Bun" in globalThis)) {
       expect(types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
       expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, probe, errors);
     });
 
-    test("Blog article Back returns to its matching localized index", async ({ page }, testInfo) => {
+    test("Blog article Back returns to its matching localized index", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await page.goto("/blog/en/codex-agents-v2");
 
@@ -434,10 +403,9 @@ if (!("Bun" in globalThis)) {
       await expect(page.getByRole("heading", { level: 1, name: "Notes from the workbench" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Blog", exact: true })).toHaveAttribute("aria-current", "page");
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, probe, errors);
     });
 
-    test("g h performs lateral hotkey navigation without transition types", async ({ page }, testInfo) => {
+    test("g h performs lateral hotkey navigation without transition types", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await page.goto("/projects");
       await expect(page.getByRole("button", { name: "Toggle keyboard shortcuts" })).toBeVisible();
@@ -450,7 +418,6 @@ if (!("Bun" in globalThis)) {
       const probe = await readProbe(page);
       expect(probe.calls.flatMap(call => call.types)).toEqual([]);
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, probe, errors);
     });
   });
 
@@ -572,7 +539,7 @@ if (!("Bun" in globalThis)) {
       ).toHaveLength(0);
     });
 
-    test("collapses the inactive slot and restores it on detail routes", async ({ page }, testInfo) => {
+    test("collapses the inactive slot and restores it on detail routes", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await page.goto("/projects");
       const backButton = page.getByRole("button", { name: "Back", includeHidden: true });
@@ -653,7 +620,6 @@ if (!("Bun" in globalThis)) {
       expect(Math.abs(reducedRestored.switcher.centerX - reducedInitial.switcher.centerX)).toBeLessThanOrEqual(1);
       expect(Math.abs(reducedRestored.brand.x - reducedInitial.brand.x)).toBeLessThanOrEqual(1);
       expectRuntimeClean(errors);
-      await attachFailureDiagnostics(testInfo, await readProbe(page), errors);
     });
   });
 }
@@ -825,17 +791,6 @@ function morphAnimationPseudoNames(probe: ProbeSnapshot) {
 
 function animationNames(probe: ProbeSnapshot) {
   return probe.calls.flatMap(call => call.animations.map(animation => animation.animationName));
-}
-
-async function attachFailureDiagnostics(testInfo: TestInfo, probe: ProbeSnapshot, errors: RuntimeErrors) {
-  if (testInfo.status === testInfo.expectedStatus) {
-    return;
-  }
-
-  await testInfo.attach("route-motion-probe", {
-    body: Buffer.from(JSON.stringify({ errors, probe }, null, 2)),
-    contentType: "application/json",
-  });
 }
 
 type BackChipFoldSample = {

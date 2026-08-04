@@ -1,11 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  BLOG_FOCUS_HOTKEY_ACTION,
-  getHotkeyDecision,
-  getNavbarHotkeyRoute,
-  type HotkeyDecisionInput,
-  type HotkeyState,
-} from "./hotkeys";
+import { BLOG_FOCUS_HOTKEY_ACTION, getHotkeyDecision, type HotkeyDecisionInput, type HotkeyState } from "./hotkeys";
 
 type TestAction = "home" | "projects" | "blog" | "theme-toggle" | "github";
 
@@ -42,36 +36,6 @@ function decide(
     state: currentState,
   });
 }
-
-describe("getNavbarHotkeyRoute", () => {
-  test("moves right from home to projects", () => {
-    expect(getNavbarHotkeyRoute("/", "right")).toBe("/projects");
-  });
-
-  test("moves left from projects to home", () => {
-    expect(getNavbarHotkeyRoute("/projects", "left")).toBe("/");
-  });
-
-  test("moves right from projects to Blog", () => {
-    expect(getNavbarHotkeyRoute("/projects", "right")).toBe("/blog/en");
-  });
-
-  test("wraps left from home to Blog", () => {
-    expect(getNavbarHotkeyRoute("/", "left")).toBe("/blog/en");
-  });
-
-  test("wraps right from a localized Blog route to home", () => {
-    expect(getNavbarHotkeyRoute("/blog/uk/codex-agents-v2", "right")).toBe("/");
-  });
-
-  test("treats project detail pages as the projects nav item", () => {
-    expect(getNavbarHotkeyRoute("/project/flowkit", "left")).toBe("/");
-  });
-
-  test("treats nested projects pages as the projects nav item", () => {
-    expect(getNavbarHotkeyRoute("/projects/archive", "left")).toBe("/");
-  });
-});
 
 describe("getHotkeyDecision", () => {
   test("returns route actions for navbar chords from explicit pathname context", () => {

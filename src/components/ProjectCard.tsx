@@ -2,17 +2,13 @@ import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
-import {
-  getProjectRouteTransitionTypes,
-  ROUTE_TRANSITION_TYPES,
-  suppressEntryMotionProps,
-} from "@/lib/motion-contract";
-import { getProjectAccentClasses } from "@/lib/project-accents";
+import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { PROJECT_ACCENT_CLASSES } from "@/lib/project-accents";
 import { getProjectPath, getProjectTransitionType, type Project } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button-variants";
-import { CardAction, CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "./ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "./ui/card";
 
 interface ProjectCardProps {
   project: Project;
@@ -22,7 +18,7 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ project, density = "default", preloadMedia = false }: ProjectCardProps) {
   const media = project.media;
-  const accentClasses = getProjectAccentClasses(project.accent);
+  const accentClasses = PROJECT_ACCENT_CLASSES[project.accent];
   const isCompact = density === "compact";
   const projectPath = getProjectPath(project);
   const projectTransitionType = getProjectTransitionType(project);
@@ -55,14 +51,14 @@ export default function ProjectCard({ project, density = "default", preloadMedia
       >
         <Link
           href={projectPath}
-          transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, projectTransitionType)}
+          transitionTypes={[ROUTE_TRANSITION_TYPES.navForward, projectTransitionType]}
           scroll
           {...suppressEntryMotionProps}
           aria-label={`View ${project.name} project details`}
           className="absolute inset-0 z-10"
         />
         <ViewTransition
-          name={`project-media-${project.id}`}
+          name={`project-media-project-${project.slug}`}
           share={{
             [projectTransitionType]: ROUTE_TRANSITION_TYPES.morph,
             default: "none",
@@ -112,10 +108,7 @@ export default function ProjectCard({ project, density = "default", preloadMedia
             >
               <Link
                 href={projectPath}
-                transitionTypes={getProjectRouteTransitionTypes(
-                  ROUTE_TRANSITION_TYPES.navForward,
-                  projectTransitionType,
-                )}
+                transitionTypes={[ROUTE_TRANSITION_TYPES.navForward, projectTransitionType]}
                 scroll
                 {...suppressEntryMotionProps}
                 className="hover:text-accent"
@@ -125,7 +118,7 @@ export default function ProjectCard({ project, density = "default", preloadMedia
             </CardTitle>
           </div>
           {project.href ? (
-            <CardAction>
+            <div data-slot="card-action" className="col-start-2 row-span-2 row-start-1 self-start justify-self-end">
               <a
                 href={project.href}
                 className={buttonVariants({ variant: "default", size: "icon" })}
@@ -135,7 +128,7 @@ export default function ProjectCard({ project, density = "default", preloadMedia
               >
                 <ArrowUpRight strokeWidth={2.5} className="magnetic-icon" />
               </a>
-            </CardAction>
+            </div>
           ) : null}
         </CardHeader>
         <CardContent className={cn("flex flex-1 flex-col", isCompact ? "px-5 pb-5" : "px-6 pb-6 sm:px-7 sm:pb-7")}>
@@ -162,7 +155,7 @@ export default function ProjectCard({ project, density = "default", preloadMedia
           <div className={cn(isCompact ? "mt-auto pt-5" : "pt-5")}>
             <Link
               href={projectPath}
-              transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, projectTransitionType)}
+              transitionTypes={[ROUTE_TRANSITION_TYPES.navForward, projectTransitionType]}
               scroll
               {...suppressEntryMotionProps}
               className={cn(

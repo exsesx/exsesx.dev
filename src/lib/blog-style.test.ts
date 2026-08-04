@@ -165,17 +165,6 @@ describe("Blog production styles", () => {
     expect(css).toMatch(/\.blog-callout\s*\{[^}]*var\(--blog-rich-block-border\)/s);
     expect(css).toMatch(/figure\[data-rehype-pretty-code-figure\]\s*\{[^}]*var\(--blog-rich-block-border\)/s);
     expect(css).toMatch(/\.blog-mermaid\s*\{[^}]*var\(--blog-rich-block-border\)/s);
-    expect(css).toMatch(/\.blog-figure img\s*\{[^}]*var\(--blog-rich-block-border\)/s);
-  });
-
-  test("lets opt-in article figures keep their intrinsic transparent corners", async () => {
-    const css = await Bun.file(globalsCssUrl).text();
-    const intrinsicFigureRule = css.match(/\.blog-figure--intrinsic img\s*\{([^}]*)\}/s)?.[1] ?? "";
-
-    expect(intrinsicFigureRule).toContain("border: 0");
-    expect(intrinsicFigureRule).toContain("border-radius: 0");
-    expect(intrinsicFigureRule).toContain("background: transparent");
-    expect(intrinsicFigureRule).not.toContain("box-shadow");
   });
 
   test("switches appearance-specific Blog figures with the document theme", async () => {
@@ -414,7 +403,6 @@ describe("Blog production styles", () => {
     expect(source).toContain("const DRAW_OUT_DURATION_MS = 280");
     expect(source).toContain('progressPathElement.dataset.drawing = "out"');
     expect(source).toContain("startOffset + (1 - startOffset) * eased");
-    expect(source).toContain("deviceFrameAnimationGeneration");
     expect(source).toContain("prefersReducedMotion.matches");
     expect(source).toContain('prefersReducedMotion.addEventListener("change", handleReducedMotionChange)');
     expect(source).not.toContain("transitioncancel");

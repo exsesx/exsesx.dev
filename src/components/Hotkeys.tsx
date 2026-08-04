@@ -16,17 +16,10 @@ import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 import { type ElementType, useEffect, useEffectEvent, useRef, useState } from "react";
 import { BLOG_UI, type BlogLocale, getBlogLocaleFromPath } from "@/lib/blog";
-import {
-  BLOG_FOCUS_HOTKEY_ACTION,
-  getHotkeyDecision,
-  getHotkeySequenceKey,
-  type HotkeyRouteAction,
-  type HotkeyState,
-} from "@/lib/hotkeys";
+import { BLOG_FOCUS_HOTKEY_ACTION, getHotkeyDecision, type HotkeyRouteAction, type HotkeyState } from "@/lib/hotkeys";
 import { prepareHotkeyRouteNavigation } from "@/lib/route-intent";
 import { SITE_PROFILE } from "@/lib/site-profile";
 import { getThemeSnapshot, parseThemeSnapshot, persistThemeMode } from "@/lib/theme";
-import { cn } from "@/lib/utils";
 import { useBlogFocus } from "./blog/BlogFocusProvider";
 import { GithubIcon } from "./icons/lucide-github";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -74,6 +67,8 @@ const HOTKEY_MENU_ITEMS = [
 const repeatableHotkeyActions = new Set<HotkeyAction>(
   HOTKEYS.flatMap(shortcut => (shortcut.repeatable ? [shortcut.action] : [])),
 );
+const hotkeyKeyClassName =
+  "grid min-w-8 place-items-center rounded-lg border border-border bg-secondary px-2 py-1.5 font-mono text-xs font-black leading-none text-secondary-foreground shadow-sm";
 
 function createInitialHotkeyState(): HotkeyState<HotkeyAction> {
   return {
@@ -247,11 +242,9 @@ function HotkeyHint({
           data-visible={isSequenceRendered ? "true" : "false"}
         >
           <span className="hotkeys-wait-sequence">
-            {sequence.map((key, index) => (
-              <span key={getHotkeySequenceKey("pending", key, index)} className="hotkeys-trigger-key">
-                <kbd className="relative z-10 leading-none">{key}</kbd>
-              </span>
-            ))}
+            <span className="hotkeys-trigger-key">
+              <kbd className="relative z-10 leading-none">{sequence[0]}</kbd>
+            </span>
           </span>
           <span className="hotkeys-pending-mark">…</span>
         </span>
@@ -329,17 +322,8 @@ function HotkeyModal({
                 </span>
               </div>
               <span className="flex shrink-0 items-center gap-1.5">
-                {shortcut.sequence.map((key, index) => (
-                  <kbd
-                    key={getHotkeySequenceKey(shortcut.id, key, index)}
-                    className={cn(
-                      "grid min-w-8 place-items-center rounded-lg border border-border bg-secondary px-2 py-1.5",
-                      "font-mono text-xs font-black leading-none text-secondary-foreground shadow-sm",
-                    )}
-                  >
-                    {key}
-                  </kbd>
-                ))}
+                <kbd className={hotkeyKeyClassName}>{shortcut.sequence[0]}</kbd>
+                <kbd className={hotkeyKeyClassName}>{shortcut.sequence[1]}</kbd>
               </span>
             </div>
           );
