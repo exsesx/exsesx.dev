@@ -141,7 +141,8 @@ if (!("Bun" in globalThis)) {
         await page.goto("/projects");
         await page.evaluate(() => window.scrollTo(0, 520));
         const expectedScroll = await page.evaluate(() => window.scrollY);
-        const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(2);
+        const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(3);
+        await expect(card).toBeInViewport();
         const href = await card.getAttribute("href");
         expect(href).toMatch(/^\/project\//);
         await Promise.all([page.waitForURL(/\/project\//), card.click()]);
@@ -395,7 +396,8 @@ if (!("Bun" in globalThis)) {
       await page.goto("/projects");
       await page.evaluate(() => window.scrollTo(0, 520));
       const expectedScroll = await page.evaluate(() => window.scrollY);
-      const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(2);
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(3);
+      await expect(card).toBeInViewport();
       await Promise.all([page.waitForURL(/\/project\//), card.click()]);
       await waitForProbe(page);
 
