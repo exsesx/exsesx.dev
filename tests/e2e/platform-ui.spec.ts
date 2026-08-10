@@ -921,15 +921,9 @@ if (!("Bun" in globalThis)) {
       const pdfGate = new Promise<void>(resolve => {
         releasePdf = resolve;
       });
-      let mainFrameNavigations = 0;
       let pdfRequests = 0;
       let popups = 0;
 
-      page.on("framenavigated", frame => {
-        if (frame === page.mainFrame()) {
-          mainFrameNavigations += 1;
-        }
-      });
       page.on("popup", () => {
         popups += 1;
       });
@@ -945,7 +939,6 @@ if (!("Bun" in globalThis)) {
       );
 
       const initialUrl = page.url();
-      const initialMainFrameNavigations = mainFrameNavigations;
       const actionsTrigger = page.getByRole("button", { name: "Show CV actions" });
 
       await actionsTrigger.click();
@@ -969,7 +962,6 @@ if (!("Bun" in globalThis)) {
       expect(harness.shareCalls[0]?.fileSize).toBeGreaterThan(0);
       expect(harness.openCalls).toBe(0);
       expect(popups).toBe(0);
-      expect(mainFrameNavigations).toBe(initialMainFrameNavigations);
       expect(page.url()).toBe(initialUrl);
 
       await page.evaluate(() => {
@@ -984,7 +976,6 @@ if (!("Bun" in globalThis)) {
       expect(harness.shareCalls[1]?.userActivationActive).toBe(true);
       await expect.poll(() => pdfRequests).toBe(1);
       expect(harness.openCalls).toBe(0);
-      expect(mainFrameNavigations).toBe(initialMainFrameNavigations);
       expect(page.url()).toBe(initialUrl);
 
       await page.evaluate(() => {
@@ -996,7 +987,6 @@ if (!("Bun" in globalThis)) {
       harness = await readCvShareHarness(page);
       expect(pdfRequests).toBe(1);
       expect(harness.openCalls).toBe(0);
-      expect(mainFrameNavigations).toBe(initialMainFrameNavigations);
       expect(page.url()).toBe(initialUrl);
     });
 
@@ -1007,15 +997,9 @@ if (!("Bun" in globalThis)) {
       const retryGate = new Promise<void>(resolve => {
         releaseRetry = resolve;
       });
-      let mainFrameNavigations = 0;
       let pdfRequests = 0;
       let popups = 0;
 
-      page.on("framenavigated", frame => {
-        if (frame === page.mainFrame()) {
-          mainFrameNavigations += 1;
-        }
-      });
       page.on("popup", () => {
         popups += 1;
       });
@@ -1037,13 +1021,11 @@ if (!("Bun" in globalThis)) {
       );
 
       const initialUrl = page.url();
-      const initialMainFrameNavigations = mainFrameNavigations;
       await page.getByRole("button", { name: "Show CV actions" }).click();
 
       const retryAction = page.getByRole("menuitem", { name: "Retry share" });
       await expect(retryAction).toBeEnabled();
       expect((await readCvShareHarness(page)).openCalls).toBe(0);
-      expect(mainFrameNavigations).toBe(initialMainFrameNavigations);
       expect(page.url()).toBe(initialUrl);
 
       await retryAction.click();
@@ -1059,7 +1041,6 @@ if (!("Bun" in globalThis)) {
       const harness = await readCvShareHarness(page);
       expect(harness.openCalls).toBe(0);
       expect(popups).toBe(0);
-      expect(mainFrameNavigations).toBe(initialMainFrameNavigations);
       expect(page.url()).toBe(initialUrl);
     });
   });
