@@ -8,7 +8,7 @@ describe("llms.txt", () => {
     expect(body).toContain("## Blog");
     expect(body).toContain("[Blog](https://exsesx.dev/blog/en)");
     expect(body).toContain(
-      "[Why I switched from Fish to Nushell](https://exsesx.dev/blog/en/switching-from-fish-to-nushell)",
+      "[Why I replaced Fish with Nushell](https://exsesx.dev/blog/en/switching-from-fish-to-nushell)",
     );
     expect(body).toContain(
       "[Two wallpapers brought me back to Light Mode](https://exsesx.dev/blog/en/umbra-light-dark-wallpapers)",

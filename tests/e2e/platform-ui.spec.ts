@@ -279,10 +279,10 @@ if (!("Bun" in globalThis)) {
       await expect(
         page.getByRole("heading", {
           level: 1,
-          name: "Why I switched from Fish to Nushell",
+          name: "Why I replaced Fish with Nushell",
         }),
       ).toBeVisible();
-      await expect(page).toHaveTitle("Oleh Vanin - Why I switched from Fish to Nushell for structured data");
+      await expect(page).toHaveTitle("Oleh Vanin - Why I replaced Fish with Nushell for structured data");
       await expectPageToFitViewport(page);
     });
 

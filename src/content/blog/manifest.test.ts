@@ -8,10 +8,10 @@ describe("Blog manifest", () => {
         locale: "en",
         slug: "switching-from-fish-to-nushell",
         status: "published",
-        title: "Why I switched from Fish to Nushell",
-        seoTitle: "Why I switched from Fish to Nushell for structured data",
+        title: "Why I replaced Fish with Nushell",
+        seoTitle: "Why I replaced Fish with Nushell for structured data",
         description:
-          "How Nushell's typed pipelines changed my daily terminal while Starship, Neovim, jq, rg, and Fish stayed in my toolkit.",
+          "I replaced Fish with Nushell as my daily shell for structured data and typed pipelines. I kept jq, yq, rg, and fd for focused tasks.",
       }),
       expect.objectContaining({
         locale: "en",
@@ -55,10 +55,10 @@ describe("Blog manifest", () => {
         locale: "uk",
         slug: "switching-from-fish-to-nushell",
         status: "published",
-        title: "Чому я перейшов із Fish на Nushell",
-        seoTitle: "Чому я перейшов із Fish на Nushell заради структурованих даних",
+        title: "Чому я замінив Fish на Nushell",
+        seoTitle: "Чому я замінив Fish на Nushell заради структурованих даних",
         description:
-          "Як типізовані конвеєри Nushell змінили мою роботу в терміналі, а Starship, Neovim, jq, rg і Fish залишилися в моєму наборі інструментів.",
+          "Я замінив Fish на Nushell як щоденну оболонку заради структурованих даних і типізованих конвеєрів. Для окремих завдань залишив jq, yq, rg і fd.",
       }),
       expect.objectContaining({
         locale: "uk",

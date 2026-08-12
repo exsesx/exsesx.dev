@@ -1,16 +1,11 @@
-`codex features list` made Nushell click for me. I wanted to find the disabled
-features marked `stable` or `under development` and copy them into my Codex
-configuration as TOML. In Nu, the command starts as aligned text. The pipeline
-turns it into a table, then serializes a record in the format I need.
+I replaced Fish with Nushell as my login shell on macOS. Fish was already
+comfortable. It had good completions, vi keybindings, Starship, and the
+abbreviations I use all day. Nu had to keep that feel while giving me a better
+way to work with command output.
 
-That small pipeline did more to convince me than another shell benchmark. My
-Fish setup was already comfortable. It had good completions, vi keybindings,
-Starship, and the abbreviations I use all day. Nushell had to keep that feel and
-give me a better way to work with command output.
-
-Nu stayed because its data model kept showing up in ordinary commands. My macOS
-login shell now points to Nu, while Fish remains installed and even supplies a
-few completions that Nu cannot generate on its own.
+The switch held up because Nu's data model kept showing up in ordinary commands
+and small scripts. My login shell now points to Nu, while Fish remains installed
+and even supplies a few completions that Nu cannot generate on its own.
 
 <Callout title="Verified locally" variant="note">
   I checked the examples and configuration in this article on August 11, 2026
@@ -26,15 +21,16 @@ Fish already gave me the parts of an interactive shell that I care about. Its
 worked well, and my configuration added Starship, Atuin history, Zoxide, Mise,
 and custom keybindings. I cached generated integrations to keep startup fast.
 
-My Fish config also replaced `ls` with `eza` because I wanted icons and a useful
-sort order. That alias produced a view for me to read. Any later filtering meant
-parsing text or asking another command for a machine-readable format.
+My Fish config also routed listings through `eza`: `ls` for icons and a useful
+sort order, and `ll` for a Git-aware long view. Those aliases gave me readable
+output, but filtering it meant parsing text or asking another command for a
+machine-readable format.
 
 My Nushell configuration repository dates to August 12, 2025. It stayed an
-experiment until August 3, 2026, when I committed a larger pass titled `make
-Nushell viable as a daily shell`. The next few days went into completion gaps,
-startup caches, prompt behavior, and small compatibility fixes. I switched the
-account login shell after that work held up in normal use.
+experiment until August 3, 2026, when I changed the account login shell and
+committed a larger pass titled `make Nushell viable as a daily shell`. The next
+few days went into completion gaps, startup caches, prompt behavior, and small
+compatibility fixes.
 
 ## Rows I can keep working with
 
@@ -42,8 +38,8 @@ Nu commands pass typed values through
 <SourceLink href="https://www.nushell.sh/book/pipelines.html">pipelines</SourceLink>.
 Those values can include records, lists, tables, dates, durations, and file
 sizes. External commands still emit text or bytes, so familiar Unix pipelines
-continue to work. The useful change appears when a Nu command already knows the
-shape of its output.
+continue to work. I can keep working with the structure when a Nu command knows
+the shape of its output.
 
 `ls` returns a table. I can filter directories, sort on the `modified` column,
 and choose the columns I want without parsing the display:
@@ -55,11 +51,12 @@ ls
 | select name modified
 ```
 
-My Nu config deliberately keeps the built-in `ls` and `open`. I moved the
-human-oriented `eza` views to `lm` and `ll`, so I can choose between a polished
-listing and structured rows. The same split applies to files. `open
-package.json` reads JSON into a record, and the rest of the pipeline works on
-fields:
+My Nu config deliberately keeps the built-in `ls` and `open`. `ls` stays Nu's
+default. I can still run `eza` directly, and `ll` uses it when I want icons and a
+Git-aware view. I am still deciding whether the default `ls` is enough for daily
+use. When I need to keep working with the result, I use its structured rows.
+`open package.json` reads JSON into a record, and the rest of the pipeline works
+on fields:
 
 ```nu title="Package scripts as a table"
 open package.json
@@ -69,15 +66,16 @@ open package.json
 ```
 
 Nu has built-in converters for formats including JSON, TOML, YAML, and CSV.
-Each converter still expects a compatible value shape, which is more precise
-than saying any data can become any format. For the formats I use, moving from
-`from json` to `to toml` feels like choosing an output type instead of assembling
-another text pipeline.
+Each converter expects a value shape compatible with its target format. For the
+formats I use, moving from `from json` to `to toml` feels like choosing an output
+type instead of assembling another text pipeline.
 
 ## A CLI table becomes Codex configuration
 
-Codex prints its feature list as aligned text. `detect columns` is the bridge
-for output like that:
+I was already trying Nushell as my daily shell. The `codex features list`
+example made me appreciate its data model enough to stick with Nushell. Codex
+prints its feature list as aligned text. `detect columns` is the bridge for
+output like that:
 
 ```nu title="Copy disabled Codex features as TOML"
 ^codex features list
@@ -100,9 +98,9 @@ whose keys are feature names, and `to toml` produces lines I can paste under
 macOS clipboard.
 
 <Callout title="Do not enable every Codex feature blindly" variant="warning">
-  This pipeline is a convenient demonstration, not my upgrade policy. Features
-  marked `under development` can be incomplete or change between Codex
-  versions. I inspect the list and enable only the ones I intend to test.
+  I use this pipeline here to demonstrate Nu's data model. Features marked
+  `under development` can be incomplete or change between Codex versions. In my
+  configuration, I inspect the list and enable only the ones I intend to test.
 </Callout>
 
 <SourceLink href="https://www.nushell.sh/commands/docs/detect_columns.html">`detect columns` guesses structure from layout</SourceLink>,
@@ -112,8 +110,8 @@ filters without depending on column spacing.
 
 ## Parallel updates without output soup
 
-The function that made Nu useful beyond one-liners is `update-tools`. I update
-Homebrew, Mise, Claude, Codex, and my global skills from one command:
+My `update-tools` function updates Homebrew, Mise, Claude, Codex, and my global
+skills from one command:
 
 ```nu title="~/.config/nushell/modules/utilities.nu"
 export def update-tools [] {
@@ -222,16 +220,16 @@ installed is useful even after changing the login shell.
 I write `.nu` files in Neovim. Enabling the
 <SourceLink href="https://www.lazyvim.org/extras/lang/nushell">LazyVim Nushell extra</SourceLink>
 through `:LazyExtras` configured the Nushell language server and installed the
-`nu` Treesitter parser. The LSP has been good at helping me write functions and
-catch mistakes in closures. Setup took one extra toggle in a Neovim environment
-I already used.
+`nu` Treesitter parser. The LSP has helped me write functions and catch mistakes
+in closures. Setup took one extra toggle in a Neovim environment I already used.
 
-## I still reach for jq and rg
+## I still use jq, yq, rg, and fd
 
-The focused command-line tools I trust keep their jobs. I use `jq` for JSON when
-its query language is the clearest option or when a command needs to run outside
-Nu. I use `rg` to search file contents and `fd` to find files. `eza` and `bat`
-still provide display-oriented views through aliases.
+Nushell replaced Fish as my daily shell. I kept the focused command-line tools I
+already trusted. I use `jq` for JSON and `yq` for YAML when their query languages
+are the clearest option or when a command needs to run outside Nu. I use `rg` to
+search file contents and `fd` to find files. `bat` still gives me a
+display-oriented view for files.
 
 I reach for Nu when the shell itself knows the data shape: `ls`, `open`, dates,
 file sizes, or a CLI result I can parse into stable columns. It also fits small
@@ -245,10 +243,9 @@ coverage varies. `detect columns` remains a guess, and I had to build caches and
 adapters around a few tools. Fish stays one command away if I hit a script that
 expects it.
 
-My login shell still points to Nu. The deciding cases are ordinary ones: a
-directory listing, a command table, a set of parallel updates. I can inspect a
-column, filter it, and serialize the result without flattening everything into
-text first. That is the shell behavior I wanted to use every day.
+I can inspect, filter, and serialize directory listings or CLI tables without
+flattening them into text, and `update-tools` handles the parallel jobs. That is
+enough to keep Nu as my login shell for now. We'll see how it goes.
 
 ## Sources
 
