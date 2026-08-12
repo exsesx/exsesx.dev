@@ -6,6 +6,15 @@ describe("Blog manifest", () => {
     expect(getBlogPosts("en", { includeDrafts: false })).toEqual([
       expect.objectContaining({
         locale: "en",
+        slug: "switching-from-fish-to-nushell",
+        status: "published",
+        title: "Why I switched from Fish to Nushell",
+        seoTitle: "Why I switched from Fish to Nushell for structured data",
+        description:
+          "How Nushell's typed pipelines changed my daily terminal while Starship, Neovim, jq, rg, and Fish stayed in my toolkit.",
+      }),
+      expect.objectContaining({
+        locale: "en",
         slug: "safari-26-invisible-tint-sampler",
         status: "published",
         title: "The invisible 11px element that fixed Safari 26 tinting",
@@ -42,6 +51,15 @@ describe("Blog manifest", () => {
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "uk",
+        slug: "switching-from-fish-to-nushell",
+        status: "published",
+        title: "Чому я перейшов із Fish на Nushell",
+        seoTitle: "Чому я перейшов із Fish на Nushell заради структурованих даних",
+        description:
+          "Як типізовані конвеєри Nushell змінили мою роботу в терміналі, а Starship, Neovim, jq, rg і Fish залишилися в моєму наборі інструментів.",
+      }),
       expect.objectContaining({
         locale: "uk",
         slug: "safari-26-invisible-tint-sampler",
@@ -87,8 +105,8 @@ describe("Blog manifest", () => {
     expect(article.readingMinutes).toBeGreaterThanOrEqual(5);
     expect(article.headings).toContainEqual({
       depth: 2,
-      id: "safari-sampled-the-viewport-edge",
-      text: "Safari sampled the viewport edge",
+      id: "parallel-updates-without-output-soup",
+      text: "Parallel updates without output soup",
     });
     expect(article.headings.at(-1)).toEqual({ depth: 2, id: "sources", text: "Sources" });
   });
@@ -108,6 +126,17 @@ describe("Blog manifest", () => {
   });
 
   test("looks up both editions and exposes their published translation alternates", () => {
+    expect(getBlogPost("en", "switching-from-fish-to-nushell", { includeDrafts: false })).toMatchObject({
+      locale: "en",
+      slug: "switching-from-fish-to-nushell",
+      status: "published",
+    });
+    expect(getBlogPost("uk", "switching-from-fish-to-nushell", { includeDrafts: false })).toMatchObject({
+      locale: "uk",
+      slug: "switching-from-fish-to-nushell",
+      status: "published",
+    });
+    expect(getPublishedBlogLocales("switching-from-fish-to-nushell")).toEqual(["en", "uk"]);
     expect(getBlogPost("en", "safari-26-invisible-tint-sampler", { includeDrafts: false })).toMatchObject({
       locale: "en",
       slug: "safari-26-invisible-tint-sampler",
@@ -156,6 +185,8 @@ describe("Blog manifest", () => {
 
   test("ships deterministic social images for the Blog index and every published edition", async () => {
     const articles = [
+      getBlogPost("en", "switching-from-fish-to-nushell", { includeDrafts: false }),
+      getBlogPost("uk", "switching-from-fish-to-nushell", { includeDrafts: false }),
       getBlogPost("en", "safari-26-invisible-tint-sampler", { includeDrafts: false }),
       getBlogPost("uk", "safari-26-invisible-tint-sampler", { includeDrafts: false }),
       getBlogPost("en", "umbra-light-dark-wallpapers", { includeDrafts: false }),

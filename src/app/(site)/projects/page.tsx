@@ -7,7 +7,7 @@ import { projects } from "@/lib/projects";
 import { buildProjectsStructuredData, serializeStructuredData } from "@/lib/structured-data";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Oleh Vanin - Projects",
+  title: "Projects",
   description:
     "Featured product engineering work by Oleh Vanin across AI, enterprise IT, pricing, fintech, education, commerce, utilities, and digital asset products.",
   path: "/projects",

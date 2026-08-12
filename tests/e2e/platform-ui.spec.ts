@@ -266,21 +266,23 @@ if (!("Bun" in globalThis)) {
       await expect(blogLink).toHaveAttribute("href", "/blog/en");
       await Promise.all([page.waitForURL("**/blog/en"), blogLink.click()]);
 
+      await expect(page).toHaveTitle("Oleh Vanin - Blog");
       await expect(page.getByRole("link", { name: "Blog", exact: true })).toHaveAttribute("aria-current", "page");
       await expect(page.locator(".site-nav-active-pill")).toHaveAttribute("data-active-nav", "blog");
       await expect(page.locator("html")).toHaveAttribute("lang", "en");
       await expectPageToFitViewport(page);
 
       await Promise.all([
-        page.waitForURL("**/blog/en/safari-26-invisible-tint-sampler"),
+        page.waitForURL("**/blog/en/switching-from-fish-to-nushell"),
         page.getByRole("link", { name: "Read article" }).click(),
       ]);
       await expect(
         page.getByRole("heading", {
           level: 1,
-          name: "The invisible 11px element that fixed Safari 26 tinting",
+          name: "Why I switched from Fish to Nushell",
         }),
       ).toBeVisible();
+      await expect(page).toHaveTitle("Oleh Vanin - Why I switched from Fish to Nushell for structured data");
       await expectPageToFitViewport(page);
     });
 

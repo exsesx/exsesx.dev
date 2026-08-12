@@ -5,12 +5,18 @@ describe("sitemap", () => {
   test("discovers only published Blog locales and editions", () => {
     const entries = sitemap();
     const englishIndex = entries.find(entry => entry.url === "https://exsesx.dev/blog/en");
+    const englishNushellArticle = entries.find(
+      entry => entry.url === "https://exsesx.dev/blog/en/switching-from-fish-to-nushell",
+    );
     const englishUmbraArticle = entries.find(
       entry => entry.url === "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
     );
     const englishArticle = entries.find(entry => entry.url === "https://exsesx.dev/blog/en/codex-agents-v2");
     const englishMemoriesArticle = entries.find(entry => entry.url === "https://exsesx.dev/blog/en/codex-memories");
     const ukrainianIndex = entries.find(entry => entry.url === "https://exsesx.dev/blog/uk");
+    const ukrainianNushellArticle = entries.find(
+      entry => entry.url === "https://exsesx.dev/blog/uk/switching-from-fish-to-nushell",
+    );
     const ukrainianUmbraArticle = entries.find(
       entry => entry.url === "https://exsesx.dev/blog/uk/umbra-light-dark-wallpapers",
     );
@@ -20,6 +26,11 @@ describe("sitemap", () => {
       en: "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
       uk: "https://exsesx.dev/blog/uk/umbra-light-dark-wallpapers",
       "x-default": "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
+    };
+    const nushellArticleLanguages = {
+      en: "https://exsesx.dev/blog/en/switching-from-fish-to-nushell",
+      uk: "https://exsesx.dev/blog/uk/switching-from-fish-to-nushell",
+      "x-default": "https://exsesx.dev/blog/en/switching-from-fish-to-nushell",
     };
     const articleLanguages = {
       en: "https://exsesx.dev/blog/en/codex-agents-v2",
@@ -34,6 +45,18 @@ describe("sitemap", () => {
 
     expect(englishIndex).toBeDefined();
     expect(ukrainianIndex).toBeDefined();
+    expect(englishNushellArticle).toMatchObject({
+      lastModified: new Date("2026-08-11T17:13:21+02:00"),
+      alternates: {
+        languages: nushellArticleLanguages,
+      },
+    });
+    expect(ukrainianNushellArticle).toMatchObject({
+      lastModified: new Date("2026-08-11T17:13:21+02:00"),
+      alternates: {
+        languages: nushellArticleLanguages,
+      },
+    });
     expect(englishUmbraArticle).toMatchObject({
       lastModified: new Date("2026-07-24T14:15:00+02:00"),
       alternates: {

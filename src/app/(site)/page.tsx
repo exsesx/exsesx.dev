@@ -19,7 +19,7 @@ import { buildHomeStructuredData, serializeStructuredData } from "@/lib/structur
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Oleh Vanin - Software Engineer",
+  title: "Software Engineer",
   description: SITE_PROFILE.description,
 });
 

@@ -48,12 +48,13 @@ export function createBlogIndexMetadata(locale: BlogLocale, hasPublishedPosts: b
   const url = getCanonicalUrl(path);
   const isEnglish = locale === "en";
   const title = isEnglish ? "Blog" : "Блог";
+  const documentTitle = `${SITE_PROFILE.name} - ${title}`;
   const description = isEnglish
     ? "Technical writing by Oleh Vanin about AI systems, product engineering, and developer tools."
     : "Технічні матеріали Олега Ваніна про AI-системи, продуктову інженерію та інструменти розробника.";
 
   return {
-    title,
+    title: { absolute: documentTitle },
     description,
     alternates: {
       canonical: url,
@@ -83,6 +84,7 @@ export function createBlogArticleMetadata(article: BlogPostEntry, availableLocal
   const path = getBlogPostPath(article.locale, article.slug);
   const url = getCanonicalUrl(path);
   const title = article.seoTitle ?? article.title;
+  const documentTitle = `${SITE_PROFILE.name} - ${title}`;
   const image = createSocialImage(article.socialImage.path, article.socialImage.alt);
   const languageAlternates = Object.fromEntries(
     availableLocales.map(locale => [locale, getCanonicalUrl(getBlogPostPath(locale, article.slug))]),
@@ -90,7 +92,7 @@ export function createBlogArticleMetadata(article: BlogPostEntry, availableLocal
   const defaultLocale = availableLocales.includes("en") ? "en" : article.locale;
 
   return {
-    title,
+    title: { absolute: documentTitle },
     description: article.description,
     authors: [{ name: SITE_PROFILE.name, url: siteUrl }],
     keywords: [...article.tags],
@@ -136,7 +138,7 @@ export const rootMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: `${SITE_PROFILE.name} - ${SITE_PROFILE.role}`,
-    template: `%s | ${SITE_PROFILE.name}`,
+    template: `${SITE_PROFILE.name} - %s`,
   },
   description: SITE_PROFILE.description,
   keywords: [
@@ -234,9 +236,10 @@ export function createPageMetadata({
   image?: SocialImage;
 }): Metadata {
   const url = getCanonicalUrl(path);
+  const brandedTitle = `${SITE_PROFILE.name} - ${title}`;
 
   return {
-    title,
+    title: { absolute: brandedTitle },
     description,
     alternates: {
       canonical: url,
@@ -246,13 +249,13 @@ export function createPageMetadata({
       locale: "en_US",
       url,
       siteName,
-      title,
+      title: brandedTitle,
       description,
       images: [image],
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: brandedTitle,
       description,
       images: [
         {

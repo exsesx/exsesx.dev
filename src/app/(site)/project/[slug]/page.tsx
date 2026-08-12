@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
     notFound();
   }
 
-  const title = `Oleh Vanin - ${project.name}`;
+  const title = project.name;
   const description = `${project.name}: ${project.detail.headline}`;
 
   return createPageMetadata({
