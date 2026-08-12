@@ -12,6 +12,11 @@ const COPY_FEEDBACK_DURATION = 1800;
 
 type CopyState = "idle" | "copied" | "error";
 
+type CodeTooltipPayload = {
+  action: "copy" | "wrap";
+  label: string;
+};
+
 type CodeActionButtonProps = {
   action: "copy" | "wrap";
   ariaLabel: string;
@@ -32,28 +37,24 @@ function CodeActionButton({
   tooltip,
 }: CodeActionButtonProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            type="button"
-            variant="glass"
-            size="icon"
-            className="blog-code-action"
-            data-code-action={action}
-            data-copy-state={copyState}
-            aria-label={ariaLabel}
-            aria-pressed={pressed}
-            onClick={onClick}
-          />
-        }
-      >
-        {children}
-      </TooltipTrigger>
-      <TooltipContent align={action === "copy" ? "end" : "center"} side="bottom" sideOffset={8}>
-        {tooltip}
-      </TooltipContent>
-    </Tooltip>
+    <TooltipTrigger
+      payload={{ action, label: tooltip }}
+      render={
+        <Button
+          type="button"
+          variant="glass"
+          size="icon"
+          className="blog-code-action"
+          data-code-action={action}
+          data-copy-state={copyState}
+          aria-label={ariaLabel}
+          aria-pressed={pressed}
+          onClick={onClick}
+        />
+      }
+    >
+      {children}
+    </TooltipTrigger>
   );
 }
 
@@ -130,33 +131,43 @@ export default function CodeBlock({ children, ...props }: ComponentPropsWithoutR
         {children}
       </pre>
 
-      <fieldset className="blog-code-toolbar" aria-label={ui.toolbar} lang={locale}>
-        <CodeActionButton
-          action="wrap"
-          ariaLabel={ui.wrap}
-          onClick={toggleWrap}
-          pressed={wrapped}
-          tooltip={wrapped ? ui.unwrap : ui.wrap}
-        >
-          <WrapText aria-hidden="true" size={15} strokeWidth={2.35} />
-        </CodeActionButton>
+      <Tooltip<CodeTooltipPayload>>
+        {({ payload }) => (
+          <>
+            <fieldset className="blog-code-toolbar" aria-label={ui.toolbar} lang={locale}>
+              <CodeActionButton
+                action="wrap"
+                ariaLabel={ui.wrap}
+                onClick={toggleWrap}
+                pressed={wrapped}
+                tooltip={wrapped ? ui.unwrap : ui.wrap}
+              >
+                <WrapText aria-hidden="true" size={15} strokeWidth={2.35} />
+              </CodeActionButton>
 
-        <CodeActionButton
-          action="copy"
-          ariaLabel={copyLabel}
-          copyState={copyState}
-          onClick={copyCode}
-          tooltip={copyLabel}
-        >
-          {copyState === "copied" ? (
-            <Check key="copied" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.5} />
-          ) : copyState === "error" ? (
-            <X key="error" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.5} />
-          ) : (
-            <Copy key="idle" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.35} />
-          )}
-        </CodeActionButton>
-      </fieldset>
+              <CodeActionButton
+                action="copy"
+                ariaLabel={copyLabel}
+                copyState={copyState}
+                onClick={copyCode}
+                tooltip={copyLabel}
+              >
+                {copyState === "copied" ? (
+                  <Check key="copied" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.5} />
+                ) : copyState === "error" ? (
+                  <X key="error" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.5} />
+                ) : (
+                  <Copy key="idle" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.35} />
+                )}
+              </CodeActionButton>
+            </fieldset>
+
+            <TooltipContent align={payload?.action === "copy" ? "end" : "center"} side="bottom" sideOffset={8}>
+              {payload?.label}
+            </TooltipContent>
+          </>
+        )}
+      </Tooltip>
 
       <span className="sr-only" lang={locale} role="status">
         {copyState === "idle" ? "" : copyLabel}

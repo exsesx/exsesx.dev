@@ -454,6 +454,7 @@ if (!("Bun" in globalThis)) {
       const source = await pre.innerText();
 
       await expect(page.locator(".blog-code-block")).toHaveCount(3);
+      await expect(toolbar.locator('[data-slot="tooltip-trigger"]')).toHaveCount(2);
       await expect(codeBlock).toHaveAttribute("data-wrap", "false");
       await expect(wrapButton).toHaveAttribute("aria-pressed", "false");
       await expect(pre).toHaveCSS("overscroll-behavior-x", "none");
@@ -472,9 +473,20 @@ if (!("Bun" in globalThis)) {
         const tooltip = page.locator('[data-slot="tooltip-content"][data-open]');
         await expect(tooltip).toBeVisible();
         await expect(tooltip).toHaveText("Wrap lines");
+        await tooltip.evaluate(element => {
+          element.dataset.sharedCodeTooltip = "true";
+        });
+
+        await copyButton.focus();
+        await expect(copyButton).toBeFocused();
+        await expect(page.locator('[data-slot="tooltip-content"][data-open]')).toHaveCount(1);
+        const sharedTooltip = page.locator('[data-shared-code-tooltip="true"]');
+        await expect(sharedTooltip).toHaveAttribute("data-open", "");
+        await expect(sharedTooltip).toHaveText("Copy code");
+
         await page.keyboard.press("Escape");
-        await expect(tooltip).toBeHidden();
-        await expect(wrapButton).toBeFocused();
+        await expect(sharedTooltip).toBeHidden();
+        await expect(copyButton).toBeFocused();
       }
 
       await wrapButton.click();
@@ -525,6 +537,18 @@ if (!("Bun" in globalThis)) {
       await expect(pre).toHaveCSS("white-space", "pre-wrap");
 
       await page.emulateMedia({ media: "screen" });
+      await page.goto("/blog/en/switching-from-fish-to-nushell");
+      const nushellCaption = page
+        .locator('figcaption[data-rehype-pretty-code-title][data-language="nu"]')
+        .filter({ hasText: "Package scripts as a table" });
+      await expect(nushellCaption).toBeVisible();
+      await expect(nushellCaption.locator(".blog-code-language")).toHaveText("nu");
+      const longCaption = page
+        .locator('figcaption[data-rehype-pretty-code-title][data-language="nu"]')
+        .filter({ hasText: "~/.config/nushell/modules/utilities.nu" });
+      await expect(longCaption).toBeVisible();
+      await expect.poll(() => longCaption.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+
       await page.goto("/blog/uk/codex-memories");
       const ukrainianToolbar = page.locator(".blog-code-block").first().getByRole("group", { name: "Дії з кодом" });
       await expect(ukrainianToolbar.getByRole("button", { name: "Переносити рядки" })).toBeVisible();

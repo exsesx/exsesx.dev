@@ -3010,6 +3010,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-prose figcaption[data-rehype-pretty-code-title] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
   padding: 0.7rem 1rem;
   border-bottom: 1px solid var(--blog-rich-block-divider);
   color: var(--muted-foreground);
@@ -3017,6 +3021,27 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   font-family: MonoLisaCode, ui-monospace, monospace;
   font-size: 0.73rem;
   font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.blog-prose .blog-code-title {
+  min-width: 0;
+}
+
+.blog-prose .blog-code-language {
+  min-width: 1.75rem;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--blog-rich-block-border));
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--accent) 78%, var(--foreground));
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+  font-size: 0.62rem;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .blog-code-block {

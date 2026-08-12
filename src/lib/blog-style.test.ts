@@ -231,7 +231,13 @@ describe("Blog production styles", () => {
 
   test("keeps code wrapping opt-in, visibly selected, and printable", async () => {
     const css = await Bun.file(globalsCssUrl).text();
+    const captionRule = css.match(/figcaption\[data-rehype-pretty-code-title\]\s*\{([^}]*)\}/s)?.[1] ?? "";
 
+    expect(captionRule).toContain("display: grid");
+    expect(captionRule).toContain("grid-template-columns: minmax(0, 1fr) auto");
+    expect(captionRule).toContain("overflow-wrap: anywhere");
+    expect(css).toMatch(/\.blog-code-title\s*\{[^}]*min-width:\s*0/s);
+    expect(css).toMatch(/\.blog-code-language\s*\{[^}]*text-transform:\s*uppercase/s);
     expect(css).toMatch(
       /\.blog-code-block\[data-wrap="true"\] pre\s*\{[^}]*overflow-x:\s*hidden;[^}]*white-space:\s*pre-wrap/s,
     );

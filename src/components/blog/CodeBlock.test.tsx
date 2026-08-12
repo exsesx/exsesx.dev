@@ -16,6 +16,7 @@ describe("CodeBlock", () => {
     expect(markup).toContain('aria-label="Wrap lines"');
     expect(markup).toContain('aria-pressed="false"');
     expect(markup).toContain('data-slot="tooltip-trigger"');
+    expect(markup.match(/data-slot="tooltip-trigger"/g)).toHaveLength(2);
     expect(markup).toContain('data-wrap="false"');
     expect(markup).not.toContain(">Copy<");
     expect(markup).toContain('role="status"');
