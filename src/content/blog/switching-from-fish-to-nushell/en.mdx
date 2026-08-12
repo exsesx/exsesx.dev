@@ -1,0 +1,261 @@
+I replaced Fish with Nushell as my login shell on macOS. Fish was already
+comfortable. It had good completions, vi keybindings, Starship, and the
+abbreviations I use all day. Nu had to keep that feel while giving me a better
+way to work with command output.
+
+The switch held up because Nu's data model kept showing up in ordinary commands
+and small scripts. My login shell now points to Nu, while Fish remains installed
+and even supplies a few completions that Nu cannot generate on its own.
+
+<Callout title="Verified locally" variant="note">
+  I checked the examples and configuration in this article on August 11, 2026
+  with Nushell `0.114.1` and Fish `4.8.1`. My login shell is
+  `/opt/homebrew/bin/nu`, and macOS resolves the Nushell configuration directory
+  to my Git repository at `~/.config/nushell`.
+</Callout>
+
+## Fish set a high bar
+
+Fish already gave me the parts of an interactive shell that I care about. Its
+<SourceLink href="https://fishshell.com/docs/current/tutorial">autosuggestions, syntax highlighting, and completions</SourceLink>
+worked well, and my configuration added Starship, Atuin history, Zoxide, Mise,
+and custom keybindings. I cached generated integrations to keep startup fast.
+
+My Fish config also routed listings through `eza`: `ls` for icons and a useful
+sort order, and `ll` for a Git-aware long view. Those aliases gave me readable
+output, but filtering it meant parsing text or asking another command for a
+machine-readable format.
+
+My Nushell configuration repository dates to August 12, 2025. It stayed an
+experiment until August 3, 2026, when I changed the account login shell and
+committed a larger pass titled `make Nushell viable as a daily shell`. The next
+few days went into completion gaps, startup caches, prompt behavior, and small
+compatibility fixes.
+
+## Rows I can keep working with
+
+Nu commands pass typed values through
+<SourceLink href="https://www.nushell.sh/book/pipelines.html">pipelines</SourceLink>.
+Those values can include records, lists, tables, dates, durations, and file
+sizes. External commands still emit text or bytes, so familiar Unix pipelines
+continue to work. I can keep working with the structure when a Nu command knows
+the shape of its output.
+
+`ls` returns a table. I can filter directories, sort on the `modified` column,
+and choose the columns I want without parsing the display:
+
+```nu title="Recent directories"
+ls
+| where type == dir
+| sort-by modified --reverse
+| select name modified
+```
+
+My Nu config deliberately keeps the built-in `ls` and `open`. `ls` stays Nu's
+default. I can still run `eza` directly, and `ll` uses it when I want icons and a
+Git-aware view. I am still deciding whether the default `ls` is enough for daily
+use. When I need to keep working with the result, I use its structured rows.
+`open package.json` reads JSON into a record, and the rest of the pipeline works
+on fields:
+
+```nu title="Package scripts as a table"
+open package.json
+| get scripts
+| transpose name command
+| sort-by name
+```
+
+Nu has built-in converters for formats including JSON, TOML, YAML, and CSV.
+Each converter expects a value shape compatible with its target format. For the
+formats I use, moving from `from json` to `to toml` feels like choosing an output
+type instead of assembling another text pipeline.
+
+## A CLI table becomes Codex configuration
+
+I was already trying Nushell as my daily shell. The `codex features list`
+example made me appreciate its data model enough to stick with Nushell. Codex
+prints its feature list as aligned text. `detect columns` is the bridge for
+output like that:
+
+```nu title="Copy disabled Codex features as TOML"
+^codex features list
+| detect columns --guess --no-headers
+| rename name stage enabled
+| update enabled { into bool }
+| where stage in ['under development' stable] and enabled == false
+| reduce --fold {} {|feature, config|
+    $config | upsert $feature.name true
+  }
+| to toml
+| pbcopy
+```
+
+`detect columns` turns the text into rows, `rename` gives the columns useful
+names, and `update` converts `enabled` from text to booleans. `where` keeps
+disabled features in the two stages I asked for. `reduce` builds one record
+whose keys are feature names, and `to toml` produces lines I can paste under
+`[features]` in `~/.codex/config.toml`. `pbcopy` puts that final string on the
+macOS clipboard.
+
+<Callout title="Do not enable every Codex feature blindly" variant="warning">
+  I use this pipeline here to demonstrate Nu's data model. Features marked
+  `under development` can be incomplete or change between Codex versions. In my
+  configuration, I inspect the list and enable only the ones I intend to test.
+</Callout>
+
+<SourceLink href="https://www.nushell.sh/commands/docs/detect_columns.html">`detect columns` guesses structure from layout</SourceLink>,
+so I treat it as an adapter for stable text output. If a CLI offers JSON, I use
+that instead. The rest of the pipeline can then keep the same records and
+filters without depending on column spacing.
+
+## Parallel updates without output soup
+
+My `update-tools` function updates Homebrew, Mise, Claude, Codex, and my global
+skills from one command:
+
+```nu title="~/.config/nushell/modules/utilities.nu"
+export def update-tools [] {
+  let jobs = [
+    {
+      name: Homebrew
+      commands: [
+        {|| brew upgrade -y }
+        {|| brew cleanup }
+      ]
+    }
+    {
+      name: Mise
+      commands: [
+        {|| mise upgrade }
+      ]
+    }
+    {
+      name: Claude
+      commands: [
+        {|| claude update }
+      ]
+    }
+    {
+      name: Codex
+      commands: [
+        {|| codex update }
+      ]
+    }
+    {
+      name: Skills
+      commands: [
+        {|| skills update -g -y }
+      ]
+    }
+  ]
+
+  $jobs | par-each --threads 5 { |job|
+    let results = (
+      $job.commands
+      | each { |command|
+          with-env {
+            CLICOLOR_FORCE: "1"
+            FORCE_COLOR: "1"
+            HOMEBREW_COLOR: "1"
+          } {
+            do $command o+e>| complete
+          }
+        }
+    )
+
+    let output = (
+      $results
+      | get stdout
+      | str join
+      | str trim
+    )
+
+    let succeeded = (
+      $results
+      | all { |result| $result.exit_code == 0 }
+    )
+
+    let heading = if $succeeded {
+      $"(ansi green_bold)✓ ($job.name)(ansi reset)"
+    } else {
+      $"(ansi red_bold)✗ ($job.name)(ansi reset)"
+    }
+
+    print $"\n($heading)\n($output)"
+  } | ignore
+}
+```
+
+The outer list contains records. Each record has a display name and one or more
+command closures. `par-each --threads 5` runs the five job records in parallel,
+while the inner `each` keeps commands inside one job sequential. Homebrew still
+runs cleanup after its upgrade. Mise, Claude, Codex, and Skills do not wait for
+that pair.
+
+`o+e>| complete` combines a command's output streams, runs the closure, and
+returns structured results with `stdout` and `exit_code`. The function joins
+each job's output, checks every exit code, and prints one green or red block for
+that job. Blocks can appear in completion order because `par-each` does not keep
+input order unless I ask it to.
+
+Fish can run background jobs with `&` and wait for them. Nu makes the bookkeeping
+fit the rest of this function: jobs are records, commands are closures, and
+results have fields. That gives me parallel updates without one long `mise
+upgrade && claude update && codex update` chain or five tools writing into the
+same unreadable stream.
+
+## The rest of my terminal came with me
+
+I still use the same `~/.config/starship.toml`. Fish loaded generated output from
+`starship init fish`; Nu loads a cached `starship init nu`. My `$all` prompt,
+colors, Git status, and command duration stayed intact. I kept Atuin, Zoxide,
+Mise, and Carapace through their Nu integrations too.
+
+Completions needed more work. I use native Nu completions for Git and Claude,
+Carapace as a broad fallback, and small targeted adapters for gaps. Codex and
+Herdr can generate Fish completions but not native Nu completions in the
+versions I use, so my Nu completer routes those files through Fish. Keeping Fish
+installed is useful even after changing the login shell.
+
+I write `.nu` files in Neovim. Enabling the
+<SourceLink href="https://www.lazyvim.org/extras/lang/nushell">LazyVim Nushell extra</SourceLink>
+through `:LazyExtras` configured the Nushell language server and installed the
+`nu` Treesitter parser. The LSP has helped me write functions and catch mistakes
+in closures. Setup took one extra toggle in a Neovim environment I already used.
+
+## I still use jq, yq, rg, and fd
+
+Nushell replaced Fish as my daily shell. I kept the focused command-line tools I
+already trusted. I use `jq` for JSON and `yq` for YAML when their query languages
+are the clearest option or when a command needs to run outside Nu. I use `rg` to
+search file contents and `fd` to find files. `bat` still gives me a
+display-oriented view for files.
+
+I reach for Nu when the shell itself knows the data shape: `ls`, `open`, dates,
+file sizes, or a CLI result I can parse into stable columns. It also fits small
+scripts where I need to filter records, run work in parallel, inspect exit
+codes, and serialize the result.
+
+Nushell is not POSIX-compatible, and its
+<SourceLink href="https://www.nushell.sh/book/default_shell.html">default-shell guide</SourceLink>
+warns that some programs assume a POSIX login shell. External completion
+coverage varies. `detect columns` remains a guess, and I had to build caches and
+adapters around a few tools. Fish stays one command away if I hit a script that
+expects it.
+
+I can inspect, filter, and serialize directory listings or CLI tables without
+flattening them into text, and `update-tools` handles the parallel jobs. That is
+enough to keep Nu as my login shell for now. We'll see how it goes.
+
+## Sources
+
+- <SourceLink href="https://www.nushell.sh/book/pipelines.html">Nushell: pipelines</SourceLink>
+- <SourceLink href="https://www.nushell.sh/book/types_of_data.html">Nushell: types of data</SourceLink>
+- <SourceLink href="https://www.nushell.sh/book/loading_data.html">Nushell: loading data</SourceLink>
+- <SourceLink href="https://www.nushell.sh/commands/docs/ls.html">Nushell: `ls`</SourceLink>
+- <SourceLink href="https://www.nushell.sh/commands/docs/detect_columns.html">Nushell: `detect columns`</SourceLink>
+- <SourceLink href="https://www.nushell.sh/commands/docs/par-each.html">Nushell: `par-each`</SourceLink>
+- <SourceLink href="https://www.nushell.sh/commands/docs/complete.html">Nushell: `complete`</SourceLink>
+- <SourceLink href="https://www.nushell.sh/commands/docs/to_toml.html">Nushell: `to toml`</SourceLink>
+- <SourceLink href="https://fishshell.com/docs/current/tutorial">Fish tutorial</SourceLink>
+- <SourceLink href="https://www.lazyvim.org/extras/lang/nushell">LazyVim: Nushell extra</SourceLink>

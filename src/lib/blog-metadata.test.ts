@@ -1,8 +1,25 @@
 import { describe, expect, test } from "bun:test";
 import { getBlogPost } from "@/content/blog/manifest";
-import { createBlogArticleMetadata, createBlogIndexMetadata } from "./metadata";
+import { createBlogArticleMetadata, createBlogIndexMetadata, createPageMetadata, rootMetadata } from "./metadata";
 
 describe("Blog metadata", () => {
+  test("formats document titles with the site name first without changing Blog social titles", () => {
+    expect(rootMetadata.title).toEqual({
+      default: "Oleh Vanin - Senior Full Stack Engineer / AI Engineer",
+      template: "Oleh Vanin - %s",
+    });
+
+    const page = createPageMetadata({ title: "Projects", description: "Projects" });
+    const blog = createBlogIndexMetadata("en", true);
+
+    expect(page.title).toEqual({ absolute: "Oleh Vanin - Projects" });
+    expect(page.openGraph).toMatchObject({ title: "Oleh Vanin - Projects" });
+    expect(page.twitter).toMatchObject({ title: "Oleh Vanin - Projects" });
+    expect(blog.title).toEqual({ absolute: "Oleh Vanin - Blog" });
+    expect(blog.openGraph).toMatchObject({ title: "Blog" });
+    expect(blog.twitter).toMatchObject({ title: "Blog" });
+  });
+
   test("describes a published article with canonical, feed, and real-language alternates", () => {
     const article = getBlogPost("en", "codex-agents-v2", { includeDrafts: false });
 
@@ -12,7 +29,9 @@ describe("Blog metadata", () => {
 
     const metadata = createBlogArticleMetadata(article, ["en"]);
 
-    expect(metadata.title).toBe("Codex Agents V2 in 0.145.0: what changed and how to enable it");
+    expect(metadata.title).toEqual({
+      absolute: "Oleh Vanin - Codex Agents V2 in 0.145.0: what changed and how to enable it",
+    });
     expect(metadata.openGraph).toMatchObject({
       title: "Codex Agents V2 in 0.145.0: what changed and how to enable it",
     });

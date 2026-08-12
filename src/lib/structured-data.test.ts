@@ -108,14 +108,14 @@ describe("Blog structured data", () => {
     expect(data["@graph"][0]).toMatchObject({
       "@type": "ItemList",
       "@id": "https://exsesx.dev/blog/en#itemlist",
-      numberOfItems: 4,
+      numberOfItems: 5,
       itemListElement: [
         {
           "@type": "ListItem",
           position: 1,
           item: {
             "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/safari-26-invisible-tint-sampler",
+            url: "https://exsesx.dev/blog/en/switching-from-fish-to-nushell",
           },
         },
         {
@@ -123,7 +123,7 @@ describe("Blog structured data", () => {
           position: 2,
           item: {
             "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
+            url: "https://exsesx.dev/blog/en/safari-26-invisible-tint-sampler",
           },
         },
         {
@@ -131,12 +131,20 @@ describe("Blog structured data", () => {
           position: 3,
           item: {
             "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/codex-memories",
+            url: "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
           },
         },
         {
           "@type": "ListItem",
           position: 4,
+          item: {
+            "@type": "BlogPosting",
+            url: "https://exsesx.dev/blog/en/codex-memories",
+          },
+        },
+        {
+          "@type": "ListItem",
+          position: 5,
           item: {
             "@type": "BlogPosting",
             url: "https://exsesx.dev/blog/en/codex-agents-v2",

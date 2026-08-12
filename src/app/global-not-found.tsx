@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import AppDocument from "@/components/AppDocument";
 import NotFoundContent from "@/components/NotFoundContent";
-import { rootViewport, siteName } from "@/lib/metadata";
+import { rootViewport } from "@/lib/metadata";
 import "@/styles/monolisa.css";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: `Page not found - ${siteName}`,
+  title: "Oleh Vanin - Page not found",
   description: "This page wandered off. The link may be old or the project was renamed.",
   robots: { index: false, follow: true },
 };
