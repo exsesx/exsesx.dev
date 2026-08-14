@@ -95,7 +95,7 @@ export default function Header() {
               <Link
                 href="/"
                 {...suppressEntryMotionProps}
-                data-cuelume-press="sparkle"
+                data-cuelume-press="scan"
                 className="site-nav-brand-link flex min-w-0 items-center rounded-full px-0 py-1 text-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent sm:px-2"
                 aria-label="Oleh Vanin home"
                 onClick={event => handleNavLinkClick(event, "/")}

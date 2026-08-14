@@ -198,7 +198,7 @@ describe("app-level sound wiring", () => {
 
     expect(appDocument).toContain('import InteractionSounds from "./InteractionSounds";');
     expect(appDocument.match(/<InteractionSounds \/>/g)).toHaveLength(1);
-    expect(header).toContain('data-cuelume-press="sparkle"');
+    expect(header).toMatch(/href="\/"[\s\S]*?data-cuelume-press="scan"[\s\S]*?site-nav-brand-link/);
     expect(interactionSoundsComponent).toContain("useSyncExternalStore");
     expect(interactionSoundsComponent).toContain("initializeInteractionSounds");
     expect(interactionSoundsComponent).toMatch(/event\.detail !== 0/);
