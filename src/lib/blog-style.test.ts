@@ -10,10 +10,22 @@ const articleTocUrl = new URL("../components/blog/ArticleToc.tsx", import.meta.u
 const mobileTocLauncherUrl = new URL("../components/blog/useMobileTocLauncher.ts", import.meta.url);
 const scrollToTopUrl = new URL("../components/blog/BlogScrollToTop.tsx", import.meta.url);
 const articleWithTocUrl = new URL("../components/blog/ArticleWithToc.tsx", import.meta.url);
+const blogIndexPageUrl = new URL("../app/(blog)/blog/[locale]/page.tsx", import.meta.url);
+const blogArticlePageUrl = new URL("../app/(blog)/blog/[locale]/[slug]/page.tsx", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 const hotkeysUrl = new URL("../components/Hotkeys.tsx", import.meta.url);
 
 describe("Blog production styles", () => {
+  test("sounds prominent Blog navigation without sonifying editorial links", async () => {
+    const [indexPage, articlePage] = await Promise.all([
+      Bun.file(blogIndexPageUrl).text(),
+      Bun.file(blogArticlePageUrl).text(),
+    ]);
+
+    expect(indexPage.match(/data-cuelume-press="tick"/g)).toHaveLength(3);
+    expect(articlePage.match(/data-cuelume-press=""/g)).toHaveLength(2);
+  });
+
   test("uses a Shiki theme selector that survives the Next CSS minifier", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 

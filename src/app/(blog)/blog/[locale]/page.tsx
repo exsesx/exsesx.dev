@@ -89,7 +89,9 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                 </span>
               </div>
               <h2 className="mt-5 max-w-4xl text-balance text-3xl font-black leading-tight tracking-tight text-foreground sm:text-5xl">
-                <Link href={getBlogPostPath(locale, featuredPost.slug)}>{featuredPost.title}</Link>
+                <Link data-cuelume-press="tick" href={getBlogPostPath(locale, featuredPost.slug)}>
+                  {featuredPost.title}
+                </Link>
               </h2>
               <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">{featuredPost.description}</p>
               <div className="mt-6 flex flex-wrap gap-2">
@@ -99,7 +101,11 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                   </span>
                 ))}
               </div>
-              <Link className="blog-read-link mt-8" href={getBlogPostPath(locale, featuredPost.slug)}>
+              <Link
+                className="blog-read-link mt-8"
+                data-cuelume-press="tick"
+                href={getBlogPostPath(locale, featuredPost.slug)}
+              >
                 {copy.readArticle}
                 <ArrowRight aria-hidden="true" size={17} strokeWidth={2.4} />
               </Link>
@@ -120,7 +126,9 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                 <article key={post.slug} className="blog-post-row">
                   <div>
                     <h3>
-                      <Link href={getBlogPostPath(locale, post.slug)}>{post.title}</Link>
+                      <Link data-cuelume-press="tick" href={getBlogPostPath(locale, post.slug)}>
+                        {post.title}
+                      </Link>
                     </h3>
                     <p>{post.description}</p>
                   </div>
