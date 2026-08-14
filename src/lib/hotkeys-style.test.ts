@@ -43,6 +43,15 @@ describe("hotkey loading and motion contracts", () => {
     expect(source).not.toContain("blog-focus-toggle");
   });
 
+  test("uses distinct feedback for pending and executed keyboard commands", async () => {
+    const source = await Bun.file(hotkeysUrl).text();
+
+    expect(source).toMatch(
+      /pendingSequence\.length === 0 && decision\.nextState\.pendingSequence\.length > 0[\s\S]*?playInteractionSound\("scan"\)/,
+    );
+    expect(source).toMatch(/if \(decision\.action\) \{[\s\S]*?playInteractionSound\("pulse"\)/);
+  });
+
   test("removes keyboard-driven loops, dots, entrances, and child staggering", async () => {
     const source = await Bun.file(hotkeysUrl).text();
     const css = await Bun.file(globalsUrl).text();

@@ -1,7 +1,15 @@
 "use client";
 
-import { Check, Monitor, Moon, Sun } from "lucide-react";
+import { Check, Monitor, Moon, Sun, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import {
+  getServerSoundEffectsSnapshot,
+  getSoundEffectsSnapshot,
+  playInteractionSound,
+  playPopupToggleSound,
+  setSoundEffectsEnabled,
+  subscribeToSoundEffects,
+} from "@/lib/interaction-sounds";
 import {
   getServerThemeSnapshot,
   getThemeSnapshot,
@@ -16,10 +24,12 @@ import { useBlogFocus } from "./blog/BlogFocusProvider";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
@@ -108,6 +118,11 @@ export default function ThemeSwitcher() {
   const { isFocusMode } = useBlogFocus();
   const [isOpen, setIsOpen] = useState(false);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
+  const soundEffectsEnabled = useSyncExternalStore(
+    subscribeToSoundEffects,
+    getSoundEffectsSnapshot,
+    getServerSoundEffectsSnapshot,
+  );
   const { mode, resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const isDark = resolvedTheme === "dark";
   const activeOption = themeOptions.find(option => option.mode === mode) ?? systemThemeOption;
@@ -120,6 +135,7 @@ export default function ThemeSwitcher() {
       return;
     }
 
+    playInteractionSound("toggle");
     persistThemeMode(nextMode);
   }
 
@@ -140,7 +156,13 @@ export default function ThemeSwitcher() {
   }, [isFocusMode]);
 
   return (
-    <DropdownMenu onOpenChange={setIsOpen} open={isOpen && !isFocusMode}>
+    <DropdownMenu
+      onOpenChange={(open, eventDetails) => {
+        playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target);
+        setIsOpen(open);
+      }}
+      open={isOpen && !isFocusMode}
+    >
       <DropdownMenuTrigger
         render={
           <Button
@@ -148,14 +170,14 @@ export default function ThemeSwitcher() {
             variant="glass"
             size="icon"
             className="relative cursor-pointer active:scale-[0.97]"
-            aria-label={`Theme: ${activeOption.label}`}
+            aria-label={`Theme: ${activeOption.label}. Sound effects: ${soundEffectsEnabled ? "on" : "off"}`}
           />
         }
       >
         <ActiveIcon strokeWidth={2.2} />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuRadioGroup
           value={mode}
           onValueChange={value => {
@@ -179,6 +201,22 @@ export default function ThemeSwitcher() {
             })}
           </DropdownMenuGroup>
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuCheckboxItem
+            checked={soundEffectsEnabled}
+            closeOnClick={false}
+            onCheckedChange={setSoundEffectsEnabled}
+          >
+            {soundEffectsEnabled ? (
+              <Volume2 data-icon="inline-start" strokeWidth={2.2} />
+            ) : (
+              <VolumeX data-icon="inline-start" strokeWidth={2.2} />
+            )}
+            <span className="min-w-0 flex-1 font-bold leading-none">Sound effects</span>
+            <span className="text-xs font-bold text-muted-foreground">{soundEffectsEnabled ? "On" : "Off"}</span>
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

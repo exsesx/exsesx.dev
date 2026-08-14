@@ -3,6 +3,7 @@ import { BlogFocusProvider } from "./blog/BlogFocusProvider";
 import DocumentBootstrapScripts from "./DocumentBootstrapScripts";
 import Header from "./Header";
 import HotkeysLoader from "./HotkeysLoader";
+import InteractionSounds from "./InteractionSounds";
 import KineticBackdrop from "./KineticBackdrop";
 import LiquidGlassLens from "./LiquidGlassLens";
 import RouteMotionGuard from "./RouteMotionGuard";
@@ -39,6 +40,7 @@ export default function AppDocument({ children, lang }: AppDocumentProps) {
           </a>
           <LiquidGlassLens />
           <RouteMotionGuard />
+          <InteractionSounds />
           <BlogFocusProvider>
             <KineticBackdrop />
             <Header />

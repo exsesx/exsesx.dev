@@ -2,6 +2,7 @@
 
 import { Pause, Play } from "lucide-react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
+import { playInteractionSound } from "@/lib/interaction-sounds";
 import { Button } from "./ui/button";
 
 type AutoPauseVideoProps = Omit<ComponentProps<"video">, "aria-label" | "autoPlay"> & {
@@ -11,6 +12,7 @@ type AutoPauseVideoProps = Omit<ComponentProps<"video">, "aria-label" | "autoPla
 export default function AutoPauseVideo({ className, label, ...props }: AutoPauseVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playbackPreferenceRef = useRef<"auto" | "pause" | "play">("auto");
+  const pendingUserPlaybackRef = useRef<"pause" | "play" | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
@@ -73,12 +75,28 @@ export default function AutoPauseVideo({ className, label, ...props }: AutoPause
 
     if (video.paused) {
       playbackPreferenceRef.current = "play";
-      video.play().catch(() => {});
+      pendingUserPlaybackRef.current = "play";
+      video.play().catch(() => {
+        if (pendingUserPlaybackRef.current === "play") {
+          pendingUserPlaybackRef.current = null;
+        }
+      });
       return;
     }
 
     playbackPreferenceRef.current = "pause";
+    pendingUserPlaybackRef.current = "pause";
     video.pause();
+  }
+
+  function handlePlaybackChange(playback: "pause" | "play") {
+    setIsPlaying(playback === "play");
+
+    if (pendingUserPlaybackRef.current === playback) {
+      playInteractionSound("toggle");
+    }
+
+    pendingUserPlaybackRef.current = null;
   }
 
   return (
@@ -88,8 +106,8 @@ export default function AutoPauseVideo({ className, label, ...props }: AutoPause
         {...props}
         aria-label={label}
         className={className}
-        onPause={() => setIsPlaying(false)}
-        onPlaying={() => setIsPlaying(true)}
+        onPause={() => handlePlaybackChange("pause")}
+        onPlaying={() => handlePlaybackChange("play")}
       />
       <Button
         type="button"

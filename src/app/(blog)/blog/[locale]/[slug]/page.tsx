@@ -69,7 +69,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
       >
         <header className="mx-auto max-w-4xl pb-9">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link className="blog-back-link" href={getBlogIndexPath(locale)}>
+            <Link className="blog-back-link" data-cuelume-press="" href={getBlogIndexPath(locale)}>
               <ArrowLeft aria-hidden="true" size={16} strokeWidth={2.4} />
               {copy.backToBlog}
             </Link>
@@ -111,7 +111,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
         </ArticleWithToc>
 
         <footer className="mx-auto mt-14 flex max-w-4xl pt-8">
-          <Link className="blog-back-link" href={getBlogIndexPath(locale)}>
+          <Link className="blog-back-link" data-cuelume-press="" href={getBlogIndexPath(locale)}>
             <ArrowLeft aria-hidden="true" size={16} strokeWidth={2.4} />
             {copy.backToBlog}
           </Link>

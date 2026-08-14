@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/drawer";
 import type { ArticleHeading } from "@/content/blog/reading";
 import { BLOG_UI, type BlogLocale } from "@/lib/blog";
+import { playPopupToggleSound } from "@/lib/interaction-sounds";
 import { useBlogTocNavigation } from "./BlogFocusProvider";
 
 type ArticleTocProps = {
@@ -129,6 +130,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
             <a
               href={`#${heading.id}`}
               aria-current={isActive ? "location" : undefined}
+              data-cuelume-press="tick"
               onClick={mode === "mobile" ? event => handleMobileLinkClick(event, heading.id) : undefined}
             >
               <span aria-hidden="true" className="blog-toc-tick" />
@@ -142,7 +144,14 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
 
   if (mode === "mobile") {
     return (
-      <Drawer actionsRef={drawerActionsRef} onOpenChangeComplete={handleOpenChangeComplete} showSwipeHandle>
+      <Drawer
+        actionsRef={drawerActionsRef}
+        onOpenChange={(open, eventDetails) =>
+          playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target)
+        }
+        onOpenChangeComplete={handleOpenChangeComplete}
+        showSwipeHandle
+      >
         <DrawerTrigger
           ref={triggerRef}
           aria-label={copy.openTableOfContents}

@@ -162,6 +162,7 @@ export default function BlogScrollToTop({ locale }: { locale: BlogLocale }) {
       type="button"
       aria-label={copy.scrollToTop}
       className="blog-toc-mobile-trigger blog-scroll-top fixed bottom-4 right-4"
+      data-cuelume-press=""
       data-scroll-top-motion="instant"
       data-scroll-top-state="hidden"
       data-testid="blog-scroll-top"

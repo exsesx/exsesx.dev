@@ -2,9 +2,10 @@
 
 import { Minus, Plus } from "lucide-react";
 import type { RenderResult } from "mermaid";
-import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useId, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { BLOG_UI } from "@/lib/blog";
+import { playInteractionSound } from "@/lib/interaction-sounds";
 import { MAX_MERMAID_ZOOM, MIN_MERMAID_ZOOM } from "@/lib/mermaid-camera";
 import {
   createMermaidPalette,
@@ -78,6 +79,11 @@ function hideInjectedSvgSemantics(svg: string) {
   return svg.replace("<svg ", '<svg aria-hidden="true" focusable="false" ');
 }
 
+function runCameraCommand(command: () => void) {
+  playInteractionSound("press");
+  command();
+}
+
 export function MermaidDiagramView(props: MermaidDiagramViewProps) {
   return <MermaidDiagramViewForSource key={props.source} {...props} />;
 }
@@ -102,6 +108,24 @@ function MermaidDiagramViewForSource({
   const descriptionId = `${reactId}-description`;
   const keyboardId = `${reactId}-keyboard`;
   const visualState = isReady && isRendering ? "updating" : isReady ? "ready" : isCurrentError ? "error" : "loading";
+
+  function handleCameraKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const isModified = event.altKey || event.ctrlKey || event.metaKey;
+    const isZoomIn = event.key === "+" || event.key === "=";
+    const isZoomOut = event.key === "-";
+    const isReset = event.key === "Home";
+    const isEnabledCommand =
+      !isModified &&
+      ((isZoomIn && camera.zoomPercent < MAX_MERMAID_ZOOM * 100) ||
+        (isZoomOut && camera.zoomPercent > MIN_MERMAID_ZOOM * 100) ||
+        (isReset && camera.isZoomed));
+
+    if (!event.repeat && isEnabledCommand) {
+      playInteractionSound("press");
+    }
+
+    camera.handleKeyDown(event);
+  }
 
   return (
     <figure
@@ -134,7 +158,7 @@ function MermaidDiagramViewForSource({
             data-panning={camera.isPanning ? "true" : "false"}
             data-testid="mermaid-viewport"
             data-zoomed={camera.isZoomed ? "true" : "false"}
-            onKeyDown={camera.handleKeyDown}
+            onKeyDown={handleCameraKeyDown}
             onLostPointerCapture={camera.handlePointerEnd}
             onPointerCancel={camera.handlePointerEnd}
             onPointerDown={camera.handlePointerDown}
@@ -180,7 +204,7 @@ function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
         aria-label={ui.zoomOut}
         data-mermaid-control="zoom-out"
         disabled={!isReady || camera.zoomPercent <= MIN_MERMAID_ZOOM * 100}
-        onClick={() => camera.zoomBy(-ZOOM_BUTTON_STEP)}
+        onClick={() => runCameraCommand(() => camera.zoomBy(-ZOOM_BUTTON_STEP))}
       >
         <Minus strokeWidth={2.4} />
       </Button>
@@ -191,7 +215,7 @@ function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
         aria-label={`${ui.resetZoom}, ${camera.zoomPercent}%`}
         data-mermaid-control="reset"
         disabled={!isReady || !camera.isZoomed}
-        onClick={camera.resetCamera}
+        onClick={() => runCameraCommand(camera.resetCamera)}
       >
         <span className="blog-mermaid-reset-chip">{camera.zoomPercent}%</span>
       </Button>
@@ -203,7 +227,7 @@ function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
         aria-label={ui.zoomIn}
         data-mermaid-control="zoom-in"
         disabled={!isReady || camera.zoomPercent >= MAX_MERMAID_ZOOM * 100}
-        onClick={() => camera.zoomBy(ZOOM_BUTTON_STEP)}
+        onClick={() => runCameraCommand(() => camera.zoomBy(ZOOM_BUTTON_STEP))}
       >
         <Plus strokeWidth={2.4} />
       </Button>
