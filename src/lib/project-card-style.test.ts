@@ -20,6 +20,12 @@ describe("project card performance styles", () => {
     expect(await Bun.file(wrapperUrl).exists()).toBe(false);
   });
 
+  test("sounds every project-card activation surface", async () => {
+    const source = await Bun.file(cardUrl).text();
+
+    expect(source.match(/data-cuelume-press=""/g)).toHaveLength(4);
+  });
+
   test("uses a static hover and focus glow without pointer coordinates", async () => {
     const cardSource = await Bun.file(cardUrl).text();
     const css = await Bun.file(globalsUrl).text();

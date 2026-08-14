@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent } from "react";
+import { playInteractionSound } from "@/lib/interaction-sounds";
 import { MOTION_ATTRIBUTES } from "@/lib/motion-contract";
 import { getBackNavigationIntent } from "@/lib/route-intent";
 import { Button } from "./ui/button";
@@ -36,6 +37,7 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
     }
 
     event.preventDefault();
+    playInteractionSound("press");
     navigateBack();
   });
 
@@ -60,6 +62,7 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
       size="icon"
       aria-label="Back"
       aria-hidden={active ? undefined : "true"}
+      data-cuelume-press={active ? "" : undefined}
       disabled={!active}
       {...{ [MOTION_ATTRIBUTES.activeBackButton]: active ? "true" : "false" }}
       className="nav-back-button cursor-pointer"

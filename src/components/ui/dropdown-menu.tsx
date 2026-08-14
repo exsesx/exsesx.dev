@@ -70,6 +70,31 @@ function DropdownMenuItem({ className, closeOnClick = true, ...props }: MenuPrim
   );
 }
 
+function DropdownMenuCheckboxItem({ className, closeOnClick = true, ...props }: MenuPrimitive.CheckboxItem.Props) {
+  return (
+    <MenuPrimitive.CheckboxItem
+      closeOnClick={closeOnClick}
+      data-slot="dropdown-menu-checkbox-item"
+      className={cn(
+        dropdownMenuItemClass,
+        "flex w-full cursor-pointer items-center gap-2 px-3 py-3 text-left",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.Props) {
+  return (
+    <MenuPrimitive.Separator
+      data-slot="dropdown-menu-separator"
+      className={cn("my-1 h-px bg-border/80", className)}
+      {...props}
+    />
+  );
+}
+
 function DropdownMenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
   return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
 }
@@ -87,11 +112,13 @@ function DropdownMenuRadioItem({ className, closeOnClick = true, ...props }: Men
 
 export {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLinkItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 };

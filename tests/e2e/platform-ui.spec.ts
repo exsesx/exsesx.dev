@@ -253,7 +253,7 @@ if (!("Bun" in globalThis)) {
       expect(snapshots.length).toBeGreaterThan(0);
       expect(snapshots.every(snapshot => snapshot.className.includes("dark"))).toBe(true);
       expect(snapshots.every(snapshot => snapshot.mode === "system")).toBe(true);
-      expect(snapshots.every(snapshot => snapshot.label === "Theme: Device")).toBe(true);
+      expect(snapshots.every(snapshot => snapshot.label === "Theme: Device. Sound effects: on")).toBe(true);
       expect(consoleErrors).not.toContainEqual(expect.stringContaining("Encountered a script tag"));
     });
 
@@ -812,7 +812,7 @@ if (!("Bun" in globalThis)) {
 
       const menu = page.getByRole("menu");
       await expect(menu).toBeVisible();
-      await expect(menu).toHaveAccessibleName("Theme: Light");
+      await expect(menu).toHaveAccessibleName("Theme: Light. Sound effects: on");
 
       const bounds = await menu.boundingBox();
       const viewport = page.viewportSize();
@@ -845,6 +845,34 @@ if (!("Bun" in globalThis)) {
       await expect(page.locator("html")).toHaveClass(/light/);
       await expect(page.getByRole("button", { name: "Theme: Light" })).toBeVisible();
       expect(await page.evaluate(() => window.__themeViewTransitionCalls)).toBe(0);
+    });
+
+    test("sound effects stay controllable and persist across visits", async ({ page }) => {
+      await page.goto("/");
+      await page.evaluate(() => window.localStorage.removeItem("exsesx:sound-effects"));
+      await page.reload();
+
+      const enabledTrigger = page.getByRole("button", { name: "Theme: Device. Sound effects: on" });
+      await enabledTrigger.click();
+
+      const menu = page.getByRole("menu");
+      const soundToggle = page.getByRole("menuitemcheckbox", { name: "Sound effects" });
+
+      await expect(soundToggle).toBeChecked();
+      await soundToggle.click();
+      await expect(menu).toBeVisible();
+      await expect(soundToggle).not.toBeChecked();
+      await expect(page.getByRole("button", { name: "Theme: Device. Sound effects: off" })).toBeVisible();
+      await expect.poll(() => page.evaluate(() => window.localStorage.getItem("exsesx:sound-effects"))).toBe("false");
+
+      await page.reload();
+      const disabledTrigger = page.getByRole("button", { name: "Theme: Device. Sound effects: off" });
+      await disabledTrigger.click();
+      const persistedToggle = page.getByRole("menuitemcheckbox", { name: "Sound effects" });
+      await expect(persistedToggle).not.toBeChecked();
+      await persistedToggle.click();
+      await expect(persistedToggle).toBeChecked();
+      await expect.poll(() => page.evaluate(() => window.localStorage.getItem("exsesx:sound-effects"))).toBe("true");
     });
 
     test("changing theme mode without changing its resolved color skips the sweep", async ({ page }) => {

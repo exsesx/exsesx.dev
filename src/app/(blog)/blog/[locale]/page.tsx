@@ -65,7 +65,12 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
           <div className="flex items-center gap-3">
             <BlogLocaleSwitcher currentLocale={locale} />
             {posts.length > 0 ? (
-              <a className="blog-rss-link" href={`/blog/${locale}/rss.xml`} aria-label={copy.rssFeed}>
+              <a
+                className="blog-rss-link"
+                href={`/blog/${locale}/rss.xml`}
+                aria-label={copy.rssFeed}
+                data-cuelume-press=""
+              >
                 <Rss size={16} strokeWidth={2.4} />
               </a>
             ) : null}

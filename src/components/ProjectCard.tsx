@@ -55,6 +55,7 @@ export default function ProjectCard({ project, density = "default", preloadMedia
       >
         <Link
           href={projectPath}
+          data-cuelume-press=""
           transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, projectTransitionType)}
           scroll
           {...suppressEntryMotionProps}
@@ -112,6 +113,7 @@ export default function ProjectCard({ project, density = "default", preloadMedia
             >
               <Link
                 href={projectPath}
+                data-cuelume-press=""
                 transitionTypes={getProjectRouteTransitionTypes(
                   ROUTE_TRANSITION_TYPES.navForward,
                   projectTransitionType,
@@ -128,6 +130,7 @@ export default function ProjectCard({ project, density = "default", preloadMedia
             <CardAction>
               <a
                 href={project.href}
+                data-cuelume-press=""
                 className={buttonVariants({ variant: "default", size: "icon" })}
                 aria-label={`Open ${project.name} website`}
                 rel="noopener noreferrer"
@@ -165,6 +168,7 @@ export default function ProjectCard({ project, density = "default", preloadMedia
               transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, projectTransitionType)}
               scroll
               {...suppressEntryMotionProps}
+              data-cuelume-press=""
               className={cn(
                 buttonVariants({
                   variant: "glass",

@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, FileDown, FileText, RotateCcw, Share2 } from "lucide-react";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import {
@@ -12,6 +12,7 @@ import {
   DropdownMenuLinkItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getPreparationCompletionSound, playInteractionSound, playPopupToggleSound } from "@/lib/interaction-sounds";
 import { SITE_PROFILE } from "@/lib/site-profile";
 import { cn } from "@/lib/utils";
 import { type CvSecondaryAction, getCvSecondaryAction } from "./cv-actions";
@@ -20,6 +21,7 @@ const RESUME_PDF_URL = SITE_PROFILE.resume.path;
 const RESUME_PDF_DOWNLOAD_URL = `${RESUME_PDF_URL}?download=1`;
 const RESUME_PDF_FILENAME = SITE_PROFILE.resume.filename;
 const RESUME_PREPARATION_TIMEOUT_MS = 12_000;
+const RESUME_PREPARATION_SOUND_DELAY_MS = 300;
 
 type CvShareStatus = "idle" | "preparing" | "ready" | "sharing" | "error";
 
@@ -93,6 +95,10 @@ function CvMenu() {
   const [shareStatus, setShareStatus] = useState<CvShareStatus>("idle");
   const preparedResumeFileRef = useRef<File | null>(null);
   const preparationPromiseRef = useRef<Promise<File> | null>(null);
+  const preparationSoundTimeoutRef = useRef<number | null>(null);
+  const preparationLoadingSoundPlayedRef = useRef(false);
+  const preparationFastCompletionSoundRef = useRef<"toggle" | null>(null);
+  const isOpenRef = useRef(false);
   const secondaryAction = useSyncExternalStore(
     subscribeToCvCapabilities,
     getClientSecondaryAction,
@@ -109,45 +115,113 @@ function CvMenu() {
           ? "Share CV"
           : "Preparing CV";
 
-  function prepareShareFile() {
+  function clearPreparationSoundTimeout() {
+    if (preparationSoundTimeoutRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(preparationSoundTimeoutRef.current);
+    preparationSoundTimeoutRef.current = null;
+  }
+
+  function schedulePreparationSound() {
+    clearPreparationSoundTimeout();
+
+    if (preparationLoadingSoundPlayedRef.current) {
+      return;
+    }
+
+    preparationSoundTimeoutRef.current = window.setTimeout(() => {
+      preparationSoundTimeoutRef.current = null;
+
+      if (isOpenRef.current && preparationPromiseRef.current) {
+        preparationLoadingSoundPlayedRef.current = true;
+        playInteractionSound("loading");
+      }
+    }, RESUME_PREPARATION_SOUND_DELAY_MS);
+  }
+
+  function prepareShareFile(fastCompletionSound: "toggle" | null) {
     if (preparedResumeFileRef.current) {
       setShareStatus("ready");
       return;
     }
 
     if (preparationPromiseRef.current) {
+      if (!preparationLoadingSoundPlayedRef.current) {
+        preparationFastCompletionSoundRef.current = fastCompletionSound;
+      }
+
+      schedulePreparationSound();
       return;
     }
 
     setShareStatus("preparing");
+    preparationLoadingSoundPlayedRef.current = false;
+    preparationFastCompletionSoundRef.current = fastCompletionSound;
 
     const preparation = prepareResumeFile();
     preparationPromiseRef.current = preparation;
+    schedulePreparationSound();
 
     void preparation.then(
       file => {
+        clearPreparationSoundTimeout();
+        const completionSound = getPreparationCompletionSound(
+          preparationLoadingSoundPlayedRef.current,
+          preparationFastCompletionSoundRef.current,
+        );
+
         preparedResumeFileRef.current = file;
         preparationPromiseRef.current = null;
+        preparationLoadingSoundPlayedRef.current = false;
+        preparationFastCompletionSoundRef.current = null;
         setShareStatus("ready");
+
+        if (isOpenRef.current && completionSound) {
+          playInteractionSound(completionSound);
+        }
       },
       () => {
+        clearPreparationSoundTimeout();
         preparationPromiseRef.current = null;
+        preparationLoadingSoundPlayedRef.current = false;
+        preparationFastCompletionSoundRef.current = null;
         setShareStatus("error");
+
+        if (isOpenRef.current) {
+          playInteractionSound("error");
+        }
       },
     );
   }
 
-  function handleMenuOpenChange(open: boolean) {
+  function handleMenuOpenChange(open: boolean, eventDetails: { event?: Event; reason: string }) {
+    isOpenRef.current = open;
     setIsOpen(open);
 
-    if (open && secondaryAction === "share" && shareStatus !== "sharing") {
-      prepareShareFile();
+    if (!open) {
+      clearPreparationSoundTimeout();
     }
+
+    if (open && secondaryAction === "share" && shareStatus !== "sharing") {
+      const requiresPreparation = !preparedResumeFileRef.current;
+      const loadingSoundAlreadyPlayed = preparationLoadingSoundPlayedRef.current;
+
+      prepareShareFile("toggle");
+
+      if (requiresPreparation && !loadingSoundAlreadyPlayed) {
+        return;
+      }
+    }
+
+    playPopupToggleSound(open, eventDetails.reason, eventDetails.event?.target);
   }
 
   function handleShareCv() {
     if (shareStatus === "error") {
-      prepareShareFile();
+      playInteractionSound("press");
+      prepareShareFile(null);
       return;
     }
 
@@ -159,6 +233,8 @@ function CvMenu() {
 
     let sharePromise: Promise<void>;
 
+    playInteractionSound("press");
+
     try {
       sharePromise = navigator.share({
         files: [file],
@@ -166,17 +242,41 @@ function CvMenu() {
       });
     } catch {
       setShareStatus("error");
+      playInteractionSound("error");
       return;
     }
 
     setShareStatus("sharing");
+    isOpenRef.current = false;
     setIsOpen(false);
 
     void sharePromise.then(
-      () => setShareStatus("ready"),
-      error => setShareStatus(error instanceof DOMException && error.name === "AbortError" ? "ready" : "error"),
+      () => {
+        setShareStatus("ready");
+        playInteractionSound("success");
+      },
+      error => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          setShareStatus("ready");
+          return;
+        }
+
+        setShareStatus("error");
+        playInteractionSound("error");
+      },
     );
   }
+
+  useEffect(
+    () => () => {
+      isOpenRef.current = false;
+
+      if (preparationSoundTimeoutRef.current !== null) {
+        window.clearTimeout(preparationSoundTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   return (
     <DropdownMenu onOpenChange={handleMenuOpenChange} open={isOpen}>
@@ -188,6 +288,7 @@ function CvMenu() {
         )}
       >
         <a
+          data-cuelume-press=""
           href={RESUME_PDF_URL}
           className="inline-flex h-full min-w-0 flex-none items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97]"
           rel="noopener noreferrer"
@@ -221,7 +322,12 @@ function CvMenu() {
 
             <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] sm:w-52">
               <DropdownMenuGroup>
-                <DropdownMenuLinkItem href={RESUME_PDF_URL} rel="noopener noreferrer" target="_blank">
+                <DropdownMenuLinkItem
+                  data-cuelume-press=""
+                  href={RESUME_PDF_URL}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
                   <FileText size={16} strokeWidth={2.3} />
                   Open CV
                 </DropdownMenuLinkItem>
@@ -254,7 +360,7 @@ function CvMenu() {
                     </span>
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuLinkItem href={RESUME_PDF_DOWNLOAD_URL}>
+                  <DropdownMenuLinkItem data-cuelume-press="" href={RESUME_PDF_DOWNLOAD_URL}>
                     <FileDown size={16} strokeWidth={2.3} />
                     Download CV
                   </DropdownMenuLinkItem>

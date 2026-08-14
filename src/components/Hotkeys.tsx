@@ -23,6 +23,7 @@ import {
   type HotkeyRouteAction,
   type HotkeyState,
 } from "@/lib/hotkeys";
+import { playInteractionSound, playPopupToggleSound } from "@/lib/interaction-sounds";
 import { prepareHotkeyRouteNavigation } from "@/lib/route-intent";
 import { SITE_PROFILE } from "@/lib/site-profile";
 import { getThemeSnapshot, parseThemeSnapshot, persistThemeMode } from "@/lib/theme";
@@ -113,9 +114,16 @@ function Hotkeys({
     setHotkeyState(current => (areHotkeyStatesEqual(current, nextState) ? current : nextState));
   }
 
-  function setHotkeyModalOpen(isOpen: boolean) {
-    const shouldRestoreReadingFocus = isFocusMode && hotkeyStateRef.current.isModalOpen && !isOpen;
+  function setHotkeyModalOpen(isOpen: boolean, eventDetails: { event?: Event; reason: string }) {
+    const wasOpen = hotkeyStateRef.current.isModalOpen;
 
+    if (wasOpen === isOpen) {
+      return;
+    }
+
+    const shouldRestoreReadingFocus = isFocusMode && wasOpen && !isOpen;
+
+    playPopupToggleSound(isOpen, eventDetails.reason, eventDetails.event?.target);
     commitHotkeyState({
       ...hotkeyStateRef.current,
       isModalOpen: isOpen,
@@ -151,11 +159,22 @@ function Hotkeys({
       event.preventDefault();
     }
 
+    if (hotkeyStateRef.current.pendingSequence.length === 0 && decision.nextState.pendingSequence.length > 0) {
+      playInteractionSound("scan");
+    }
+
     const shouldRestoreReadingFocus =
       isFocusMode && hotkeyStateRef.current.isModalOpen && !decision.nextState.isModalOpen;
+
+    if (!decision.action && hotkeyStateRef.current.isModalOpen !== decision.nextState.isModalOpen) {
+      playInteractionSound("toggle");
+    }
+
     commitHotkeyState(decision.nextState);
 
     if (decision.action) {
+      playInteractionSound("pulse");
+
       if (decision.action === BLOG_FOCUS_HOTKEY_ACTION) {
         const isEnteringFocusMode = !isFocusMode;
         toggleFocusMode();

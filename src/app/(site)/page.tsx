@@ -107,6 +107,7 @@ export default function HomePage() {
                 href="/projects"
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                 {...suppressEntryMotionProps}
+                data-cuelume-press=""
                 className={buttonVariants({ variant: "default", size: "lg" })}
               >
                 See the work
@@ -119,6 +120,7 @@ export default function HomePage() {
               <CvMenu />
               <a
                 href={SITE_PROFILE.links.linkedin}
+                data-cuelume-press=""
                 className={buttonVariants({ variant: "glass", size: "lg" })}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -128,6 +130,7 @@ export default function HomePage() {
               </a>
               <a
                 href={SITE_PROFILE.links.github}
+                data-cuelume-press=""
                 className={buttonVariants({ variant: "glass", size: "lg" })}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -194,6 +197,7 @@ export default function HomePage() {
 
             <a
               href={SITE_PROFILE.links.booking}
+              data-cuelume-press=""
               className={cn(
                 buttonVariants({ variant: "default", size: "lg" }),
                 "mt-3 min-w-0 w-full justify-between rounded-[1.1rem] p-4 sm:mt-4 sm:rounded-[1.45rem] sm:p-5",
@@ -277,6 +281,7 @@ export default function HomePage() {
               href="/projects"
               transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
               {...suppressEntryMotionProps}
+              data-cuelume-press=""
               className={buttonVariants({ variant: "glass", size: "default" })}
             >
               Featured projects

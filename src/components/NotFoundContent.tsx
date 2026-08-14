@@ -42,7 +42,12 @@ export default function NotFoundContent() {
         </p>
 
         <div className="not-found-actions motion-rise motion-delay-3 mt-10 flex flex-wrap gap-3">
-          <Link href="/" {...suppressEntryMotionProps} className={buttonVariants({ variant: "default", size: "lg" })}>
+          <Link
+            href="/"
+            {...suppressEntryMotionProps}
+            data-cuelume-press=""
+            className={buttonVariants({ variant: "default", size: "lg" })}
+          >
             <Home data-icon="inline-start" strokeWidth={2.5} />
             Back home
           </Link>
@@ -50,6 +55,7 @@ export default function NotFoundContent() {
             href="/projects"
             transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
             {...suppressEntryMotionProps}
+            data-cuelume-press=""
             className={buttonVariants({ variant: "glass", size: "lg" })}
           >
             See the work

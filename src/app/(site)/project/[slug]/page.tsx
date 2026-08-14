@@ -161,6 +161,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               {project.href ? (
                 <a
                   href={project.href}
+                  data-cuelume-press=""
                   className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-fit")}
                   rel="noopener noreferrer"
                   target="_blank"
@@ -267,6 +268,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 href={getProjectPath(previousProject)}
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navBack]}
                 {...suppressEntryMotionProps}
+                data-cuelume-press=""
                 className={cn(
                   buttonVariants({ variant: "glass", size: "default" }),
                   "project-adjacent-link project-adjacent-link-previous",
@@ -281,6 +283,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 href={getProjectPath(nextProject)}
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                 {...suppressEntryMotionProps}
+                data-cuelume-press=""
                 className={cn(
                   buttonVariants({ variant: "default", size: "default" }),
                   "project-adjacent-link project-adjacent-link-next",

@@ -6,6 +6,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BLOG_UI } from "@/lib/blog";
+import { playInteractionSound } from "@/lib/interaction-sounds";
 import { useBlogLocale } from "./BlogLocaleContext";
 
 const COPY_FEEDBACK_DURATION = 1800;
@@ -85,6 +86,7 @@ export default function CodeBlock({ children, ...props }: ComponentPropsWithoutR
   }, [wrapped]);
 
   function showCopyFeedback(state: Exclude<CopyState, "idle">) {
+    playInteractionSound(state === "copied" ? "success" : "error");
     setCopyState(state);
 
     if (resetTimerRef.current) {
@@ -113,6 +115,8 @@ export default function CodeBlock({ children, ...props }: ComponentPropsWithoutR
   }
 
   function toggleWrap() {
+    playInteractionSound("toggle");
+
     if (!wrapped) {
       savedScrollLeftRef.current = preRef.current?.scrollLeft ?? 0;
       setWrapped(true);

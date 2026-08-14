@@ -313,7 +313,8 @@ describe("Blog production styles", () => {
     expect(toc).toContain("navigateToHeading");
     expect(toc).toContain("actionsRef={drawerActionsRef}");
     expect(toc).toContain("drawerActionsRef.current?.close()");
-    expect(toc).not.toContain("onOpenChange={");
+    expect(toc).toContain("playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target)");
+    expect(toc).not.toContain("open={");
     expect(toc).not.toContain("handleOpenChange(open");
     expect(toc).not.toContain("initialFocus");
     expect(toc).not.toContain("[--bleed:");
