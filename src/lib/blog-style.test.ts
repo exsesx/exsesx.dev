@@ -261,9 +261,7 @@ describe("Blog production styles", () => {
     expect(css).toMatch(
       /@media print\s*\{[\s\S]*?\.blog-code-toolbar\s*\{[^}]*display:\s*none;[\s\S]*?\.blog-code-block pre\s*\{[^}]*white-space:\s*pre-wrap/s,
     );
-    expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-code-state-icon\s*\{[^}]*animation:\s*none/s,
-    );
+    expect(css).not.toContain("blog-code-state-in");
     expect(css).not.toContain(".blog-code-tooltip");
   });
 

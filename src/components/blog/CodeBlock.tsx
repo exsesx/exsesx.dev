@@ -1,6 +1,8 @@
 "use client";
 
-import { Check, Copy, WrapText, X } from "lucide-react";
+import { Check, Copy, X } from "lucide";
+import { WrapText } from "lucide-react";
+import { MorphIcon } from "morphicons/react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -128,6 +130,7 @@ export default function CodeBlock({ children, ...props }: ComponentPropsWithoutR
   }
 
   const copyLabel = copyState === "copied" ? ui.copied : copyState === "error" ? ui.copyFailed : ui.copy;
+  const copyIcon = copyState === "copied" ? Check : copyState === "error" ? X : Copy;
 
   return (
     <div className="blog-code-block" data-wrap={wrapped ? "true" : "false"}>
@@ -156,13 +159,14 @@ export default function CodeBlock({ children, ...props }: ComponentPropsWithoutR
                 onClick={copyCode}
                 tooltip={copyLabel}
               >
-                {copyState === "copied" ? (
-                  <Check key="copied" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.5} />
-                ) : copyState === "error" ? (
-                  <X key="error" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.5} />
-                ) : (
-                  <Copy key="idle" className="blog-code-state-icon" aria-hidden="true" size={15} strokeWidth={2.35} />
-                )}
+                <MorphIcon
+                  className="blog-code-state-icon"
+                  icon={copyIcon}
+                  reducedMotion="user"
+                  size={15}
+                  spring="snappy"
+                  strokeWidth={2.4}
+                />
               </CodeActionButton>
             </fieldset>
 

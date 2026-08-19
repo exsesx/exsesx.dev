@@ -3171,22 +3171,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   transform: scale(0.97);
 }
 
-.blog-code-state-icon {
-  animation: blog-code-state-in 150ms var(--ease-out) both;
-}
-
-@keyframes blog-code-state-in {
-  from {
-    opacity: 0;
-    transform: scale(0.82);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 @media (hover: hover) and (pointer: fine) {
   .blog-code-action {
     width: 2.25rem;
@@ -3670,10 +3654,6 @@ html.dark .blog-figure-image--dark {
 
   .blog-code-action:active {
     transform: none;
-  }
-
-  .blog-code-state-icon {
-    animation: none;
   }
 
   [data-slot="tooltip-content"] {

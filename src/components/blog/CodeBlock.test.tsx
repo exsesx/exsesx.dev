@@ -18,6 +18,9 @@ describe("CodeBlock", () => {
     expect(markup).toContain('data-slot="tooltip-trigger"');
     expect(markup.match(/data-slot="tooltip-trigger"/g)).toHaveLength(2);
     expect(markup).toContain('data-wrap="false"');
+    expect(markup).toContain('class="blog-code-state-icon"');
+    expect(markup.match(/blog-code-state-icon/g)).toHaveLength(1);
+    expect(markup).toContain('aria-hidden="true"');
     expect(markup).not.toContain(">Copy<");
     expect(markup).toContain('role="status"');
     expect(markup).toContain("codex features enable multi_agent_v2");

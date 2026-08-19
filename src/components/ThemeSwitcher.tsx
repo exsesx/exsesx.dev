@@ -1,6 +1,8 @@
 "use client";
 
-import { Check, Monitor, Moon, Sun, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide";
+import { Check, Monitor, Moon, Sun } from "lucide-react";
+import { MorphIcon } from "morphicons/react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   getServerSoundEffectsSnapshot,
@@ -208,11 +210,13 @@ export default function ThemeSwitcher() {
             closeOnClick={false}
             onCheckedChange={setSoundEffectsEnabled}
           >
-            {soundEffectsEnabled ? (
-              <Volume2 data-icon="inline-start" strokeWidth={2.2} />
-            ) : (
-              <VolumeX data-icon="inline-start" strokeWidth={2.2} />
-            )}
+            <MorphIcon
+              icon={soundEffectsEnabled ? Volume2 : VolumeX}
+              data-icon="inline-start"
+              strokeWidth={2.2}
+              spring="snappy"
+              reducedMotion="user"
+            />
             <span className="min-w-0 flex-1 font-bold leading-none">Sound effects</span>
             <span className="text-xs font-bold text-muted-foreground">{soundEffectsEnabled ? "On" : "Off"}</span>
           </DropdownMenuCheckboxItem>

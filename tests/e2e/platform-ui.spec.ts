@@ -499,10 +499,27 @@ if (!("Bun" in globalThis)) {
         await expect(page.locator('[data-slot="tooltip-content"][data-open]')).toBeHidden();
       }
 
+      await page.emulateMedia({ reducedMotion: "reduce" });
+
+      const copyStateIcon = copyButton.locator(".blog-code-state-icon");
+      const copyStatePath = copyStateIcon.locator("path");
+      const idleIconPath = await copyStatePath.getAttribute("d");
+
+      await copyStateIcon.evaluate(element => {
+        element.dataset.morphIdentity = "preserved";
+      });
+
       await copyButton.click();
       await expect(copyButton).toHaveAttribute("aria-label", "Code copied");
       await expect.poll(() => page.evaluate(() => window.__copiedCode)).toBe(source);
       await expect(codeBlock.getByRole("status")).toHaveText("Code copied");
+      await expect(copyStateIcon).toHaveAttribute("data-morph-identity", "preserved");
+      await expect.poll(() => copyStatePath.getAttribute("d")).not.toBe(idleIconPath);
+
+      const copiedIconPath = await copyStatePath.getAttribute("d");
+
+      await page.waitForTimeout(100);
+      await expect(copyStatePath).toHaveAttribute("d", copiedIconPath ?? "");
 
       await page.evaluate(() => {
         window.__copyShouldFail = true;
@@ -510,6 +527,8 @@ if (!("Bun" in globalThis)) {
       await copyButton.click();
       await expect(copyButton).toHaveAttribute("aria-label", "Couldn't copy code");
       await expect(codeBlock.getByRole("status")).toHaveText("Couldn't copy code");
+      await expect(copyStateIcon).toHaveAttribute("data-morph-identity", "preserved");
+      await expect.poll(() => copyStatePath.getAttribute("d")).not.toBe(copiedIconPath);
 
       if (isMobile) {
         const overflowingBlock = page.locator(".blog-code-block").nth(1);
@@ -528,9 +547,6 @@ if (!("Bun" in globalThis)) {
         await expect(overflowingBlock).toHaveAttribute("data-wrap", "false");
         await expect.poll(() => overflowingPre.evaluate(element => element.scrollLeft)).toBe(savedScrollLeft);
       }
-
-      await page.emulateMedia({ reducedMotion: "reduce" });
-      await expect(copyButton.locator(".blog-code-state-icon")).toHaveCSS("animation-name", "none");
 
       await page.emulateMedia({ media: "print", reducedMotion: "no-preference" });
       await expect(toolbar).toBeHidden();
