@@ -11,7 +11,7 @@ Built with Next.js 16 and React 19, deployed on [Vercel](https://vercel.com).
 - **React 19**, **Tailwind CSS 4**, **Base UI**, and **Lucide React**
 - Native CSS motion and a tiered glass system, with refractive effects progressively enhanced where supported
 - **TypeScript 7.0.2** through Next's CLI checker and **Biome** for linting and formatting
-- **Bun 1.3.14** for package management and scripts
+- **Bun 1.4.0** for package management and scripts
 
 ## Development
 
@@ -28,13 +28,14 @@ The CV endpoint (`/api/resume/pdf`) proxies a resume from RXResume and needs
 ```shell
 bun run biome:check
 bun run mdx:check
-bunx tsc --noEmit
+bun run typecheck
 bun test
 bun run build
 ```
 
-CI uses Bun 1.3.14 to run a frozen install, Biome and MDX checks, the Bun test
-suite, and a production build on every push to `main` and on pull requests. The
+CI uses Bun 1.4.0 to run a frozen install, verify dependency deduplication, run
+Biome and MDX checks, typecheck, execute the Bun test suite, build for production,
+and run the browser tests on every push to `main` and on pull requests. The
 route-motion browser contract can also be run locally with `bun run test:motion`.
 
 Production builds use Webpack while the 16.3 preview's Turbopack build path is
