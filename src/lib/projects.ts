@@ -108,18 +108,19 @@ export const projects: Project[] = [
     href: "https://tsochinese.com",
     period: "Restaurant delivery",
     description:
-      "Dark-kitchen automation software where I designed the TSO 3.0 architecture, moving to microservices and rewriting the REST APIs as GraphQL.",
+      "Dark-kitchen delivery software where I supported Tso 2.0 through a five-location expansion and a payment-processor migration, then designed Tso 3.0's microservices and GraphQL architecture.",
     impact:
-      "Led a cross-functional team of up to 10 on a product running live operations, jobs, delivery, and a payment-processor migration.",
+      "Led a cross-functional team of up to 7 on a product running live restaurant operations, delivery, and payments.",
     tags: ["microservices", "graphql", "team lead"],
     detail: {
       headline: "Commerce and operations software for a dark-kitchen delivery business.",
       context:
-        "TSO 3.0 ran live restaurant operations: delivery coordination, jobs, and a move to a new payment processor, all while the old system stayed up.",
+        "Tso 2.0 ran live restaurant operations while the business grew from two locations to five. Tso 3.0 is the ground-up redesign built to address the architectural limits 2.0 had run into.",
       contribution: [
-        "Designed the TSO 3.0 architecture from the ground up and moved the system to microservices.",
-        "Rewrote the REST APIs as GraphQL, which unblocked the other teams building on top.",
-        "Led a cross-functional team of up to 10 while staying hands-on in the codebase.",
+        "Developed and supported Tso 2.0 in production through the expansion to five locations, and migrated payment processing from Stripe to Cybersource.",
+        "Designed Tso 3.0's architecture from the ground up: microservices, and GraphQL in place of the REST APIs, which unblocked the other teams building on top.",
+        "Built the CI/CD pipeline, where a pull request label deploys any branch into an isolated Kubernetes preview namespace, with a Go service on Lambda cleaning up namespaces and ECR images once a branch is gone.",
+        "Led a cross-functional team of up to 7 while staying hands-on in the codebase.",
       ],
       outcome:
         "A live commerce system where a bad architecture call would have hit real kitchens, drivers, and payments.",
@@ -129,7 +130,7 @@ export const projects: Project[] = [
     media: {
       type: "image",
       src: "/images/tso_preview.jpg",
-      alt: "TSO delivery preview",
+      alt: "Tso delivery preview",
     },
   },
   {
