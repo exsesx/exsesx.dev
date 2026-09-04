@@ -6,6 +6,13 @@ describe("Blog manifest", () => {
     expect(getBlogPosts("en", { includeDrafts: false })).toEqual([
       expect.objectContaining({
         locale: "en",
+        slug: "shadcn-cn-benchmarks",
+        status: "published",
+        title: "I tried shadcn's new cn on my site",
+        titleCodeWords: ["cn"],
+      }),
+      expect.objectContaining({
+        locale: "en",
         slug: "switching-from-fish-to-nushell",
         status: "published",
         title: "Why I replaced Fish with Nushell",
@@ -51,6 +58,13 @@ describe("Blog manifest", () => {
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "uk",
+        slug: "shadcn-cn-benchmarks",
+        status: "published",
+        title: "Я спробував новий cn від shadcn на своєму сайті",
+        titleCodeWords: ["cn"],
+      }),
       expect.objectContaining({
         locale: "uk",
         slug: "switching-from-fish-to-nushell",
@@ -105,8 +119,8 @@ describe("Blog manifest", () => {
     expect(article.readingMinutes).toBeGreaterThanOrEqual(5);
     expect(article.headings).toContainEqual({
       depth: 2,
-      id: "parallel-updates-without-output-soup",
-      text: "Parallel updates without output soup",
+      id: "i-changed-the-inputs",
+      text: "I changed the inputs",
     });
     expect(article.headings.at(-1)).toEqual({ depth: 2, id: "sources", text: "Sources" });
   });
@@ -126,6 +140,7 @@ describe("Blog manifest", () => {
   });
 
   test("looks up both editions and exposes their published translation alternates", () => {
+    expect(getPublishedBlogLocales("shadcn-cn-benchmarks")).toEqual(["en", "uk"]);
     expect(getBlogPost("en", "switching-from-fish-to-nushell", { includeDrafts: false })).toMatchObject({
       locale: "en",
       slug: "switching-from-fish-to-nushell",
@@ -185,6 +200,8 @@ describe("Blog manifest", () => {
 
   test("ships deterministic social images for the Blog index and every published edition", async () => {
     const articles = [
+      getBlogPost("en", "shadcn-cn-benchmarks", { includeDrafts: false }),
+      getBlogPost("uk", "shadcn-cn-benchmarks", { includeDrafts: false }),
       getBlogPost("en", "switching-from-fish-to-nushell", { includeDrafts: false }),
       getBlogPost("uk", "switching-from-fish-to-nushell", { includeDrafts: false }),
       getBlogPost("en", "safari-26-invisible-tint-sampler", { includeDrafts: false }),

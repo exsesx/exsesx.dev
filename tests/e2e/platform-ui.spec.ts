@@ -274,7 +274,7 @@ if (!("Bun" in globalThis)) {
 
       await Promise.all([
         page.waitForURL("**/blog/en/switching-from-fish-to-nushell"),
-        page.getByRole("link", { name: "Read article" }).click(),
+        page.getByRole("link", { name: "Why I replaced Fish with Nushell", exact: true }).click(),
       ]);
       await expect(
         page.getByRole("heading", {

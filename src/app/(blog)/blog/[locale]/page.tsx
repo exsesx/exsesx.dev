@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BlogLocaleSwitcher from "@/components/blog/BlogLocaleSwitcher";
+import BlogTitle from "@/components/blog/BlogTitle";
 import { getBlogPostSummaries, getBlogPosts } from "@/content/blog/manifest";
 import { BLOG_UI, formatBlogDate, getBlogPostPath, isBlogLocale } from "@/lib/blog";
 import { createBlogIndexMetadata } from "@/lib/metadata";
@@ -90,7 +91,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
               </div>
               <h2 className="mt-5 max-w-4xl text-balance text-3xl font-black leading-tight tracking-tight text-foreground sm:text-5xl">
                 <Link data-cuelume-press="tick" href={getBlogPostPath(locale, featuredPost.slug)}>
-                  {featuredPost.title}
+                  <BlogTitle title={featuredPost.title} codeWords={featuredPost.titleCodeWords} />
                 </Link>
               </h2>
               <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">{featuredPost.description}</p>
@@ -127,7 +128,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                   <div>
                     <h3>
                       <Link data-cuelume-press="tick" href={getBlogPostPath(locale, post.slug)}>
-                        {post.title}
+                        <BlogTitle title={post.title} codeWords={post.titleCodeWords} />
                       </Link>
                     </h3>
                     <p>{post.description}</p>

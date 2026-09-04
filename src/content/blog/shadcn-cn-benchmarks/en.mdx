@@ -1,0 +1,180 @@
+My class-merging helper went from six lines to one. In a local Node benchmark,
+repeated calls went from 234 ns to 11 ns. But when I gave every call a new width,
+the new helper took longer.
+
+I was updating the dependencies in `exsesx.dev` when I tried
+<SourceLink href="https://github.com/shadcn-ui/cn/releases/tag/cn%400.2.5">shadcn's new `cn` package</SourceLink>.
+It replaces the familiar `clsx` and `tailwind-merge` combination. The project
+advertises a 30x speedup for repeated component-style calls. I wanted to see how
+that held up with different inputs.
+
+<Callout title="Versions tested" variant="note">
+  Checked September 4, 2026 with `cn` 0.2.5, `clsx` 2.1.1, and `tailwind-merge`
+  3.6.0. The site uses Tailwind CSS 4.3.3. Benchmarks ran on macOS arm64 with Node
+  24.20.0 and Bun 1.4.1. They measure synthetic class-merging workloads, including
+  their loop and input-construction costs. They do not measure React renders or
+  browser page speed.
+</Callout>
+
+## The familiar helper
+
+My components already imported `cn` from a shared utility file. That file joined
+conditional class values with `clsx`, then passed the resulting string to
+`tailwind-merge` to resolve conflicts:
+
+```ts
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+The replacement was:
+
+```ts
+export { cn } from "cn";
+```
+
+That let me keep the component imports and call sites. For example, a caller can
+override a component's default padding without leaving both conflicting classes
+in the output:
+
+```ts
+cn("rounded-md p-2 text-red-500", "p-4 text-blue-500 custom-class");
+// "rounded-md p-4 text-blue-500 custom-class"
+```
+
+I pinned `cn` to `0.2.5` and checked the cases my wrapper needs: conditional inputs,
+consumer overrides, and modifier conflicts such as `hover:` and
+`data-[state=open]:`. Those tests pass for this site's usage. They don't cover
+every possible Tailwind configuration.
+
+## Where the fast path helps
+
+The new package ships compiled conflict tables. Its runtime also caches complete
+strings, tokens, and repeated argument sequences. A familiar call such as
+`cn(base, variant, extra)` can return a remembered result before repeating the
+joining and merging work.
+<SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/packages/cn/src/engine.ts">The engine source</SourceLink>
+shows those paths.
+
+`tailwind-merge` already caches results too, but the old wrapper still runs
+`clsx` to produce the string it looks up. `cn` can check repeated string arguments
+before joining them, so a cache hit can skip that work as well.
+
+The upstream 30x result concerns repeated calls with stable string arguments.
+The other rows in
+<SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/README.md#how-much-faster">the published comparison</SourceLink>
+measure different workloads, so I wrote a small benchmark to vary the inputs myself.
+
+## I changed the inputs
+
+I compared the old wrapper with `cn` in three small workloads. One repeats the
+same strings. One creates a fresh conditional object on every call while cycling
+through 16 variant strings. The last generates a new width such as `w-[30001px]`
+on every call.
+
+For each library and workload, I ran five fresh child processes, alternating which
+library went first. Each process made 30,000 warmup calls and then timed 300,000
+calls. The table shows the median. I checked output equality on 1,000 inputs per
+workload before timing and compared output-length checksums from each process,
+including its warmup.
+
+| Runtime      | Input shape               | Old wrapper |     `cn` |
+| ------------ | ------------------------- | ----------: | -------: |
+| Node 24.20.0 | Repeated strings          |      234 ns |    11 ns |
+| Node 24.20.0 | Fresh conditional objects |      288 ns |   139 ns |
+| Node 24.20.0 | Unique arbitrary widths   |    3,754 ns | 5,207 ns |
+| Bun 1.4.1    | Repeated strings          |      145 ns |    16 ns |
+| Bun 1.4.1    | Fresh conditional objects |      157 ns |   134 ns |
+| Bun 1.4.1    | Unique arbitrary widths   |    2,462 ns | 2,924 ns |
+
+Repeated strings were about 21x faster in Node and 9x faster in Bun, using the
+unrounded values. With fresh objects, the gains fell to about 2.1x and 1.2x. The
+unique-width workload took about 39% longer in Node and 19% longer in Bun. A
+separate repeat of that Node case preserved the direction of the result.
+
+A full rerun kept the same ordering in all six cases. I also repeated the stable
+strings with 300,000 warmup calls and 3 million timed calls per process. With that
+longer setup, the medians were 251 ns versus 5.5 ns in Node and 125 ns versus 7 ns
+in Bun. Warmup and run length changed the ratios. The table above retains the
+original run, and the download includes all these checks.
+
+The unique-width case is a sustained synthetic stress test. A portfolio page does
+not normally create 300,000 different widths. It is useful here because it shows
+how much the result can change when inputs stop repeating. It does not establish
+that `cn` is slower for server rendering in general.
+
+The repeated-string Node case saved around 223 nanoseconds per call. Even 1,000
+such calls would save only about 0.22 milliseconds at that rate. That's a
+calculation from this loop, not a measured improvement in page loading or
+interaction speed on my site.
+
+## Faster code can mean more compressed bytes
+
+The project's own size report puts the default `cn` entry at approximately
+10.5 KB after minification and gzip, compared with 8.6 KB for the old pair. It is
+slightly smaller before compression. Those are upstream figures, not a
+measurement of my Next.js chunks.
+<SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/docs/how-it-works.md#size">The size explanation</SourceLink>
+describes the trade-off.
+
+I changed several dependencies in the same upgrade, so comparing those two site
+builds would not isolate `cn`. I am not treating the migration as a bundle-size
+improvement.
+
+There is an optional `cn build` command that generates smaller tables by scanning
+your project. The normal import already includes compiled default tables; it
+does not require this extra build step. Source scanning introduces its own
+conditions: constructed class names need safelisting, and classes from unscanned
+groups can pass through without conflict resolution.
+<SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/docs/build-setup.md">The build guide</SourceLink>
+spells out the constraints. I left that optimization out of this migration.
+
+## Why I kept it
+
+I kept `cn` because my components need no changes and the class-merging tests
+pass. The repeated-string benchmarks support the switch for those calls. If I
+need to switch back, I can do it in the same utility file.
+
+Before making the same change in another app, I'd check what its components pass in.
+Some of my components pass several strings; others pass an already-composed
+variant string. A single benchmark ratio cannot represent both. This version
+targets Tailwind 4, and advanced integrations using `experimentalParseClassName`
+cannot migrate unchanged.
+<SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/README.md#coming-from-tailwind-merge">The compatibility notes</SourceLink>
+list the supported APIs and exceptions.
+
+## Reproduce the comparison
+
+Download the [benchmark script](/downloads/cn-benchmark-2026-09-04.mjs) and
+[raw results](/downloads/cn-benchmark-2026-09-04.json). Put the script in a scratch
+project with these exact dependencies, then run it with the runtime you want to
+compare:
+
+```sh
+bun add --exact cn@0.2.5 clsx@2.1.1 tailwind-merge@3.6.0
+node cn-benchmark-2026-09-04.mjs
+bun cn-benchmark-2026-09-04.mjs
+```
+
+Run the runtimes sequentially. The script checks package versions and prints the
+individual samples as JSON. Its short workloads leave room for timer, JIT, and
+machine-load effects; treat the numbers as a description of this experiment.
+
+To repeat the longer stable-string check, use the same script with these settings:
+
+```sh
+CN_BENCH_ITERATIONS=3000000 CN_BENCH_WARMUP=300000 CN_BENCH_WORKLOAD=stable node cn-benchmark-2026-09-04.mjs
+CN_BENCH_ITERATIONS=3000000 CN_BENCH_WARMUP=300000 CN_BENCH_WORKLOAD=stable bun cn-benchmark-2026-09-04.mjs
+```
+
+## Sources
+
+- <SourceLink href="https://github.com/shadcn-ui/cn/releases/tag/cn%400.2.5">cn 0.2.5 release</SourceLink>
+- <SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/README.md">Versioned migration and benchmark documentation</SourceLink>
+- <SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/packages/cn/src/engine.ts">cn engine implementation</SourceLink>
+- <SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/docs/how-it-works.md">Implementation and size explanation</SourceLink>
+- <SourceLink href="https://github.com/shadcn-ui/cn/blob/cn%400.2.5/docs/build-setup.md">Optional build setup</SourceLink>
