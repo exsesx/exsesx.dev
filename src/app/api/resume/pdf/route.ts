@@ -5,15 +5,14 @@ const DEFAULT_RESUME_ID = "019befbe-521d-71d8-ad3b-f1610eda247a";
 const MAX_RESUME_PDF_BYTES = 10 * 1024 * 1024;
 const RESUME_PDF_FETCH_TIMEOUT_MS = 10_000;
 const RESUME_PDF_BROWSER_CACHE_SECONDS = 60 * 60;
+const RESUME_PDF_SHARED_CACHE_SECONDS = 60 * 60 * 6;
 const RESUME_PDF_STALE_SECONDS = 60 * 60 * 24;
 export const runtime = "nodejs";
-export const revalidate = 21600;
 
-const RESUME_PDF_REVALIDATE_SECONDS = revalidate;
 const RESUME_PDF_CACHE_CONTROL = [
   "public",
   `max-age=${RESUME_PDF_BROWSER_CACHE_SECONDS}`,
-  `s-maxage=${RESUME_PDF_REVALIDATE_SECONDS}`,
+  `s-maxage=${RESUME_PDF_SHARED_CACHE_SECONDS}`,
   `stale-while-revalidate=${RESUME_PDF_STALE_SECONDS}`,
 ].join(", ");
 
@@ -147,9 +146,8 @@ export async function GET(request: Request) {
         Accept: "application/pdf",
         "x-api-key": apiKey,
       },
-      next: {
-        revalidate: RESUME_PDF_REVALIDATE_SECONDS,
-      },
+      // Keep validation and the size limit ahead of every cache write.
+      cache: "no-store",
       redirect: "manual",
       signal: AbortSignal.timeout(RESUME_PDF_FETCH_TIMEOUT_MS),
     });
