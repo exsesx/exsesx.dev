@@ -11,6 +11,8 @@ export type BlogMdxModule = {
 
 export type BlogEdition = {
   title: string;
+  /** Whitespace-delimited title words rendered as code; title stays plain for metadata. */
+  titleCodeWords?: readonly string[];
   seoTitle?: string;
   description: string;
   publishedAt: string;

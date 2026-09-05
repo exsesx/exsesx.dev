@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleWithToc } from "@/components/blog/ArticleWithToc";
 import BlogLocaleSwitcher from "@/components/blog/BlogLocaleSwitcher";
+import BlogTitle from "@/components/blog/BlogTitle";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import { analyzeBlogPost, getAllBlogPosts, getBlogPost, getPublishedBlogLocales } from "@/content/blog/manifest";
 import { BLOG_UI, formatBlogDate, getBlogIndexPath, isBlogLocale } from "@/lib/blog";
@@ -75,8 +76,8 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
             </Link>
             <BlogLocaleSwitcher currentLocale={locale} availableLocales={availableLocales} slug={slug} />
           </div>
-          <h1 className="mt-8 text-balance text-[clamp(2.75rem,6.4vw,5.75rem)] font-black leading-[0.94] tracking-tight text-foreground">
-            {article.title}
+          <h1 className="mt-8 text-balance text-[clamp(2.75rem,6.4vw,5.75rem)] font-black leading-[1.08] tracking-tight text-foreground">
+            <BlogTitle title={article.title} codeWords={article.titleCodeWords} />
           </h1>
           <p className="mt-6 max-w-3xl text-pretty text-xl leading-8 text-muted-foreground sm:text-2xl sm:leading-10">
             {article.description}
