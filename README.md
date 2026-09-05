@@ -11,7 +11,7 @@ Built with Next.js 16 and React 19, deployed on [Vercel](https://vercel.com).
 - **React 19**, **Tailwind CSS 4**, **Base UI**, and **Lucide React**
 - Native CSS motion and a tiered glass system, with refractive effects progressively enhanced where supported
 - **TypeScript 7.0.2** through Next's CLI checker and **Biome** for linting and formatting
-- **Bun 1.4.0** for package management and scripts
+- **Bun 1.4.1** for package management and scripts
 
 ## Development
 
@@ -33,7 +33,7 @@ bun test
 bun run build
 ```
 
-CI uses Bun 1.4.0 to run a frozen install, verify dependency deduplication, run
+CI uses Bun 1.4.1 to run a frozen install, verify dependency deduplication, run
 Biome and MDX checks, typecheck, execute the Bun test suite, build for production,
 and run the browser tests on every push to `main` and on pull requests. The
 route-motion browser contract can also be run locally with `bun run test:motion`.
