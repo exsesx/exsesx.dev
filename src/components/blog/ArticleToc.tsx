@@ -141,7 +141,6 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
           playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target)
         }
         onOpenChangeComplete={handleOpenChangeComplete}
-        showSwipeHandle
       >
         <DrawerTrigger
           ref={triggerRef}
