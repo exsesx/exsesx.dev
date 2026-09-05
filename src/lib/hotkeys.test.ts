@@ -33,6 +33,7 @@ function decide(
 ) {
   return getHotkeyDecision({
     input: {
+      characterShortcutsEnabled: true,
       isBlogFocusShortcutEnabled: true,
       pathname: "/",
       ...input,
@@ -74,6 +75,68 @@ describe("getNavbarHotkeyRoute", () => {
 });
 
 describe("getHotkeyDecision", () => {
+  test("leaves character sequences, shifted navigation, and repeat untouched when disabled", () => {
+    const currentState = state({ lastRepeatableAction: "projects" });
+
+    for (const input of [
+      { key: "g" },
+      { key: "p" },
+      { key: "h", shiftKey: true },
+      { key: "L", shiftKey: true },
+      { key: "." },
+    ]) {
+      expect(decide({ ...input, characterShortcutsEnabled: false }, currentState)).toEqual({
+        nextState: currentState,
+        preventDefault: false,
+      });
+    }
+
+    const pendingState = state({ pendingSequence: ["g"] });
+    expect(decide({ characterShortcutsEnabled: false, key: "p" }, pendingState)).toEqual({
+      nextState: pendingState,
+      preventDefault: false,
+    });
+  });
+
+  test("keeps modifier help and Blog focus shortcuts available when character shortcuts are disabled", () => {
+    for (const modifier of [{ metaKey: true }, { ctrlKey: true }]) {
+      expect(decide({ ...modifier, characterShortcutsEnabled: false, key: "/" })).toEqual({
+        nextState: state({ isModalOpen: true }),
+        preventDefault: true,
+      });
+      expect(
+        decide({
+          ...modifier,
+          characterShortcutsEnabled: false,
+          key: ".",
+          pathname: "/blog/en/codex-agents-v2",
+        }),
+      ).toEqual({
+        action: BLOG_FOCUS_HOTKEY_ACTION,
+        nextState: state(),
+        preventDefault: true,
+      });
+    }
+  });
+
+  test("preserves Escape precedence when character shortcuts are disabled", () => {
+    const input = { characterShortcutsEnabled: false, isBlogFocusActive: true, key: "Escape" };
+
+    expect(decide(input, state({ isModalOpen: true }))).toEqual({
+      nextState: state(),
+      preventDefault: true,
+    });
+    expect(decide(input)).toEqual({
+      action: BLOG_FOCUS_HOTKEY_ACTION,
+      nextState: state(),
+      preventDefault: true,
+    });
+    expect(decide({ characterShortcutsEnabled: false, key: "Escape" })).toEqual({
+      nextState: state(),
+      preventDefault: false,
+    });
+  });
+
   test("returns route actions for navbar chords from explicit pathname context", () => {
     expect(decide({ key: "l", shiftKey: true, pathname: "/" })).toMatchObject({
       action: "projects",

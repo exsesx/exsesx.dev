@@ -928,7 +928,11 @@ if (!("Bun" in globalThis)) {
       await expect(page.getByRole("button", { name: "Close keyboard shortcuts" })).toBeFocused();
 
       await page.keyboard.press("Tab");
+      await expect(dialog.getByRole("checkbox", { name: "Character shortcuts" })).toBeFocused();
+      await page.keyboard.press("Tab");
       await expect(page.getByRole("button", { name: "Close keyboard shortcuts" })).toBeFocused();
+      await page.keyboard.press("Shift+Tab");
+      await expect(dialog.getByRole("checkbox", { name: "Character shortcuts" })).toBeFocused();
       await page.keyboard.press("Shift+Tab");
       await expect(page.getByRole("button", { name: "Close keyboard shortcuts" })).toBeFocused();
 

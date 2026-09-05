@@ -598,9 +598,25 @@ html[data-season="pride"] .logo-mark-pride {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .snapshot-specialty-rail {
+    overflow: visible;
+    mask-image: none;
+  }
+
   .snapshot-specialty-track {
     animation: none;
     transform: none;
+    width: auto;
+  }
+
+  .snapshot-specialty-track > div:first-child {
+    max-width: 100%;
+    flex-wrap: wrap;
+    padding-right: 0;
+  }
+
+  .snapshot-specialty-track > [aria-hidden="true"] {
+    display: none;
   }
 }
 
@@ -2828,6 +2844,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   width: 100%;
   overflow-x: auto;
   overscroll-behavior-x: none;
+}
+
+.blog-table-scroll:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 .blog-prose table {
