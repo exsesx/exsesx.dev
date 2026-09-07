@@ -58,42 +58,21 @@ const themeOptions: Array<{
 ];
 const systemThemeOption = themeOptions.find(option => option.mode === "system") ?? themeOptions[0];
 
-function setMetaContent(name: string, content: string) {
-  let metas = Array.from(document.querySelectorAll<HTMLMetaElement>(`meta[name="${name}"]`));
+function setThemeColor(content: string) {
+  const metas = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
 
-  if (metas.length === 0) {
-    if (name === "theme-color") {
-      return;
+  for (const [index, meta] of metas.entries()) {
+    if (index > 0) {
+      meta.remove();
+      continue;
     }
 
-    const meta = document.createElement("meta");
-    meta.name = name;
-    document.head.appendChild(meta);
-    metas = [meta];
-  }
-
-  if (name === "theme-color") {
-    for (const [index, meta] of metas.entries()) {
-      if (index > 0) {
-        meta.remove();
-        continue;
-      }
-
-      if (meta.content !== content) {
-        meta.content = content;
-      }
-
-      if (meta.hasAttribute("media")) {
-        meta.removeAttribute("media");
-      }
-    }
-
-    return;
-  }
-
-  for (const meta of metas) {
     if (meta.content !== content) {
       meta.content = content;
+    }
+
+    if (meta.hasAttribute("media")) {
+      meta.removeAttribute("media");
     }
   }
 }
@@ -148,7 +127,7 @@ export default function ThemeSwitcher() {
     root.classList.toggle("light", !isDark);
     root.dataset.themeMode = mode;
     paintSafariChromeSamples(isDark);
-    setMetaContent("theme-color", isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light);
+    setThemeColor(isDark ? THEME_CHROME_COLORS.dark : THEME_CHROME_COLORS.light);
   }, [isDark, mode]);
 
   useEffect(() => {

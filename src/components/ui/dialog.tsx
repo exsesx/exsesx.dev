@@ -41,12 +41,8 @@ function DialogTitle(props: DialogPrimitive.Title.Props) {
   return <DialogPrimitive.Title data-slot="dialog-title" {...props} />;
 }
 
-function DialogDescription(props: DialogPrimitive.Description.Props) {
-  return <DialogPrimitive.Description data-slot="dialog-description" {...props} />;
-}
-
 function DialogClose(props: DialogPrimitive.Close.Props) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
-export { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger };
+export { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger };

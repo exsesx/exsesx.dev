@@ -42,7 +42,6 @@ type MermaidCamera = ReturnType<typeof useMermaidCamera>;
 
 type MermaidToolbarProps = {
   camera: MermaidCamera;
-  isReady: boolean;
   ui: MermaidUi;
 };
 
@@ -171,7 +170,7 @@ function MermaidDiagramViewForSource({
             dangerouslySetInnerHTML={{ __html: state.svg }}
           />
 
-          <MermaidToolbar camera={camera} isReady={isReady} ui={ui} />
+          <MermaidToolbar camera={camera} ui={ui} />
         </>
       ) : isCurrentError ? (
         <pre className="blog-mermaid-visual blog-mermaid-source">
@@ -188,7 +187,7 @@ function MermaidDiagramViewForSource({
   );
 }
 
-function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
+function MermaidToolbar({ camera, ui }: MermaidToolbarProps) {
   return (
     <div
       className="blog-mermaid-toolbar"
@@ -203,7 +202,7 @@ function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
         className="blog-mermaid-control blog-mermaid-zoom-step"
         aria-label={ui.zoomOut}
         data-mermaid-control="zoom-out"
-        disabled={!isReady || camera.zoomPercent <= MIN_MERMAID_ZOOM * 100}
+        disabled={camera.zoomPercent <= MIN_MERMAID_ZOOM * 100}
         onClick={() => runCameraCommand(() => camera.zoomBy(-ZOOM_BUTTON_STEP))}
       >
         <Minus strokeWidth={2.4} />
@@ -214,7 +213,7 @@ function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
         className="blog-mermaid-control blog-mermaid-reset"
         aria-label={`${ui.resetZoom}, ${camera.zoomPercent}%`}
         data-mermaid-control="reset"
-        disabled={!isReady || !camera.isZoomed}
+        disabled={!camera.isZoomed}
         onClick={() => runCameraCommand(camera.resetCamera)}
       >
         <span className="blog-mermaid-reset-chip">{camera.zoomPercent}%</span>
@@ -226,7 +225,7 @@ function MermaidToolbar({ camera, isReady, ui }: MermaidToolbarProps) {
         className="blog-mermaid-control blog-mermaid-zoom-step"
         aria-label={ui.zoomIn}
         data-mermaid-control="zoom-in"
-        disabled={!isReady || camera.zoomPercent >= MAX_MERMAID_ZOOM * 100}
+        disabled={camera.zoomPercent >= MAX_MERMAID_ZOOM * 100}
         onClick={() => runCameraCommand(() => camera.zoomBy(ZOOM_BUTTON_STEP))}
       >
         <Plus strokeWidth={2.4} />

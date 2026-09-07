@@ -1,3 +1,5 @@
+import { getRoutePathname } from "./route-path";
+
 export const BLOG_LOCALES = ["en", "uk"] as const;
 
 export type BlogLocale = (typeof BLOG_LOCALES)[number];
@@ -119,7 +121,7 @@ export function getBlogPostPath(locale: BlogLocale, slug: string): BlogPostPath 
 }
 
 export function getBlogLocaleFromPath(pathname: string): BlogLocale | null {
-  const [, section, locale] = getPathname(pathname).split("/");
+  const [, section, locale] = getRoutePathname(pathname).split("/");
 
   if (section === "blog" && locale && isBlogLocale(locale)) {
     return locale;
@@ -129,7 +131,7 @@ export function getBlogLocaleFromPath(pathname: string): BlogLocale | null {
 }
 
 export function resolveBlogBackHref(pathname: string): BlogIndexPath | null {
-  const segments = getPathname(pathname).split("/").filter(Boolean);
+  const segments = getRoutePathname(pathname).split("/").filter(Boolean);
   const locale = segments[1];
 
   return segments[0] === "blog" && segments.length === 3 && isBlogLocale(locale) ? getBlogIndexPath(locale) : null;
@@ -137,12 +139,4 @@ export function resolveBlogBackHref(pathname: string): BlogIndexPath | null {
 
 export function formatBlogDate(value: string, locale: BlogLocale) {
   return BLOG_DATE_FORMATTERS[locale].format(new Date(value));
-}
-
-function getPathname(value: string) {
-  try {
-    return new URL(value, "https://exsesx.dev").pathname;
-  } catch {
-    return value.split(/[?#]/, 1)[0] ?? value;
-  }
 }
