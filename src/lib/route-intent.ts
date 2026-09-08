@@ -1,5 +1,6 @@
 import { resolveBlogBackHref } from "./blog";
 import { MOTION_ATTRIBUTES, MOTION_DATASET_KEYS, ROUTE_TRANSITION_TYPES } from "./motion-contract";
+import { getRoutePathname } from "./route-path";
 import { isProjectsIndexRoutePath } from "./routes";
 
 const PREVIOUS_ROUTE_STORAGE_KEY = "exsesx.previousRoute";
@@ -36,7 +37,7 @@ export function getBackNavigationIntent(): RouteNavigationIntent {
   const fallbackTransitionTypes = blogFallbackHref ? [ROUTE_TRANSITION_TYPES.navBack] : getBackTransitionTypes();
   const storedPreviousRoute = readPreviousRoute({ allowCurrent: false });
   const previousRoute =
-    blogFallbackHref && storedPreviousRoute && getPathname(storedPreviousRoute.path) !== blogFallbackHref
+    blogFallbackHref && storedPreviousRoute && getRoutePathname(storedPreviousRoute.path) !== blogFallbackHref
       ? null
       : storedPreviousRoute;
 
@@ -69,14 +70,6 @@ export function prepareHotkeyRouteNavigation(action: RouteHotkeyAction): RouteNa
     href: action === "home" ? "/" : action === "projects" ? FALLBACK_BACK_HREF : "/blog/en",
     transitionTypes: [],
   };
-}
-
-function getPathname(value: string) {
-  try {
-    return new URL(value, "https://exsesx.dev").pathname;
-  } catch {
-    return value.split(/[?#]/, 1)[0] ?? value;
-  }
 }
 
 export function queueBrowserBackScrollRestore() {

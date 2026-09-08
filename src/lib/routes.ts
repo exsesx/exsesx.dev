@@ -1,5 +1,5 @@
-import type { Route } from "next";
-import { isBlogLocale } from "./blog";
+import { resolveBlogBackHref } from "./blog";
+import { getRoutePathname } from "./route-path";
 
 export type PrimaryNavHref = "/" | "/projects" | "/blog/en";
 export type NavbarHotkeyDirection = "left" | "right";
@@ -36,29 +36,9 @@ export function isBlogSectionPath(pathname: string) {
 }
 
 export function isBlogPostPath(pathname: string) {
-  const segments = getRoutePathname(pathname).split("/").filter(Boolean);
-
-  return segments[0] === "blog" && segments.length === 3 && isBlogLocale(segments[1] ?? "");
-}
-
-export function isBlogIndexRoutePath(routePath: string) {
-  const segments = getRoutePathname(routePath).split("/").filter(Boolean);
-
-  return segments[0] === "blog" && segments.length === 2 && isBlogLocale(segments[1] ?? "");
+  return resolveBlogBackHref(pathname) !== null;
 }
 
 export function isProjectsIndexRoutePath(routePath: string) {
   return getRoutePathname(routePath) === "/projects";
-}
-
-export function getProjectsHref() {
-  return "/projects" as Route;
-}
-
-function getRoutePathname(routePath: string) {
-  try {
-    return new URL(routePath, "https://exsesx.dev").pathname;
-  } catch {
-    return routePath.split(/[?#]/, 1)[0] ?? routePath;
-  }
 }

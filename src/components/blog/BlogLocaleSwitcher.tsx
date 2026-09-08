@@ -1,6 +1,5 @@
-import type { Route } from "next";
 import Link from "next/link";
-import { type BlogLocale, getBlogIndexPath, getBlogPostPath } from "@/lib/blog";
+import { BLOG_LOCALES, type BlogLocale, getBlogIndexPath, getBlogPostPath } from "@/lib/blog";
 
 type BlogLocaleSwitcherProps = {
   availableLocales?: readonly BlogLocale[];
@@ -19,7 +18,7 @@ const navigationLabels: Record<BlogLocale, string> = {
 };
 
 export default function BlogLocaleSwitcher({
-  availableLocales = ["en", "uk"],
+  availableLocales = BLOG_LOCALES,
   currentLocale,
   slug,
 }: BlogLocaleSwitcherProps) {
@@ -31,7 +30,7 @@ export default function BlogLocaleSwitcher({
         return (
           <Link
             key={locale}
-            href={href as Route}
+            href={href}
             data-cuelume-press={locale === currentLocale ? undefined : "tick"}
             hrefLang={locale}
             lang={locale}
