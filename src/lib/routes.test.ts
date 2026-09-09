@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import {
   getAdjacentPrimaryNavHref,
   getPrimaryNavHref,
-  isBlogIndexRoutePath,
   isBlogPostPath,
   isProjectDetailPath,
   isProjectsIndexRoutePath,
@@ -49,13 +48,12 @@ describe("route classification", () => {
   });
 
   test("distinguishes localized Blog indexes from article routes", () => {
-    expect(isBlogIndexRoutePath("/blog/en")).toBe(true);
-    expect(isBlogIndexRoutePath("/blog/uk?from=nav")).toBe(true);
-    expect(isBlogIndexRoutePath("/blog/en/codex-agents-v2")).toBe(false);
     expect(isBlogPostPath("/blog/en/codex-agents-v2")).toBe(true);
     expect(isBlogPostPath("/blog/uk/codex-agents-v2")).toBe(true);
+    expect(isBlogPostPath("/blog/uk/codex-agents-v2?from=nav#overview")).toBe(true);
     expect(isBlogPostPath("/blog/en")).toBe(false);
+    expect(isBlogPostPath("/blog/uk?from=nav")).toBe(false);
     expect(isBlogPostPath("/blog/ua/not-a-language-route")).toBe(false);
-    expect(isBlogIndexRoutePath("/blog/ua")).toBe(false);
+    expect(isBlogPostPath("/blog/en/codex-agents-v2/extra")).toBe(false);
   });
 });

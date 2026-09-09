@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getBlogPost, getBlogPostSummaries, getBlogPosts, getPublishedBlogLocales } from "./manifest";
+import { getAllBlogPosts, getBlogPost, getBlogPostSummaries, getBlogPosts, getPublishedBlogLocales } from "./manifest";
 
 describe("Blog manifest", () => {
   test("publishes the English and Ukrainian article editions newest first", () => {
@@ -199,29 +199,12 @@ describe("Blog manifest", () => {
   });
 
   test("ships deterministic social images for the Blog index and every published edition", async () => {
-    const articles = [
-      getBlogPost("en", "shadcn-cn-benchmarks", { includeDrafts: false }),
-      getBlogPost("uk", "shadcn-cn-benchmarks", { includeDrafts: false }),
-      getBlogPost("en", "switching-from-fish-to-nushell", { includeDrafts: false }),
-      getBlogPost("uk", "switching-from-fish-to-nushell", { includeDrafts: false }),
-      getBlogPost("en", "safari-26-invisible-tint-sampler", { includeDrafts: false }),
-      getBlogPost("uk", "safari-26-invisible-tint-sampler", { includeDrafts: false }),
-      getBlogPost("en", "umbra-light-dark-wallpapers", { includeDrafts: false }),
-      getBlogPost("uk", "umbra-light-dark-wallpapers", { includeDrafts: false }),
-      getBlogPost("en", "codex-memories", { includeDrafts: false }),
-      getBlogPost("uk", "codex-memories", { includeDrafts: false }),
-      getBlogPost("en", "codex-agents-v2", { includeDrafts: false }),
-      getBlogPost("uk", "codex-agents-v2", { includeDrafts: false }),
-    ];
-
-    if (articles.some(article => !article)) {
-      throw new Error("Expected all published article fixtures");
-    }
+    const articles = getAllBlogPosts({ includeDrafts: false });
 
     expect(await Bun.file(new URL("../../../public/images/og/blog.png", import.meta.url)).exists()).toBe(true);
 
     for (const article of articles) {
-      expect(await Bun.file(new URL(`../../../public${article?.socialImage.path}`, import.meta.url)).exists()).toBe(
+      expect(await Bun.file(new URL(`../../../public${article.socialImage.path}`, import.meta.url)).exists()).toBe(
         true,
       );
     }
