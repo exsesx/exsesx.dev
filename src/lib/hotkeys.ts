@@ -24,6 +24,7 @@ export type HotkeyState<TAction extends string = string> = {
 
 export type HotkeyDecisionInput = {
   altKey?: boolean;
+  characterShortcutsEnabled: boolean;
   ctrlKey?: boolean;
   defaultPrevented?: boolean;
   isEditableTarget?: boolean;
@@ -108,7 +109,7 @@ export function getHotkeyDecision<TAction extends string>({
     };
   }
 
-  if (input.metaKey || input.ctrlKey || input.altKey) {
+  if (!input.characterShortcutsEnabled || input.metaKey || input.ctrlKey || input.altKey) {
     return keepState(state);
   }
 

@@ -75,6 +75,15 @@ const HOTKEY_MENU_ITEMS = [
 const repeatableHotkeyActions = new Set<HotkeyAction>(
   HOTKEYS.flatMap(shortcut => (shortcut.repeatable ? [shortcut.action] : [])),
 );
+const CHARACTER_SHORTCUTS_STORAGE_KEY = "exsesx:character-shortcuts";
+
+function getInitialCharacterShortcutsEnabled() {
+  try {
+    return window.localStorage.getItem(CHARACTER_SHORTCUTS_STORAGE_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
 
 function createInitialHotkeyState(): HotkeyState<HotkeyAction> {
   return {
@@ -94,6 +103,7 @@ function Hotkeys({
   const router = useRouter();
   const pathname = usePathname();
   const { exitFocusMode, isBlogArticle, isFocusMode, toggleFocusMode } = useBlogFocus();
+  const [characterShortcutsEnabled, setCharacterShortcutsEnabled] = useState(getInitialCharacterShortcutsEnabled);
   const [hotkeyState, setHotkeyState] = useState<HotkeyState<HotkeyAction>>(createInitialHotkeyState);
   const hotkeyStateRef = useRef(hotkeyState);
   const lastPendingSequenceRef = useRef<string[]>([]);
@@ -135,11 +145,26 @@ function Hotkeys({
     }
   }
 
+  function changeCharacterShortcutsEnabled(enabled: boolean) {
+    setCharacterShortcutsEnabled(enabled);
+
+    if (!enabled) {
+      commitHotkeyState({ ...hotkeyStateRef.current, lastRepeatableAction: null, pendingSequence: [] });
+    }
+
+    try {
+      window.localStorage.setItem(CHARACTER_SHORTCUTS_STORAGE_KEY, String(enabled));
+    } catch {
+      // The control still works for this page when browser storage is unavailable.
+    }
+  }
+
   const handleHotkeyKeyDown = useEffectEvent((event: KeyboardEvent) => {
     const activeElement = document.activeElement;
     const decision = getHotkeyDecision({
       input: {
         altKey: event.altKey,
+        characterShortcutsEnabled,
         ctrlKey: event.ctrlKey,
         defaultPrevented: event.defaultPrevented,
         isEditableTarget: isEditableTarget(event.target),
@@ -219,10 +244,12 @@ function Hotkeys({
       ) : null}
       <HotkeyModal
         allowBlogFocusShortcut={allowBlogFocusShortcut}
+        characterShortcutsEnabled={characterShortcutsEnabled}
         focusLabel={isFocusMode ? blogCopy.exitFocus : blogCopy.focus}
         focusLocale={blogLocale}
         isBlogArticle={isBlogArticle}
         modifierKey={modifierKey}
+        onCharacterShortcutsChange={changeCharacterShortcutsEnabled}
       />
     </Dialog>
   );
@@ -285,16 +312,20 @@ function HotkeyHint({
 
 function HotkeyModal({
   allowBlogFocusShortcut,
+  characterShortcutsEnabled,
   focusLabel,
   focusLocale,
   isBlogArticle,
   modifierKey,
+  onCharacterShortcutsChange,
 }: {
   allowBlogFocusShortcut: boolean;
+  characterShortcutsEnabled: boolean;
   focusLabel: string;
   focusLocale: BlogLocale;
   isBlogArticle: boolean;
   modifierKey: PlatformModifierKey;
+  onCharacterShortcutsChange: (enabled: boolean) => void;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const menuItems =
@@ -331,6 +362,21 @@ function HotkeyModal({
           <X aria-hidden="true" size={24} strokeWidth={2.5} />
         </DialogClose>
       </div>
+
+      <label className="mx-3 mt-2 flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border px-3 py-2.5 sm:mx-4">
+        <span className="text-sm font-bold">Character shortcuts</span>
+        <input
+          type="checkbox"
+          checked={characterShortcutsEnabled}
+          onChange={event => onCharacterShortcutsChange(event.target.checked)}
+          className="size-4 cursor-pointer accent-accent"
+        />
+      </label>
+      {!characterShortcutsEnabled ? (
+        <p className="px-6 pt-2 text-sm text-muted-foreground sm:px-7">
+          Letter shortcuts and . repeat are off. {modifierKey.key} shortcuts and Escape still work.
+        </p>
+      ) : null}
 
       <div className="mt-2 grid gap-1">
         {menuItems.map(shortcut => {
@@ -403,7 +449,8 @@ function isEditableTarget(target: EventTarget | null) {
 
   return (
     target.isContentEditable ||
-    target.closest("input, textarea, select, [contenteditable='true'], [role='textbox']") !== null
+    target.closest("input:not([type='checkbox']), textarea, select, [contenteditable='true'], [role='textbox']") !==
+      null
   );
 }
 

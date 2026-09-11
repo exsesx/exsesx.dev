@@ -30,6 +30,7 @@ export const BLOG_UI = {
     focusModeOn: "Focus mode activated",
     focusModeOff: "Focus mode deactivated",
     scrollToTop: "Scroll to top",
+    scrollableTable: "Scrollable table",
     codeBlock: {
       copied: "Code copied",
       copy: "Copy code",
@@ -72,6 +73,7 @@ export const BLOG_UI = {
     focusModeOn: "Режим фокусу увімкнено",
     focusModeOff: "Режим фокусу вимкнено",
     scrollToTop: "На початок сторінки",
+    scrollableTable: "Таблиця з прокручуванням",
     codeBlock: {
       copied: "Код скопійовано",
       copy: "Копіювати код",

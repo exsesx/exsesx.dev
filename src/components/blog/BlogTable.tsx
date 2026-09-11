@@ -1,6 +1,8 @@
 "use client";
 
 import { type ComponentPropsWithoutRef, useLayoutEffect, useRef } from "react";
+import { BLOG_UI } from "@/lib/blog";
+import { useBlogLocale } from "./BlogLocaleContext";
 
 type TableScrollMetrics = {
   clientWidth: number;
@@ -23,8 +25,9 @@ export function getTableOverflowState({ clientWidth, scrollLeft, scrollWidth }: 
 }
 
 export default function BlogTable({ children, ...props }: ComponentPropsWithoutRef<"table">) {
+  const locale = useBlogLocale();
   const frameRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
 
   useLayoutEffect(() => {
@@ -37,7 +40,7 @@ export default function BlogTable({ children, ...props }: ComponentPropsWithoutR
     }
 
     const frameElement: HTMLDivElement = frame;
-    const scrollElement: HTMLDivElement = scrollContainer;
+    const scrollElement: HTMLElement = scrollContainer;
     const tableElement: HTMLTableElement = table;
 
     function updateOverflowState() {
@@ -49,6 +52,7 @@ export default function BlogTable({ children, ...props }: ComponentPropsWithoutR
       if (frameElement.dataset.overflow !== nextOverflow) {
         frameElement.dataset.overflow = nextOverflow;
       }
+      scrollElement.tabIndex = hasOverflow ? 0 : -1;
       if (frameElement.dataset.scrollLeft !== nextScrollLeft) {
         frameElement.dataset.scrollLeft = nextScrollLeft;
       }
@@ -78,11 +82,17 @@ export default function BlogTable({ children, ...props }: ComponentPropsWithoutR
       data-scroll-right="false"
       ref={frameRef}
     >
-      <div className="blog-table-scroll" ref={scrollRef}>
+      <section
+        aria-label={BLOG_UI[locale].scrollableTable}
+        className="blog-table-scroll"
+        ref={scrollRef}
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need focus here to scroll hidden columns.
+        tabIndex={0}
+      >
         <table {...props} ref={tableRef}>
           {children}
         </table>
-      </div>
+      </section>
     </div>
   );
 }
