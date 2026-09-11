@@ -3,6 +3,7 @@ import path from "node:path";
 import { BLOG_LOCALES } from "@/lib/blog";
 import codexAgentsV2 from "./codex-agents-v2/post";
 import codexMemories from "./codex-memories/post";
+import codexUsageTrackers from "./codex-usage-trackers/post";
 import { analyzeMdxSource } from "./reading";
 import safari26InvisibleTintSampler from "./safari-26-invisible-tint-sampler/post";
 import shadcnCnBenchmarks from "./shadcn-cn-benchmarks/post";
@@ -11,6 +12,7 @@ import type { AnalyzedBlogPostSummary, BlogLocale, BlogPost, BlogPostEntry, Blog
 import umbraLightDarkWallpapers from "./umbra-light-dark-wallpapers/post";
 
 const posts: readonly BlogPost[] = [
+  codexUsageTrackers,
   shadcnCnBenchmarks,
   switchingFromFishToNushell,
   safari26InvisibleTintSampler,

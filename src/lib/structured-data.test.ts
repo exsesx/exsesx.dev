@@ -108,14 +108,14 @@ describe("Blog structured data", () => {
     expect(data["@graph"][0]).toMatchObject({
       "@type": "ItemList",
       "@id": "https://exsesx.dev/blog/en#itemlist",
-      numberOfItems: 6,
+      numberOfItems: 7,
       itemListElement: [
         {
           "@type": "ListItem",
           position: 1,
           item: {
             "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/shadcn-cn-benchmarks",
+            url: "https://exsesx.dev/blog/en/codex-usage-trackers",
           },
         },
         {
@@ -123,7 +123,7 @@ describe("Blog structured data", () => {
           position: 2,
           item: {
             "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/switching-from-fish-to-nushell",
+            url: "https://exsesx.dev/blog/en/shadcn-cn-benchmarks",
           },
         },
         {
@@ -131,7 +131,7 @@ describe("Blog structured data", () => {
           position: 3,
           item: {
             "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/safari-26-invisible-tint-sampler",
+            url: "https://exsesx.dev/blog/en/switching-from-fish-to-nushell",
           },
         },
         {
@@ -139,7 +139,7 @@ describe("Blog structured data", () => {
           position: 4,
           item: {
             "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
+            url: "https://exsesx.dev/blog/en/safari-26-invisible-tint-sampler",
           },
         },
         {
@@ -147,12 +147,20 @@ describe("Blog structured data", () => {
           position: 5,
           item: {
             "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/codex-memories",
+            url: "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
           },
         },
         {
           "@type": "ListItem",
           position: 6,
+          item: {
+            "@type": "BlogPosting",
+            url: "https://exsesx.dev/blog/en/codex-memories",
+          },
+        },
+        {
+          "@type": "ListItem",
+          position: 7,
           item: {
             "@type": "BlogPosting",
             url: "https://exsesx.dev/blog/en/codex-agents-v2",

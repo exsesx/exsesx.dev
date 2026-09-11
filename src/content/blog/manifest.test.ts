@@ -6,6 +6,12 @@ describe("Blog manifest", () => {
     expect(getBlogPosts("en", { includeDrafts: false })).toEqual([
       expect.objectContaining({
         locale: "en",
+        slug: "codex-usage-trackers",
+        status: "published",
+        title: "I found a Codex usage tracker I like",
+      }),
+      expect.objectContaining({
+        locale: "en",
         slug: "shadcn-cn-benchmarks",
         status: "published",
         title: "I tried shadcn's new cn on my site",
@@ -58,6 +64,12 @@ describe("Blog manifest", () => {
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "uk",
+        slug: "codex-usage-trackers",
+        status: "published",
+        title: "Знайшов зручний трекер лімітів Codex",
+      }),
       expect.objectContaining({
         locale: "uk",
         slug: "shadcn-cn-benchmarks",
@@ -114,7 +126,9 @@ describe("Blog manifest", () => {
   });
 
   test("derives index reading details and the article table of contents from MDX", async () => {
-    const [article] = await getBlogPostSummaries("en", { includeDrafts: false });
+    const articles = await getBlogPostSummaries("en", { includeDrafts: false });
+    const article = articles.find(post => post.slug === "shadcn-cn-benchmarks");
+    if (!article) throw new Error("Missing reading-analysis fixture");
 
     expect(article.readingMinutes).toBeGreaterThanOrEqual(5);
     expect(article.headings).toContainEqual({
