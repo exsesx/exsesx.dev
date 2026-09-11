@@ -1,0 +1,118 @@
+import openUsagePanel from "../../../../public/images/blog/codex-usage-trackers/openusage-panel.png";
+import openUsagePanelDark from "../../../../public/images/blog/codex-usage-trackers/openusage-panel-dark.png";
+import openUsageShare from "../../../../public/images/blog/codex-usage-trackers/openusage-share.png";
+import openUsageShareDark from "../../../../public/images/blog/codex-usage-trackers/openusage-share-dark.png";
+import codeNotchCollapsed from "../../../../public/images/blog/codex-usage-trackers/codenotch-collapsed.png";
+import codeNotchCollapsedDark from "../../../../public/images/blog/codex-usage-trackers/codenotch-collapsed-dark.png";
+import codeNotchExpanded from "../../../../public/images/blog/codex-usage-trackers/codenotch-expanded.png";
+import codeNotchExpandedDark from "../../../../public/images/blog/codex-usage-trackers/codenotch-expanded-dark.png";
+import codexBarPanel from "../../../../public/images/blog/codex-usage-trackers/codexbar-panel.png";
+import codexBarPanelDark from "../../../../public/images/blog/codex-usage-trackers/codexbar-panel-dark.png";
+
+Я просто хотів бачити, скільки ліміту Codex у мене залишилося. Спробував
+<SourceLink href="https://www.openusage.ai/">OpenUsage</SourceLink>,
+<SourceLink href="https://github.com/vinzdg/codenotch">CodeNotch</SourceLink> і
+<SourceLink href="https://codexbar.app/">CodexBar</SourceLink>.
+
+Поки користуватимуся CodexBar. Я прискіпливий до програм, навіть до таких маленьких утиліт.
+
+## OpenUsage
+
+Загалом OpenUsage мені сподобався, але інтерфейс ще потребує доопрацювання.
+Під час тестування він часто мерехтів і перемальовувався. Іконки теж змінювали
+розмір, коли я взаємодіяв із програмою.
+
+<Figure
+  src={openUsagePanel}
+  darkSrc={openUsagePanelDark}
+  alt="OpenUsage показує залишок тижневого ліміту Codex 84%"
+  caption="OpenUsage 0.7.11. На світлому знімку також видно пункти Customize та Share Screenshot."
+/>
+
+Зручно бачити залишок ліміту в смузі меню, але мерехтіння та зміни розмірів
+відволікали. Сам дизайн доволі нудний, і тут це комплімент. До того ж багато
+чого можна налаштувати під себе.
+
+Ще мені дуже сподобалося, що можна кнопкою скопіювати зображення зі своєю
+статистикою й вставити його куди потрібно. Ось світлий і темний варіанти,
+які створює OpenUsage.
+
+<Figure
+  src={openUsageShare}
+  darkSrc={openUsageShareDark}
+  alt="Зображення для поширення з OpenUsage із залишком ліміту Codex і графіком використання"
+  caption="Зображення зі статистикою, скопійоване з OpenUsage."
+/>
+
+## CodeNotch
+
+CodeNotch має чудовий вигляд праворуч на екрані. З усіх трьох візуально він
+сподобався мені найбільше. І анімація чудова.
+
+Утім, мені бракувало деяких функцій. Вигляд сподобався настільки, що я,
+можливо, ще повернуся до нього. Але цього разу вибрав іншу програму.
+
+<div className="mt-[var(--blog-rich-block-gap)] grid grid-cols-2 gap-4">
+  <Figure
+    src={codeNotchCollapsed}
+    darkSrc={codeNotchCollapsedDark}
+    alt="CodeNotch на правому краї робочого столу показує 16% використаного ліміту"
+    caption="CodeNotch на краю екрана."
+  />
+
+  <Figure
+    src={codeNotchExpanded}
+    darkSrc={codeNotchExpandedDark}
+    alt="Розгорнута панель CodeNotch із лімітом Codex, невикористаними скиданнями та історією використання"
+    caption="Розгорнута панель зі статистикою."
+  />
+
+  <figure className="blog-figure col-span-2">
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="metadata"
+      width="1080"
+      height="1388"
+      className="h-auto w-full rounded-[var(--blog-rich-block-radius)]"
+      aria-label="CodeNotch розгортається та згортається на правому краї екрана"
+      src="/videos/blog/codex-usage-trackers/codenotch-demo.mp4"
+    />
+
+    <figcaption>Анімація CodeNotch у світлій темі.</figcaption>
+  </figure>
+</div>
+
+## CodexBar
+
+CodexBar має все, що мені потрібно. За відчуттями він ближчий до програм Apple:
+швидко працює й робить свою справу. Трохи налаштувань, і виглядає саме так,
+як я хочу. У його
+<SourceLink href="https://github.com/steipete/CodexBar#features">налаштуваннях вигляду</SourceLink>
+можна змінити іконки, підписи, індикатори використання та формат часу до
+оновлення лімітів. Мені подобається мати змогу налаштувати такі дрібниці.
+
+Також видно, що програму підтримують. Її
+<SourceLink href="https://github.com/steipete/CodexBar/releases">історія випусків</SourceLink>
+додала мені впевненості у виборі.
+
+<Figure
+  src={codexBarPanel}
+  darkSrc={codexBarPanelDark}
+  alt="CodexBar показує залишок тижневого ліміту Codex 84% і два доступні скидання ліміту"
+  caption="Мої налаштування CodexBar із залишком тижневого ліміту та доступними скиданнями."
+/>
+
+Коли я перевіряв 11 вересня 2026 року,
+<SourceLink href="https://github.com/steipete/CodexBar">CodexBar</SourceLink>
+мав близько 21,2 тисячі зірок на GitHub,
+<SourceLink href="https://github.com/robinebers/openusage">OpenUsage</SourceLink>
+мав близько 4,1 тисячі, а
+<SourceLink href="https://github.com/vinzdg/codenotch">CodeNotch</SourceLink>
+мав 1,4 тисячі. Така увага до проєкту теж додавала впевненості. Вибрав я його,
+бо він добре працював для моїх потреб.
+
+Можливо, ще повернуся до цих програм. А поки мені треба було бачити свій
+залишок ліміту Codex, і CodexBar із цим чудово справляється.

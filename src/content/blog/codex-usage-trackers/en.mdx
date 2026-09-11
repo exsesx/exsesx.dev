@@ -1,0 +1,117 @@
+import openUsagePanel from "../../../../public/images/blog/codex-usage-trackers/openusage-panel.png";
+import openUsagePanelDark from "../../../../public/images/blog/codex-usage-trackers/openusage-panel-dark.png";
+import openUsageShare from "../../../../public/images/blog/codex-usage-trackers/openusage-share.png";
+import openUsageShareDark from "../../../../public/images/blog/codex-usage-trackers/openusage-share-dark.png";
+import codeNotchCollapsed from "../../../../public/images/blog/codex-usage-trackers/codenotch-collapsed.png";
+import codeNotchCollapsedDark from "../../../../public/images/blog/codex-usage-trackers/codenotch-collapsed-dark.png";
+import codeNotchExpanded from "../../../../public/images/blog/codex-usage-trackers/codenotch-expanded.png";
+import codeNotchExpandedDark from "../../../../public/images/blog/codex-usage-trackers/codenotch-expanded-dark.png";
+import codexBarPanel from "../../../../public/images/blog/codex-usage-trackers/codexbar-panel.png";
+import codexBarPanelDark from "../../../../public/images/blog/codex-usage-trackers/codexbar-panel-dark.png";
+
+I just wanted something to show me my Codex usage. I ended up trying
+<SourceLink href="https://www.openusage.ai/">OpenUsage</SourceLink>,
+<SourceLink href="https://github.com/vinzdg/codenotch">CodeNotch</SourceLink>, and
+<SourceLink href="https://codexbar.app/">CodexBar</SourceLink>.
+
+For now, I'm keeping CodexBar. I'm picky about software, even a small
+utility like this.
+
+## OpenUsage
+
+OpenUsage was a good experience overall, but the interface didn't feel quite
+polished. During testing, the interface flickered a lot and kept redrawing.
+Icons also changed size when I interacted with the app.
+
+<Figure
+  src={openUsagePanel}
+  darkSrc={openUsagePanelDark}
+  alt="OpenUsage showing 84% of my weekly Codex allowance left"
+  caption="OpenUsage 0.7.11. The light screenshot also shows the Customize and Share Screenshot options."
+/>
+
+I liked having my usage in the menu bar, but the flickering and resizing
+were distracting. The design itself is pretty boring in a good way, and
+there's plenty to customize.
+
+One feature I really like is copying a usage image with a button and pasting
+it wherever I need it. These are the light and dark versions from OpenUsage.
+
+<Figure
+  src={openUsageShare}
+  darkSrc={openUsageShareDark}
+  alt="A shareable usage image from OpenUsage with my remaining Codex allowance and usage trend"
+  caption="The usage image copied from OpenUsage."
+/>
+
+## CodeNotch
+
+CodeNotch looks amazing on the right side of the screen. Visually, it was my
+favorite of the three. The animation is great, too.
+
+I still wanted more features, though. I liked the look enough that I might
+come back to it, but it wasn't my pick this time.
+
+<div className="mt-[var(--blog-rich-block-gap)] grid grid-cols-2 gap-4">
+  <Figure
+    src={codeNotchCollapsed}
+    darkSrc={codeNotchCollapsedDark}
+    alt="CodeNotch tucked into the right edge of my desktop, showing 16% used"
+    caption="CodeNotch at the edge of the screen."
+  />
+
+  <Figure
+    src={codeNotchExpanded}
+    darkSrc={codeNotchExpandedDark}
+    alt="CodeNotch expanded to show my Codex allowance, unused resets, and usage history"
+    caption="The expanded usage panel."
+  />
+
+  <figure className="blog-figure col-span-2">
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="metadata"
+      width="1080"
+      height="1388"
+      className="h-auto w-full rounded-[var(--blog-rich-block-radius)]"
+      aria-label="CodeNotch expanding and collapsing at the right edge of the screen"
+      src="/videos/blog/codex-usage-trackers/codenotch-demo.mp4"
+    />
+
+    <figcaption>CodeNotch in motion, recorded in light mode.</figcaption>
+  </figure>
+</div>
+
+## CodexBar
+
+CodexBar ticks all my boxes. It feels more like a native Apple app, it's
+fast, and it does what I need. With a bit of customization, it looks just
+the way I want it. Its
+<SourceLink href="https://github.com/steipete/CodexBar#features">display settings</SourceLink>
+cover icons, labels, usage bars, and how reset times appear. I appreciate being
+able to adjust those details.
+
+It also looks well maintained to me. The
+<SourceLink href="https://github.com/steipete/CodexBar/releases">release history</SourceLink>
+gave me more confidence in it.
+
+<Figure
+  src={codexBarPanel}
+  darkSrc={codexBarPanelDark}
+  alt="CodexBar showing 84% of my weekly Codex allowance left and two available reset credits"
+  caption="My CodexBar setup, showing the remaining weekly allowance and reset credits."
+/>
+
+When I checked on September 11, 2026,
+<SourceLink href="https://github.com/steipete/CodexBar">CodexBar</SourceLink>
+had about 21.2k GitHub stars, compared with about 4.1k for
+<SourceLink href="https://github.com/robinebers/openusage">OpenUsage</SourceLink>
+and 1.4k for
+<SourceLink href="https://github.com/vinzdg/codenotch">CodeNotch</SourceLink>.
+The larger following was reassuring. I chose it because it worked well for me.
+
+I might revisit these apps. For now, I needed something to show me my Codex
+usage, and CodexBar does that really well for me.

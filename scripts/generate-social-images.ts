@@ -600,6 +600,18 @@ async function writePng(svg: string, outputPath: string) {
 }
 
 async function main() {
+  const slug = process.argv[2];
+  if (slug) {
+    const editions = getAllBlogPosts({ includeDrafts: true }).filter(post => post.slug === slug);
+    if (editions.length === 0) throw new Error(`Unknown blog slug: ${slug}`);
+    for (const post of editions) {
+      const outputPath = path.join(process.cwd(), "public", post.socialImage.path.replace(/^\//, ""));
+      await mkdir(path.dirname(outputPath), { recursive: true });
+      await writePng(blogArticleSvg(post), outputPath);
+    }
+    return;
+  }
+
   await mkdir(outDir, { recursive: true });
   await writePng(homeSvg(), homeOut);
   await writePng(projectsSvg(), path.join(outDir, "projects.png"));
