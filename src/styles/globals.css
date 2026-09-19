@@ -3531,9 +3531,18 @@ code[data-theme] span {
   font-weight: 750;
 }
 
+.blog-figure img,
+.blog-figure video {
+  corner-shape: squircle;
+}
+
+.blog-figure video {
+  border-radius: clamp(3px, 0.6vw, 8px);
+}
+
 .blog-figure img {
+  border-radius: clamp(14px, calc(10px + 0.6vw), 24px);
   border: 1px solid var(--blog-rich-block-border);
-  border-radius: var(--blog-rich-block-radius);
   background: var(--muted);
 }
 
