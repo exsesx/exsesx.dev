@@ -1,0 +1,139 @@
+I asked Codex to open YouTube in Safari, search for a creator, visit their
+channel, and tell me their latest upload.
+
+Once connected, it felt fast. Codex searched the site, opened the channel's
+Videos page, and checked that Latest was selected. It came back with the
+title, link, upload age, and runtime.
+
+Safari has its own MCP server now, and I think that's pretty cool. It's part
+of <SourceLink href="https://webkit.org/blog/18325/webkit-features-for-safari-27-0/">Safari 27.0</SourceLink>,
+released on September 17. Apple supplies the connection through `safaridriver`.
+Codex still runs the agent; Safari gives it tools to inspect and use a browser
+window. It also works with Claude Code and other MCP-compatible clients.
+
+## What happened in the test
+
+The server returned structured page content with search fields, buttons,
+links, and element identifiers. Codex rejected optional cookies, entered the
+search, and opened the official channel. It read the newest video's details
+from the page and requested full URLs to get a direct link.
+
+That worked without screenshots or custom JavaScript. There was one small
+failure along the way: clicking the text "Videos" matched multiple elements.
+Codex retried with a specific element identifier and reached the right page.
+
+Getting connected took a few attempts. Safari reported that remote automation
+was disabled even though the setting was enabled. A later retry worked, but I
+couldn't establish what fixed it.
+
+So "felt fast" describes the interaction once it worked. I didn't benchmark
+it or compare its speed with another browser tool.
+
+## Checking a Shottr release
+
+I recorded another task: open X, find Shottr's account, read its release
+announcements, then check the official website to see what was available.
+
+In the September 19 recording, Codex found that
+<SourceLink href="https://shottr.cc/newversion.html">Shottr 1.9.2</SourceLink>
+was available with macOS 27 compatibility improvements. The
+<SourceLink href="https://x.com/shottr_cc/status/2100719116458045608">announcement on X</SourceLink>
+also mentioned a bigger release with new features. That update was still
+upcoming, with no version number or release date given. The website listed
+1.9.2, so Codex kept the released update and the promised one separate.
+
+<figure className="blog-figure">
+  <video
+    controls
+    playsInline
+    preload="metadata"
+    width="2304"
+    height="1490"
+    className="h-auto w-full rounded-[0.5rem]"
+    aria-label="Codex using Safari to compare Shottr's release announcement on X with its official website"
+    poster="/images/blog/safari-mcp/shottr-release-check.webp"
+    src="/videos/blog/safari-mcp/shottr-release-check.mp4"
+  />
+
+  <figcaption>
+    Safari MCP in use, checking what's released and what's still coming. Recorded
+    September 19, 2026. No audio.
+  </figcaption>
+</figure>
+
+And a shout-out to <SourceLink href="https://shottr.cc/">Shottr</SourceLink>.
+It's an amazing piece of software for screenshots on the Mac.
+
+## Connect it to Codex
+
+You'll need Safari 27 or later. In Safari's settings, open Advanced and enable
+"Show features for web developers" if the Developer tab isn't visible. Then
+open Developer and enable "Allow remote automation and external agents".
+
+Register the server:
+
+```sh
+codex mcp add safari-mcp -- "/usr/bin/safaridriver" --mcp
+```
+
+Start by asking Codex to open a specific URL in Safari. That first navigation
+creates the controlled window, which displays an agent-control banner. Asking
+to list or create tabs before that can return an error. Apple explains this in
+its <SourceLink href="https://developer.apple.com/documentation/safari-developer-tools/connecting-an-ai-agent-to-safari">connection guide</SourceLink>.
+
+Safari Technology Preview uses a different driver path. WebKit's
+<SourceLink href="https://webkit.org/blog/18136/introducing-the-safari-mcp-server-for-web-developers/">MCP introduction</SourceLink>
+has the separate setup commands for it.
+
+## The next thing I want to try
+
+The YouTube task was a small browsing test. What I want to try next is having
+the agent check my own site in Safari after changing the code.
+
+Apple documents tools for reading page content, inspecting console messages
+and network requests, running JavaScript, taking screenshots, and changing
+the viewport. That gives an agent ways to investigate a broken layout or form
+beyond reading the source code.
+
+Here's a prompt for that next test. I haven't run this website check yet:
+
+> Use Safari MCP to open my local website. Visit a blog post at desktop width
+> and at 390 pixels wide. Check whether the navigation works and whether a long
+> code block makes the page overflow horizontally. Inspect console errors and
+> failed requests. Report what you observed and capture a screenshot if there
+> is a visual problem.
+
+A narrow desktop viewport can catch responsive layout problems. Testing on an
+actual iPhone would still be a separate check.
+
+## What stays local
+
+WebKit says the MCP server runs locally, makes no network calls itself, and
+can't access Safari personal information such as AutoFill or unrelated
+browsing activity. The page content, screenshots, and logs it captures go to
+your agent. What happens to that data then depends on the agent and model.
+The <SourceLink href="https://webkit.org/blog/18136/introducing-the-safari-mcp-server-for-web-developers/">privacy explanation</SourceLink>
+is specific about that boundary. A local MCP server doesn't make the whole
+AI workflow offline.
+
+## A few more Safari 27 changes
+
+The <SourceLink href="https://webkit.org/blog/18325/webkit-features-for-safari-27-0/">release overview</SourceLink>
+also has some useful changes for everyday web development:
+
+- Customizable `select` controls let you style a native dropdown while keeping
+  its built-in keyboard and form behavior.
+- Scroll anchoring keeps the reading position steady when content loads above
+  it. It's enabled by default.
+- The rewritten ES module loader fixes evaluation-order and initialization
+  problems, including issues around top-level `await`.
+- Web Inspector shows color contrast in its color picker and exposes each
+  request in a redirect chain.
+
+These are documented release changes; my hands-on test covered MCP browsing.
+The release also expands spatial web support, adds WebAssembly JavaScript
+Promise Integration, and improves streams. WebKit counts 83 features and 844
+fixes in total.
+
+For me, the next step is that local website check. I want Codex to open the
+page it just changed and show me what works in Safari.

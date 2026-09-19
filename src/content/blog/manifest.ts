@@ -6,12 +6,14 @@ import codexMemories from "./codex-memories/post";
 import codexUsageTrackers from "./codex-usage-trackers/post";
 import { analyzeMdxSource } from "./reading";
 import safari26InvisibleTintSampler from "./safari-26-invisible-tint-sampler/post";
+import safariMcp from "./safari-mcp/post";
 import shadcnCnBenchmarks from "./shadcn-cn-benchmarks/post";
 import switchingFromFishToNushell from "./switching-from-fish-to-nushell/post";
 import type { AnalyzedBlogPostSummary, BlogLocale, BlogPost, BlogPostEntry, BlogPostSummary } from "./types";
 import umbraLightDarkWallpapers from "./umbra-light-dark-wallpapers/post";
 
 const posts: readonly BlogPost[] = [
+  safariMcp,
   codexUsageTrackers,
   shadcnCnBenchmarks,
   switchingFromFishToNushell,

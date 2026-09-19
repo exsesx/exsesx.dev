@@ -6,6 +6,12 @@ describe("Blog manifest", () => {
     expect(getBlogPosts("en", { includeDrafts: false })).toEqual([
       expect.objectContaining({
         locale: "en",
+        slug: "safari-mcp",
+        status: "published",
+        title: "I let my AI agent use Safari",
+      }),
+      expect.objectContaining({
+        locale: "en",
         slug: "codex-usage-trackers",
         status: "published",
         title: "I found a Codex usage tracker I like",
@@ -64,6 +70,12 @@ describe("Blog manifest", () => {
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "uk",
+        slug: "safari-mcp",
+        status: "published",
+        title: "Я дав AI-агенту доступ до Safari",
+      }),
       expect.objectContaining({
         locale: "uk",
         slug: "codex-usage-trackers",
