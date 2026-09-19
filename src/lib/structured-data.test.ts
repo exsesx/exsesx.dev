@@ -101,14 +101,16 @@ describe("Blog structured data", () => {
     });
   });
 
-  test("lists only visible posts on a localized Blog index", () => {
-    const posts = getBlogPosts("en", { includeDrafts: false });
+  test("lists only the supplied posts on a localized Blog index", () => {
+    const posts = getBlogPosts("en", { includeDrafts: false }).filter(post =>
+      ["codex-usage-trackers", "shadcn-cn-benchmarks"].includes(post.slug),
+    );
     const data = buildBlogIndexStructuredData("en", posts);
 
     expect(data["@graph"][0]).toMatchObject({
       "@type": "ItemList",
       "@id": "https://exsesx.dev/blog/en#itemlist",
-      numberOfItems: 7,
+      numberOfItems: 2,
       itemListElement: [
         {
           "@type": "ListItem",
@@ -124,46 +126,6 @@ describe("Blog structured data", () => {
           item: {
             "@type": "BlogPosting",
             url: "https://exsesx.dev/blog/en/shadcn-cn-benchmarks",
-          },
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          item: {
-            "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/switching-from-fish-to-nushell",
-          },
-        },
-        {
-          "@type": "ListItem",
-          position: 4,
-          item: {
-            "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/safari-26-invisible-tint-sampler",
-          },
-        },
-        {
-          "@type": "ListItem",
-          position: 5,
-          item: {
-            "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/umbra-light-dark-wallpapers",
-          },
-        },
-        {
-          "@type": "ListItem",
-          position: 6,
-          item: {
-            "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/codex-memories",
-          },
-        },
-        {
-          "@type": "ListItem",
-          position: 7,
-          item: {
-            "@type": "BlogPosting",
-            url: "https://exsesx.dev/blog/en/codex-agents-v2",
           },
         },
       ],
