@@ -813,69 +813,20 @@ if (!("Bun" in globalThis)) {
     test("mobile table of contents restores directly into its docked state and yields at article end", async ({
       page,
     }) => {
-      await page.addInitScript(() => {
-        const samples: unknown[] = [];
-        Object.assign(window, { __fragmentDiagnostics: samples });
-        const started = performance.now();
-        const timer = window.setInterval(() => {
-          const main = document.getElementById("main-content");
-          const target = document.getElementById("how-to-enable-agents-v2");
-          const ancestors = [];
-
-          for (let element = main; element; element = element.parentElement) {
-            const style = getComputedStyle(element);
-            ancestors.push({
-              tag: element.tagName,
-              id: element.id,
-              rect: element.getBoundingClientRect().toJSON(),
-              display: style.display,
-              visibility: style.visibility,
-              opacity: style.opacity,
-              transform: style.transform,
-              overflow: style.overflow,
-              contentVisibility: style.contentVisibility,
-              scrollTop: element.scrollTop,
-              scrollHeight: element.scrollHeight,
-            });
-          }
-
-          samples.push({
-            time: performance.now() - started,
-            y: window.scrollY,
-            viewport: window.visualViewport?.pageTop,
-            ready: document.readyState,
-            hidden: document.hidden,
-            target: target?.getBoundingClientRect().toJSON(),
-            ancestors,
-            animations: document.getAnimations().map(animation => ({
-              state: animation.playState,
-              time: animation.currentTime,
-            })),
-          });
-
-          if (performance.now() - started > 10000) {
-            clearInterval(timer);
-          }
-        }, 100);
-      });
       await page.goto(`${BLOG_ARTICLE_PATH}#how-to-enable-agents-v2`);
 
       const tocShell = page.locator(".blog-toc-mobile-shell");
       const trigger = page.getByTestId("mobile-toc-trigger");
+      const target = page.locator("#how-to-enable-agents-v2");
+      await expect(target).toBeVisible();
+      await expect.poll(() => target.evaluate(element => element.getBoundingClientRect().top)).toBeLessThan(180);
       await waitForScrollToSettle(page);
 
-      try {
-        await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
-      } catch (error) {
-        const diagnostics = await page.evaluate(() => Reflect.get(window, "__fragmentDiagnostics"));
-        await test.info().attach("initial-fragment-layout.json", {
-          body: JSON.stringify(diagnostics, null, 2),
-          contentType: "application/json",
-        });
+      const targetTop = await target.evaluate(element => element.getBoundingClientRect().top);
+      expect(targetTop).toBeGreaterThanOrEqual(0);
+      expect(targetTop).toBeLessThan(180);
 
-        throw error;
-      }
-
+      await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
       await expect(tocShell).not.toHaveAttribute("data-toc-launcher-entering", "true");
       await expect(trigger).toBeVisible();
 
