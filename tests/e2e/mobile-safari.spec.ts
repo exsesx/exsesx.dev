@@ -876,10 +876,12 @@ if (!("Bun" in globalThis)) {
       page,
     }) => {
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.goto(`${BLOG_ARTICLE_PATH}#how-to-enable-agents-v2`);
+      await page.goto(BLOG_ARTICLE_PATH);
 
       const tocShell = page.locator(".blog-toc-mobile-shell");
       const trigger = page.getByTestId("mobile-toc-trigger");
+      // Set up docking explicitly; initial hash restoration is covered separately.
+      await page.locator("#how-to-enable-agents-v2").scrollIntoViewIfNeeded();
       await waitForScrollToSettle(page);
 
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
