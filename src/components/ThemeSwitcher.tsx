@@ -96,7 +96,7 @@ function paintSafariChromeSamples(isDark: boolean) {
 }
 
 export default function ThemeSwitcher() {
-  const { isFocusMode } = useBlogFocus();
+  const { isFocusMode, isPassiveHeaderHidden } = useBlogFocus();
   const [isOpen, setIsOpen] = useState(false);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const soundEffectsEnabled = useSyncExternalStore(
@@ -131,10 +131,10 @@ export default function ThemeSwitcher() {
   }, [isDark, mode]);
 
   useEffect(() => {
-    if (isFocusMode) {
+    if (isFocusMode || isPassiveHeaderHidden) {
       setIsOpen(false);
     }
-  }, [isFocusMode]);
+  }, [isFocusMode, isPassiveHeaderHidden]);
 
   return (
     <DropdownMenu
@@ -142,7 +142,7 @@ export default function ThemeSwitcher() {
         playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target);
         setIsOpen(open);
       }}
-      open={isOpen && !isFocusMode}
+      open={isOpen && !isFocusMode && !isPassiveHeaderHidden}
     >
       <DropdownMenuTrigger
         render={
