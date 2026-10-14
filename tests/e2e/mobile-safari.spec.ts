@@ -774,17 +774,39 @@ if (!("Bun" in globalThis)) {
         "location",
       );
       await sectionLink.scrollIntoViewIfNeeded();
+
+      const revealDistance = BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND;
+      const interruptNavigation = page.evaluate(
+        distance =>
+          new Promise<{ movement: number; targetTop: number }>(resolve => {
+            const startScrollY = window.scrollY;
+
+            function interruptOnScroll() {
+              if (location.hash !== "#how-to-enable-agents-v2" || window.scrollY <= startScrollY) {
+                return;
+              }
+
+              window.removeEventListener("scroll", interruptOnScroll);
+              const before = window.scrollY;
+              const targetTop = document.getElementById("how-to-enable-agents-v2")?.getBoundingClientRect().top ?? 0;
+
+              // Interrupt a delivered scroll frame so intent and movement share its current baseline.
+              document.body.dispatchEvent(new Event("touchmove", { bubbles: true }));
+              window.scrollBy({ behavior: "instant", top: -distance });
+              resolve({ movement: window.scrollY - before, targetTop });
+            }
+
+            window.addEventListener("scroll", interruptOnScroll);
+          }),
+        revealDistance,
+      );
+
       await sectionLink.click();
       await expect(page).toHaveURL(/#how-to-enable-agents-v2$/);
 
-      // New touch input interrupts the in-flight TOC navigation. Its upward
-      // movement is immediately interpreted by the normal passive header.
-      // Account for a downward animation frame that may land before the
-      // interruption and consume the direction-change deadband.
-      await scrollWithTouchIntent(
-        page,
-        -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
-      );
+      const interruption = await interruptNavigation;
+      expect(interruption.targetTop).toBeGreaterThan(180);
+      expect(interruption.movement).toBeCloseTo(-revealDistance, 0);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
     });
 
