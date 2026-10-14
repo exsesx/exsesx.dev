@@ -22,7 +22,7 @@ describe("Blog production styles", () => {
       Bun.file(blogArticlePageUrl).text(),
     ]);
 
-    expect(indexPage.match(/data-cuelume-press="tick"/g)).toHaveLength(3);
+    expect(indexPage.match(/data-cuelume-press="select"/g)).toHaveLength(3);
     expect(articlePage.match(/data-cuelume-press=""/g)).toHaveLength(2);
   });
 

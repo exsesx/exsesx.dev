@@ -31,7 +31,7 @@ export default function BlogLocaleSwitcher({
           <Link
             key={locale}
             href={href}
-            data-cuelume-press={locale === currentLocale ? undefined : "tick"}
+            data-cuelume-press={locale === currentLocale ? undefined : "select"}
             hrefLang={locale}
             lang={locale}
             prefetch

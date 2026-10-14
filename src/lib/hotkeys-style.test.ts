@@ -47,9 +47,9 @@ describe("hotkey loading and motion contracts", () => {
     const source = await Bun.file(hotkeysUrl).text();
 
     expect(source).toMatch(
-      /pendingSequence\.length === 0 && decision\.nextState\.pendingSequence\.length > 0[\s\S]*?playInteractionSound\("scan"\)/,
+      /pendingSequence\.length === 0 && decision\.nextState\.pendingSequence\.length > 0[\s\S]*?playInteractionSound\("select"\)/,
     );
-    expect(source).toMatch(/if \(decision\.action\) \{[\s\S]*?playInteractionSound\("pulse"\)/);
+    expect(source).toMatch(/if \(decision\.action\) \{[\s\S]*?playInteractionSound\("tap"\)/);
   });
 
   test("removes keyboard-driven loops, dots, entrances, and child staggering", async () => {

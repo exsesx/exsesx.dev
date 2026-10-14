@@ -28,6 +28,7 @@ function DropdownMenuContent({
         align={align}
         alignOffset={alignOffset}
         className="isolate z-50 outline-none"
+        positionMethod="fixed"
         side={side}
         sideOffset={sideOffset}
       >

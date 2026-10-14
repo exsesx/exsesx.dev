@@ -10,7 +10,7 @@ mock.module("cuelume", () => ({
   play: playMock,
   setEnabled: setEnabledMock,
   setVolume: setVolumeMock,
-  sounds: ["error", "loading", "press", "ready", "success", "tick", "toggle"],
+  sounds: ["error", "loading", "tap", "ready", "success", "select", "toggle"],
 }));
 
 const {
@@ -198,7 +198,7 @@ describe("app-level sound wiring", () => {
 
     expect(appDocument).toContain('import InteractionSounds from "./InteractionSounds";');
     expect(appDocument.match(/<InteractionSounds \/>/g)).toHaveLength(1);
-    expect(header).toMatch(/href="\/"[\s\S]*?data-cuelume-press="scan"[\s\S]*?site-nav-brand-link/);
+    expect(header).toMatch(/href="\/"[\s\S]*?data-cuelume-press="select"[\s\S]*?site-nav-brand-link/);
     expect(interactionSoundsComponent).toContain("useSyncExternalStore");
     expect(interactionSoundsComponent).toContain("initializeInteractionSounds");
     expect(interactionSoundsComponent).toMatch(/event\.detail !== 0/);

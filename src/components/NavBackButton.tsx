@@ -37,7 +37,7 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
     }
 
     event.preventDefault();
-    playInteractionSound("press");
+    playInteractionSound("tap");
     navigateBack();
   });
 
