@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect } from "react";
+import { MOTION_DATASET_KEYS } from "@/lib/motion-contract";
 import {
   captureAnchorRouteIntent,
   consumeQueuedScrollRestore,
@@ -56,9 +57,31 @@ export default function RouteMotionGuard() {
       return;
     }
 
-    // html has scroll-behavior: smooth; an animated restore would misalign the morph snapshot
+    // html[data-smooth-scroll] scrolls smoothly; an animated restore would misalign the morph snapshot
     window.scrollTo({ behavior: "instant", left: 0, top: scrollY });
   }, [pathname]);
+
+  useEffect(() => {
+    let frame = 0;
+
+    // WebKit stops holding the load-time #fragment position once loading completes.
+    function enableSmoothScrolling() {
+      frame = requestAnimationFrame(() => {
+        document.documentElement.dataset[MOTION_DATASET_KEYS.smoothScroll] = "";
+      });
+    }
+
+    if (document.readyState === "complete") {
+      enableSmoothScrolling();
+    } else {
+      window.addEventListener("load", enableSmoothScrolling, { once: true });
+    }
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("load", enableSmoothScrolling);
+    };
+  }, []);
 
   useEffect(() => {
     function markRouteNavigation(event: MouseEvent) {

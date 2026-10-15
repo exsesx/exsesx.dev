@@ -151,6 +151,15 @@ body,
 html {
   background: var(--background);
   color-scheme: light;
+}
+
+/*
+ * scroll-behavior also animates the browser's load-time jump to a #fragment.
+ * WebKit can run that animation without ever updating the page's scroll
+ * position, leaving a deep link unscrolled and unpainted, so smooth in-page
+ * navigation starts only after load restores the position instantly.
+ */
+html[data-smooth-scroll] {
   scroll-behavior: smooth;
 }
 

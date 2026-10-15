@@ -9,6 +9,7 @@ export const MOTION_ATTRIBUTES = {
 
 export const MOTION_DATASET_KEYS = {
   condensedHeader: "condensed",
+  smoothScroll: "smoothScroll",
   viewTransitionNavigated: "viewTransitionNavigated",
 } as const;
 
