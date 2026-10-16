@@ -90,7 +90,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                 </span>
               </div>
               <h2 className="mt-5 max-w-4xl text-balance text-3xl font-black leading-tight tracking-tight text-foreground sm:text-5xl">
-                <Link data-cuelume-press="tick" href={getBlogPostPath(locale, featuredPost.slug)}>
+                <Link data-cuelume-press="select" href={getBlogPostPath(locale, featuredPost.slug)}>
                   <BlogTitle title={featuredPost.title} codeWords={featuredPost.titleCodeWords} />
                 </Link>
               </h2>
@@ -104,7 +104,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
               </div>
               <Link
                 className="blog-read-link mt-8"
-                data-cuelume-press="tick"
+                data-cuelume-press="select"
                 href={getBlogPostPath(locale, featuredPost.slug)}
               >
                 {copy.readArticle}
@@ -127,7 +127,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                 <article key={post.slug} className="blog-post-row">
                   <div>
                     <h3>
-                      <Link data-cuelume-press="tick" href={getBlogPostPath(locale, post.slug)}>
+                      <Link data-cuelume-press="select" href={getBlogPostPath(locale, post.slug)}>
                         <BlogTitle title={post.title} codeWords={post.titleCodeWords} />
                       </Link>
                     </h3>

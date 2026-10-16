@@ -121,7 +121,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
             <a
               href={`#${heading.id}`}
               aria-current={isActive ? "location" : undefined}
-              data-cuelume-press="tick"
+              data-cuelume-press="select"
               onClick={mode === "mobile" ? event => handleMobileLinkClick(event, heading.id) : undefined}
             >
               <span aria-hidden="true" className="blog-toc-tick" />

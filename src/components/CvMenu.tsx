@@ -220,7 +220,7 @@ function CvMenu() {
 
   function handleShareCv() {
     if (shareStatus === "error") {
-      playInteractionSound("press");
+      playInteractionSound("tap");
       prepareShareFile(null);
       return;
     }
@@ -233,7 +233,7 @@ function CvMenu() {
 
     let sharePromise: Promise<void>;
 
-    playInteractionSound("press");
+    playInteractionSound("tap");
 
     try {
       sharePromise = navigator.share({

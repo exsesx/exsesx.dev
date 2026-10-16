@@ -7,13 +7,17 @@ Built with Next.js 16 and React 19, deployed on [Vercel](https://vercel.com).
 
 ## Stack
 
-- **Next.js 16.3 Preview** — App Router, React Compiler, typed routes, and experimental React View Transitions
-- **React 19**, **Tailwind CSS 4**, **Base UI**, and **Lucide React**
+- **Next.js 16.4** — App Router, React Compiler, and typed routes
+- **React 19.3**, **Tailwind CSS 4**, **Base UI**, and **Lucide React**
 - Native CSS motion and a tiered glass system, with refractive effects progressively enhanced where supported
 - **TypeScript 7.0.2** through Next's CLI checker and **Biome** for linting and formatting
-- **Bun 1.4.1** for package management and scripts
+- **Bun 1.4.2** for package management and scripts
 
 ## Development
+
+Use Node.js 22.12 or newer. Interactive Mermaid diagrams require Safari 17.4
+or newer, or a current Chromium/Firefox browser. Their layout and theme are
+configured explicitly to preserve the site's existing diagram appearance.
 
 ```shell
 bun install
@@ -33,13 +37,13 @@ bun test
 bun run build
 ```
 
-CI uses Bun 1.4.1 to run a frozen install, verify dependency deduplication, run
+CI uses Bun 1.4.2 to run a frozen install, verify dependency deduplication, run
 Biome and MDX checks, typecheck, execute the Bun test suite, build for production,
 and run the browser tests on every push to `main` and on pull requests. The
 route-motion browser contract can also be run locally with `bun run test:motion`.
 
-Production builds use Webpack while the 16.3 preview's Turbopack build path is
-avoided because it currently deadlocks during compilation in this project.
+Production builds use Webpack. This preserves the build path chosen after
+Turbopack compilation deadlocked in this project during the 16.3 preview.
 
 ## Production
 

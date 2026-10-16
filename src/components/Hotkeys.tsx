@@ -185,7 +185,7 @@ function Hotkeys({
     }
 
     if (hotkeyStateRef.current.pendingSequence.length === 0 && decision.nextState.pendingSequence.length > 0) {
-      playInteractionSound("scan");
+      playInteractionSound("select");
     }
 
     const shouldRestoreReadingFocus =
@@ -198,7 +198,7 @@ function Hotkeys({
     commitHotkeyState(decision.nextState);
 
     if (decision.action) {
-      playInteractionSound("pulse");
+      playInteractionSound("tap");
 
       if (decision.action === BLOG_FOCUS_HOTKEY_ACTION) {
         const isEnteringFocusMode = !isFocusMode;

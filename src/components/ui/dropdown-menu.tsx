@@ -1,4 +1,7 @@
+"use client";
+
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const dropdownMenuItemClass =
@@ -6,8 +9,46 @@ const dropdownMenuItemClass =
 const dropdownMenuRadioItemClass =
   "dropdown-menu-radio-item grid cursor-pointer grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3 px-3 text-left";
 
-function DropdownMenu({ modal = false, ...props }: MenuPrimitive.Root.Props) {
-  return <MenuPrimitive.Root data-slot="dropdown-menu-root" modal={modal} {...props} />;
+function DropdownMenu({
+  actionsRef: suppliedActionsRef,
+  modal = false,
+  onOpenChange,
+  ...props
+}: MenuPrimitive.Root.Props) {
+  const localActionsRef = useRef<MenuPrimitive.Root.Actions>(null);
+  const actionsRef = suppliedActionsRef ?? localActionsRef;
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(props.defaultOpen ?? false);
+  const isOpen = props.open ?? uncontrolledOpen;
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function closeOnDocumentScroll() {
+      actionsRef.current?.close();
+    }
+
+    document.addEventListener("scroll", closeOnDocumentScroll, { passive: true });
+
+    return () => document.removeEventListener("scroll", closeOnDocumentScroll);
+  }, [actionsRef, isOpen]);
+
+  return (
+    <MenuPrimitive.Root
+      data-slot="dropdown-menu-root"
+      actionsRef={actionsRef}
+      modal={modal}
+      onOpenChange={(open, eventDetails) => {
+        onOpenChange?.(open, eventDetails);
+
+        if (!eventDetails.isCanceled) {
+          setUncontrolledOpen(open);
+        }
+      }}
+      {...props}
+    />
+  );
 }
 
 function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
@@ -28,13 +69,14 @@ function DropdownMenuContent({
         align={align}
         alignOffset={alignOffset}
         className="isolate z-50 outline-none"
+        positionMethod="fixed"
         side={side}
         sideOffset={sideOffset}
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu"
           className={cn(
-            "dropdown-menu liquid-glass max-h-(--available-height) overflow-x-hidden overflow-y-auto rounded-2xl p-1.5 text-sm font-bold text-foreground shadow-menu outline-none",
+            "dropdown-menu liquid-glass max-h-(--available-height) overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl p-1.5 text-sm font-bold text-foreground shadow-menu outline-none",
             className,
           )}
           {...props}

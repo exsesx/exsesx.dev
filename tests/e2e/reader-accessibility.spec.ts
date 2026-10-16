@@ -3,6 +3,105 @@ import { specialties } from "../../src/lib/projects";
 
 if (!("Bun" in globalThis)) {
   test.describe("reader accessibility", () => {
+    test("scrolling past the end of a constrained dropdown keeps it open", async ({ page, browserName }) => {
+      test.skip(browserName === "webkit", "Playwright cannot dispatch wheel input in mobile WebKit");
+
+      await page.setViewportSize({ width: 390, height: 220 });
+      await page.goto("/");
+
+      const trigger = page.getByRole("button", { name: /^Theme:/ });
+      const menu = page.getByRole("menu");
+      await trigger.click();
+      await expect(menu).toBeVisible();
+      expect(await menu.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
+
+      await menu.hover();
+      await page.mouse.wheel(0, 600);
+      await expect
+        .poll(() => menu.evaluate(element => element.scrollHeight - element.clientHeight - element.scrollTop))
+        .toBeLessThan(1);
+
+      // A fresh gesture at the menu's end chains to the page unless the menu contains its overscroll.
+      await page.mouse.wheel(0, 600);
+      await page.evaluate(
+        () =>
+          new Promise<void>(resolve => {
+            let remainingFrames = 10;
+
+            function waitForFrame() {
+              remainingFrames -= 1;
+
+              if (remainingFrames === 0) {
+                resolve();
+                return;
+              }
+
+              requestAnimationFrame(waitForFrame);
+            }
+
+            requestAnimationFrame(waitForFrame);
+          }),
+      );
+
+      expect(await page.evaluate(() => window.scrollY)).toBe(0);
+      await expect(menu).toBeVisible();
+      await expect(trigger).toHaveAttribute("aria-expanded", "true");
+      await page.getByRole("menuitemcheckbox", { name: "Sound effects" }).click();
+      await expect(menu).toBeVisible();
+    });
+
+    test("CV dropdown closes when its trigger scrolls away without restoring the old scroll position", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      const trigger = page.getByRole("button", { name: "Show CV actions" });
+      const menu = page.getByRole("menu", { name: "Show CV actions" });
+      await trigger.click();
+      await expect(menu).toBeVisible();
+
+      const scrollTop = await trigger.evaluate(element => {
+        const bounds = element.getBoundingClientRect();
+
+        return window.scrollY + bounds.bottom + 20;
+      });
+      await page.evaluate(top => window.scrollTo({ top, behavior: "instant" }), scrollTop);
+
+      await expect(menu).toBeHidden();
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollTop - 1);
+
+      await trigger.scrollIntoViewIfNeeded();
+      await expect(menu).toBeHidden();
+      await trigger.press("Enter");
+      await expect(menu).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeHidden();
+      await expect(trigger).toBeFocused();
+    });
+
+    test("theme dropdown closes when reading scroll hides the blog header", async ({ page, isMobile }) => {
+      await page.goto("/blog/en/codex-agents-v2");
+
+      const trigger = page.locator('button[aria-label^="Theme:"]');
+      const menu = page.getByRole("menu");
+      await trigger.click();
+      await expect(menu).toBeVisible();
+
+      if (isMobile) {
+        await page.locator("body").dispatchEvent("touchmove");
+      } else {
+        await page.evaluate(() => window.dispatchEvent(new WheelEvent("wheel", { deltaY: 800 })));
+      }
+
+      await page.evaluate(() => window.scrollBy({ top: 800, behavior: "instant" }));
+
+      await expect(menu).toBeHidden();
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await expect(page.locator("[data-blog-passive-hidden]")).toHaveAttribute("data-blog-passive-hidden", "true");
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(799);
+    });
+
     test("reduced motion keeps every specialty visible on narrow screens", async ({ page }) => {
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.goto("/");

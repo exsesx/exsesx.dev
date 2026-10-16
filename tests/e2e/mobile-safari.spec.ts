@@ -774,17 +774,39 @@ if (!("Bun" in globalThis)) {
         "location",
       );
       await sectionLink.scrollIntoViewIfNeeded();
+
+      const revealDistance = BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND;
+      const interruptNavigation = page.evaluate(
+        distance =>
+          new Promise<{ movement: number; targetTop: number }>(resolve => {
+            const startScrollY = window.scrollY;
+
+            function interruptOnScroll() {
+              if (location.hash !== "#how-to-enable-agents-v2" || window.scrollY <= startScrollY) {
+                return;
+              }
+
+              window.removeEventListener("scroll", interruptOnScroll);
+              const before = window.scrollY;
+              const targetTop = document.getElementById("how-to-enable-agents-v2")?.getBoundingClientRect().top ?? 0;
+
+              // Interrupt a delivered scroll frame so intent and movement share its current baseline.
+              document.body.dispatchEvent(new Event("touchmove", { bubbles: true }));
+              window.scrollBy({ behavior: "instant", top: -distance });
+              resolve({ movement: window.scrollY - before, targetTop });
+            }
+
+            window.addEventListener("scroll", interruptOnScroll);
+          }),
+        revealDistance,
+      );
+
       await sectionLink.click();
       await expect(page).toHaveURL(/#how-to-enable-agents-v2$/);
 
-      // New touch input interrupts the in-flight TOC navigation. Its upward
-      // movement is immediately interpreted by the normal passive header.
-      // Account for a downward animation frame that may land before the
-      // interruption and consume the direction-change deadband.
-      await scrollWithTouchIntent(
-        page,
-        -(BLOG_HEADER_TOUCH_REVEAL_DISTANCE + BLOG_HEADER_TOUCH_DIRECTION_CHANGE_DEADBAND),
-      );
+      const interruption = await interruptNavigation;
+      expect(interruption.targetTop).toBeGreaterThan(180);
+      expect(interruption.movement).toBeCloseTo(-revealDistance, 0);
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
     });
 
@@ -795,7 +817,14 @@ if (!("Bun" in globalThis)) {
 
       const tocShell = page.locator(".blog-toc-mobile-shell");
       const trigger = page.getByTestId("mobile-toc-trigger");
+      const target = page.locator("#how-to-enable-agents-v2");
+      await expect(target).toBeVisible();
+      await expect.poll(() => target.evaluate(element => element.getBoundingClientRect().top)).toBeLessThan(180);
       await waitForScrollToSettle(page);
+
+      const targetTop = await target.evaluate(element => element.getBoundingClientRect().top);
+      expect(targetTop).toBeGreaterThanOrEqual(0);
+      expect(targetTop).toBeLessThan(180);
 
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");
       await expect(tocShell).not.toHaveAttribute("data-toc-launcher-entering", "true");
@@ -876,10 +905,12 @@ if (!("Bun" in globalThis)) {
       page,
     }) => {
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.goto(`${BLOG_ARTICLE_PATH}#how-to-enable-agents-v2`);
+      await page.goto(BLOG_ARTICLE_PATH);
 
       const tocShell = page.locator(".blog-toc-mobile-shell");
       const trigger = page.getByTestId("mobile-toc-trigger");
+      // Set up docking explicitly; initial hash restoration is covered separately.
+      await page.locator("#how-to-enable-agents-v2").scrollIntoViewIfNeeded();
       await waitForScrollToSettle(page);
 
       await expect(tocShell).toHaveAttribute("data-toc-launcher-state", "docked");

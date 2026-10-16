@@ -79,7 +79,7 @@ function hideInjectedSvgSemantics(svg: string) {
 }
 
 function runCameraCommand(command: () => void) {
-  playInteractionSound("press");
+  playInteractionSound("tap");
   command();
 }
 
@@ -120,7 +120,7 @@ function MermaidDiagramViewForSource({
         (isReset && camera.isZoomed));
 
     if (!event.repeat && isEnabledCommand) {
-      playInteractionSound("press");
+      playInteractionSound("tap");
     }
 
     camera.handleKeyDown(event);

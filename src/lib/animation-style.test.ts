@@ -126,6 +126,13 @@ describe("semantic animation styles", () => {
     expect(css).not.toContain("transition-duration: 380ms");
   });
 
+  test("restores load-time fragment positions before enabling smooth scrolling", async () => {
+    const css = await readGlobalsCss();
+
+    expect(css.match(/scroll-behavior:\s*smooth/g)).toHaveLength(1);
+    expect(ruleBody(css, "html[data-smooth-scroll]")).toContain("scroll-behavior: smooth");
+  });
+
   test("keeps the Safari chrome sample paintless and eligible only on coarse touch WebKit", async () => {
     const css = await readGlobalsCss();
     const sampleSelector = ".safari-chrome-sample";

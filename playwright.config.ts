@@ -14,7 +14,7 @@ export default defineConfig({
   workers: IS_CI ? 2 : "50%",
   forbidOnly: IS_CI,
   reporter: "line",
-  outputDir: join(tmpdir(), "exsesx-dev-playwright-results"),
+  outputDir: join(process.env.RUNNER_TEMP ?? tmpdir(), "exsesx-dev-playwright-results"),
   use: {
     baseURL: BASE_URL,
     trace: "retain-on-failure",

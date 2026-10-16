@@ -38,7 +38,7 @@ export default function InteractionSounds() {
         return;
       }
 
-      playInteractionSound(resolveInteractionSound(control.getAttribute("data-cuelume-press"), "press"));
+      playInteractionSound(resolveInteractionSound(control.getAttribute("data-cuelume-press"), "tap"));
     }
 
     document.addEventListener("click", handleKeyboardActivation, true);

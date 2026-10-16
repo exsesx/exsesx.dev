@@ -71,6 +71,7 @@ describe("Mermaid theme configuration", () => {
 
     expect(config).toMatchObject({
       fontFamily: "MonoLisaCode, ui-monospace, monospace",
+      layout: "dagre",
       look: "classic",
       securityLevel: "strict",
       startOnLoad: false,

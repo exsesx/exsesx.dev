@@ -162,6 +162,7 @@ export function getMermaidConfig(palette: MermaidPalette): MermaidConfig {
     },
     fontFamily: palette.fontFamily,
     htmlLabels: true,
+    layout: "dagre",
     look: "classic",
     securityLevel: "strict",
     startOnLoad: false,
