@@ -12,12 +12,13 @@ Built with Next.js 16 and React 19, deployed on [Vercel](https://vercel.com).
 - Native CSS motion and a tiered glass system, with refractive effects progressively enhanced where supported
 - **TypeScript 7.0.2** through Next's CLI checker and **Biome** for linting and formatting
 - **Bun 1.4.2** for package management and scripts
+- **Pele 1.6** for Mermaid flowcharts with CSS themes and responsive layouts
 
 ## Development
 
-Use Node.js 22.12 or newer. Interactive Mermaid diagrams require Safari 17.4
-or newer, or a current Chromium/Firefox browser. Their layout and theme are
-configured explicitly to preserve the site's existing diagram appearance.
+Use Node.js 22.12 or newer. Blog diagrams use Mermaid flowchart syntax rendered
+by Pele. Their colors follow the site's CSS theme, and their layouts adapt to
+the available width while retaining the custom zoom and pan controls.
 
 ```shell
 bun install

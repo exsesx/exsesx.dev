@@ -44,7 +44,7 @@ export default defineConfig({
     },
     {
       name: "mobile-webkit-iphone-17-pro",
-      testMatch: [MOBILE_SAFARI_SPEC, /reader-accessibility\.spec\.ts/],
+      testMatch: [MOBILE_SAFARI_SPEC, /reader-accessibility\.spec\.ts/, /diagram-rendering\.spec\.ts/],
       use: {
         ...devices["iPhone 17 Pro"],
       },

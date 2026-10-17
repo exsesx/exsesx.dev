@@ -1,19 +1,20 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
-import type { RenderResult } from "mermaid";
-import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useId, useState, useSyncExternalStore } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  type Ref,
+  useCallback,
+  useEffect,
+  useId,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { BLOG_UI } from "@/lib/blog";
 import { playInteractionSound } from "@/lib/interaction-sounds";
 import { MAX_MERMAID_ZOOM, MIN_MERMAID_ZOOM } from "@/lib/mermaid-camera";
-import {
-  createMermaidPalette,
-  getMermaidAccessibleDescription,
-  getMermaidAccessibleLabel,
-  getMermaidConfig,
-  readMermaidThemeTokens,
-} from "@/lib/mermaid-theme";
+import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "@/lib/mermaid-theme";
 import { getServerThemeSnapshot, getThemeSnapshot, parseThemeSnapshot, subscribeToTheme } from "@/lib/theme";
 import { useBlogLocale } from "./BlogLocaleContext";
 import { useMermaidCamera } from "./useMermaidCamera";
@@ -31,6 +32,7 @@ type MermaidDiagramViewProps = {
   accessibleDescription: string | null;
   accessibleLabel: string;
   isRendering: boolean;
+  containerRef?: Ref<HTMLElement>;
   reactId: string;
   resolvedTheme: "light" | "dark";
   source: string;
@@ -47,37 +49,6 @@ type MermaidToolbarProps = {
 
 const ZOOM_BUTTON_STEP = 0.25;
 
-let mermaidRenderQueue: Promise<void> = Promise.resolve();
-let mermaidRenderAttempt = 0;
-
-async function renderMermaid(source: string, id: string, resolvedTheme: "light" | "dark"): Promise<RenderResult> {
-  const attempt = ++mermaidRenderAttempt;
-  const renderTask = mermaidRenderQueue.then(async () => {
-    const { default: mermaid } = await import("mermaid");
-    const palette = createMermaidPalette(readMermaidThemeTokens());
-    const primaryFontFamily = palette.fontFamily.split(",")[0]?.trim();
-
-    if (primaryFontFamily) {
-      await document.fonts.load(`700 1em ${primaryFontFamily}`);
-    }
-
-    mermaid.initialize(getMermaidConfig(palette));
-
-    return mermaid.render(`${id}-${resolvedTheme}-${attempt}`, source);
-  });
-
-  mermaidRenderQueue = renderTask.then(
-    () => undefined,
-    () => undefined,
-  );
-
-  return renderTask;
-}
-
-function hideInjectedSvgSemantics(svg: string) {
-  return svg.replace("<svg ", '<svg aria-hidden="true" focusable="false" ');
-}
-
 function runCameraCommand(command: () => void) {
   playInteractionSound("tap");
   command();
@@ -90,6 +61,7 @@ export function MermaidDiagramView(props: MermaidDiagramViewProps) {
 function MermaidDiagramViewForSource({
   accessibleDescription,
   accessibleLabel,
+  containerRef,
   isRendering,
   reactId,
   resolvedTheme,
@@ -128,6 +100,7 @@ function MermaidDiagramViewForSource({
 
   return (
     <figure
+      ref={containerRef}
       className="blog-mermaid"
       aria-busy={isBusy}
       data-state={visualState}
@@ -166,7 +139,7 @@ function MermaidDiagramViewForSource({
             role="img"
             //biome-ignore lint/a11y/noNoninteractiveTabindex: The SVG camera is keyboard-operable while this labelled image viewport is focused.
             tabIndex={0}
-            //biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid renders trusted local MDX with strict security enabled.
+            //biome-ignore lint/security/noDangerouslySetInnerHtml: Pele escapes labels from trusted local MDX and disables links and images.
             dangerouslySetInnerHTML={{ __html: state.svg }}
           />
 
@@ -236,6 +209,7 @@ function MermaidToolbar({ camera, ui }: MermaidToolbarProps) {
 
 export default function MermaidDiagram({ source }: MermaidDiagramProps) {
   const reactId = useId();
+  const [maxWidth, setMaxWidth] = useState<number | null>(null);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const accessibleLabel = getMermaidAccessibleLabel(source);
@@ -243,7 +217,30 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
   const [state, setState] = useState<MermaidState>({ status: "loading" });
   const [isRendering, setIsRendering] = useState(true);
 
+  const containerRef = useCallback((container: HTMLElement | null) => {
+    if (!container) {
+      return;
+    }
+
+    const observer = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width;
+
+      if (width && width > 0) {
+        setMaxWidth(Math.floor(width));
+      }
+    });
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
+    if (maxWidth === null) {
+      return;
+    }
+
+    const layoutWidth = maxWidth;
     let cancelled = false;
 
     setIsRendering(true);
@@ -251,10 +248,26 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     async function renderDiagram() {
       try {
         const id = `mermaid-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-        const { svg } = await renderMermaid(source, id, resolvedTheme);
+        const { createPeleTextMeasurer, renderPeleDiagram } = await import("@/lib/pele-renderer");
+
+        await Promise.all(
+          ["700", "800", "italic 700", "italic 800"].map(weight =>
+            document.fonts.load(`${weight} 16px MonoLisaCode`, source),
+          ),
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        const svg = renderPeleDiagram(source, {
+          idPrefix: id,
+          maxWidth: layoutWidth,
+          measurer: createPeleTextMeasurer(),
+        });
 
         if (!cancelled) {
-          setState({ status: "ready", renderedSource: source, svg: hideInjectedSvgSemantics(svg) });
+          setState({ status: "ready", renderedSource: source, svg });
           setIsRendering(false);
         }
       } catch (error) {
@@ -274,11 +287,12 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     return () => {
       cancelled = true;
     };
-  }, [reactId, resolvedTheme, source]);
+  }, [maxWidth, reactId, source]);
 
   return (
     <MermaidDiagramView
       accessibleDescription={accessibleDescription}
+      containerRef={containerRef}
       accessibleLabel={accessibleLabel}
       isRendering={isRendering}
       reactId={reactId}

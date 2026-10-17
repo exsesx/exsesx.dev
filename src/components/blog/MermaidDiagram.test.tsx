@@ -3,13 +3,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "@/lib/mermaid-theme";
 import MermaidDiagram, { MermaidDiagramView } from "./MermaidDiagram";
 
-const mermaidDiagramSourceUrl = new URL("./MermaidDiagram.tsx", import.meta.url);
-const mermaidCameraHookUrl = new URL("./useMermaidCamera.ts", import.meta.url);
 const globalsCssUrl = new URL("../../styles/globals.css", import.meta.url);
 
 describe("MermaidDiagram", () => {
   test("reserves a universal diagram viewport with an inert loading skeleton", async () => {
-    const markup = renderToStaticMarkup(<MermaidDiagram source={"sequenceDiagram\n  Browser->>Server: Request"} />);
+    const markup = renderToStaticMarkup(<MermaidDiagram source={"flowchart TD\n  Browser --> Server"} />);
     const css = await Bun.file(globalsCssUrl).text();
 
     expect(markup).toContain('data-state="loading"');
@@ -97,16 +95,46 @@ describe("MermaidDiagram", () => {
     expect(getMermaidAccessibleDescription("flowchart TD\n  root --> child")).toBeNull();
   });
 
-  test("keeps the previous SVG while a loaded mono font theme is rendered", async () => {
-    const source = await Bun.file(mermaidDiagramSourceUrl).text();
-    const cameraSource = await Bun.file(mermaidCameraHookUrl).text();
+  test("keeps the loaded diagram and controls visible while layout is updated", () => {
+    const source = "flowchart TD\n  root --> child";
+    const markup = renderToStaticMarkup(
+      <MermaidDiagramView
+        accessibleDescription={null}
+        accessibleLabel="Task hierarchy"
+        isRendering={true}
+        reactId="diagram"
+        resolvedTheme="dark"
+        source={source}
+        state={{ status: "ready", renderedSource: source, svg: '<svg data-layout="previous" />' }}
+      />,
+    );
 
-    expect(source).toContain("await document.fonts.load");
-    expect(source).toContain("const [isRendering, setIsRendering] = useState(true)");
-    expect(source).toContain("useMermaidCamera({ isReady, renderedSvg");
-    expect(cameraSource).toContain("rebaseViewBox(previousBase, previousCamera, parsedViewBox)");
-    expect(source).toContain("const renderedSvg = isReady ? state.svg : null");
-    expect(source).toContain("data-state={visualState}");
-    expect(source).not.toContain('setState({ status: "loading" });');
+    expect(markup).toContain('data-state="updating"');
+    expect(markup).toContain('aria-busy="true"');
+    expect(markup).toContain('data-layout="previous"');
+    expect(markup).toContain('data-mermaid-control="zoom-in"');
+    expect(markup).not.toContain("blog-mermaid-skeleton");
+  });
+
+  test("shows the source and a readable error when rendering fails", () => {
+    const source = "flowchart TD\n broken[";
+    const markup = renderToStaticMarkup(
+      <MermaidDiagramView
+        accessibleDescription={null}
+        accessibleLabel="Diagram"
+        isRendering={false}
+        reactId="broken"
+        resolvedTheme="light"
+        source={source}
+        state={{ status: "error", renderedSource: source, message: "Unclosed node label" }}
+      />,
+    );
+
+    expect(markup).toContain('data-state="error"');
+    expect(markup).toContain('aria-busy="false"');
+    expect(markup).toContain("Unclosed node label");
+    expect(markup).toContain("broken[");
+    expect(markup).toContain("blog-mermaid-source");
+    expect(markup).not.toContain('role="toolbar"');
   });
 });
