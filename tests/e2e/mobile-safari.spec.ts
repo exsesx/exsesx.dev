@@ -552,7 +552,7 @@ if (!("Bun" in globalThis)) {
       await expect(root).not.toHaveAttribute("data-blog-passive-hidden", "true");
     });
 
-    test("Mermaid reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
+    test("Pele reveals a compact reset chip after pinch zoom in iPhone Safari", async ({ page }) => {
       await page.goto(MERMAID_ARTICLE_PATH);
 
       const diagram = page.locator(".blog-mermaid").first();
@@ -564,6 +564,8 @@ if (!("Bun" in globalThis)) {
       await expect(viewport).toHaveRole("img");
       await expect(viewport).toHaveAccessibleName("Codex local memory pipeline");
       await expect(svg).toBeVisible();
+      await expect(svg).toHaveClass(/\bpele-flowchart\b/);
+      await expect(svg.locator(".pele-node")).toHaveCount(6);
       await expect(toolbar.getByRole("button", { name: "Zoom in" })).toBeEnabled();
       await expect(toolbar.getByRole("button")).toHaveCount(2);
       await expect(toolbar).toHaveAttribute("data-zoomed", "false");

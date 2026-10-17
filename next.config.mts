@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 import { buildContentSecurityPolicy } from "./src/lib/content-security-policy.mts";
@@ -8,7 +9,7 @@ const withMDX = createMDX({
     rehypePlugins: [
       "rehype-slug",
       ["rehype-autolink-headings", { behavior: "wrap", properties: { className: ["heading-anchor"] } }],
-      ["rehype-mermaid", { strategy: "pre-mermaid" }],
+      join(import.meta.dirname, "src/lib/rehype-diagrams.mts"),
       [
         "rehype-pretty-code",
         {

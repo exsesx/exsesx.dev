@@ -3293,6 +3293,20 @@ code[data-theme] span {
 }
 
 .blog-mermaid-svg {
+  --pele-bg: var(--background);
+  --pele-fg: var(--foreground);
+  --pele-muted: var(--muted-foreground);
+  --pele-line: var(--muted-foreground);
+  --pele-surface: color-mix(in srgb, color(from var(--card) srgb r g b / 1) 80%, var(--background));
+  --pele-surface-alt: color-mix(in oklab, var(--foreground) 7%, var(--background));
+  --pele-border: color-mix(in oklab, var(--accent) 42%, var(--pele-surface));
+  --pele-accent: var(--accent);
+  --pele-font: var(--font-mono);
+  --pele-font-mono: var(--font-mono);
+  --pele-title-weight: 800;
+  --pele-heading-weight: 800;
+  --pele-bold-weight: 800;
+  --pele-radius: 10px;
   position: relative;
   border-radius: calc(var(--blog-rich-block-radius) - 0.35rem);
   outline: none;
@@ -3327,6 +3341,59 @@ code[data-theme] span {
   margin: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+.blog-mermaid-svg .pele text {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.blog-mermaid-svg .pele text[font-weight],
+.blog-mermaid-svg .pele-cluster-label {
+  font-weight: 800;
+}
+
+.blog-mermaid-svg .pele-node > :is(rect, polygon, circle, ellipse, path) {
+  stroke-width: 1.25px;
+}
+
+.blog-mermaid-svg .pele-node > rect {
+  rx: 10px;
+  ry: 10px;
+}
+
+.blog-mermaid-svg .pele-edge > path:not(.pele-marker) {
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  opacity: 0.86;
+}
+
+.blog-mermaid-svg .pele-marker {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.blog-mermaid-svg .pele-edge-label > rect {
+  rx: 6px;
+  ry: 6px;
+  opacity: 0.96;
+}
+
+.blog-mermaid-svg .pele-cluster > rect {
+  rx: 14px;
+  ry: 14px;
+  stroke: var(--border);
+  stroke-width: 1px;
+  stroke-dasharray: 4 5;
+}
+
+.blog-mermaid-svg .pele-node.focus > :is(rect, polygon, circle, ellipse, path) {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.blog-mermaid-svg .pele-node.focus .pele-label {
+  fill: var(--accent-foreground);
 }
 
 .blog-mermaid-toolbar {
