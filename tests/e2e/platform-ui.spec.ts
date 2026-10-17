@@ -286,7 +286,7 @@ if (!("Bun" in globalThis)) {
       await expectPageToFitViewport(page);
     });
 
-    test("Mermaid camera preserves scrolling and supports pointer, keyboard, and touch gestures", async ({
+    test("Pele camera preserves scrolling and supports pointer, keyboard, and touch gestures", async ({
       page,
       isMobile,
     }) => {
@@ -301,6 +301,7 @@ if (!("Bun" in globalThis)) {
       const svg = viewport.locator("svg");
 
       await expect(diagram).toHaveAttribute("data-state", "ready", { timeout: 15_000 });
+      await expect(svg).toHaveClass(/\bpele-flowchart\b/);
       await expect(viewport).toBeVisible();
       await expect(zoomIn).toBeEnabled();
       await expect(toolbar.getByRole("button")).toHaveCount(isMobile ? 2 : 3);
