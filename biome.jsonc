@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
   "files": {
     "includes": ["**", "!!**/.next", "!!**/.agents", "!!bun.lock", "!!public"]
   },
@@ -37,6 +37,17 @@
   "css": {
     "parser": {
       "tailwindDirectives": true
+    }
+  },
+  // Biome 2.6 added Markdown and YAML formatters; remark owns MDX and docs keep their hand layout.
+  "markdown": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "yaml": {
+    "formatter": {
+      "enabled": false
     }
   },
   "linter": {

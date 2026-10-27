@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { createPatchedFetcher, NEXT_PATCH_SYMBOL } from "next/dist/server/lib/patch-fetch";
+import { createPatchedFetcher } from "next/dist/server/lib/patch-fetch";
+import { NEXT_PATCH_SYMBOL } from "next/dist/server/lib/patch-fetch-symbol";
 import { GET } from "./route";
 
 const pdf = "%PDF-1.7\nfixture";
