@@ -39,10 +39,9 @@
       "tailwindDirectives": true
     }
   },
-  // Biome 2.6's Markdown formatter drops the space before inline code in table link text.
   "markdown": {
     "formatter": {
-      "enabled": false
+      "formatEmbeds": false
     }
   },
   "yaml": {

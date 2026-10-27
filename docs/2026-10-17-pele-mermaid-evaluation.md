@@ -44,14 +44,14 @@ touch support. Sources:
 
 ## What Pele changes
 
-| Area | Fit and tradeoff |
-| --- | --- |
-| Theme colors | Bind existing palette values to `--pele-bg`, `--pele-fg`, `--pele-muted`, `--pele-line`, `--pele-surface`, `--pele-surface-alt`, `--pele-border`, and `--pele-accent`. Color changes then apply through CSS without rendering SVG again. |
-| Font | `--pele-font` sets the displayed font; layout must measure that same font. Font changes still need a render. |
-| Node styling | Pele exposes classes such as `.pele-node` and `.pele-label`, plus `data-id`. Existing Mermaid-specific selectors need adaptation. Inline `style`/`classDef` colors remain fixed across themes. |
-| Bundle | `pele/core` plus `pele/diagrams/flowchart` fits the present corpus. The main `pele` entry includes every diagram type; `pele/lazy` loads types asynchronously. |
-| Rendering | `render(source, options)` synchronously returns SVG, dimensions, type, and links. `mount()` also manages container resizing, font loading, errors, and optional zoom. |
-| Narrow screens | With `maxWidth`, layouts can wrap/rearrange. Supported horizontal diagrams can become vertical below 640px; `autoDirection: false` preserves the authored direction. |
+| Area           | Fit and tradeoff                                                                                                                                                                                                                         |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Theme colors   | Bind existing palette values to `--pele-bg`, `--pele-fg`, `--pele-muted`, `--pele-line`, `--pele-surface`, `--pele-surface-alt`, `--pele-border`, and `--pele-accent`. Color changes then apply through CSS without rendering SVG again. |
+| Font           | `--pele-font` sets the displayed font; layout must measure that same font. Font changes still need a render.                                                                                                                             |
+| Node styling   | Pele exposes classes such as `.pele-node` and `.pele-label`, plus `data-id`. Existing Mermaid-specific selectors need adaptation. Inline `style`/`classDef` colors remain fixed across themes.                                           |
+| Bundle         | `pele/core` plus `pele/diagrams/flowchart` fits the present corpus. The main `pele` entry includes every diagram type; `pele/lazy` loads types asynchronously.                                                                           |
+| Rendering      | `render(source, options)` synchronously returns SVG, dimensions, type, and links. `mount()` also manages container resizing, font loading, errors, and optional zoom.                                                                    |
+| Narrow screens | With `maxWidth`, layouts can wrap/rearrange. Supported horizontal diagrams can become vertical below 640px; `autoDirection: false` preserves the authored direction.                                                                     |
 
 Sources: [theming](https://pele.run/theming), [API](https://pele.run/api),
 [entry-point exports](https://github.com/obsidianmd/pele/blob/main/package.json).

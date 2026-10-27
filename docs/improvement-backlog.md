@@ -44,7 +44,7 @@ Each item is independent. Read the **invariants** section before touching anythi
 
 ## Motion / view transitions
 
-- **Adjacent-project morph polish.** Clicking *Next* on a detail page already morphs the bottom
+- **Adjacent-project morph polish.** Clicking _Next_ on a detail page already morphs the bottom
   compact card into the next hero (pairing falls out of `project-media-${id}` naming). Verify the
   long-travel morph on slower machines; consider shortening `--duration-move` for that path.
 - **List-identity VTs** are intentionally absent (the project lists never reorder). If filtering or

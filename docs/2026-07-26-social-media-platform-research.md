@@ -262,12 +262,12 @@ This is a proposed experiment, not an official platform prescription:
 
 Suggested scorecard:
 
-| Outcome | LinkedIn | X | Site analytics |
-| --- | --- | --- | --- |
-| Discovery | Impressions, members reached, out-of-network share | Impressions, profile visits, follows | New users |
-| Conversation | Comments, reposts, saves, sends | Replies, reposts, likes | — |
-| Traffic | UTM campaign comparison | Link clicks | Sessions by UTM |
-| Quality | Viewer role/industry where available | Engagement rate | Engaged time, scroll/completion, return visits |
+| Outcome      | LinkedIn                                           | X                                    | Site analytics                                 |
+| ------------ | -------------------------------------------------- | ------------------------------------ | ---------------------------------------------- |
+| Discovery    | Impressions, members reached, out-of-network share | Impressions, profile visits, follows | New users                                      |
+| Conversation | Comments, reposts, saves, sends                    | Replies, reposts, likes              | —                                              |
+| Traffic      | UTM campaign comparison                            | Link clicks                          | Sessions by UTM                                |
+| Quality      | Viewer role/industry where available               | Engagement rate                      | Engaged time, scroll/completion, return visits |
 
 After four weeks, keep the smallest cadence that reliably produces qualified
 visits and genuine replies. Scale the winning format before increasing

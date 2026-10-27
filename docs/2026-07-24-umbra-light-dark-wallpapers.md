@@ -114,10 +114,10 @@ Source and attribution:
 Local inspection with macOS `sips` found that the supplied files have the same names,
 dimensions, HEIC format, and sRGB profile as expected:
 
-| Local file | Dimensions | Format | Profile |
-| --- | ---: | --- | --- |
-| `mono_light_distortion_1.heic` | 6016 × 3388 | HEIC | sRGB IEC61966-2.1 |
-| `mono_dark_distortion_1.heic` | 6016 × 3388 | HEIC | sRGB IEC61966-2.1 |
+| Local file                     |  Dimensions | Format | Profile           |
+| ------------------------------ | ----------: | ------ | ----------------- |
+| `mono_light_distortion_1.heic` | 6016 × 3388 | HEIC   | sRGB IEC61966-2.1 |
+| `mono_dark_distortion_1.heic`  | 6016 × 3388 | HEIC   | sRGB IEC61966-2.1 |
 
 The local bytes were not compared with a fresh official download, so this is strong
 filename/metadata consistency, not a byte-identity claim.

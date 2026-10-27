@@ -499,25 +499,25 @@ the full Simulator matrix and the real-device preview check.
 
 ## Failed approaches and what they taught us
 
-| Approach | Result | Reason or current interpretation |
-| --- | --- | --- |
-| Depend on `theme-color` | Did not control the target Safari 26 behavior | Fixed-container edge sampling was the active path |
-| Cookie-driven SSR theme | Correct first load, wrong architecture | Forced static routes into dynamic rendering and did not solve live changes |
-| Paint only `html` and `body` | Bottom worked, top did not | A fixed header won the top edge |
-| Low or equal stacking sampler | Unreliable | WebKit takes one frontmost hit |
-| Negative z-index sampler | Not viable | Current candidate classification can reject it |
-| Pseudo-element or absolute-child source | Did not become the selected fixed candidate | The fixed-edge walk requires fixed or sticky renderers |
-| Background gradient | No dependable tint | Direct color extraction reads `background-color` |
-| `opacity: 0` or `visibility: hidden` | Not viable in pinned source | Explicit hidden and transparency rejection |
-| `display: none` | Not viable | No renderer exists to hit |
-| Empty `clip-path` | Not viable | Box hit-testing rejects a clip that excludes the probe |
-| Move the whole box offscreen | Not viable | The box no longer contains the inset midpoint |
-| 6px or 10px sample | Unreliable | Loses the direct computed-color path |
-| 44px header band | Tinted correctly but looked wrong | It visibly covered the article edge |
-| Timed 11px flash | Lost tint after later recomputes | The eligible box was absent when WebKit sampled again |
-| Drawer-lifecycle hold | Correct but visibly intrusive | The opaque band stayed present during the drawer lifecycle |
-| Transparent or neutral backdrop filter | Could retain the wrong material | Non-solid edge output did not force a clean transparent state |
-| Empty text-clipped 11px box | Works | Computed style stays opaque while paint has no glyph mask |
+| Approach                                | Result                                        | Reason or current interpretation                                           |
+| --------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------- |
+| Depend on `theme-color`                 | Did not control the target Safari 26 behavior | Fixed-container edge sampling was the active path                          |
+| Cookie-driven SSR theme                 | Correct first load, wrong architecture        | Forced static routes into dynamic rendering and did not solve live changes |
+| Paint only `html` and `body`            | Bottom worked, top did not                    | A fixed header won the top edge                                            |
+| Low or equal stacking sampler           | Unreliable                                    | WebKit takes one frontmost hit                                             |
+| Negative z-index sampler                | Not viable                                    | Current candidate classification can reject it                             |
+| Pseudo-element or absolute-child source | Did not become the selected fixed candidate   | The fixed-edge walk requires fixed or sticky renderers                     |
+| Background gradient                     | No dependable tint                            | Direct color extraction reads `background-color`                           |
+| `opacity: 0` or `visibility: hidden`    | Not viable in pinned source                   | Explicit hidden and transparency rejection                                 |
+| `display: none`                         | Not viable                                    | No renderer exists to hit                                                  |
+| Empty `clip-path`                       | Not viable                                    | Box hit-testing rejects a clip that excludes the probe                     |
+| Move the whole box offscreen            | Not viable                                    | The box no longer contains the inset midpoint                              |
+| 6px or 10px sample                      | Unreliable                                    | Loses the direct computed-color path                                       |
+| 44px header band                        | Tinted correctly but looked wrong             | It visibly covered the article edge                                        |
+| Timed 11px flash                        | Lost tint after later recomputes              | The eligible box was absent when WebKit sampled again                      |
+| Drawer-lifecycle hold                   | Correct but visibly intrusive                 | The opaque band stayed present during the drawer lifecycle                 |
+| Transparent or neutral backdrop filter  | Could retain the wrong material               | Non-solid edge output did not force a clean transparent state              |
+| Empty text-clipped 11px box             | Works                                         | Computed style stays opaque while paint has no glyph mask                  |
 
 Two source-plausible alternatives remain unneeded:
 
