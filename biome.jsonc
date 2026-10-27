@@ -39,7 +39,7 @@
       "tailwindDirectives": true
     }
   },
-  // Biome 2.6 added Markdown and YAML formatters; remark owns MDX and docs keep their hand layout.
+  // Biome 2.6's Markdown formatter drops the space before inline code in table link text.
   "markdown": {
     "formatter": {
       "enabled": false
@@ -47,7 +47,7 @@
   },
   "yaml": {
     "formatter": {
-      "enabled": false
+      "bracketSpacing": false
     }
   },
   "linter": {
