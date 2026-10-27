@@ -177,6 +177,9 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: var(--font-features);
   text-rendering: optimizeLegibility;
+  /* Full-bleed hero art (the ASCII field) spans 100vw, which includes the
+     scrollbar gutter; clip it without creating a scroll container. */
+  overflow-x: clip;
 }
 
 h1,
@@ -341,6 +344,28 @@ select {
 
 .dark .signal-traces {
   opacity: 0.24;
+}
+
+/*
+ * Homepage hero ASCII field (AsciiField.tsx). The canvas reads these tokens:
+ * base glyphs in ink, energized glyphs in the accent signal. The mask fades the
+ * field out under the header, toward the page edges and into the next section.
+ */
+.ascii-field {
+  --ascii-base: var(--foreground);
+  --ascii-glow: var(--accent);
+  --ascii-base-alpha: 0.13;
+  --ascii-glow-alpha: 1;
+  font-family: var(--font-mono);
+  mask-image:
+    linear-gradient(to bottom, transparent, black 18%, black 74%, transparent),
+    linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  mask-composite: intersect;
+}
+
+.dark .ascii-field {
+  --ascii-base-alpha: 0.15;
+  --ascii-glow-alpha: 0.95;
 }
 
 .background-vignette {

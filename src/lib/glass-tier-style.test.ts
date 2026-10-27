@@ -56,8 +56,8 @@ describe("glass tier contracts", () => {
       Bun.file(hotkeysUrl).text(),
     ]);
 
-    expect(home).toMatch(/motion-rise glass-frost mb-6/);
-    expect(home).toMatch(/<aside className="motion-rise motion-delay-2 surface-panel hero-surface-panel/);
+    expect(home).toMatch(/motion-rise glass-frost mb-8/);
+    expect(home).toMatch(/<aside\s+className="motion-rise motion-delay-2 surface-panel hero-surface-panel/);
     expect(home).toMatch(/snapshot-inner-card surface-panel/);
     expect(detail).toMatch(/motion-rise motion-delay-1 surface-panel hero-surface-panel/);
     expect(projects).toMatch(/motion-rise motion-delay-1[^"]*glass-frost/);
