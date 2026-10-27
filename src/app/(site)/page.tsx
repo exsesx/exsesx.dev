@@ -1,4 +1,15 @@
-import { Activity, ArrowRight, BrainCircuit, BriefcaseBusiness, Send, Sparkles, Terminal, Wrench } from "lucide-react";
+import {
+  ArrowRight,
+  Bot,
+  BriefcaseBusiness,
+  FolderGit2,
+  Rocket,
+  ScanSearch,
+  Search,
+  Send,
+  Sparkles,
+  Workflow,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,8 +21,6 @@ import ProjectCard from "@/components/ProjectCard";
 import PulseTrace from "@/components/PulseTrace";
 import SnapshotSpecialtyRail from "@/components/SnapshotSpecialtyRail";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { CardContent, CardHeader, CardTitle, Card as UiCard } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { createPageMetadata } from "@/lib/metadata";
 import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
 import { projects, specialties } from "@/lib/projects";
@@ -27,44 +36,59 @@ export const metadata: Metadata = createPageMetadata({
 const experienceHighlights = [
   {
     company: "ControlUp",
-    role: "Senior Full Stack Engineer / AI Engineer",
+    role: "Senior Full-Stack / AI Engineer",
+    period: "2026",
     detail:
-      "Building production AI assistant infrastructure with MCP servers, tool orchestration, human-in-the-loop flows, chat history, and full-stack LLM integrations.",
+      "Atlas, the AI assistant for enterprise IT operations at a $100M+ ARR company. Owned MCP architecture with a shared transport and authentication core, and shipped parallel, approval-gated actions for IT admins.",
   },
   {
     company: "Quicklizard",
-    role: "Senior Software Engineer",
+    role: "Senior Full-Stack Developer",
+    period: "2025 – 2026",
     detail:
-      "Delivered pricing and commerce features across Next.js, Go services, Redis, RabbitMQ, PostgreSQL, Kafka, AWS, and observability tooling.",
+      "Owned pricing dashboards, localization, authentication, and bulk overrides from scoping through feature-flagged rollout. Built the Go backend and Next.js frontend for an Operations Dashboard.",
+  },
+  {
+    company: "Tso Chinese",
+    role: "Solution architecture and full-stack delivery",
+    period: "2021 – 2026",
+    detail:
+      "Led Tso 3.0's technical direction and designed its microservices architecture on Kubernetes with GraphQL gateways. It went live in September 2026 on that architecture.",
   },
   {
     company: "S-PRO",
     role: "Lead Software Engineer",
+    period: "2018 – 2025",
     detail:
-      "Led frontend engineers, supported 17+ projects, contributed to discovery, hiring, estimations, workshops, and system architecture.",
+      "Managed and mentored up to 10 engineers, guided 17+ projects, and ran TypeScript and backend workshops while supporting hiring, discovery, and presales.",
   },
 ];
 
-const workingPrinciples = [
+/* How work moves from a question to production, with agents doing the typing and me owning the result. */
+const agentWorkflow = [
   {
-    title: "Practical AI",
-    detail: "LLM features should be observable, debuggable, and useful inside real product workflows.",
-    icon: BrainCircuit,
+    step: "01",
+    title: "Research",
+    detail: "Frame the problem with ChatGPT research and pull design context straight from Figma through MCP.",
+    icon: Search,
   },
   {
-    title: "Product gravity",
-    detail: "The point is not just clean code. It is helping people learn, work, decide, ship, and operate.",
-    icon: Activity,
+    step: "02",
+    title: "Build with agents",
+    detail: "Ship full-stack changes with Claude Code and Codex, steering architecture and reviewing every diff.",
+    icon: Bot,
   },
   {
-    title: "Tooling taste",
-    detail: "Fast feedback loops, developer experience, automation, and terminal-native workflows matter.",
-    icon: Terminal,
+    step: "03",
+    title: "Verify",
+    detail: "Check results by hand and with browser automation, network traces, Playwright, and Langfuse.",
+    icon: ScanSearch,
   },
   {
-    title: "Maintainable systems",
-    detail: "Clear ownership, simple abstractions, and production reliability beat cleverness for its own sake.",
-    icon: Wrench,
+    step: "04",
+    title: "Ship and observe",
+    detail: "Roll out behind feature flags and staged releases, then iterate on monitoring and production feedback.",
+    icon: Rocket,
   },
 ];
 
@@ -84,36 +108,37 @@ export default function HomePage() {
         tabIndex={-1}
         className="page-safe-inline mx-auto flex w-full max-w-7xl flex-col pb-28 pt-28 lg:pt-32"
       >
-        <section className="hero-viewport relative isolate grid min-w-0 items-center gap-12 pb-16 lg:grid-cols-[1.04fr_0.96fr] lg:gap-20 lg:pb-24">
+        {/* Copy holds the left column; the open right side belongs to the ASCII field. */}
+        <section className="hero-viewport relative isolate flex min-w-0 flex-col justify-center pb-20 lg:pb-28">
           <AsciiField className="absolute -top-28 bottom-0 left-1/2 -z-10 w-screen -translate-x-1/2 lg:-top-32" />
-          <div className="min-w-0 max-w-4xl">
+          <div className="min-w-0 max-w-3xl">
             <div
               className="motion-rise glass-frost mb-8 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground"
               data-ascii-avoid=""
             >
               <Sparkles size={15} strokeWidth={2.4} className="text-accent" />
-              {SITE_PROFILE.role}
+              {SITE_PROFILE.tagline}
             </div>
 
             <h1
-              className="motion-rise motion-delay-1 max-w-5xl text-balance text-[clamp(3.25rem,8.2vw,8.9rem)] font-black leading-[0.88] tracking-tight text-foreground"
+              className="motion-rise motion-delay-1 text-balance text-[clamp(3.1rem,7.4vw,7.6rem)] font-black leading-[0.9] tracking-tight text-foreground"
               data-ascii-avoid=""
             >
               Software with a{" "}
-              <span data-ascii-pulse="" className="whitespace-nowrap">
+              <span className="whitespace-nowrap">
                 pulse
                 <PulseTrace />
               </span>
             </h1>
 
             <p
-              className="motion-rise motion-delay-2 mt-10 max-w-2xl text-pretty text-xl leading-8 text-muted-foreground sm:text-2xl sm:leading-10"
+              className="motion-rise motion-delay-2 mt-10 max-w-xl text-pretty text-xl leading-8 text-muted-foreground sm:text-[1.35rem] sm:leading-9"
               data-ascii-avoid=""
             >
               {SITE_PROFILE.introduction}
             </p>
 
-            <div className="motion-rise motion-delay-3 mt-10 flex flex-wrap gap-3" data-ascii-avoid="">
+            <div className="motion-rise motion-delay-3 mt-12 flex flex-wrap items-center gap-3" data-ascii-avoid="">
               <Link
                 href="/projects"
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
@@ -132,161 +157,71 @@ export default function HomePage() {
               <a
                 href={SITE_PROFILE.links.linkedin}
                 data-cuelume-press=""
-                className={buttonVariants({ variant: "glass", size: "lg" })}
+                aria-label="LinkedIn"
+                className={buttonVariants({ variant: "glass", size: "icon" })}
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                <LinkedinIcon data-icon="inline-start" strokeWidth={2.4} />
-                LinkedIn
+                <LinkedinIcon strokeWidth={2.4} />
               </a>
               <a
                 href={SITE_PROFILE.links.github}
                 data-cuelume-press=""
-                className={buttonVariants({ variant: "glass", size: "lg" })}
+                aria-label="GitHub"
+                className={buttonVariants({ variant: "glass", size: "icon" })}
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
-                GitHub
+                <GithubIcon strokeWidth={2.4} />
               </a>
             </div>
           </div>
+        </section>
 
-          <aside
-            className="motion-rise motion-delay-2 surface-panel hero-surface-panel relative min-w-0 overflow-hidden rounded-[1.55rem] p-3 sm:rounded-[2rem] sm:p-5"
-            data-ascii-avoid=""
-          >
+        <div className="scroll-rise">
+          <aside className="surface-panel hero-surface-panel relative min-w-0 overflow-hidden rounded-[1.55rem] p-5 sm:rounded-[2rem] sm:p-8">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/70 to-transparent" />
-            <UiCard className="snapshot-inner-card surface-panel min-w-0 gap-0 rounded-[1.25rem] py-0 shadow-none ring-0 sm:rounded-[1.45rem] sm:ring-1">
-              <CardHeader className="flex flex-col gap-3 px-2 pt-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-5 sm:pt-5">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3 sm:block">
-                    <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground">Professional snapshot</p>
-                    <span className="relative block size-14 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-lg shadow-foreground/10 ring-4 ring-background/55 sm:hidden">
-                      <Image
-                        src="/images/me/oleh_portrait.jpg"
-                        alt="Portrait of Oleh Vanin"
-                        fill
-                        sizes="56px"
-                        className="object-cover object-[50%_34%]"
-                      />
-                    </span>
-                  </div>
-                  <CardTitle className="mt-3 text-[1.85rem] font-black leading-[1.12] tracking-tight text-foreground sm:text-3xl">
-                    Building AI-assisted product systems across frontend, backend, and cloud
-                  </CardTitle>
-                  <span className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-background/55 px-3 py-1.5 text-xs font-bold text-muted-foreground">
-                    <BrainCircuit size={14} strokeWidth={2.4} className="text-accent" />
-                    <span className="min-w-0 truncate">AI systems and product engineering</span>
-                  </span>
-                </div>
-                <span className="relative hidden size-20 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-lg shadow-foreground/10 ring-4 ring-background/55 sm:block">
+            <div className="grid min-w-0 gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-12">
+              <div className="flex min-w-0 items-start gap-5">
+                <span className="relative block size-16 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-lg shadow-foreground/10 ring-4 ring-background/55 sm:size-20">
                   <Image
                     src="/images/me/oleh_portrait.jpg"
                     alt="Portrait of Oleh Vanin"
                     fill
                     sizes="(max-width: 639px) 64px, 80px"
                     className="object-cover object-[50%_34%]"
-                    preload
                   />
                 </span>
-              </CardHeader>
-
-              <CardContent className="min-w-0 px-2 pb-2 sm:px-5 sm:pb-5">
-                <div className="mt-5 grid grid-cols-1 gap-2 sm:mt-7 sm:grid-cols-2 sm:gap-3">
-                  {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => (
-                    <UiCard
-                      key={label}
-                      className="snapshot-stat-card gap-0 rounded-[1.05rem] border-border bg-background/40 p-3.5 py-3.5 shadow-none ring-0 sm:rounded-2xl sm:bg-background/45 sm:p-4 sm:py-4 sm:ring-1"
-                    >
-                      <p className="text-[1.7rem] font-black leading-none text-foreground sm:text-3xl">{value}</p>
-                      <p className="mt-2 text-xs font-bold leading-5 text-muted-foreground">{label}</p>
-                    </UiCard>
-                  ))}
+                <div className="min-w-0">
+                  <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground">Professional snapshot</p>
+                  <p className="mt-2 text-balance text-2xl font-black leading-[1.15] tracking-tight text-foreground sm:text-[1.7rem]">
+                    Building AI-assisted product systems across frontend, backend, and cloud
+                  </p>
                 </div>
+              </div>
 
-                <SnapshotSpecialtyRail specialties={specialties} />
-              </CardContent>
-            </UiCard>
-
-            <a
-              href={SITE_PROFILE.links.booking}
-              data-cuelume-press=""
-              className={cn(
-                buttonVariants({ variant: "default", size: "lg" }),
-                "mt-3 min-w-0 w-full justify-between rounded-[1.1rem] p-4 sm:mt-4 sm:rounded-[1.45rem] sm:p-5",
-              )}
-            >
-              <span className="font-black">Schedule a conversation</span>
-              <Send data-icon="inline-end" strokeWidth={2.4} />
-            </a>
-          </aside>
-        </section>
-
-        <Separator />
-        <section className="py-20 sm:py-28">
-          <div className="scroll-rise mb-12 flex flex-col gap-3">
-            <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
-              <BriefcaseBusiness size={15} strokeWidth={2.4} />
-              Experience
-            </p>
-            <h2 className="max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
-              Senior full-stack work across AI, product, and production systems
-            </h2>
-          </div>
-          <div className="grid gap-4">
-            {experienceHighlights.map(item => (
-              <UiCard
-                key={item.company}
-                className="surface-panel gap-0 rounded-[1.35rem] px-5 py-4 shadow-none sm:grid sm:grid-cols-[0.34fr_0.66fr] sm:gap-6 sm:px-6"
-              >
-                <div>
-                  <h3 className="text-xl font-black text-foreground">{item.company}</h3>
-                  <p className="mt-1 text-sm font-bold text-muted-foreground">{item.role}</p>
-                </div>
-                <p className="mt-4 text-base leading-7 text-muted-foreground sm:mt-0">{item.detail}</p>
-              </UiCard>
-            ))}
-          </div>
-        </section>
-
-        <Separator />
-        <section className="py-20 sm:py-28">
-          <div className="scroll-rise mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Operating style</p>
-              <h2 className="mt-3 max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
-                Useful software, fast feedback, fewer weird corners
-              </h2>
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
+                {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => (
+                  <div key={label} className="min-w-0 border-l border-border pl-4">
+                    <dt className="sr-only">{label}</dt>
+                    <dd className="text-[1.7rem] font-black leading-none text-foreground sm:text-3xl">{value}</dd>
+                    <dd className="mt-2 text-xs font-bold leading-5 text-muted-foreground">{label}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-            <p className="max-w-md text-base leading-7 text-muted-foreground">
-              I like engineering that serves the product: observable systems, thoughtful automation, and tools that make
-              teams faster without making the codebase stranger.
-            </p>
-          </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {workingPrinciples.map(item => {
-              const Icon = item.icon;
+            <SnapshotSpecialtyRail specialties={specialties} />
+          </aside>
+        </div>
 
-              return (
-                <UiCard key={item.title} className="surface-panel gap-0 rounded-[1.35rem] p-5 shadow-none">
-                  <span className="grid size-11 place-items-center rounded-full bg-primary text-primary-foreground">
-                    <Icon size={19} strokeWidth={2.4} />
-                  </span>
-                  <h3 className="mt-5 text-xl font-black text-foreground">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-                </UiCard>
-              );
-            })}
-          </div>
-        </section>
-
-        <Separator />
-        <section className="pt-20 sm:pt-28">
+        <section className="pt-24 sm:pt-32">
           <div className="scroll-rise mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Selected projects</p>
+              <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
+                <FolderGit2 size={15} strokeWidth={2.4} />
+                Selected projects
+              </p>
               <h2 className="mt-3 max-w-2xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
                 Real product surfaces, not just shiny screenshots
               </h2>
@@ -298,7 +233,7 @@ export default function HomePage() {
               data-cuelume-press=""
               className={buttonVariants({ variant: "glass", size: "default" })}
             >
-              Featured projects
+              All projects
               <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
             </Link>
           </div>
@@ -306,6 +241,88 @@ export default function HomePage() {
             {featuredProjects.map(project => (
               <ProjectCard key={project.id} project={project} />
             ))}
+          </div>
+        </section>
+
+        <section className="pt-24 sm:pt-32">
+          <div className="scroll-rise mb-12 flex flex-col gap-3">
+            <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
+              <BriefcaseBusiness size={15} strokeWidth={2.4} />
+              Experience
+            </p>
+            <h2 className="max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
+              Senior full-stack work across AI, product, and production systems
+            </h2>
+          </div>
+          <ol className="border-y border-border">
+            {experienceHighlights.map(item => (
+              <li
+                key={item.company}
+                className="grid gap-3 border-b border-border py-8 last:border-b-0 sm:grid-cols-[0.34fr_0.66fr] sm:gap-8"
+              >
+                <div>
+                  <h3 className="text-xl font-black text-foreground">{item.company}</h3>
+                  <p className="mt-1 text-sm font-bold text-muted-foreground">{item.role}</p>
+                  <p className="mt-2 font-mono text-xs tabular-nums text-muted-foreground">{item.period}</p>
+                </div>
+                <p className="max-w-2xl text-base leading-7 text-muted-foreground">{item.detail}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="pt-24 sm:pt-32">
+          <div className="scroll-rise mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
+                <Workflow size={15} strokeWidth={2.4} />
+                How I get things done
+              </p>
+              <h2 className="mt-3 max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
+                AI-native, from research to production
+              </h2>
+            </div>
+            <p className="max-w-md text-base leading-7 text-muted-foreground">
+              Coding agents do much of the typing. I own the architecture, the review, and the result in production.
+            </p>
+          </div>
+
+          <ol className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+            {agentWorkflow.map(item => {
+              const Icon = item.icon;
+
+              return (
+                <li key={item.title} className="border-t border-border pt-6">
+                  <div className="flex items-center justify-between">
+                    <Icon size={20} strokeWidth={2.4} className="text-accent" />
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground">{item.step}</span>
+                  </div>
+                  <h3 className="mt-5 text-xl font-black text-foreground">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.detail}</p>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+
+        <section className="pt-24 sm:pt-32">
+          <div className="scroll-rise flex flex-col items-start justify-between gap-8 border-t border-border pt-12 lg:flex-row lg:items-end">
+            <div>
+              <h2 className="max-w-2xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
+                Have a product that needs a senior engineer?
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
+                Book a short call to talk through the problem, the stack, and where I can help.
+              </p>
+            </div>
+            <a
+              href={SITE_PROFILE.links.booking}
+              data-cuelume-press=""
+              className={cn(buttonVariants({ variant: "default", size: "lg" }), "shrink-0")}
+            >
+              Schedule a conversation
+              <Send data-icon="inline-end" strokeWidth={2.4} />
+            </a>
           </div>
         </section>
       </main>

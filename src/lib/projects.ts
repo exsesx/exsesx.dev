@@ -40,24 +40,27 @@ export const projects: Project[] = [
     id: "project-controlup",
     slug: "controlup",
     name: "ControlUp",
-    role: "Senior Full Stack / AI Engineer",
+    role: "Senior Full-Stack / AI Engineer",
     href: "https://www.controlup.com/",
-    period: "DEX / autonomous IT",
+    period: "AI assistant for IT ops",
     description:
-      "A Digital Employee Experience platform where I'm building the AI Assistant from scratch: MCP servers, multi-agent tooling, and LLM pipelines on Foundry.",
-    impact: "A license-aware AI platform that acts directly on enterprise monitoring and automation infrastructure.",
-    tags: ["ai assistant", "mcp", "multi-agent"],
+      "Atlas, the AI assistant for enterprise IT operations at a $100M+ ARR company. I owned the MCP architecture and shipped approval-gated actions IT admins review in one turn.",
+    impact:
+      "An entitlement-aware assistant that acts on customer infrastructure only after a human approves, built and verified with coding agents.",
+    tags: ["ai assistant", "mcp", "human-in-the-loop"],
     detail: {
-      headline: "AI assistant platform work for enterprise digital employee experience.",
+      headline: "An AI assistant that automates enterprise IT workflows, with a human in the loop.",
       context:
         "ControlUp helps IT teams monitor, troubleshoot, and optimize enterprise endpoints, virtual desktops, applications, and employee experience signals.",
       contribution: [
-        "Building the dex-ai-assistant platform from the ground up: MCP servers, tool orchestration, and skill-based workflows powered by LLM pipelines on Foundry.",
-        "Designing license-aware features so assistant capabilities adapt to each customer's subscription tier.",
-        "Building multi-agent tooling and MCP integrations that let the assistant act on ControlUp's monitoring and automation infrastructure, full-stack in TypeScript, Node.js, and React.",
+        "Replaced sequential Mastra approvals with a parallel workflow so IT admins could review multiple changes in one turn, and shipped approval-gated create, edit, and delete actions to selected customer organizations.",
+        "Owned the MCP architecture: built a shared transport and authentication core so other teams could add tools and schemas, and migrated servers from the assistant's local runtime to cloud deployments.",
+        "Excluded unlicensed tools and adjusted assistant instructions to match each organization's entitlements, and validated Mastra Observational Memory as a pre-release replacement for context rotation.",
+        "Delivered full-stack changes with Claude Code and Codex, then verified them manually and with browser automation, network traces, and Langfuse.",
       ],
-      outcome: "AI tooling that turns slow manual investigation into guided, automated fixes.",
-      scope: ["AI assistant platform", "Multi-agent + MCP", "Enterprise IT operations"],
+      outcome:
+        "Assistant actions that IT admins can trust: reviewed together, scoped to their license, and checked before release.",
+      scope: ["MCP architecture", "Human-in-the-loop actions", "Agent-assisted delivery"],
     },
     accent: "controlup",
     media: {
@@ -71,13 +74,13 @@ export const projects: Project[] = [
     id: "project-quicklizard",
     slug: "quicklizard",
     name: "Quicklizard",
-    role: "Senior Full Stack Developer",
+    role: "Senior Full-Stack Developer",
     href: "https://quicklizard.com/en/",
     period: "AI dynamic pricing",
     description:
       "An AI-powered dynamic pricing platform where I owned full-stack delivery: Next.js workflows, Go services, and rollouts behind feature flags.",
     impact:
-      "Modernized the frontend stack, cut repository overhead, and shipped the pricing dashboard, i18n, auth, and bulk-override workflows.",
+      "Shipped pricing dashboards, localization, authentication, bulk overrides, and an Operations Dashboard, then simplified the stack and CI.",
     tags: ["next.js", "go", "pricing"],
     detail: {
       headline: "Full-stack delivery for AI-powered retail pricing automation.",
@@ -85,8 +88,9 @@ export const projects: Project[] = [
         "Quicklizard is a B2B SaaS platform that helps retailers and brands automate pricing across channels by reading market data, competitor prices, and demand patterns in real time.",
       contribution: [
         "Owned features end to end: scoping with stakeholders, implementation, reviews, rollout behind feature flags, and iteration on production feedback.",
-        "Drove core Next.js workflows for pricing dashboards, localization, authentication, and bulk pricing overrides, plus Go API work across a microservices backend.",
-        "Modernized the stack to Next.js 16 and Tailwind CSS 4, dropped Nx where a single-app setup didn't justify it, and tracked Next.js / RSC security advisories to coordinate upgrades.",
+        "Built the Go backend and Next.js frontend for an Operations Dashboard with charts and operational metrics.",
+        "Developed pricing activity and total exposure endpoints, and implemented Redis token caching and sessions across the Go gateway and Next.js UI.",
+        "Upgraded to Next.js 16 and Tailwind CSS 4 and removed Nx to simplify development and CI, keeping dependencies secure through recurring upgrades.",
       ],
       outcome:
         "A more maintainable codebase, faster local development, and reliable releases for pricing analytics and automation.",
@@ -104,11 +108,11 @@ export const projects: Project[] = [
     id: "project-tso-chinese",
     slug: "tso-chinese",
     name: "Tso Chinese",
-    role: "Commerce systems",
+    role: "Lead engineer, solution architecture",
     href: "https://tsochinese.com",
     period: "Restaurant delivery",
     description:
-      "Dark-kitchen delivery software where I supported Tso 2.0 through a five-location expansion and a payment-processor migration, then designed Tso 3.0's microservices and GraphQL architecture.",
+      "Dark-kitchen delivery software where I supported Tso 2.0 through a five-location expansion, then designed Tso 3.0's microservices architecture, which went live in September 2026.",
     impact:
       "Led a cross-functional team of up to 7 on a product running live restaurant operations, delivery, and payments.",
     tags: ["microservices", "graphql", "team lead"],
@@ -117,10 +121,10 @@ export const projects: Project[] = [
       context:
         "Tso 2.0 ran live restaurant operations while the business grew from two locations to five. Tso 3.0 is the ground-up redesign built to address the architectural limits 2.0 had run into.",
       contribution: [
-        "Developed and supported Tso 2.0 in production through the expansion to five locations, and migrated payment processing from Stripe to Cybersource.",
-        "Designed Tso 3.0's architecture from the ground up: microservices, and GraphQL in place of the REST APIs, which unblocked the other teams building on top.",
-        "Built the CI/CD pipeline, where a pull request label deploys any branch into an isolated Kubernetes preview namespace, with a Go service on Lambda cleaning up namespaces and ECR images once a branch is gone.",
-        "Led a cross-functional team of up to 7 while staying hands-on in the codebase.",
+        "Developed and supported the Tso 2.0 ordering and kitchen platform as the business grew from two to five restaurants, owning releases, monitoring, and incident response, and migrated payments from Stripe to Cybersource to cut processing costs.",
+        "Designed Tso 3.0 on Kubernetes: microservices with separate databases, messaging, and GraphQL gateways for independent scaling, service ownership, and zero-downtime deployments.",
+        "Built isolated branch previews with test data so the CTO, QA, and PM could validate changes before merge, with deployment and cleanup automated in GitHub Actions and Go.",
+        "Led the technical direction and a cross-functional team of up to 7, set priorities with the CTO, and later planned the phased database migration the team used for cutover.",
       ],
       outcome:
         "A live commerce system where a bad architecture call would have hit real kitchens, drivers, and payments.",
