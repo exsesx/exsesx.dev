@@ -217,7 +217,7 @@ describe("semantic animation styles", () => {
   test("keeps entry motion at section level instead of every repeated card", async () => {
     const [homePage, projectsPage] = await Promise.all([readSource(homePageUrl), readSource(projectsPageUrl)]);
 
-    expect(homePage.match(/className="scroll-rise mb-8/g)).toHaveLength(3);
+    expect(homePage.match(/className="scroll-rise mb-12/g)).toHaveLength(3);
     expect(homePage).not.toMatch(/className="scroll-rise surface-panel/);
     expect(homePage).not.toMatch(/className="scroll-rise h-full/);
     expect(projectsPage).toContain('<div className="motion-rise">');

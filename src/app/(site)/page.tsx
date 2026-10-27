@@ -2,6 +2,7 @@ import { Activity, ArrowRight, BrainCircuit, BriefcaseBusiness, Send, Sparkles, 
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import AsciiField from "@/components/AsciiField";
 import CvMenu from "@/components/CvMenu";
 import { GithubIcon } from "@/components/icons/lucide-github";
 import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
@@ -81,28 +82,38 @@ export default function HomePage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="page-safe-inline mx-auto flex w-full max-w-7xl flex-col pb-20 pt-28 lg:pt-32"
+        className="page-safe-inline mx-auto flex w-full max-w-7xl flex-col pb-28 pt-28 lg:pt-32"
       >
-        <section className="hero-viewport grid min-w-0 items-center gap-10 pb-8 lg:grid-cols-[1.04fr_0.96fr] lg:pb-12">
+        <section className="hero-viewport relative isolate grid min-w-0 items-center gap-12 pb-16 lg:grid-cols-[1.04fr_0.96fr] lg:gap-20 lg:pb-24">
+          <AsciiField className="absolute -top-28 bottom-0 left-1/2 -z-10 w-screen -translate-x-1/2 lg:-top-32" />
           <div className="min-w-0 max-w-4xl">
-            <div className="motion-rise glass-frost mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground">
+            <div
+              className="motion-rise glass-frost mb-8 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground"
+              data-ascii-avoid=""
+            >
               <Sparkles size={15} strokeWidth={2.4} className="text-accent" />
               {SITE_PROFILE.role}
             </div>
 
-            <h1 className="motion-rise motion-delay-1 max-w-5xl text-balance text-[clamp(3.25rem,8.2vw,8.9rem)] font-black leading-[0.88] tracking-tight text-foreground">
+            <h1
+              className="motion-rise motion-delay-1 max-w-5xl text-balance text-[clamp(3.25rem,8.2vw,8.9rem)] font-black leading-[0.88] tracking-tight text-foreground"
+              data-ascii-avoid=""
+            >
               Software with a{" "}
-              <span className="whitespace-nowrap">
+              <span data-ascii-pulse="" className="whitespace-nowrap">
                 pulse
                 <PulseTrace />
               </span>
             </h1>
 
-            <p className="motion-rise motion-delay-2 mt-8 max-w-2xl text-pretty text-xl leading-8 text-muted-foreground sm:text-2xl sm:leading-10">
+            <p
+              className="motion-rise motion-delay-2 mt-10 max-w-2xl text-pretty text-xl leading-8 text-muted-foreground sm:text-2xl sm:leading-10"
+              data-ascii-avoid=""
+            >
               {SITE_PROFILE.introduction}
             </p>
 
-            <div className="motion-rise motion-delay-3 mt-8 flex flex-wrap gap-3">
+            <div className="motion-rise motion-delay-3 mt-10 flex flex-wrap gap-3" data-ascii-avoid="">
               <Link
                 href="/projects"
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
@@ -141,7 +152,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          <aside className="motion-rise motion-delay-2 surface-panel hero-surface-panel relative min-w-0 overflow-hidden rounded-[1.55rem] p-3 sm:rounded-[2rem] sm:p-5">
+          <aside
+            className="motion-rise motion-delay-2 surface-panel hero-surface-panel relative min-w-0 overflow-hidden rounded-[1.55rem] p-3 sm:rounded-[2rem] sm:p-5"
+            data-ascii-avoid=""
+          >
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/70 to-transparent" />
             <UiCard className="snapshot-inner-card surface-panel min-w-0 gap-0 rounded-[1.25rem] py-0 shadow-none ring-0 sm:rounded-[1.45rem] sm:ring-1">
               <CardHeader className="flex flex-col gap-3 px-2 pt-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-5 sm:pt-5">
@@ -210,8 +224,8 @@ export default function HomePage() {
         </section>
 
         <Separator />
-        <section className="py-14">
-          <div className="scroll-rise mb-8 flex flex-col gap-3">
+        <section className="py-20 sm:py-28">
+          <div className="scroll-rise mb-12 flex flex-col gap-3">
             <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
               <BriefcaseBusiness size={15} strokeWidth={2.4} />
               Experience
@@ -220,7 +234,7 @@ export default function HomePage() {
               Senior full-stack work across AI, product, and production systems
             </h2>
           </div>
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {experienceHighlights.map(item => (
               <UiCard
                 key={item.company}
@@ -237,8 +251,8 @@ export default function HomePage() {
         </section>
 
         <Separator />
-        <section className="py-14">
-          <div className="scroll-rise mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <section className="py-20 sm:py-28">
+          <div className="scroll-rise mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Operating style</p>
               <h2 className="mt-3 max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
@@ -251,7 +265,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {workingPrinciples.map(item => {
               const Icon = item.icon;
 
@@ -269,8 +283,8 @@ export default function HomePage() {
         </section>
 
         <Separator />
-        <section className="py-16 pb-0">
-          <div className="scroll-rise mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <section className="pt-20 sm:pt-28">
+          <div className="scroll-rise mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Selected projects</p>
               <h2 className="mt-3 max-w-2xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
