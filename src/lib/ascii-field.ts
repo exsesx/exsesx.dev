@@ -14,8 +14,12 @@ export function hashCell(cell: number, salt: number): number {
   return (value >>> 0) / 0x100000000;
 }
 
+export function glyphIndexFor(cell: number, tick: number): number {
+  return Math.floor(hashCell(cell, tick) * ASCII_GLYPHS.length);
+}
+
 export function glyphFor(cell: number, tick: number): string {
-  return ASCII_GLYPHS[Math.floor(hashCell(cell, tick) * ASCII_GLYPHS.length)];
+  return ASCII_GLYPHS[glyphIndexFor(cell, tick)];
 }
 
 /* Quadratic falloff: 1 at the center, 0 at (and beyond) the radius. */

@@ -1,33 +1,41 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { glowFalloff, glyphFor, hashCell, smoothstep } from "@/lib/ascii-field";
+import { ASCII_GLYPHS, glowFalloff, glyphIndexFor, hashCell, smoothstep } from "@/lib/ascii-field";
 import { cn } from "@/lib/utils";
 
 /*
- * Interactive ASCII field behind the homepage hero. A dim grid of MonoLisa
- * glyphs shimmers slowly; the pointer lights a radius of cells in the accent
- * color, a click sends a ripple, and the "pulse" headline emits a heartbeat
- * ripple every few seconds. Plain Canvas 2D: one fillText per visible cell.
+ * Quiet ASCII field in the open side of the homepage hero. A faint grid of
+ * MonoLisa glyphs drifts slowly inside a soft spotlight; the pointer lights a
+ * small radius of cells in the accent color and a click sends a ripple.
  *
- * Content marked [data-ascii-avoid] dims the cells around it so copy never
- * sits on busy glyphs. Colors, alpha and font come from CSS (.ascii-field in
- * globals.css), so theme switches only need a palette re-read.
+ * Cost model, Canvas 2D:
+ * - Glyphs are pre-rendered once into an atlas (base + accent rows), so every
+ *   draw is a drawImage blit instead of fillText shaping.
+ * - The faint base field lives on an offscreen layer repainted only on a slow
+ *   shimmer tick (every SHIMMER_INTERVAL_MS) and only for cells inside the
+ *   spotlight.
+ * - requestAnimationFrame runs only while cells are lit (pointer moving or a
+ *   ripple in flight); idle, a timer repaints the base layer and nothing else.
+ * - Touch screens and reduced motion get one still frame.
+ *
+ * Content marked [data-ascii-avoid] clears the base field around it, so copy
+ * never sits on glyphs. Colors and alpha come from CSS tokens (.ascii-field).
  */
 
-const FONT_SIZE = 13;
-const ROW_HEIGHT = 20;
+const FONT_SIZE = 12;
+const ROW_HEIGHT = 18;
 const MAX_DPR = 2;
-const GLOW_RADIUS = 120;
-const AVOID_PADDING = 56;
-const AVOID_FLOOR = 0.12;
-const ENERGY_HALF_LIFE_MS = 260;
-const SHIMMER_INTERVAL_MS = 140;
-const MEASURE_INTERVAL_MS = 1000;
-const HEARTBEAT_INTERVAL_MS = 4800;
-const RIPPLE_SPEED = 0.48; // px per ms
-const RIPPLE_BAND = 22;
-const RIPPLE_LIFE_MS = 1700;
+const GLOW_RADIUS = 96;
+const AVOID_PADDING = 48;
+const ENERGY_HALF_LIFE_MS = 220;
+const POINTER_IDLE_MS = 900;
+const SHIMMER_INTERVAL_MS = 400;
+const SCRAMBLE_INTERVAL_MS = 90;
+const RIPPLE_SPEED = 0.42; // px per ms
+const RIPPLE_BAND = 18;
+const RIPPLE_LIFE_MS = 1400;
+const LIT_THRESHOLD = 0.03;
 const INTERACTIVE_SELECTOR = "a, button, input, textarea, select, label, [role='button'], [data-ascii-ignore]";
 
 type Ripple = { x: number; y: number; born: number; strength: number };
@@ -41,12 +49,17 @@ export default function AsciiField({ className }: { className?: string }) {
     const context = canvas?.getContext("2d");
     // The wrapper div positions the canvas; its parent holds the content to avoid.
     const host = canvas?.parentElement?.parentElement;
+    // Offscreen surfaces: the glyph atlas and the slowly repainted base field.
+    const atlas = document.createElement("canvas");
+    const baseLayer = document.createElement("canvas");
+    const atlasContext = atlas.getContext("2d");
+    const baseContext = baseLayer.getContext("2d");
 
-    if (!canvas || !context || !host) {
+    if (!canvas || !context || !host || !atlasContext || !baseContext) {
       return;
     }
 
-    return startAsciiField(canvas, context, host);
+    return startAsciiField(canvas, context, host, atlasContext, baseContext);
   }, []);
 
   return (
@@ -56,10 +69,21 @@ export default function AsciiField({ className }: { className?: string }) {
   );
 }
 
-function startAsciiField(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D, host: HTMLElement) {
+function startAsciiField(
+  canvas: HTMLCanvasElement,
+  context: CanvasRenderingContext2D,
+  host: HTMLElement,
+  atlasContext: CanvasRenderingContext2D,
+  baseContext: CanvasRenderingContext2D,
+) {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const pointer = { x: 0, y: 0, active: false };
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const atlas = atlasContext.canvas;
+  const baseLayer = baseContext.canvas;
+
+  const pointer = { x: 0, y: 0, inside: false, lastMove: 0 };
   let palette = readPalette(canvas);
+  let dpr = 1;
   let width = 0;
   let height = 0;
   let cols = 0;
@@ -67,41 +91,95 @@ function startAsciiField(canvas: HTMLCanvasElement, context: CanvasRenderingCont
   let cellWidth = 8;
   let offsetX = 0;
   let offsetY = 0;
+  // Per cell: lit energy, base-field weight (spotlight x text clearance), glow weight.
   let energy = new Float32Array(0);
-  let dim = new Float32Array(0);
+  let baseWeight = new Float32Array(0);
+  let glowWeight = new Float32Array(0);
   let ripples: Ripple[] = [];
   let raf = 0;
+  let idleTimer = 0;
   let lastFrame = 0;
-  let lastPaint = 0;
-  let lastMeasure = 0;
-  let nextHeartbeat = 0;
-  let energized = false;
+  let lastBasePaint = 0;
   let intersecting = true;
   let disposed = false;
 
-  function resize() {
-    const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1);
+  const animated = () => !reducedMotion.matches && finePointer.matches;
+  const cellX = (index: number) => offsetX + (index % cols) * cellWidth;
+  const cellY = (index: number) => offsetY + Math.floor(index / cols) * ROW_HEIGHT;
 
-    width = rect.width;
-    height = rect.height;
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    context.setTransform(dpr, 0, 0, dpr, 0, 0);
-    context.font = `500 ${FONT_SIZE}px ${palette.fontFamily}`;
-    cellWidth = context.measureText("M").width + 3;
-    cols = Math.ceil(width / cellWidth);
-    rows = Math.ceil(height / ROW_HEIGHT);
-    offsetX = (width - cols * cellWidth) / 2;
-    offsetY = (height - rows * ROW_HEIGHT) / 2;
-    energy = new Float32Array(cols * rows);
-    dim = new Float32Array(cols * rows);
-    measureAvoid();
+  function buildAtlas() {
+    const glyphWidth = Math.round(cellWidth * dpr);
+    const glyphHeight = Math.round(ROW_HEIGHT * dpr);
+
+    atlas.width = glyphWidth * ASCII_GLYPHS.length;
+    atlas.height = glyphHeight * 2;
+    atlasContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    atlasContext.clearRect(0, 0, atlas.width, atlas.height);
+    atlasContext.font = `500 ${FONT_SIZE}px ${palette.fontFamily}`;
+    atlasContext.textAlign = "center";
+    atlasContext.textBaseline = "middle";
+
+    for (const [row, color] of [palette.base, palette.glow].entries()) {
+      atlasContext.fillStyle = color;
+
+      for (let index = 0; index < ASCII_GLYPHS.length; index++) {
+        atlasContext.fillText(ASCII_GLYPHS[index], (index + 0.5) * cellWidth, (row + 0.5) * ROW_HEIGHT);
+      }
+    }
   }
 
-  function measureAvoid() {
+  function blitGlyph(target: CanvasRenderingContext2D, glyph: number, row: number, x: number, y: number) {
+    const sourceWidth = atlas.width / ASCII_GLYPHS.length;
+    const sourceHeight = atlas.height / 2;
+    target.drawImage(
+      atlas,
+      glyph * sourceWidth,
+      row * sourceHeight,
+      sourceWidth,
+      sourceHeight,
+      x,
+      y,
+      cellWidth,
+      ROW_HEIGHT,
+    );
+  }
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+
+    dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1);
+    width = rect.width;
+    height = rect.height;
+
+    for (const surface of [canvas, baseLayer]) {
+      surface.width = Math.round(width * dpr);
+      surface.height = Math.round(height * dpr);
+    }
+
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    baseContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    context.font = `500 ${FONT_SIZE}px ${palette.fontFamily}`;
+    cellWidth = Math.ceil(context.measureText("M").width + 3);
+    cols = Math.ceil(width / cellWidth);
+    rows = Math.ceil(height / ROW_HEIGHT);
+    offsetX = Math.floor((width - cols * cellWidth) / 2);
+    offsetY = Math.floor((height - rows * ROW_HEIGHT) / 2);
+    energy = new Float32Array(cols * rows);
+    baseWeight = new Float32Array(cols * rows);
+    glowWeight = new Float32Array(cols * rows);
+    buildAtlas();
+    measure();
+  }
+
+  /* Spotlight on the open side of the hero, cleared around [data-ascii-avoid]. */
+  function measure() {
     const origin = canvas.getBoundingClientRect();
-    dim.fill(1);
+    const wide = width >= 1024;
+    const centerX = width * (wide ? 0.76 : 0.6);
+    const centerY = height * (wide ? 0.48 : 0.3);
+    const radiusX = width * (wide ? 0.34 : 0.6);
+    const radiusY = height * (wide ? 0.5 : 0.36);
+    const clearance = new Float32Array(cols * rows).fill(1);
 
     for (const element of host.querySelectorAll("[data-ascii-avoid]")) {
       const rect = element.getBoundingClientRect();
@@ -120,10 +198,72 @@ function startAsciiField(canvas: HTMLCanvasElement, context: CanvasRenderingCont
           const y = offsetY + (row + 0.5) * ROW_HEIGHT;
           const distance = Math.hypot(Math.max(left - x, 0, x - right), Math.max(top - y, 0, y - bottom));
           const index = row * cols + col;
-          dim[index] = Math.min(dim[index], AVOID_FLOOR + (1 - AVOID_FLOOR) * smoothstep(0, AVOID_PADDING, distance));
+          clearance[index] = Math.min(clearance[index], smoothstep(0, AVOID_PADDING, distance));
         }
       }
     }
+
+    for (let index = 0; index < clearance.length; index++) {
+      const x = cellX(index) + cellWidth / 2;
+      const y = cellY(index) + ROW_HEIGHT / 2;
+      const spot = 1 - smoothstep(0.3, 1, Math.hypot((x - centerX) / radiusX, (y - centerY) / radiusY));
+      const edges = smoothstep(0, height * 0.14, y) * smoothstep(0, height * 0.18, height - y);
+
+      baseWeight[index] = spot * edges * clearance[index];
+      glowWeight[index] = (0.3 + 0.7 * clearance[index]) * (0.45 + 0.55 * spot) * edges;
+    }
+  }
+
+  function paintBase(now: number) {
+    baseContext.clearRect(0, 0, width, height);
+    const sparkleTick = Math.floor(now / 1600);
+
+    for (let index = 0; index < baseWeight.length; index++) {
+      const weight = baseWeight[index];
+
+      if (weight < 0.02) {
+        continue;
+      }
+
+      const seed = hashCell(index, 7);
+      const sparkle = hashCell(index, sparkleTick) > 0.996 ? 2.5 : 1;
+      baseContext.globalAlpha = Math.min(1, palette.baseAlpha * (0.35 + 0.65 * seed) * sparkle * weight);
+      blitGlyph(
+        baseContext,
+        glyphIndexFor(index, Math.floor(now / (2400 + seed * 6000))),
+        0,
+        cellX(index),
+        cellY(index),
+      );
+    }
+
+    baseContext.globalAlpha = 1;
+    lastBasePaint = now;
+  }
+
+  function composite(now: number) {
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(baseLayer, 0, 0);
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const scrambleTick = Math.floor(now / SCRAMBLE_INTERVAL_MS);
+
+    for (let index = 0; index < energy.length; index++) {
+      const value = energy[index];
+
+      if (value < LIT_THRESHOLD) {
+        continue;
+      }
+
+      const x = cellX(index);
+      const y = cellY(index);
+      context.clearRect(x, y, cellWidth, ROW_HEIGHT);
+      context.globalAlpha = Math.min(1, value * palette.glowAlpha * glowWeight[index]);
+      blitGlyph(context, glyphIndexFor(index, scrambleTick), 1, x, y);
+    }
+
+    context.globalAlpha = 1;
   }
 
   function energize(x: number, y: number, radius: number, amount: (distance: number) => number) {
@@ -144,19 +284,21 @@ function startAsciiField(canvas: HTMLCanvasElement, context: CanvasRenderingCont
     }
   }
 
+  /* Decays lit cells, deposits pointer glow and ripples; returns whether anything is still lit. */
   function step(now: number, elapsed: number) {
     const decay = 0.5 ** (elapsed / ENERGY_HALF_LIFE_MS);
-    let peak = 0;
+    let lit = false;
 
     for (let index = 0; index < energy.length; index++) {
       const value = energy[index] * decay;
-      energy[index] = value < 0.01 ? 0 : value;
-      peak = Math.max(peak, energy[index]);
+      energy[index] = value < LIT_THRESHOLD ? 0 : value;
+      lit ||= energy[index] > 0;
     }
 
-    if (pointer.active) {
+    // A resting cursor lets its glow fade, so the loop can stop.
+    if (pointer.inside && now - pointer.lastMove < POINTER_IDLE_MS) {
       energize(pointer.x, pointer.y, GLOW_RADIUS, distance => glowFalloff(distance, GLOW_RADIUS));
-      peak = 1;
+      lit = true;
     }
 
     ripples = ripples.filter(ripple => now - ripple.born < RIPPLE_LIFE_MS);
@@ -170,124 +312,84 @@ function startAsciiField(canvas: HTMLCanvasElement, context: CanvasRenderingCont
         const offset = Math.abs(distance - radius);
         return offset < RIPPLE_BAND ? fade * (1 - offset / RIPPLE_BAND) : 0;
       });
-      peak = 1;
+      lit = true;
     }
 
-    energized = peak > 0;
-  }
-
-  function paint(now: number) {
-    context.clearRect(0, 0, width, height);
-    context.font = `500 ${FONT_SIZE}px ${palette.fontFamily}`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-
-    // Pass 1: the dim field. Each cell has its own change rate and opacity.
-    context.fillStyle = palette.base;
-    for (let index = 0; index < energy.length; index++) {
-      if (energy[index] > 0.04) {
-        continue;
-      }
-
-      const seed = hashCell(index, 7);
-      const sparkle = hashCell(index, Math.floor(now / 900)) > 0.994 ? 3 : 1;
-      const alpha = palette.baseAlpha * (0.35 + 0.65 * seed) * sparkle * dim[index];
-
-      if (alpha < 0.012) {
-        continue;
-      }
-
-      context.globalAlpha = Math.min(1, alpha);
-      context.fillText(
-        glyphFor(index, Math.floor(now / (1200 + seed * 4200))),
-        offsetX + ((index % cols) + 0.5) * cellWidth,
-        offsetY + (Math.floor(index / cols) + 0.5) * ROW_HEIGHT,
-      );
-    }
-
-    // Pass 2: energized cells scramble fast in the accent color.
-    context.fillStyle = palette.glow;
-    for (let index = 0; index < energy.length; index++) {
-      const value = energy[index];
-
-      if (value <= 0.04) {
-        continue;
-      }
-
-      context.globalAlpha = Math.min(1, value * palette.glowAlpha * (0.7 + 0.3 * dim[index]));
-      context.fillText(
-        glyphFor(index, Math.floor(now / 70)),
-        offsetX + ((index % cols) + 0.5) * cellWidth,
-        offsetY + (Math.floor(index / cols) + 0.5) * ROW_HEIGHT,
-      );
-    }
-
-    context.globalAlpha = 1;
-    lastPaint = now;
-  }
-
-  function heartbeat(now: number) {
-    if (now < nextHeartbeat || document.hidden) {
-      return;
-    }
-
-    nextHeartbeat = now + HEARTBEAT_INTERVAL_MS;
-    const origin = host.querySelector("[data-ascii-pulse]");
-
-    if (!origin) {
-      return;
-    }
-
-    const rect = origin.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
-    ripples.push({
-      x: rect.right - canvasRect.left - rect.height * 0.9,
-      y: rect.top + rect.height * 0.55 - canvasRect.top,
-      born: now,
-      strength: 0.5,
-    });
+    return lit;
   }
 
   const frame = (now: number) => {
-    raf = requestAnimationFrame(frame);
+    raf = 0;
     const elapsed = lastFrame ? Math.min(64, now - lastFrame) : 16;
     lastFrame = now;
+    const lit = step(now, elapsed);
 
-    if (now - lastMeasure > MEASURE_INTERVAL_MS) {
-      measureAvoid();
-      lastMeasure = now;
+    if (now - lastBasePaint >= SHIMMER_INTERVAL_MS) {
+      paintBase(now);
     }
 
-    heartbeat(now);
-    step(now, elapsed);
+    composite(now);
 
-    // Idle field only needs a repaint when the shimmer ticks.
-    if (energized || now - lastPaint >= SHIMMER_INTERVAL_MS) {
-      paint(now);
+    if (lit) {
+      raf = requestAnimationFrame(frame);
+    } else {
+      lastFrame = 0;
+      scheduleIdle();
     }
   };
+
+  const idleTick = () => {
+    idleTimer = 0;
+    const now = performance.now();
+    paintBase(now);
+    composite(now);
+    scheduleIdle();
+  };
+
+  function scheduleIdle() {
+    window.clearTimeout(idleTimer);
+    idleTimer = running() && !raf ? window.setTimeout(idleTick, SHIMMER_INTERVAL_MS) : 0;
+  }
+
+  function running() {
+    return !disposed && intersecting && !document.hidden && animated();
+  }
+
+  function wake() {
+    if (running() && !raf) {
+      window.clearTimeout(idleTimer);
+      idleTimer = 0;
+      raf = requestAnimationFrame(frame);
+    }
+  }
 
   function drawStill() {
     energy.fill(0);
     ripples = [];
-    paint(performance.now());
+    const now = performance.now();
+    paintBase(now);
+    composite(now);
   }
 
   function schedule() {
     cancelAnimationFrame(raf);
     raf = 0;
+    window.clearTimeout(idleTimer);
+    idleTimer = 0;
 
-    if (disposed || !intersecting || document.hidden) {
+    if (disposed || width === 0) {
       return;
     }
 
-    if (reducedMotion.matches) {
+    if (!animated()) {
       drawStill();
       return;
     }
 
-    lastFrame = 0;
-    raf = requestAnimationFrame(frame);
+    if (running()) {
+      drawStill();
+      scheduleIdle();
+    }
   }
 
   function toLocal(event: PointerEvent) {
@@ -305,51 +407,64 @@ function startAsciiField(canvas: HTMLCanvasElement, context: CanvasRenderingCont
     const { x, y, inside } = toLocal(event);
     pointer.x = x;
     pointer.y = y;
-    pointer.active = inside && !reducedMotion.matches;
+    pointer.inside = inside;
+    pointer.lastMove = performance.now();
+
+    if (inside) {
+      wake();
+    }
   }
 
   function handlePointerDown(event: PointerEvent) {
-    if (
-      reducedMotion.matches ||
-      event.button !== 0 ||
-      (event.target instanceof Element && event.target.closest(INTERACTIVE_SELECTOR))
-    ) {
+    if (event.button !== 0 || (event.target instanceof Element && event.target.closest(INTERACTIVE_SELECTOR))) {
       return;
     }
 
     const { x, y, inside } = toLocal(event);
 
-    if (inside) {
-      ripples.push({ x, y, born: performance.now(), strength: 1 });
+    if (inside && running()) {
+      ripples.push({ x, y, born: performance.now(), strength: 0.7 });
+      wake();
     }
   }
 
   function handlePointerLeave() {
-    pointer.active = false;
+    pointer.inside = false;
   }
 
-  function handleThemeChange() {
+  function refreshPalette() {
     palette = readPalette(canvas);
+    buildAtlas();
+    schedule();
+  }
 
-    if (reducedMotion.matches) {
-      drawStill();
+  function remeasure() {
+    if (width > 0) {
+      measure();
+      schedule();
     }
   }
 
-  const resizeObserver = new ResizeObserver(() => {
+  const canvasObserver = new ResizeObserver(() => {
     resize();
     schedule();
   });
+  // Content reflow inside the hero (fonts, wrapping) moves the clear zones.
+  const hostObserver = new ResizeObserver(remeasure);
   const intersectionObserver = new IntersectionObserver(([entry]) => {
     intersecting = entry.isIntersecting;
     schedule();
   });
-  const themeObserver = new MutationObserver(handleThemeChange);
+  const themeObserver = new MutationObserver(refreshPalette);
+  // Entry animations translate the copy; measure again once they settle.
+  const settleTimer = window.setTimeout(remeasure, 1200);
 
-  resizeObserver.observe(canvas);
+  canvasObserver.observe(canvas);
+  hostObserver.observe(host);
   intersectionObserver.observe(canvas);
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
   reducedMotion.addEventListener("change", schedule);
+  finePointer.addEventListener("change", schedule);
   document.addEventListener("visibilitychange", schedule);
   window.addEventListener("pointermove", handlePointerMove, { passive: true });
   window.addEventListener("pointerdown", handlePointerDown, { passive: true });
@@ -368,10 +483,14 @@ function startAsciiField(canvas: HTMLCanvasElement, context: CanvasRenderingCont
   return () => {
     disposed = true;
     cancelAnimationFrame(raf);
-    resizeObserver.disconnect();
+    window.clearTimeout(idleTimer);
+    window.clearTimeout(settleTimer);
+    canvasObserver.disconnect();
+    hostObserver.disconnect();
     intersectionObserver.disconnect();
     themeObserver.disconnect();
     reducedMotion.removeEventListener("change", schedule);
+    finePointer.removeEventListener("change", schedule);
     document.removeEventListener("visibilitychange", schedule);
     window.removeEventListener("pointermove", handlePointerMove);
     window.removeEventListener("pointerdown", handlePointerDown);
@@ -387,8 +506,8 @@ function readPalette(canvas: HTMLCanvasElement): Palette {
   return {
     base: read("--ascii-base") || style.color,
     glow: read("--ascii-glow") || style.color,
-    baseAlpha: Number.parseFloat(read("--ascii-base-alpha")) || 0.1,
-    glowAlpha: Number.parseFloat(read("--ascii-glow-alpha")) || 0.9,
+    baseAlpha: Number.parseFloat(read("--ascii-base-alpha")) || 0.08,
+    glowAlpha: Number.parseFloat(read("--ascii-glow-alpha")) || 0.8,
     fontFamily: style.fontFamily,
   };
 }

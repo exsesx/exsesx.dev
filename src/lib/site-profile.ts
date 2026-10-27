@@ -3,12 +3,13 @@ export const SITE_PROFILE = {
   domain: "exsesx.dev",
   url: "https://exsesx.dev",
   role: "Senior Full Stack Engineer / AI Engineer",
+  tagline: "Senior Full-Stack Engineer · AI-native",
   nationality: "Ukraine",
   location: "Poland",
   description:
-    "Oleh Vanin is a Ukrainian Senior Full Stack Engineer / AI Engineer based in Poland, building practical AI systems, full-stack products, MCP servers, LLM workflows, and developer tools.",
+    "Oleh Vanin is a Ukrainian Senior Full Stack Engineer / AI Engineer based in Poland. He owns architecture, delivery, and production operations, ships AI features that automate enterprise IT workflows, and builds and verifies software with coding agents.",
   introduction:
-    "I am Oleh, a Ukrainian engineer based in Poland. I build practical AI systems, full-stack products, MCP servers, LLM workflows, and developer tools with TypeScript, React, Node.js, Go, and cloud infrastructure.",
+    "I'm Oleh, a senior full-stack engineer in Poland with 9+ years of building products. I own architecture, delivery, and production operations, ship AI features that automate enterprise IT workflows, and build and verify software with coding agents.",
   links: {
     github: "https://github.com/exsesx",
     linkedin: "https://www.linkedin.com/in/exsesx/",
@@ -21,16 +22,12 @@ export const SITE_PROFILE = {
 } as const;
 
 export const PROFILE_SNAPSHOT_STATS = [
-  { value: "9+", label: "years building web products", socialLabel: "years building web products" },
-  { value: "17+", label: "projects supported as lead engineer", socialLabel: "projects supported as lead engineer" },
+  { value: "9+", label: "years building products", socialLabel: "years building products" },
+  { value: "17+", label: "projects guided as lead engineer", socialLabel: "projects guided as lead engineer" },
+  { value: "10", label: "engineers managed and mentored", socialLabel: "engineers managed and mentored" },
   {
     value: "AI",
-    label: "assistant systems, MCP, LLM workflows",
-    socialLabel: "assistant systems, MCP, LLM",
-  },
-  {
-    value: "Full-stack",
-    label: "React, Next.js, Node.js, Go, cloud",
-    socialLabel: "React, Next, Node, Go, cloud",
+    label: "MCP, agents, human-in-the-loop workflows",
+    socialLabel: "MCP, agents, HITL workflows",
   },
 ] as const;
