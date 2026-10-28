@@ -17,10 +17,15 @@ import { cn } from "@/lib/utils";
  *   spotlight.
  * - requestAnimationFrame runs only while cells are lit (pointer moving or a
  *   ripple in flight); idle, a timer repaints the base layer and nothing else.
- * - Touch screens and reduced motion get one still frame.
+ * - Reduced motion gets one still frame.
  *
  * Content marked [data-ascii-avoid] clears the base field around it, so copy
  * never sits on glyphs. Colors and alpha come from CSS tokens (.ascii-field).
+ *
+ * Narrow layouts have no open side, so the hero renders a [data-ascii-stage]
+ * block under the copy: the field is strongest there and keeps a faint texture
+ * behind the copy. Without hover, a slow double beat ripples out of the
+ * headline's ECG trace, and a finger lights cells while scrolling or tapping.
  */
 
 const FONT_SIZE = 12;
@@ -34,11 +39,18 @@ const SHIMMER_INTERVAL_MS = 400;
 const SCRAMBLE_INTERVAL_MS = 90;
 const RIPPLE_SPEED = 0.42; // px per ms
 const RIPPLE_BAND = 18;
+const HEARTBEAT_BAND = 30;
 const RIPPLE_LIFE_MS = 1400;
 const LIT_THRESHOLD = 0.03;
+const HEARTBEAT_INTERVAL_MS = 5200;
+const HEARTBEAT_FIRST_MS = 1400;
+const HEARTBEAT_ECHO_MS = 200;
+// Narrow layouts: share of the field kept behind copy, and the texture floor outside the stage.
+const STAGE_CLEARANCE_FLOOR = 0.5;
+const STAGE_AMBIENT = 0.6;
 const INTERACTIVE_SELECTOR = "a, button, input, textarea, select, label, [role='button'], [data-ascii-ignore]";
 
-type Ripple = { x: number; y: number; born: number; strength: number };
+type Ripple = { x: number; y: number; born: number; strength: number; band: number };
 type Palette = { base: string; glow: string; baseAlpha: number; glowAlpha: number; fontFamily: string };
 
 export default function AsciiField({ className }: { className?: string }) {
@@ -96,14 +108,18 @@ function startAsciiField(
   let baseWeight = new Float32Array(0);
   let glowWeight = new Float32Array(0);
   let ripples: Ripple[] = [];
+  let pulseOrigin = { x: 0, y: 0 };
   let raf = 0;
   let idleTimer = 0;
+  let heartbeatTimer = 0;
   let lastFrame = 0;
   let lastBasePaint = 0;
   let intersecting = true;
   let disposed = false;
 
-  const animated = () => !reducedMotion.matches && finePointer.matches;
+  const animated = () => !reducedMotion.matches;
+  // Without hover nothing would ever light the field, so it beats on its own.
+  const ambient = () => !finePointer.matches;
   const cellX = (index: number) => offsetX + (index % cols) * cellWidth;
   const cellY = (index: number) => offsetY + Math.floor(index / cols) * ROW_HEIGHT;
 
@@ -171,15 +187,36 @@ function startAsciiField(
     measure();
   }
 
-  /* Spotlight on the open side of the hero, cleared around [data-ascii-avoid]. */
+  /*
+   * Spotlight on the open side of the hero, or on the [data-ascii-stage] block
+   * when one is rendered; cleared around [data-ascii-avoid].
+   */
   function measure() {
     const origin = canvas.getBoundingClientRect();
-    const wide = width >= 1024;
-    const centerX = width * (wide ? 0.76 : 0.6);
-    const centerY = height * (wide ? 0.48 : 0.3);
-    const radiusX = width * (wide ? 0.34 : 0.6);
-    const radiusY = height * (wide ? 0.5 : 0.36);
+    const stageRect = host.querySelector("[data-ascii-stage]")?.getBoundingClientRect();
+    const staged = Boolean(stageRect && stageRect.width > 0 && stageRect.height > 0);
     const clearance = new Float32Array(cols * rows).fill(1);
+    let centerX = width * 0.76;
+    let centerY = height * 0.48;
+    let radiusX = width * 0.34;
+    let radiusY = height * 0.5;
+
+    if (stageRect && staged) {
+      centerX = stageRect.left - origin.left + stageRect.width / 2;
+      centerY = stageRect.top - origin.top + stageRect.height / 2;
+      radiusX = Math.max(width * 0.7, stageRect.width * 0.8);
+      radiusY = Math.max(160, stageRect.height * 1.1);
+    }
+
+    // Beats start at the headline's ECG spike when it is on screen.
+    const traceRect = host.querySelector(".pulse-trace")?.getBoundingClientRect();
+    pulseOrigin =
+      traceRect && traceRect.width > 0
+        ? {
+            x: traceRect.left - origin.left + traceRect.width * 0.44,
+            y: traceRect.top - origin.top + traceRect.height * 0.5,
+          }
+        : { x: centerX, y: centerY };
 
     for (const element of host.querySelectorAll("[data-ascii-avoid]")) {
       const rect = element.getBoundingClientRect();
@@ -206,11 +243,23 @@ function startAsciiField(
     for (let index = 0; index < clearance.length; index++) {
       const x = cellX(index) + cellWidth / 2;
       const y = cellY(index) + ROW_HEIGHT / 2;
-      const spot = 1 - smoothstep(0.3, 1, Math.hypot((x - centerX) / radiusX, (y - centerY) / radiusY));
-      const edges = smoothstep(0, height * 0.14, y) * smoothstep(0, height * 0.18, height - y);
+      const distance = Math.hypot((x - centerX) / radiusX, (y - centerY) / radiusY);
 
-      baseWeight[index] = spot * edges * clearance[index];
-      glowWeight[index] = (0.3 + 0.7 * clearance[index]) * (0.45 + 0.55 * spot) * edges;
+      if (staged) {
+        // Fade under the header and at the hero's end; keep a texture behind the copy.
+        const spot = Math.max(STAGE_AMBIENT, 1 - smoothstep(0.2, 1, distance));
+        const edges = smoothstep(72, 160, y) * smoothstep(0, 64, height - y);
+        const clear = STAGE_CLEARANCE_FLOOR + (1 - STAGE_CLEARANCE_FLOOR) * clearance[index];
+
+        baseWeight[index] = spot * edges * clear;
+        glowWeight[index] = (0.4 + 0.6 * clearance[index]) * edges;
+      } else {
+        const spot = 1 - smoothstep(0.3, 1, distance);
+        const edges = smoothstep(0, height * 0.14, y) * smoothstep(0, height * 0.18, height - y);
+
+        baseWeight[index] = spot * edges * clearance[index];
+        glowWeight[index] = (0.3 + 0.7 * clearance[index]) * (0.45 + 0.55 * spot) * edges;
+      }
     }
   }
 
@@ -259,7 +308,11 @@ function startAsciiField(
       const x = cellX(index);
       const y = cellY(index);
       context.clearRect(x, y, cellWidth, ROW_HEIGHT);
-      context.globalAlpha = Math.min(1, value * palette.glowAlpha * glowWeight[index]);
+      // Never dimmer than the base glyph it replaces, so a passing ripple can't punch holes.
+      context.globalAlpha = Math.min(
+        1,
+        palette.baseAlpha * baseWeight[index] + value * palette.glowAlpha * glowWeight[index],
+      );
       blitGlyph(context, glyphIndexFor(index, scrambleTick), 1, x, y);
     }
 
@@ -305,12 +358,19 @@ function startAsciiField(
 
     for (const ripple of ripples) {
       const age = now - ripple.born;
+
+      // A scheduled echo beat waits its turn but keeps the loop alive.
+      if (age < 0) {
+        lit = true;
+        continue;
+      }
+
       const radius = age * RIPPLE_SPEED;
       const fade = ripple.strength * (1 - age / RIPPLE_LIFE_MS) ** 1.5;
 
-      energize(ripple.x, ripple.y, radius + RIPPLE_BAND, distance => {
+      energize(ripple.x, ripple.y, radius + ripple.band, distance => {
         const offset = Math.abs(distance - radius);
-        return offset < RIPPLE_BAND ? fade * (1 - offset / RIPPLE_BAND) : 0;
+        return offset < ripple.band ? fade * (1 - offset / ripple.band) : 0;
       });
       lit = true;
     }
@@ -351,6 +411,30 @@ function startAsciiField(
     idleTimer = running() && !raf ? window.setTimeout(idleTick, SHIMMER_INTERVAL_MS) : 0;
   }
 
+  /* A double beat ("lub-dub") from the stage, echoing the pulse in the headline. */
+  function beat() {
+    heartbeatTimer = 0;
+
+    if (!running() || !ambient()) {
+      return;
+    }
+
+    const now = performance.now();
+    ripples.push(
+      { ...pulseOrigin, born: now, strength: 1, band: HEARTBEAT_BAND },
+      { ...pulseOrigin, born: now + HEARTBEAT_ECHO_MS, strength: 0.6, band: HEARTBEAT_BAND },
+    );
+    wake();
+    heartbeatTimer = window.setTimeout(beat, HEARTBEAT_INTERVAL_MS);
+  }
+
+  // Resizes reschedule often on mobile (toolbar collapse); keep a pending beat's rhythm.
+  function scheduleHeartbeat(delay: number) {
+    if (!heartbeatTimer && running() && ambient()) {
+      heartbeatTimer = window.setTimeout(beat, delay);
+    }
+  }
+
   function running() {
     return !disposed && intersecting && !document.hidden && animated();
   }
@@ -389,6 +473,7 @@ function startAsciiField(
     if (running()) {
       drawStill();
       scheduleIdle();
+      scheduleHeartbeat(HEARTBEAT_FIRST_MS);
     }
   }
 
@@ -415,6 +500,25 @@ function startAsciiField(
     }
   }
 
+  /* A finger lights the cells under it while it scrolls past the hero. */
+  function handleTouch(event: TouchEvent) {
+    const touch = event.touches[0];
+
+    if (!touch) {
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    pointer.x = touch.clientX - rect.left;
+    pointer.y = touch.clientY - rect.top;
+    pointer.inside = pointer.x >= 0 && pointer.y >= 0 && pointer.x <= rect.width && pointer.y <= rect.height;
+    pointer.lastMove = performance.now();
+
+    if (pointer.inside) {
+      wake();
+    }
+  }
+
   function handlePointerDown(event: PointerEvent) {
     if (event.button !== 0 || (event.target instanceof Element && event.target.closest(INTERACTIVE_SELECTOR))) {
       return;
@@ -423,7 +527,7 @@ function startAsciiField(
     const { x, y, inside } = toLocal(event);
 
     if (inside && running()) {
-      ripples.push({ x, y, born: performance.now(), strength: 0.7 });
+      ripples.push({ x, y, born: performance.now(), strength: 0.7, band: RIPPLE_BAND });
       wake();
     }
   }
@@ -468,6 +572,8 @@ function startAsciiField(
   document.addEventListener("visibilitychange", schedule);
   window.addEventListener("pointermove", handlePointerMove, { passive: true });
   window.addEventListener("pointerdown", handlePointerDown, { passive: true });
+  window.addEventListener("touchstart", handleTouch, { passive: true });
+  window.addEventListener("touchmove", handleTouch, { passive: true });
   document.documentElement.addEventListener("pointerleave", handlePointerLeave);
   window.addEventListener("blur", handlePointerLeave);
 
@@ -484,6 +590,7 @@ function startAsciiField(
     disposed = true;
     cancelAnimationFrame(raf);
     window.clearTimeout(idleTimer);
+    window.clearTimeout(heartbeatTimer);
     window.clearTimeout(settleTimer);
     canvasObserver.disconnect();
     hostObserver.disconnect();
@@ -494,6 +601,8 @@ function startAsciiField(
     document.removeEventListener("visibilitychange", schedule);
     window.removeEventListener("pointermove", handlePointerMove);
     window.removeEventListener("pointerdown", handlePointerDown);
+    window.removeEventListener("touchstart", handleTouch);
+    window.removeEventListener("touchmove", handleTouch);
     document.documentElement.removeEventListener("pointerleave", handlePointerLeave);
     window.removeEventListener("blur", handlePointerLeave);
   };

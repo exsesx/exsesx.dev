@@ -365,6 +365,19 @@ select {
   --ascii-glow-alpha: 0.85;
 }
 
+/* Phones see the field at arm's length, often outdoors; give the glyphs more ink. */
+@media (max-width: 1023px) {
+  .ascii-field {
+    --ascii-base-alpha: 0.2;
+    --ascii-glow-alpha: 0.9;
+  }
+
+  .dark .ascii-field {
+    --ascii-base-alpha: 0.24;
+    --ascii-glow-alpha: 0.95;
+  }
+}
+
 /* The field is the homepage texture; the ECG rows would double it up. */
 body:has(.ascii-field) .signal-traces {
   display: none;

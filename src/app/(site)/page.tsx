@@ -108,8 +108,11 @@ export default function HomePage() {
         tabIndex={-1}
         className="page-safe-inline mx-auto flex w-full max-w-7xl flex-col pb-28 pt-28 lg:pt-32"
       >
-        {/* Copy holds the left column; the open right side belongs to the ASCII field. */}
-        <section className="hero-viewport relative isolate flex min-w-0 flex-col justify-center pb-20 lg:pb-28">
+        {/*
+          Copy holds the left column; the open right side belongs to the ASCII field.
+          Below lg there is no open side, so a stage under the copy takes that role.
+        */}
+        <section className="hero-viewport relative isolate flex min-w-0 flex-col pb-10 lg:justify-center lg:pb-28">
           <AsciiField className="absolute -top-28 bottom-0 left-1/2 -z-10 w-screen -translate-x-1/2 lg:-top-32" />
           <div className="min-w-0 max-w-3xl">
             <div
@@ -132,13 +135,16 @@ export default function HomePage() {
             </h1>
 
             <p
-              className="motion-rise motion-delay-2 mt-10 max-w-xl text-pretty text-xl leading-8 text-muted-foreground sm:text-[1.35rem] sm:leading-9"
+              className="motion-rise motion-delay-2 mt-8 max-w-xl text-pretty text-lg leading-8 text-muted-foreground sm:mt-10 sm:text-[1.35rem] sm:leading-9"
               data-ascii-avoid=""
             >
               {SITE_PROFILE.introduction}
             </p>
 
-            <div className="motion-rise motion-delay-3 mt-12 flex flex-wrap items-center gap-3" data-ascii-avoid="">
+            <div
+              className="motion-rise motion-delay-3 mt-10 flex flex-wrap items-center gap-3 sm:mt-12"
+              data-ascii-avoid=""
+            >
               <Link
                 href="/projects"
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
@@ -176,6 +182,7 @@ export default function HomePage() {
               </a>
             </div>
           </div>
+          <div aria-hidden="true" className="min-h-44 flex-1 lg:hidden" data-ascii-stage="" />
         </section>
 
         <div className="scroll-rise">
