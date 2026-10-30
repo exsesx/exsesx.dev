@@ -1,18 +1,15 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight, CheckCircle2, Layers3 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
+import AsciiField from "@/components/AsciiField";
 import AutoPauseVideo from "@/components/AutoPauseVideo";
 import ProjectCard from "@/components/ProjectCard";
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { createPageMetadata, createProjectSocialImage } from "@/lib/metadata";
 import { getBackTransitionTypeProps, ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
-import { getProjectAccentClasses } from "@/lib/project-accents";
 import {
   getAdjacentProjects,
   getProjectBySlug,
@@ -56,46 +53,66 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   });
 }
 
-function ProjectMedia({ project, preload = false }: { project: Project; preload?: boolean }) {
+/* The one content width every section shares, so left edges line up from the nav down. */
+function Container({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("page-safe-inline mx-auto w-full max-w-7xl", className)}>{children}</div>;
+}
+
+/*
+ * The case's hero picture. It shares its view-transition name with the
+ * project's picture on the index and in the adjacent entries, so arriving from
+ * either morphs the picture into place. The frame keeps the same 16:10 shape as
+ * those entries, so the morph only scales and moves.
+ */
+function ProjectHeroMedia({ project }: { project: Project }) {
   const media = project.media;
-  const projectTransitionType = getProjectTransitionType(project);
+  const transitionType = getProjectTransitionType(project);
+  const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
 
   return (
-    <ViewTransition
-      name={`project-media-${project.id}`}
-      share={{ [projectTransitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
-      default="none"
-    >
-      <div
-        className="project-media-frame relative h-full min-h-[18rem] rounded-[1.75rem] sm:min-h-[28rem] lg:min-h-[34rem]"
-        style={media.type === "image" && media.backgroundColor ? { backgroundColor: media.backgroundColor } : {}}
+    <div className="relative aspect-[16/10] rounded-lg bg-muted" style={{ backgroundColor }}>
+      <ViewTransition
+        name={`project-media-${project.id}`}
+        share={{ [transitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
+        default="none"
       >
-        {media.type === "image" ? (
-          <Image
-            src={media.src}
-            alt={media.alt}
-            fill
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            preload={preload}
-            className="shared-project-media object-cover opacity-95 saturate-[0.94]"
-          />
-        ) : (
-          <AutoPauseVideo
-            className="shared-project-media h-full min-h-[18rem] w-full object-cover opacity-95 saturate-[0.94] sm:min-h-[28rem] lg:min-h-[34rem]"
-            poster={media.poster}
-            preload="metadata"
-            muted
-            loop
-            playsInline
-            label={media.label}
-          >
-            <source src={media.src} type="video/mp4" />
-            {media.label}
-          </AutoPauseVideo>
-        )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
-      </div>
-    </ViewTransition>
+        <div className="project-media-frame absolute inset-0 rounded-lg" style={{ backgroundColor }}>
+          {media.type === "image" ? (
+            <Image
+              src={media.src}
+              alt={media.alt}
+              fill
+              sizes="(min-width: 1024px) 66vw, 100vw"
+              preload
+              className="shared-project-media object-cover"
+            />
+          ) : (
+            <AutoPauseVideo
+              className="shared-project-media size-full object-cover"
+              poster={media.poster}
+              preload="metadata"
+              muted
+              loop
+              playsInline
+              label={media.label}
+            >
+              <source src={media.src} type="video/mp4" />
+              {media.label}
+            </AutoPauseVideo>
+          )}
+        </div>
+      </ViewTransition>
+    </div>
+  );
+}
+
+/* A readout row: what is measured on the left, the value beside it. */
+function ReadoutRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] items-baseline gap-6 border-b border-border py-5">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 text-base leading-7 text-foreground">{children}</dd>
+    </div>
   );
 }
 
@@ -109,198 +126,163 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   const { previousProject, nextProject } = getAdjacentProjects(project);
   const projectTransitionType = getProjectTransitionType(project);
-  const accentClasses = getProjectAccentClasses(project.accent);
-  const adjacentProjects = [previousProject, nextProject].filter(
-    (projectItem): projectItem is Project => projectItem !== undefined && projectItem.id !== project.id,
-  );
 
   return (
     <main
       id="main-content"
       tabIndex={-1}
-      className="page-safe-inline mx-auto w-full max-w-7xl pb-16 pt-24 lg:pt-28"
+      className="flex w-full flex-col"
       {...getBackTransitionTypeProps(projectTransitionType)}
     >
-      <section className="grid gap-8 lg:grid-cols-[0.48fr_0.52fr] lg:items-stretch">
-        <div className="motion-rise flex flex-col gap-6">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">{project.role}</p>
-            <h1 className="mt-3 max-w-4xl text-balance text-[clamp(2.75rem,6vw,5.75rem)] font-black leading-[0.9] tracking-tight text-foreground">
+      {/* The case opens on its name across the page, set on the site's ASCII field. The field's box
+          runs from just below the nav's first 64px to the foot of the name, so it ends above the
+          picture and never sits under it; the headline and action start level with the picture. */}
+      <section aria-labelledby="project-title" className="relative isolate" data-ascii-host="">
+        <div className="relative pt-28 lg:pt-32">
+          <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" placement="around" />
+          <Container>
+            <h1
+              id="project-title"
+              className="display-title motion-rise text-display font-black text-foreground"
+              data-ascii-avoid=""
+            >
               {project.name}
             </h1>
-            <p className="mt-6 max-w-2xl text-pretty text-xl leading-8 text-muted-foreground">
-              {project.detail.headline}
-            </p>
-          </div>
+          </Container>
+        </div>
 
-          <div className="flex flex-wrap gap-2">
-            {project.tags.map(tag => (
-              <Badge key={tag} variant="secondary" className="h-7 bg-secondary/75 px-3 text-sm font-bold">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-
-          <UiCard className="surface-panel gap-0 rounded-[1.85rem] py-0 shadow-none">
-            <CardHeader className="gap-3 px-7 pb-5 pt-7 sm:px-10 sm:pb-6 sm:pt-10">
-              <CardTitle className="text-2xl font-black tracking-tight text-foreground">Project signal</CardTitle>
-              <CardDescription className="max-w-3xl text-lg leading-8">{project.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-6 px-7 pb-7 sm:gap-7 sm:px-10 sm:pb-8">
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[
-                  ["Context", project.period],
-                  ["Role", project.role],
-                ].map(([label, value]) => (
-                  <div key={label} className="rounded-[1.45rem] border border-border bg-background/45 p-5 sm:p-6">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-                    <p className="mt-3 text-xl font-black text-foreground">{value}</p>
-                  </div>
-                ))}
-              </div>
+        <Container>
+          <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-x-8">
+            <div
+              className="motion-rise motion-delay-1 flex min-w-0 flex-col items-start gap-8 lg:col-span-4"
+              data-ascii-avoid=""
+            >
+              <p className="max-w-[36ch] text-pretty text-lead text-muted-foreground">{project.detail.headline}</p>
               {project.href ? (
                 <a
                   href={project.href}
                   data-cuelume-press=""
-                  className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-fit")}
+                  className={buttonVariants({ variant: "default", size: "lg" })}
                   rel="noopener noreferrer"
                   target="_blank"
                 >
-                  Visit product
+                  {project.name} website
                   <ArrowUpRight data-icon="inline-end" strokeWidth={2.4} />
                 </a>
               ) : null}
-            </CardContent>
-          </UiCard>
-        </div>
-
-        <aside
-          className={cn(
-            "motion-rise motion-delay-1 surface-panel hero-surface-panel relative overflow-hidden rounded-[2rem] p-3",
-            accentClasses.detailHero.surface,
-          )}
-        >
-          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClasses.gradient}`} />
-          {accentClasses.topLight ? (
-            <div className={cn("pointer-events-none absolute inset-x-0 top-0 h-52", accentClasses.topLight)} />
-          ) : null}
-          <div className="relative h-full">
-            <ProjectMedia project={project} preload />
+            </div>
+            <div className="motion-rise motion-delay-2 min-w-0 lg:col-span-8">
+              <ProjectHeroMedia project={project} />
+            </div>
           </div>
-        </aside>
+        </Container>
       </section>
 
-      <Separator className="my-16 lg:my-18" />
-
-      <section className="grid gap-6 lg:grid-cols-[0.34fr_0.66fr] lg:gap-8">
-        <div className="motion-rise">
-          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-accent">
-            <Layers3 size={15} strokeWidth={2.4} />
-            Work shape
+      {/* The result first, then what the product is and the facts of the engagement. */}
+      <section className="pt-section">
+        <Container>
+          <p className="scroll-rise min-w-0 max-w-[34ch] text-balance break-words text-title font-black tracking-[-0.025em] text-foreground sm:text-section">
+            {project.impact}
           </p>
-          <h2 className="mt-3 max-w-xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
-            What mattered in the build
-          </h2>
-        </div>
 
-        <div className="grid gap-6">
-          <UiCard className="surface-panel gap-0 rounded-[1.85rem] py-0 shadow-none">
-            <CardHeader className="px-7 pb-4 pt-7 sm:px-10 sm:pb-5 sm:pt-10">
-              <CardTitle className="text-2xl font-black tracking-tight text-foreground">Context</CardTitle>
-            </CardHeader>
-            <CardContent className="px-7 pb-7 sm:px-10 sm:pb-8">
-              <p className="text-lg leading-8 text-muted-foreground">{project.detail.context}</p>
-            </CardContent>
-          </UiCard>
+          <div className="mt-stack grid gap-12 lg:grid-cols-12 lg:gap-x-8">
+            <div className="flex flex-col gap-6 lg:col-span-6">
+              <p className="text-pretty text-lead text-foreground">{project.description}</p>
+              <p className="max-w-[60ch] text-pretty text-base leading-7 text-muted-foreground">
+                {project.detail.context}
+              </p>
+            </div>
 
-          <UiCard className="surface-panel gap-0 rounded-[1.85rem] py-0 shadow-none">
-            <CardHeader className="px-7 pb-4 pt-7 sm:px-10 sm:pb-5 sm:pt-10">
-              <CardTitle className="text-2xl font-black tracking-tight text-foreground">Contribution</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 px-7 pb-7 sm:gap-5 sm:px-10 sm:pb-8">
-              {project.detail.contribution.map(item => (
-                <div
-                  key={item}
-                  className="flex gap-5 rounded-[1.45rem] border border-border bg-background/45 p-5 sm:gap-6 sm:p-6"
-                >
-                  <CheckCircle2
-                    className="mt-0.5 size-7 shrink-0 text-accent"
-                    data-icon="inline-start"
-                    strokeWidth={2.4}
-                  />
-                  <p className="text-lg leading-8 text-muted-foreground">{item}</p>
-                </div>
-              ))}
-            </CardContent>
-          </UiCard>
-
-          <UiCard className="surface-panel gap-0 rounded-[1.85rem] py-0 shadow-none">
-            <CardHeader className="px-7 pb-4 pt-7 sm:px-10 sm:pb-5 sm:pt-10">
-              <CardTitle className="text-2xl font-black tracking-tight text-foreground">Outcome</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-6 px-7 pb-7 sm:px-10 sm:pb-8">
-              <p className="text-lg leading-8 text-muted-foreground">{project.detail.outcome}</p>
-              <div className="flex flex-wrap gap-2">
-                {project.detail.scope.map(item => (
-                  <Badge key={item} variant="outline" className="h-7 bg-background/50 px-3 text-sm font-bold">
-                    {item}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </UiCard>
-        </div>
+            <dl className="border-t border-border lg:col-span-5 lg:col-start-8">
+              <ReadoutRow label="Role">{project.role}</ReadoutRow>
+              <ReadoutRow label="Product">{project.period}</ReadoutRow>
+              <ReadoutRow label="Scope">
+                <ul>
+                  {project.detail.scope.map(item => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </ReadoutRow>
+              <ReadoutRow label="Focus">{project.tags.join(", ")}</ReadoutRow>
+            </dl>
+          </div>
+        </Container>
       </section>
 
-      <Separator className="my-14" />
-
-      <section>
-        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Keep exploring</p>
-            <h2 className="mt-3 max-w-2xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
-              Adjacent project surfaces
+      {/* The contribution as numbered items beside a head that stays in view; the numerals and
+          the space between items do the separating, so the list carries no rules. */}
+      <section aria-labelledby="contribution-title" className="pt-section">
+        <Container className="grid gap-12 lg:grid-cols-12 lg:gap-x-8">
+          <div className="lg:col-span-5">
+            <h2 id="contribution-title" className="section-title max-w-[16ch] lg:sticky lg:top-32">
+              What I did at {project.name}
             </h2>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {previousProject ? (
-              <Link
-                href={getProjectPath(previousProject)}
-                transitionTypes={[ROUTE_TRANSITION_TYPES.navBack]}
-                {...suppressEntryMotionProps}
-                data-cuelume-press=""
-                className={cn(
-                  buttonVariants({ variant: "glass", size: "default" }),
-                  "project-adjacent-link project-adjacent-link-previous",
-                )}
-              >
-                <ArrowLeft className="project-adjacent-arrow" data-icon="inline-start" strokeWidth={2.4} />
-                Previous
-              </Link>
+
+          <div className="lg:col-span-7">
+            <ol className="flex flex-col gap-y-8">
+              {project.detail.contribution.map((item, index) => (
+                <li
+                  key={item}
+                  className="grid grid-cols-[minmax(0,2.5rem)_minmax(0,1fr)] items-baseline gap-4 sm:gap-6"
+                >
+                  <span aria-hidden="true" className="text-title font-black tabular-nums text-accent">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <p className="max-w-[60ch] text-base leading-7 text-foreground">{item}</p>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-12 max-w-[48ch] text-pretty text-lead font-bold text-foreground">
+              {project.detail.outcome}
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* The close: a change of paper holding the way on through the work. Each neighbour is one
+          card: its Previous or Next label pages on with direction only, while its picture and
+          name open it with the picture morph. */}
+      <section aria-labelledby="more-projects-title" className="close-band mt-section">
+        <Container className="py-section-s">
+          <h2 id="more-projects-title" className="section-title">
+            More client work
+          </h2>
+
+          <div className="mt-stack grid gap-x-8 gap-y-12 md:grid-cols-2">
+            {previousProject && previousProject.id !== project.id ? (
+              <div className="flex min-w-0 flex-col gap-3">
+                <Link
+                  href={getProjectPath(previousProject)}
+                  transitionTypes={[ROUTE_TRANSITION_TYPES.navBack]}
+                  {...suppressEntryMotionProps}
+                  data-cuelume-press=""
+                  className="project-adjacent-link project-adjacent-link-previous -my-2 inline-flex min-h-11 items-center gap-2 self-start rounded-sm text-sm font-bold text-muted-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-foreground"
+                >
+                  <ArrowLeft className="project-adjacent-arrow size-4" strokeWidth={2.4} />
+                  Previous
+                </Link>
+                <ProjectCard project={previousProject} />
+              </div>
             ) : null}
-            {nextProject ? (
-              <Link
-                href={getProjectPath(nextProject)}
-                transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
-                {...suppressEntryMotionProps}
-                data-cuelume-press=""
-                className={cn(
-                  buttonVariants({ variant: "default", size: "default" }),
-                  "project-adjacent-link project-adjacent-link-next",
-                )}
-              >
-                Next
-                <ArrowRight className="project-adjacent-arrow" data-icon="inline-end" strokeWidth={2.4} />
-              </Link>
+
+            {nextProject && nextProject.id !== project.id ? (
+              <div className="flex min-w-0 flex-col gap-3">
+                <Link
+                  href={getProjectPath(nextProject)}
+                  transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
+                  {...suppressEntryMotionProps}
+                  data-cuelume-press=""
+                  className="project-adjacent-link project-adjacent-link-next -my-2 inline-flex min-h-11 items-center gap-2 self-start rounded-sm text-sm font-bold text-muted-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-foreground"
+                >
+                  Next
+                  <ArrowRight className="project-adjacent-arrow size-4" strokeWidth={2.4} />
+                </Link>
+                <ProjectCard project={nextProject} />
+              </div>
             ) : null}
           </div>
-        </div>
-
-        <div className="grid items-stretch gap-5 md:grid-cols-2">
-          {adjacentProjects.map(projectItem => (
-            <ProjectCard key={projectItem.id} project={projectItem} density="compact" />
-          ))}
-        </div>
+        </Container>
       </section>
     </main>
   );

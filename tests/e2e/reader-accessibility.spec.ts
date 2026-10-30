@@ -102,31 +102,27 @@ if (!("Bun" in globalThis)) {
       await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(799);
     });
 
-    test("reduced motion keeps every specialty visible on narrow screens", async ({ page }) => {
-      await page.emulateMedia({ reducedMotion: "reduce" });
+    test("keeps every specialty visible on narrow screens", async ({ page }) => {
       await page.goto("/");
 
-      const rail = page.getByRole("region", { name: "Specialties" });
-      const track = rail.locator(".snapshot-specialty-track");
-      const badges = track.locator("> div:first-child > [data-slot=badge]");
+      const list = page.getByRole("list", { name: "Specialties" });
+      const badges = list.locator("[data-slot=badge]");
 
       for (const width of [320, 390]) {
         await page.setViewportSize({ width, height: 844 });
-        await rail.scrollIntoViewIfNeeded();
+        await list.scrollIntoViewIfNeeded();
+
         await expect(badges).toHaveText(specialties);
-        await expect(track).toHaveCSS("animation-name", "none");
-        await expect(track.locator('> [aria-hidden="true"]')).toBeHidden();
         expect(
           await badges.evaluateAll(elements =>
             elements.every(element => {
               const bounds = element.getBoundingClientRect();
-              const railBounds = element.closest(".snapshot-specialty-rail")?.getBoundingClientRect();
+              const listBounds = element.closest("ul")?.getBoundingClientRect();
               return (
-                railBounds &&
-                bounds.left >= railBounds.left - 1 &&
-                bounds.right <= railBounds.right + 1 &&
-                bounds.top >= railBounds.top - 1 &&
-                bounds.bottom <= railBounds.bottom + 1
+                listBounds &&
+                bounds.width > 0 &&
+                bounds.left >= listBounds.left - 1 &&
+                bounds.right <= listBounds.right + 1
               );
             }),
           ),

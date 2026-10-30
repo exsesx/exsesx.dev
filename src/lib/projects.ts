@@ -44,23 +44,24 @@ export const projects: Project[] = [
     href: "https://www.controlup.com/",
     period: "AI assistant for IT ops",
     description:
-      "Atlas, the AI assistant for enterprise IT operations at a $100M+ ARR company. I owned the MCP architecture and shipped approval-gated actions IT admins review in one turn.",
+      "I worked on the Atlas team's AI assistant for enterprise IT operations at a $100M+ ARR company. I owned its MCP architecture and built a shared transport and authentication core for other teams' tools.",
     impact:
-      "An entitlement-aware assistant that acts on customer infrastructure only after a human approves, built and verified with coding agents.",
-    tags: ["ai assistant", "mcp", "human-in-the-loop"],
+      "IT admins approve create, edit, and delete actions before they run, and can review several changes in one turn.",
+    tags: ["AI assistant", "MCP", "Human-in-the-loop"],
     detail: {
       headline: "An AI assistant that automates enterprise IT workflows, with a human in the loop.",
       context:
-        "ControlUp helps IT teams monitor, troubleshoot, and optimize enterprise endpoints, virtual desktops, applications, and employee experience signals.",
+        "The Atlas team builds ControlUp's AI assistant for enterprise IT operations. Some of its actions change devices, sessions, users, and roles, so an IT admin has to approve each one.",
       contribution: [
-        "Replaced sequential Mastra approvals with a parallel workflow so IT admins could review multiple changes in one turn, and shipped approval-gated create, edit, and delete actions to selected customer organizations.",
-        "Owned the MCP architecture: built a shared transport and authentication core so other teams could add tools and schemas, and migrated servers from the assistant's local runtime to cloud deployments.",
-        "Excluded unlicensed tools and adjusted assistant instructions to match each organization's entitlements, and validated Mastra Observational Memory as a pre-release replacement for context rotation.",
-        "Delivered full-stack changes with Claude Code and Codex, then verified them manually and with browser automation, network traces, and Langfuse.",
+        "Built an approval layer that shows every pending approval in a turn at once, so an IT admin approves or rejects them together and the stream carries on. Mastra's flow at the time blocked the turn on one approval after another.",
+        "Built mcp-server-core, the shared base other teams used to ship MCP servers: import it, add tools and schemas, and the HTTP and stdio transports come with it. Version one was a straight extraction of the existing server, so about ten teams could adopt it without migration surprises.",
+        "Moved the core's transport to Hono with the MCP SDK's web-standard streamable HTTP, and migrated the MCP servers from the assistant's local runtime to cloud deployments.",
+        "Made the assistant read each organization's entitlements: its instructions adjust per organization and unlicensed tools are left out entirely, which removed a class of failed actions and confusing answers. Also validated Mastra Observational Memory as a pre-release replacement for context rotation.",
+        "Owned the frontend of the assistant redesign, including a new full-screen mode. The assistant is a module-federation microfrontend, so full screen falls back to the sidebar on navigation and neither the conversation nor the page is lost. Shipped through a staged customer rollout.",
       ],
       outcome:
-        "Assistant actions that IT admins can trust: reviewed together, scoped to their license, and checked before release.",
-      scope: ["MCP architecture", "Human-in-the-loop actions", "Agent-assisted delivery"],
+        "Assistant actions IT admins can trust: approved together, scoped to their organization's license, and checked in production with Langfuse traces.",
+      scope: ["Human-in-the-loop approvals", "MCP architecture", "Assistant frontend", "Agent-assisted delivery"],
     },
     accent: "controlup",
     media: {
@@ -76,25 +77,25 @@ export const projects: Project[] = [
     name: "Quicklizard",
     role: "Senior Full-Stack Developer",
     href: "https://quicklizard.com/en/",
-    period: "AI dynamic pricing",
+    period: "Pricing platform",
     description:
-      "An AI-powered dynamic pricing platform where I owned full-stack delivery: Next.js workflows, Go services, and rollouts behind feature flags.",
+      "A pricing platform where I owned dashboards, localization, authentication, and bulk overrides from scoping to feature-flagged rollout.",
     impact:
-      "Shipped pricing dashboards, localization, authentication, bulk overrides, and an Operations Dashboard, then simplified the stack and CI.",
-    tags: ["next.js", "go", "pricing"],
+      "Built the Go backend and Next.js frontend for an Operations Dashboard, and removed Nx to simplify development and CI.",
+    tags: ["Next.js", "Go", "Pricing"],
     detail: {
-      headline: "Full-stack delivery for AI-powered retail pricing automation.",
+      headline: "Full-stack features for a retail pricing platform, from scoping to rollout.",
       context:
-        "Quicklizard is a B2B SaaS platform that helps retailers and brands automate pricing across channels by reading market data, competitor prices, and demand patterns in real time.",
+        "Quicklizard is a pricing platform for retailers. I worked across its Go gateway and Next.js UI through Adaptiq, from March 2025 to January 2026.",
       contribution: [
-        "Owned features end to end: scoping with stakeholders, implementation, reviews, rollout behind feature flags, and iteration on production feedback.",
+        "Took each feature from scoping with stakeholders to a feature-flagged rollout, then followed it through monitoring and production feedback.",
         "Built the Go backend and Next.js frontend for an Operations Dashboard with charts and operational metrics.",
-        "Developed pricing activity and total exposure endpoints, and implemented Redis token caching and sessions across the Go gateway and Next.js UI.",
-        "Upgraded to Next.js 16 and Tailwind CSS 4 and removed Nx to simplify development and CI, keeping dependencies secure through recurring upgrades.",
+        "Developed the pricing activity and total exposure endpoints, and added Redis token caching and sessions across the Go gateway and the Next.js UI.",
+        "Upgraded to Next.js 16 and Tailwind 4 and removed Nx, which simplified development and CI, and kept dependencies secure with recurring upgrades.",
       ],
       outcome:
-        "A more maintainable codebase, faster local development, and reliable releases for pricing analytics and automation.",
-      scope: ["Pricing dashboards", "Stack modernization", "Go microservices"],
+        "Pricing features that shipped behind feature flags and improved on production feedback, on a simpler stack and CI.",
+      scope: ["Pricing dashboards", "Go backend endpoints", "Stack modernization"],
     },
     accent: "quicklizard",
     media: {
@@ -110,31 +111,32 @@ export const projects: Project[] = [
     name: "Tso Chinese",
     role: "Lead engineer, solution architecture",
     href: "https://tsochinese.com",
-    period: "Restaurant delivery",
+    period: "Dark-kitchen automation",
     description:
-      "Dark-kitchen delivery software where I supported Tso 2.0 through a five-location expansion, then designed Tso 3.0's microservices architecture, which went live in September 2026.",
+      "I developed and supported Tso 2.0 as the business grew from two to five restaurants, then designed Tso 3.0's architecture. It went live in September 2026.",
     impact:
-      "Led a cross-functional team of up to 7 on a product running live restaurant operations, delivery, and payments.",
-    tags: ["microservices", "graphql", "team lead"],
+      "Led Tso 3.0's technical direction and cross-functional team, then wrote the phased database migration plan the team adopted.",
+    tags: ["Microservices", "GraphQL", "Team lead"],
     detail: {
-      headline: "Commerce and operations software for a dark-kitchen delivery business.",
+      headline: "Ordering, dispatch, and kitchen software for a dark-kitchen delivery business.",
       context:
-        "Tso 2.0 ran live restaurant operations while the business grew from two locations to five. Tso 3.0 is the ground-up redesign built to address the architectural limits 2.0 had run into.",
+        "Tso Chinese is a US restaurant brand that runs dark kitchens: an ordering site, an admin panel, a dispatch screen for delivery drivers, and kitchen tablets. Tso 3.0 is the redesign for 2.0's downtime releases and single-Postgres bottleneck.",
       contribution: [
-        "Developed and supported the Tso 2.0 ordering and kitchen platform as the business grew from two to five restaurants, owning releases, monitoring, and incident response, and migrated payments from Stripe to Cybersource to cut processing costs.",
-        "Designed Tso 3.0 on Kubernetes: microservices with separate databases, messaging, and GraphQL gateways for independent scaling, service ownership, and zero-downtime deployments.",
-        "Built isolated branch previews with test data so the CTO, QA, and PM could validate changes before merge, with deployment and cleanup automated in GitHub Actions and Go.",
-        "Led the technical direction and a cross-functional team of up to 7, set priorities with the CTO, and later planned the phased database migration the team used for cutover.",
+        "Developed and supported the Tso 2.0 ordering and kitchen platform, owning client communication, releases, monitoring, and incident response. Migrated payment processing from Stripe to Cybersource to cut processing costs.",
+        "Reduced the database load from kitchen tablets that re-fetched on every change signal and hit Postgres in waves, first with query analysis and Redis, then by sending only what changed so only the affected tablet refreshed.",
+        "Designed Tso 3.0 as solution architect around the CTO's two requirements: test changes in small, isolated pieces before they reach the kitchens, and grow the team without people stepping on each other. That meant Kubernetes, a database per service, RabbitMQ, and GraphQL gateways, so each service scales on its own, releases need no downtime, and one engineer can own payments without touching ordering.",
+        "Built preview environments: label a pull request and it deploys to its own namespace with a database, test data, RabbitMQ, and Jaeger tracing, so the CTO, QA, and PM could try any branch before merge. GitHub Actions and Go handled deploy and cleanup, and the AWS calculator showed previews costing less than full environments.",
+        "Led a cross-functional team of about 7 to 9 while staying hands-on, setting priorities with the CTO and coordinating delivery with the PM. Later, as a consultant, documented the migration in phases across off-hours windows, with cutover failure scenarios and mitigations, and presented it to the team.",
       ],
       outcome:
         "A live commerce system where a bad architecture call would have hit real kitchens, drivers, and payments.",
-      scope: ["Team leadership", "GraphQL architecture", "Delivery operations"],
+      scope: ["Solution architecture", "Team leadership", "Preview environments", "Delivery operations"],
     },
     accent: "rose",
     media: {
       type: "image",
       src: "/images/tso_preview.jpg",
-      alt: "Tso delivery preview",
+      alt: "A bowl of glazed chicken with broccoli and dried chilies",
     },
   },
   {
@@ -148,7 +150,7 @@ export const projects: Project[] = [
     description:
       "Banking product work where reliability and restraint mattered more than flash. The specifics stay private.",
     impact: "Fintech-facing product engineering; the details are confidential.",
-    tags: ["fintech", "banking", "systems"],
+    tags: ["Fintech", "Banking", "Systems"],
     detail: {
       headline: "A banking surface where reliability came first.",
       context:
@@ -176,16 +178,17 @@ export const projects: Project[] = [
     href: "https://www.coinmena.com",
     period: "Digital assets",
     description:
-      "A UAE-based cryptocurrency application where I implemented asynchronous frontend architecture for real-time verifications and updates.",
+      "A UAE-based cryptocurrency app where I built the asynchronous frontend architecture for real-time verification. I also delivered the functionality its regulatory certification required, by the deadline.",
     impact:
       "Hit a critical regulatory certification deadline that opened up business operations across the MENA region.",
-    tags: ["crypto", "real-time", "regulated"],
+    tags: ["Crypto", "Real-time", "Regulated"],
     detail: {
       headline: "Real-time regulated crypto product work under a certification deadline.",
       context:
         "CoinMENA needed a frontend that could handle asynchronous verification flows and regulated digital-asset operations, with a hard certification deadline attached.",
       contribution: [
-        "Built an asynchronous frontend architecture for real-time verifications and updates.",
+        "Built the asynchronous frontend architecture for real-time verification, so verification status and updates reached users as they happened.",
+        "Delivered the functionality required for regulatory certification by the deadline.",
         "Worked in a regulated setting where correctness and timing were both business-critical.",
         "Adapted fast as requirements shifted on the way to a key certification milestone.",
       ],
@@ -204,24 +207,24 @@ export const projects: Project[] = [
     id: "project-this-is-language",
     slug: "this-is-language",
     name: "This is Language",
-    role: "Platform work",
+    role: "Backend engineering",
     href: "https://www.thisisschool.com/",
     period: "Learning platform",
     description:
-      "A language-learning platform where I built scalable backend features around video transcoding, learning puzzles, and a multiplayer game.",
+      "A language-learning platform where I owned the Node.js backend, including an AWS video-transcoding pipeline and a learning game with four-player rooms.",
     impact: "Backend features for learning, media, and play that students used directly.",
-    tags: ["video", "backend", "multiplayer"],
+    tags: ["Node.js", "Video", "Multiplayer"],
     detail: {
       headline: "Learning-platform engineering across media, puzzles, and multiplayer play.",
       context:
         "This is Language pairs language learning with video-heavy content and interactive practice, so the backend has to stay fast while students are mid-lesson.",
       contribution: [
-        "Built a scalable backend around video transcoding and learning workflows.",
-        "Built the product mechanics for learning puzzles and a multiplayer game.",
+        "Built an AWS video-transcoding pipeline for the platform's video-heavy content.",
+        "Built the backend for a learning game with four-player rooms, alongside the learning puzzles.",
         "Tuned the performance and feedback loops that students felt while practicing.",
       ],
       outcome: "The work led to a UK team invitation with potential visa sponsorship.",
-      scope: ["Video workflows", "Learning mechanics", "Backend product features"],
+      scope: ["Node.js backend", "AWS video transcoding", "Multiplayer game rooms"],
     },
     accent: "amber",
     media: {
@@ -235,24 +238,25 @@ export const projects: Project[] = [
     id: "project-huddle",
     slug: "huddle",
     name: "Huddle",
-    role: "Product engineering",
+    role: "Web developer",
     href: "https://www.huddle.uk.com/",
     period: "Utilities / tenancy",
     description:
-      "Household utility management work where I adapted from Angular.js to React and worked closely with PostgreSQL stored procedures and PostGraphQL.",
-    impact: "Moved an everyday utility product through a frontend rebuild and a shift in its data layer.",
-    tags: ["react", "postgresql", "postgraphql"],
+      "A household utility management product where I contributed to the AngularJS-to-React migration and exposed PostgreSQL stored procedures as GraphQL APIs with PostGraphQL.",
+    impact:
+      "Helped move an everyday utility product from AngularJS to React, with GraphQL APIs over its PostgreSQL stored procedures.",
+    tags: ["React", "PostgreSQL", "PostGraphQL"],
     detail: {
       headline: "A practical product transition for household utility management.",
       context:
         "Huddle handled the everyday plumbing of household services: tenancy, utility accounts, and the operational edge cases that come with them.",
       contribution: [
-        "Switched from Angular.js to React mid-project without stalling delivery.",
-        "Worked close to the data layer through PostgreSQL stored procedures and PostGraphQL.",
-        "Turned utility-management requirements into maintainable frontend surfaces.",
+        "Contributed to the AngularJS-to-React migration mid-project without stalling delivery.",
+        "Exposed PostgreSQL stored procedures as GraphQL APIs with PostGraphQL, so the React frontend could query them directly.",
+        "Turned utility-management requirements into maintainable frontend screens.",
       ],
       outcome: "A frontend and data-layer move that kept the live product working for everyday users.",
-      scope: ["Frontend migration", "Data-backed product UI", "Utility operations"],
+      scope: ["AngularJS to React", "PostGraphQL APIs", "Utility operations"],
     },
     accent: "violet",
     media: {

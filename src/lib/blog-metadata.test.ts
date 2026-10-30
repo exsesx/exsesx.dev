@@ -5,7 +5,7 @@ import { createBlogArticleMetadata, createBlogIndexMetadata, createPageMetadata,
 describe("Blog metadata", () => {
   test("formats document titles with the site name first without changing Blog social titles", () => {
     expect(rootMetadata.title).toEqual({
-      default: "Oleh Vanin - Senior Full Stack Engineer / AI Engineer",
+      default: "Oleh Vanin - Senior Full-Stack Engineer, Applied AI",
       template: "Oleh Vanin - %s",
     });
 

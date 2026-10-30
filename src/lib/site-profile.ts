@@ -2,14 +2,14 @@ export const SITE_PROFILE = {
   name: "Oleh Vanin",
   domain: "exsesx.dev",
   url: "https://exsesx.dev",
-  role: "Senior Full Stack Engineer / AI Engineer",
-  tagline: "Senior Full-Stack Engineer · AI-native",
+  role: "Senior Full-Stack Engineer, Applied AI",
   nationality: "Ukraine",
   location: "Poland",
   description:
-    "Oleh Vanin is a Ukrainian Senior Full Stack Engineer / AI Engineer based in Poland. He owns architecture, delivery, and production operations, ships AI features that automate enterprise IT workflows, and builds and verifies software with coding agents.",
+    "Oleh Vanin is a senior full-stack engineer in Poland with 9+ years building products, most recently AI features that automate enterprise IT workflows.",
+  summary: "Senior full-stack engineer in Poland who ships AI features to production.",
   introduction:
-    "I'm Oleh, a senior full-stack engineer in Poland with 9+ years of building products. I own architecture, delivery, and production operations, ship AI features that automate enterprise IT workflows, and build and verify software with coding agents.",
+    "I've owned architecture, delivery, and production operations. Most recently, I shipped AI features that automate enterprise IT workflows.",
   links: {
     github: "https://github.com/exsesx",
     linkedin: "https://www.linkedin.com/in/exsesx/",
@@ -24,10 +24,10 @@ export const SITE_PROFILE = {
 export const PROFILE_SNAPSHOT_STATS = [
   { value: "9+", label: "years building products", socialLabel: "years building products" },
   { value: "17+", label: "projects guided as lead engineer", socialLabel: "projects guided as lead engineer" },
-  { value: "10", label: "engineers managed and mentored", socialLabel: "engineers managed and mentored" },
+  { value: "10", label: "engineers managed and mentored at peak", socialLabel: "engineers managed at peak" },
   {
     value: "AI",
-    label: "MCP, agents, human-in-the-loop workflows",
-    socialLabel: "MCP, agents, HITL workflows",
+    label: "MCP architecture and approval-gated actions in production",
+    socialLabel: "MCP, approval-gated actions",
   },
 ] as const;

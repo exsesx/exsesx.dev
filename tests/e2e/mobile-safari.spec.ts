@@ -999,11 +999,11 @@ async function expectTargetAtReadingOffset(target: Locator) {
 }
 
 async function readHeaderSurface(page: Page) {
-  const nav = page.locator(".site-nav-glass");
+  const surface = page.locator(".site-nav-surface");
 
-  return nav.evaluate(element => {
+  return surface.evaluate(element => {
     const style = getComputedStyle(element);
-    const before = getComputedStyle(element, "::before");
+    const rim = getComputedStyle(element, "::after");
     const fade = document.querySelector(".site-header-fade");
 
     return {
@@ -1012,7 +1012,7 @@ async function readHeaderSurface(page: Page) {
       borderRadius: style.borderRadius,
       boxShadow: style.boxShadow,
       fadeDisplay: fade ? getComputedStyle(fade).display : null,
-      lensBackground: before.backgroundImage,
+      rimBackground: rim.backgroundImage,
     };
   });
 }

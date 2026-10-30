@@ -597,7 +597,6 @@ if (!("Bun" in globalThis)) {
       await expect(root).toHaveAttribute("data-blog-focus", "true");
       await expect(page.locator(".site-header-nav-frame")).toBeHidden();
       await expect(page.locator(".site-header-fade")).toBeHidden();
-      await expect(page.locator(".kinetic-backdrop > *").first()).toBeHidden();
       await expect(page.locator(".site-version-tag")).toBeHidden();
       const readingProgress = page.locator(".blog-reading-progress");
       await expect(readingProgress).toBeHidden();

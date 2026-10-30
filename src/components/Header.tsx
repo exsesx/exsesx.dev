@@ -5,9 +5,10 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent, PointerEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import { MOTION_ATTRIBUTES, suppressEntryMotionProps } from "@/lib/motion-contract";
 import { attachNavCondense } from "@/lib/nav-condense";
+import { attachNavPill, type NavPillController } from "@/lib/nav-pill";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
 import { getPrimaryNavHref, isBlogPostPath, isProjectDetailPath, type PrimaryNavHref } from "@/lib/routes";
 import { SITE_PROFILE } from "@/lib/site-profile";
@@ -24,6 +25,8 @@ const navigation: Array<{ href: PrimaryNavHref; label: string; icon: typeof Home
   { href: "/projects", label: "Projects", icon: BriefcaseBusiness },
   { href: "/blog/en", label: "Blog", icon: BookOpenText },
 ];
+
+const navNames = ["home", "projects", "blog"] as const;
 
 const navActionBaseClassName =
   "relative z-10 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-0 text-sm font-bold whitespace-nowrap text-foreground outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97] sm:px-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
@@ -44,6 +47,9 @@ export default function Header() {
   const activeNavHref = getPrimaryNavHref(pathname);
   const [visualActiveNavHref, setVisualActiveNavHref] = useState<PrimaryNavHref>(activeNavHref);
   const navFrameRef = useRef<HTMLDivElement | null>(null);
+  const switcherRef = useRef<HTMLDivElement | null>(null);
+  const pillRef = useRef<HTMLSpanElement | null>(null);
+  const pillControllerRef = useRef<NavPillController | null>(null);
   const visualActiveNav =
     visualActiveNavHref === "/projects" ? "projects" : visualActiveNavHref === "/blog/en" ? "blog" : "home";
   const isReadingHeaderHidden = isFocusMode || isPassiveHeaderHidden;
@@ -63,6 +69,46 @@ export default function Header() {
     return attachNavCondense(frame);
   }, []);
 
+  // A drag picked a tab (or was cancelled): navigate, or settle back on the
+  // current route without the tap-again scroll-to-top.
+  const commitDraggedNav = useEffectEvent((index: number | null) => {
+    const item = index === null ? undefined : navigation[index];
+
+    if (!item || item.href === activeNavHref) {
+      setVisualActiveNavHref(activeNavHref);
+
+      return;
+    }
+
+    switcherRef.current?.querySelectorAll<HTMLAnchorElement>(":scope > a")[index ?? 0]?.click();
+  });
+
+  useEffect(() => {
+    const switcher = switcherRef.current;
+    const pill = pillRef.current;
+
+    if (!switcher || !pill) {
+      return;
+    }
+
+    const controller = attachNavPill(switcher, pill, {
+      names: navNames,
+      onCommit: index => commitDraggedNav(index),
+    });
+
+    pillControllerRef.current = controller;
+
+    return () => {
+      pillControllerRef.current = null;
+      controller.dispose();
+    };
+  }, []);
+
+  // Before paint, so the spring starts from where the pill was drawn.
+  useLayoutEffect(() => {
+    pillControllerRef.current?.moveTo(navNames.indexOf(visualActiveNav));
+  }, [visualActiveNav]);
+
   function handleNavLinkClick(event: MouseEvent<HTMLAnchorElement>, href: PrimaryNavHref) {
     if (shouldPreviewNavChange(event)) {
       setVisualActiveNavHref(href);
@@ -78,16 +124,16 @@ export default function Header() {
     <>
       <div aria-hidden="true" className="safari-chrome-sample" data-safari-chrome-sample />
       <header lang="en" className="site-header fixed inset-x-0 top-0 z-50">
-        <div aria-hidden="true" className="site-header-fade" style={{ viewTransitionName: "persistent-nav-fade" }} />
+        <div aria-hidden="true" className="site-header-fade" />
         <div
           ref={navFrameRef}
           aria-hidden={isReadingHeaderHidden ? "true" : undefined}
           className="site-header-nav-frame"
           inert={isReadingHeaderHidden ? true : undefined}
           onFocusCapture={revealHeader}
-          style={{ viewTransitionName: "persistent-nav" }}
         >
-          <nav className="liquid-glass site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full px-2 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] sm:flex sm:justify-between sm:gap-3 sm:px-3">
+          <nav className="site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full px-2 py-2 sm:flex sm:justify-between sm:gap-3 sm:px-3">
+            <span aria-hidden="true" className="liquid-glass site-nav-surface" />
             <div
               className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1.5 sm:gap-x-0" : "gap-x-0"}`}
             >
@@ -105,7 +151,7 @@ export default function Header() {
                   }
                 }}
               >
-                <span className="logo-tile grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground shadow-lg shadow-foreground/15">
+                <span className="logo-tile grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground">
                   <LogoMark className="size-8" />
                 </span>
                 <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
@@ -116,14 +162,18 @@ export default function Header() {
             </div>
 
             <div
-              className="site-nav-switcher relative grid grid-cols-[2.5rem_2.5rem_2.5rem] items-center gap-1 rounded-full bg-muted p-1 sm:grid-cols-3"
+              ref={switcherRef}
+              className="site-nav-switcher relative grid grid-cols-[2.5rem_2.5rem_2.5rem] items-center gap-1 rounded-full p-1 sm:grid-cols-3"
               {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
             >
               <span
+                ref={pillRef}
                 aria-hidden="true"
                 className="site-nav-active-pill absolute inset-y-1 left-1 z-0 rounded-full"
                 {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
-              />
+              >
+                <span className="site-nav-active-pill-body" />
+              </span>
               {navigation.map(item => {
                 const Icon = item.icon;
 
@@ -135,6 +185,7 @@ export default function Header() {
                     data-cuelume-press="select"
                     aria-label={item.label}
                     aria-current={activeNavHref === item.href ? "page" : undefined}
+                    draggable={false}
                     className={navActionBaseClassName}
                     onClick={event => handleNavLinkClick(event, item.href)}
                     onPointerDown={event => {

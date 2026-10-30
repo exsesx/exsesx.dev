@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ASCII_GLYPHS, glowFalloff, glyphFor, hashCell, smoothstep } from "./ascii-field";
+import { ASCII_GLYPHS, DENSITY_RAMP, glowFalloff, glyphFor, hashCell, smoothstep } from "./ascii-field";
 
 describe("ascii field helpers", () => {
   test("hashCell is deterministic and stays in [0, 1)", () => {
@@ -34,5 +34,11 @@ describe("ascii field helpers", () => {
     expect(smoothstep(0, 10, -5)).toBe(0);
     expect(smoothstep(0, 10, 5)).toBe(0.5);
     expect(smoothstep(0, 10, 50)).toBe(1);
+  });
+
+  test("every ramp and trace glyph exists in the atlas", () => {
+    for (const glyph of `${DENSITY_RAMP}-/\\|`) {
+      expect(ASCII_GLYPHS).toContain(glyph);
+    }
   });
 });

@@ -1,29 +1,22 @@
-import {
-  ArrowRight,
-  Bot,
-  BriefcaseBusiness,
-  FolderGit2,
-  Rocket,
-  ScanSearch,
-  Search,
-  Send,
-  Sparkles,
-  Workflow,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import AsciiField from "@/components/AsciiField";
 import CvMenu from "@/components/CvMenu";
 import { GithubIcon } from "@/components/icons/lucide-github";
 import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
-import ProjectCard from "@/components/ProjectCard";
 import PulseTrace from "@/components/PulseTrace";
-import SnapshotSpecialtyRail from "@/components/SnapshotSpecialtyRail";
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { createPageMetadata } from "@/lib/metadata";
-import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
-import { projects, specialties } from "@/lib/projects";
+import {
+  getProjectRouteTransitionTypes,
+  ROUTE_TRANSITION_TYPES,
+  suppressEntryMotionProps,
+} from "@/lib/motion-contract";
+import { getProjectPath, getProjectTransitionType, type Project, projects, specialties } from "@/lib/projects";
 import { PROFILE_SNAPSHOT_STATS, SITE_PROFILE } from "@/lib/site-profile";
 import { buildHomeStructuredData, serializeStructuredData } from "@/lib/structured-data";
 import { cn } from "@/lib/utils";
@@ -36,64 +29,155 @@ export const metadata: Metadata = createPageMetadata({
 const experienceHighlights = [
   {
     company: "ControlUp",
-    role: "Senior Full-Stack / AI Engineer",
+    role: "Senior Full-Stack / AI Engineer, via Adaptiq",
     period: "2026",
     detail:
-      "Atlas, the AI assistant for enterprise IT operations at a $100M+ ARR company. Owned MCP architecture with a shared transport and authentication core, and shipped parallel, approval-gated actions for IT admins.",
+      "Moved MCP servers from the assistant's local runtime to cloud deployments. Matched the assistant's tools and instructions to each organization's license.",
   },
   {
     company: "Quicklizard",
-    role: "Senior Full-Stack Developer",
+    role: "Senior Full-Stack Developer, via Adaptiq",
     period: "2025 – 2026",
     detail:
-      "Owned pricing dashboards, localization, authentication, and bulk overrides from scoping through feature-flagged rollout. Built the Go backend and Next.js frontend for an Operations Dashboard.",
+      "Developed pricing activity and total exposure endpoints. Added Redis token caching and sessions across the Go gateway and Next.js UI.",
   },
   {
     company: "Tso Chinese",
     role: "Solution architecture and full-stack delivery",
     period: "2021 – 2026",
     detail:
-      "Led Tso 3.0's technical direction and designed its microservices architecture on Kubernetes with GraphQL gateways. It went live in September 2026 on that architecture.",
+      "Led Tso 3.0's technical direction and cross-functional team while staying hands-on. Built isolated branch previews so the CTO, QA, and PM could validate changes before merge.",
   },
   {
     company: "S-PRO",
-    role: "Lead Software Engineer",
+    role: "Lead Software Engineer / Full-Stack Developer",
     period: "2018 – 2025",
     detail:
-      "Managed and mentored up to 10 engineers, guided 17+ projects, and ran TypeScript and backend workshops while supporting hiring, discovery, and presales.",
+      "Managed and mentored up to 10 frontend engineers through development plans and one-on-ones. Ran TypeScript and backend workshops and supported hiring and presales.",
   },
 ];
 
 /* How work moves from a question to production, with agents doing the typing and me owning the result. */
 const agentWorkflow = [
   {
-    step: "01",
     title: "Research",
-    detail: "Frame the problem with ChatGPT research and pull design context straight from Figma through MCP.",
-    icon: Search,
+    detail: "Research the problem with ChatGPT and pull design context from Figma through MCP.",
   },
   {
-    step: "02",
-    title: "Build with agents",
-    detail: "Ship full-stack changes with Claude Code and Codex, steering architecture and reviewing every diff.",
-    icon: Bot,
+    title: "Build",
+    detail: "Deliver full-stack changes with Claude Code and Codex while I steer the architecture.",
   },
   {
-    step: "03",
     title: "Verify",
-    detail: "Check results by hand and with browser automation, network traces, Playwright, and Langfuse.",
-    icon: ScanSearch,
+    detail: "Check results by hand and with browser automation, network traces, and Langfuse.",
   },
   {
-    step: "04",
-    title: "Ship and observe",
-    detail: "Roll out behind feature flags and staged releases, then iterate on monitoring and production feedback.",
-    icon: Rocket,
+    title: "Ship",
+    detail: "Roll out behind feature flags or in stages, then act on monitoring and production feedback.",
   },
 ];
 
+/*
+ * Project media that morphs into the detail page's hero (same view-transition
+ * name as ProjectCard). The overlay link is a duplicate of the title link, so
+ * it stays out of the tab order and the accessibility tree.
+ */
+function ProjectMedia({ project, sizes, className }: { project: Project; sizes: string; className?: string }) {
+  const media = project.media;
+  const transitionType = getProjectTransitionType(project);
+  const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
+
+  return (
+    <div className={cn("relative overflow-hidden rounded-lg bg-muted", className)} style={{ backgroundColor }}>
+      <Link
+        href={getProjectPath(project)}
+        transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, transitionType)}
+        scroll
+        {...suppressEntryMotionProps}
+        aria-hidden="true"
+        tabIndex={-1}
+        className="absolute inset-0 z-10"
+      />
+      <ViewTransition
+        name={`project-media-${project.id}`}
+        share={{ [transitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
+        default="none"
+      >
+        <div className="project-media-frame absolute inset-0" style={{ backgroundColor }}>
+          <Image
+            src={media.type === "image" ? media.src : media.poster}
+            alt={media.type === "image" ? media.alt : media.label}
+            fill
+            sizes={sizes}
+            className="shared-project-media object-cover"
+          />
+        </div>
+      </ViewTransition>
+    </div>
+  );
+}
+
+// Plain classes: cn() reads the custom text-title size as a color and drops it.
+function ProjectTitle({ project }: { project: Project }) {
+  return (
+    <h3 className="text-title font-black text-foreground">
+      <Link
+        href={getProjectPath(project)}
+        transitionTypes={getProjectRouteTransitionTypes(
+          ROUTE_TRANSITION_TYPES.navForward,
+          getProjectTransitionType(project),
+        )}
+        scroll
+        {...suppressEntryMotionProps}
+        data-cuelume-press=""
+        className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
+      >
+        {project.name}
+      </Link>
+    </h3>
+  );
+}
+
+function ProjectTags({ project }: { project: Project }) {
+  return (
+    <ul className="flex flex-wrap gap-2" aria-label={`${project.name} focus`}>
+      {project.tags.map(tag => (
+        <li key={tag}>
+          <Badge variant="outline" className="h-7 px-3 text-sm font-normal">
+            {tag}
+          </Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ProjectWebsiteLink({ project }: { project: Project }) {
+  if (!project.href) {
+    return null;
+  }
+
+  return (
+    <a
+      href={project.href}
+      data-cuelume-press=""
+      className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start")}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      {project.name} website
+      <ArrowUpRight data-icon="inline-end" strokeWidth={2.5} />
+    </a>
+  );
+}
+
+/* The one content width every section shares, so left edges line up from the nav down. */
+function Container({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("page-safe-inline mx-auto w-full max-w-7xl", className)}>{children}</div>;
+}
+
 export default function HomePage() {
-  const featuredProjects = projects.slice(0, 3);
+  const [leadProject, ...moreProjects] = projects.slice(0, 3);
   const structuredData = buildHomeStructuredData();
 
   return (
@@ -103,227 +187,267 @@ export default function HomePage() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static site data.
         dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
       />
-      <main
-        id="main-content"
-        tabIndex={-1}
-        className="page-safe-inline mx-auto flex w-full max-w-7xl flex-col pb-28 pt-28 lg:pt-32"
-      >
-        {/* Copy holds the left column; the open right side belongs to the ASCII field. */}
-        <section className="hero-viewport relative isolate flex min-w-0 flex-col justify-center pb-20 lg:pb-28">
-          <AsciiField className="absolute -top-28 bottom-0 left-1/2 -z-10 w-screen -translate-x-1/2 lg:-top-32" />
-          <div className="min-w-0 max-w-3xl">
-            <div
-              className="motion-rise glass-frost mb-8 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-[0.16em] text-muted-foreground"
-              data-ascii-avoid=""
-            >
-              <Sparkles size={15} strokeWidth={2.4} className="text-accent" />
-              {SITE_PROFILE.tagline}
-            </div>
+      <main id="main-content" tabIndex={-1} className="flex w-full flex-col">
+        {/* Stage hero: the copy on clean paper, the field as the visual beside it
+            (above it on phones), the trace leaving the headline's pulse mark. */}
+        <section aria-labelledby="hero-title" className="hero-stage relative isolate flex flex-col" data-ascii-host="">
+          <AsciiField className="absolute inset-0 -z-10" />
+          <div className="flex flex-1 flex-col justify-end lg:justify-center">
+            <Container className="lg:grid lg:grid-cols-12 lg:gap-x-8">
+              <div className="min-w-0 lg:col-span-7">
+                <h1
+                  id="hero-title"
+                  className="display-title motion-rise text-display font-black text-foreground"
+                  data-ascii-avoid=""
+                >
+                  Software with a{" "}
+                  <span className="whitespace-nowrap">
+                    pulse
+                    <PulseTrace />
+                  </span>
+                </h1>
 
-            <h1
-              className="motion-rise motion-delay-1 text-balance text-[clamp(3.1rem,7.4vw,7.6rem)] font-black leading-[0.9] tracking-tight text-foreground"
-              data-ascii-avoid=""
-            >
-              Software with a{" "}
-              <span className="whitespace-nowrap">
-                pulse
-                <PulseTrace />
-              </span>
-            </h1>
+                <p
+                  className="motion-rise motion-delay-1 mt-8 max-w-[36ch] text-pretty text-lead text-muted-foreground"
+                  data-ascii-avoid=""
+                >
+                  {SITE_PROFILE.summary}
+                </p>
 
-            <p
-              className="motion-rise motion-delay-2 mt-10 max-w-xl text-pretty text-xl leading-8 text-muted-foreground sm:text-[1.35rem] sm:leading-9"
-              data-ascii-avoid=""
-            >
-              {SITE_PROFILE.introduction}
-            </p>
+                <div className="motion-rise motion-delay-2 mt-10 flex flex-wrap items-center gap-3" data-ascii-avoid="">
+                  <Link
+                    href="/projects"
+                    transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
+                    {...suppressEntryMotionProps}
+                    data-cuelume-press=""
+                    className={buttonVariants({ variant: "default", size: "lg" })}
+                  >
+                    See the work
+                    <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
+                  </Link>
+                  <CvMenu />
+                </div>
+              </div>
+            </Container>
+          </div>
+        </section>
 
-            <div className="motion-rise motion-delay-3 mt-12 flex flex-wrap items-center gap-3" data-ascii-avoid="">
+        <section aria-labelledby="work-title" className="pt-section-s">
+          <Container>
+            <div className="scroll-rise flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+              <h2 id="work-title" className="section-title max-w-[24ch]">
+                Client products and the parts I owned
+              </h2>
               <Link
                 href="/projects"
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                 {...suppressEntryMotionProps}
                 data-cuelume-press=""
-                className={buttonVariants({ variant: "default", size: "lg" })}
+                className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start sm:self-auto")}
               >
-                See the work
-                <ArrowRight
-                  data-icon="inline-end"
-                  strokeWidth={2.5}
-                  className="transition group-hover/button:translate-x-0.5"
-                />
+                All projects
+                <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
               </Link>
-              <CvMenu />
-              <a
-                href={SITE_PROFILE.links.linkedin}
-                data-cuelume-press=""
-                aria-label="LinkedIn"
-                className={buttonVariants({ variant: "glass", size: "icon" })}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <LinkedinIcon strokeWidth={2.4} />
-              </a>
-              <a
-                href={SITE_PROFILE.links.github}
-                data-cuelume-press=""
-                aria-label="GitHub"
-                className={buttonVariants({ variant: "glass", size: "icon" })}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <GithubIcon strokeWidth={2.4} />
-              </a>
             </div>
-          </div>
-        </section>
 
-        <div className="scroll-rise">
-          <aside className="surface-panel hero-surface-panel relative min-w-0 overflow-hidden rounded-[1.55rem] p-5 sm:rounded-[2rem] sm:p-8">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/70 to-transparent" />
-            <div className="grid min-w-0 gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-12">
-              <div className="flex min-w-0 items-start gap-5">
-                <span className="relative block size-16 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-lg shadow-foreground/10 ring-4 ring-background/55 sm:size-20">
-                  <Image
-                    src="/images/me/oleh_portrait.jpg"
-                    alt="Portrait of Oleh Vanin"
-                    fill
-                    sizes="(max-width: 639px) 64px, 80px"
-                    className="object-cover object-[50%_34%]"
-                  />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground">Professional snapshot</p>
-                  <p className="mt-2 text-balance text-2xl font-black leading-[1.15] tracking-tight text-foreground sm:text-[1.7rem]">
-                    Building AI-assisted product systems across frontend, backend, and cloud
+            {/* One project opened as a case, then the next two beneath it. */}
+            <article className="mt-stack grid gap-8 lg:grid-cols-12 lg:items-center lg:gap-x-8">
+              <ProjectMedia
+                project={leadProject}
+                sizes="(min-width: 1024px) 56vw, 100vw"
+                className="aspect-[40/21] lg:col-span-7"
+              />
+              <div className="flex min-w-0 flex-col gap-5 lg:col-span-5">
+                <div>
+                  <ProjectTitle project={leadProject} />
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    <span className="block">{leadProject.period}</span>
+                    <span className="block">{leadProject.role}</span>
                   </p>
                 </div>
+                <p className="text-base leading-7 text-muted-foreground">{leadProject.description}</p>
+                <p className="text-base font-bold leading-7 text-foreground">{leadProject.impact}</p>
+                <ProjectTags project={leadProject} />
+                <ProjectWebsiteLink project={leadProject} />
+              </div>
+            </article>
+
+            <div className="mt-stack grid gap-x-8 gap-y-16 lg:grid-cols-12">
+              {moreProjects.map((project, index) => (
+                <article
+                  key={project.id}
+                  className={cn("flex min-w-0 flex-col gap-5", index === 0 ? "lg:col-span-7" : "lg:col-span-5")}
+                >
+                  <ProjectMedia
+                    project={project}
+                    sizes={index === 0 ? "(min-width: 1024px) 56vw, 100vw" : "(min-width: 1024px) 40vw, 100vw"}
+                    className="aspect-[40/21] lg:aspect-auto lg:h-80"
+                  />
+                  <div>
+                    <ProjectTitle project={project} />
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      <span className="block">{project.period}</span>
+                      <span className="block">{project.role}</span>
+                    </p>
+                  </div>
+                  <p className="max-w-[60ch] text-base leading-7 text-muted-foreground">{project.description}</p>
+                  <ProjectWebsiteLink project={project} />
+                </article>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <section aria-labelledby="profile-title" className="pt-section">
+          <Container>
+            <div className="flex items-center gap-4">
+              <span className="relative block size-14 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border">
+                <Image
+                  src="/images/me/oleh_portrait.jpg"
+                  alt="Portrait of Oleh Vanin"
+                  fill
+                  sizes="56px"
+                  className="object-cover object-[50%_34%]"
+                />
+              </span>
+              <p className="text-sm leading-6 text-muted-foreground">
+                <span className="block font-bold text-foreground">{SITE_PROFILE.name}</span>
+                <span className="block">{SITE_PROFILE.role}</span>
+                <span className="block">{SITE_PROFILE.location}</span>
+              </p>
+            </div>
+
+            <h2 id="profile-title" className="scroll-rise section-title mt-10 max-w-[30ch]">
+              I've led engineering teams and stayed hands-on
+            </h2>
+
+            <div className="mt-stack grid gap-12 lg:grid-cols-12 lg:gap-x-8">
+              <div className="flex flex-col gap-8 lg:col-span-5">
+                <p className="text-pretty text-lead text-muted-foreground">{SITE_PROFILE.introduction}</p>
+                <ul className="flex flex-wrap gap-2" aria-label="Specialties">
+                  {specialties.map(specialty => (
+                    <li key={specialty}>
+                      <Badge variant="outline" className="h-7 px-3 text-sm font-normal">
+                        {specialty}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
+              {/* A readout: the value first, what it measures beside it. */}
+              <dl className="border-t border-border lg:col-span-6 lg:col-start-7">
                 {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => (
-                  <div key={label} className="min-w-0 border-l border-border pl-4">
+                  <div
+                    key={label}
+                    className="grid grid-cols-[minmax(0,6rem)_minmax(0,1fr)] items-baseline gap-6 border-b border-border py-5"
+                  >
                     <dt className="sr-only">{label}</dt>
-                    <dd className="text-[1.7rem] font-black leading-none text-foreground sm:text-3xl">{value}</dd>
-                    <dd className="mt-2 text-xs font-bold leading-5 text-muted-foreground">{label}</dd>
+                    <dd className="text-title font-black tabular-nums text-foreground">{value}</dd>
+                    <dd className="text-base leading-7 text-muted-foreground">{label}</dd>
                   </div>
                 ))}
               </dl>
             </div>
-
-            <SnapshotSpecialtyRail specialties={specialties} />
-          </aside>
-        </div>
-
-        <section className="pt-24 sm:pt-32">
-          <div className="scroll-rise mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
-                <FolderGit2 size={15} strokeWidth={2.4} />
-                Selected projects
-              </p>
-              <h2 className="mt-3 max-w-2xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
-                Real product surfaces, not just shiny screenshots
-              </h2>
-            </div>
-            <Link
-              href="/projects"
-              transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
-              {...suppressEntryMotionProps}
-              data-cuelume-press=""
-              className={buttonVariants({ variant: "glass", size: "default" })}
-            >
-              All projects
-              <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
-            </Link>
-          </div>
-          <div className="grid items-stretch gap-6 lg:grid-cols-3">
-            {featuredProjects.map(project => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
+          </Container>
         </section>
 
-        <section className="pt-24 sm:pt-32">
-          <div className="scroll-rise mb-12 flex flex-col gap-3">
-            <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
-              <BriefcaseBusiness size={15} strokeWidth={2.4} />
-              Experience
-            </p>
-            <h2 className="max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
-              Senior full-stack work across AI, product, and production systems
-            </h2>
-          </div>
-          <ol className="border-y border-border">
-            {experienceHighlights.map(item => (
-              <li
-                key={item.company}
-                className="grid gap-3 border-b border-border py-8 last:border-b-0 sm:grid-cols-[0.34fr_0.66fr] sm:gap-8"
-              >
-                <div>
-                  <h3 className="text-xl font-black text-foreground">{item.company}</h3>
-                  <p className="mt-1 text-sm font-bold text-muted-foreground">{item.role}</p>
-                  <p className="mt-2 font-mono text-xs tabular-nums text-muted-foreground">{item.period}</p>
-                </div>
-                <p className="max-w-2xl text-base leading-7 text-muted-foreground">{item.detail}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section className="pt-24 sm:pt-32">
-          <div className="scroll-rise mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-accent">
-                <Workflow size={15} strokeWidth={2.4} />
-                How I get things done
-              </p>
-              <h2 className="mt-3 max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
-                AI-native, from research to production
+        <section aria-labelledby="experience-title" className="pt-section-s">
+          <Container className="grid gap-12 lg:grid-cols-12 lg:gap-x-8">
+            <div className="lg:col-span-5">
+              <h2 id="experience-title" className="section-title max-w-[22ch] lg:sticky lg:top-32">
+                Recent roles and what I did in each
               </h2>
             </div>
-            <p className="max-w-md text-base leading-7 text-muted-foreground">
-              Coding agents do much of the typing. I own the architecture, the review, and the result in production.
-            </p>
-          </div>
-
-          <ol className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-            {agentWorkflow.map(item => {
-              const Icon = item.icon;
-
-              return (
-                <li key={item.title} className="border-t border-border pt-6">
-                  <div className="flex items-center justify-between">
-                    <Icon size={20} strokeWidth={2.4} className="text-accent" />
-                    <span className="font-mono text-xs tabular-nums text-muted-foreground">{item.step}</span>
+            <ol className="border-t border-border lg:col-span-7">
+              {experienceHighlights.map(item => (
+                <li
+                  key={item.company}
+                  className="grid gap-3 border-b border-border py-8 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:gap-8"
+                >
+                  <div>
+                    <h3 className="text-title font-black text-foreground">{item.company}</h3>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.role}</p>
+                    <p className="mt-2 text-sm tabular-nums text-muted-foreground">{item.period}</p>
                   </div>
-                  <h3 className="mt-5 text-xl font-black text-foreground">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.detail}</p>
+                  <p className="text-base leading-7 text-muted-foreground">{item.detail}</p>
                 </li>
-              );
-            })}
-          </ol>
+              ))}
+            </ol>
+          </Container>
         </section>
 
-        <section className="pt-24 sm:pt-32">
-          <div className="scroll-rise flex flex-col items-start justify-between gap-8 border-t border-border pt-12 lg:flex-row lg:items-end">
-            <div>
-              <h2 className="max-w-2xl text-4xl font-black tracking-tight text-foreground sm:text-5xl">
-                Have a product that needs a senior engineer?
+        <section aria-labelledby="workflow-title" className="pt-section">
+          <Container>
+            <div className="scroll-rise grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-x-8">
+              <h2 id="workflow-title" className="section-title max-w-[22ch] lg:col-span-7">
+                How I build and verify with coding agents
               </h2>
-              <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
-                Book a short call to talk through the problem, the stack, and where I can help.
+              <p className="text-pretty text-lead text-muted-foreground lg:col-span-5">
+                Coding agents do much of the typing. I review what they write and own the result in production.
               </p>
             </div>
-            <a
-              href={SITE_PROFILE.links.booking}
-              data-cuelume-press=""
-              className={cn(buttonVariants({ variant: "default", size: "lg" }), "shrink-0")}
-            >
-              Schedule a conversation
-              <Send data-icon="inline-end" strokeWidth={2.4} />
-            </a>
-          </div>
+
+            <ol className="workflow-steps mt-stack grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+              {agentWorkflow.map(item => (
+                <li key={item.title} className="border-t border-border pt-6">
+                  <h3 className="text-title font-black text-foreground">{item.title}</h3>
+                  <p className="mt-3 text-base leading-7 text-muted-foreground">{item.detail}</p>
+                </li>
+              ))}
+            </ol>
+          </Container>
+        </section>
+
+        {/* The close: a change of paper holding the one thing a visitor came to do. */}
+        <section aria-labelledby="contact-title" className="close-band mt-section">
+          <Container className="grid gap-10 py-section-s lg:grid-cols-12 lg:items-end lg:gap-x-8">
+            <div className="lg:col-span-8">
+              <h2 id="contact-title" className="section-title max-w-[20ch]">
+                Tell me what you're building
+              </h2>
+              <p className="mt-6 max-w-[48ch] text-pretty text-lead text-muted-foreground">
+                Book a short call about the problem and your stack, and I'll say where I can help.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-start gap-6 lg:col-span-4 lg:items-end">
+              <a
+                href={SITE_PROFILE.links.booking}
+                data-cuelume-press=""
+                className={buttonVariants({ variant: "default", size: "lg" })}
+              >
+                <CalendarDays data-icon="inline-start" strokeWidth={2.4} />
+                Schedule a conversation
+              </a>
+              <ul className="flex flex-wrap gap-3" aria-label="Elsewhere">
+                <li>
+                  <a
+                    href={SITE_PROFILE.links.linkedin}
+                    data-cuelume-press=""
+                    className={buttonVariants({ variant: "glass", size: "lg" })}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <LinkedinIcon data-icon="inline-start" strokeWidth={2.4} />
+                    LinkedIn
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={SITE_PROFILE.links.github}
+                    data-cuelume-press=""
+                    className={buttonVariants({ variant: "glass", size: "lg" })}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
+                    GitHub
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </Container>
         </section>
       </main>
     </>

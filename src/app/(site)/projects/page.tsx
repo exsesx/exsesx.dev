@@ -1,10 +1,15 @@
-import { Layers3 } from "lucide-react";
+import { ArrowUpRight, CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
-import ProjectCard from "@/components/ProjectCard";
-import { CardContent, Card as UiCard } from "@/components/ui/card";
+import AsciiField from "@/components/AsciiField";
+import { GithubIcon } from "@/components/icons/lucide-github";
+import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
+import { ProjectDetailsLink, ProjectMediaLink, ProjectTags, ProjectTitleLink } from "@/components/ProjectCard";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { createPageMetadata, projectsSocialImage } from "@/lib/metadata";
-import { projects } from "@/lib/projects";
+import { type Project, projects } from "@/lib/projects";
+import { SITE_PROFILE } from "@/lib/site-profile";
 import { buildProjectsStructuredData, serializeStructuredData } from "@/lib/structured-data";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Projects",
@@ -13,6 +18,62 @@ export const metadata: Metadata = createPageMetadata({
   path: "/projects",
   image: projectsSocialImage,
 });
+
+/* The one content width every section shares, so left edges line up from the nav down. */
+function Container({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("page-safe-inline mx-auto w-full max-w-7xl", className)}>{children}</div>;
+}
+
+/* The product's own address doubles as the link text, so the row says where it goes. */
+function getWebsiteLabel(href: string) {
+  return new URL(href).hostname.replace(/^www\./, "");
+}
+
+/*
+ * One row of the index: the picture, then who the product is and my part in
+ * it, then what I did. Three columns on wide screens; on tablets the picture
+ * holds the left side while the two text blocks stack beside it. Rows carry no
+ * rules: each one holds tight around its picture, so the gaps between rows do
+ * the separating.
+ */
+function ProjectRow({ project, preloadMedia }: { project: Project; preloadMedia: boolean }) {
+  return (
+    <li className="grid gap-x-8 gap-y-5 md:grid-cols-12">
+      <ProjectMediaLink
+        project={project}
+        sizes="(min-width: 1024px) 26vw, (min-width: 768px) 38vw, 100vw"
+        preload={preloadMedia}
+        className="aspect-[16/10] md:col-span-5 md:row-span-2 lg:col-span-4 lg:row-span-1"
+      />
+
+      <div className="flex min-w-0 flex-col items-start gap-2 md:col-span-7 lg:col-span-3">
+        <ProjectTitleLink project={project} as="h2" />
+        <p className="text-sm leading-6 text-muted-foreground">
+          <span className="block">{project.period}</span>
+          <span className="block">{project.role}</span>
+        </p>
+        <ProjectDetailsLink project={project} />
+        {project.href ? (
+          <a
+            href={project.href}
+            data-cuelume-press=""
+            className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm text-muted-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent hover:decoration-current"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {getWebsiteLabel(project.href)}
+            <ArrowUpRight aria-hidden="true" className="size-4" strokeWidth={2.4} />
+          </a>
+        ) : null}
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-5 md:col-span-7 lg:col-span-5">
+        <p className="max-w-[60ch] text-base leading-7 text-muted-foreground">{project.description}</p>
+        <ProjectTags project={project} />
+      </div>
+    </li>
+  );
+}
 
 export default function Projects() {
   const structuredData = buildProjectsStructuredData();
@@ -24,35 +85,86 @@ export default function Projects() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static site data.
         dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
       />
-      <main id="main-content" tabIndex={-1} className="page-safe-inline mx-auto w-full max-w-7xl pb-16 pt-28 lg:pt-32">
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,0.78fr)_minmax(18rem,0.32fr)] lg:items-end">
-          <div className="motion-rise">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Featured projects</p>
-            <h1 className="mt-3 max-w-4xl text-balance text-[clamp(2.75rem,6vw,5.75rem)] font-black leading-[0.9] tracking-tight text-foreground">
-              Built across real constraints
-            </h1>
-          </div>
-
-          <UiCard className="motion-rise motion-delay-1 glass-frost w-full max-w-sm justify-self-start rounded-xl border-border/70 bg-card/45 py-0 shadow-none lg:justify-self-end">
-            <CardContent className="flex items-center gap-3 px-4 py-3">
-              <span
-                aria-hidden="true"
-                className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-foreground"
+      <main id="main-content" tabIndex={-1} className="flex w-full flex-col">
+        {/* The masthead sits on the site's ASCII field, like the blog index: the field fills the
+            columns beside the title (a band above it on phones) and the copy keeps it clear. The
+            title stays on one line so the first rows of the list still reach the fold. */}
+        <header className="relative isolate" data-ascii-host="">
+          <AsciiField className="absolute inset-0 -z-10" />
+          <Container className="grid gap-8 pb-section-s pt-52 lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
+            <div className="min-w-0 lg:col-span-9">
+              <div className="motion-rise" data-ascii-avoid="">
+                <h1 id="projects-title" className="display-title text-display font-black text-foreground">
+                  Client work
+                </h1>
+              </div>
+              <p
+                className="motion-rise motion-delay-1 mt-8 max-w-[48ch] text-pretty text-lead text-muted-foreground"
+                data-ascii-avoid=""
               >
-                <Layers3 size={17} strokeWidth={2.2} />
-              </span>
-              <p className="text-sm font-medium leading-6 text-muted-foreground">
-                <span className="font-bold text-foreground">{projects.length} featured surfaces</span>, curated from a
-                wider history across AI, enterprise IT, pricing, fintech, education, commerce, utilities, and crypto.
+                From IT operations to restaurant kitchens, and my part in each.
               </p>
-            </CardContent>
-          </UiCard>
-        </section>
+            </div>
+          </Container>
+        </header>
 
-        <section className="mt-8 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {projects.map((project, index) => (
-            <ProjectCard key={project.id} project={project} density="compact" preloadMedia={index === 0} />
-          ))}
+        <Container>
+          <ol aria-label="Projects" className="motion-rise motion-delay-2 flex flex-col gap-y-14 sm:gap-y-16">
+            {projects.map((project, index) => (
+              <ProjectRow key={project.id} project={project} preloadMedia={index === 0} />
+            ))}
+          </ol>
+        </Container>
+
+        {/* The close: after the work, the one thing a visitor came to do. */}
+        <section aria-labelledby="projects-contact-title" className="close-band mt-section">
+          <Container className="grid gap-10 py-section-s lg:grid-cols-12 lg:items-end lg:gap-x-8">
+            <div className="lg:col-span-8">
+              <h2 id="projects-contact-title" className="section-title max-w-[20ch]">
+                Hiring for work like this?
+              </h2>
+              <p className="mt-6 max-w-[48ch] text-pretty text-lead text-muted-foreground">
+                Book a short call about your product and team, and we'll see where I fit.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-start gap-6 lg:col-span-4 lg:items-end">
+              <a
+                href={SITE_PROFILE.links.booking}
+                data-cuelume-press=""
+                className={buttonVariants({ variant: "default", size: "lg" })}
+              >
+                <CalendarDays data-icon="inline-start" strokeWidth={2.4} />
+                Schedule a conversation
+              </a>
+              <ul className="flex flex-wrap gap-3" aria-label="Elsewhere">
+                <li>
+                  <a
+                    href={SITE_PROFILE.links.linkedin}
+                    data-cuelume-press=""
+                    className={buttonVariants({ variant: "glass", size: "lg" })}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <LinkedinIcon data-icon="inline-start" strokeWidth={2.4} />
+                    LinkedIn
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={SITE_PROFILE.links.github}
+                    data-cuelume-press=""
+                    className={buttonVariants({ variant: "glass", size: "lg" })}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
+                    GitHub
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </Container>
         </section>
       </main>
     </>
