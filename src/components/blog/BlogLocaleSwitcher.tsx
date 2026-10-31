@@ -1,15 +1,10 @@
 import Link from "next/link";
-import { BLOG_LOCALES, type BlogLocale, getBlogIndexPath, getBlogPostPath } from "@/lib/blog";
+import { BLOG_LOCALE_LABELS, BLOG_LOCALES, type BlogLocale, getBlogIndexPath, getBlogPostPath } from "@/lib/blog";
 
 type BlogLocaleSwitcherProps = {
   availableLocales?: readonly BlogLocale[];
   currentLocale: BlogLocale;
   slug?: string;
-};
-
-const labels: Record<BlogLocale, string> = {
-  en: "EN",
-  uk: "UA",
 };
 
 const navigationLabels: Record<BlogLocale, string> = {
@@ -38,7 +33,7 @@ export default function BlogLocaleSwitcher({
             aria-current={locale === currentLocale ? "page" : undefined}
             className="blog-locale-link"
           >
-            {labels[locale]}
+            {BLOG_LOCALE_LABELS[locale]}
           </Link>
         );
       })}

@@ -3,8 +3,10 @@ import path from "node:path";
 import sharp from "sharp";
 import { getAllBlogPosts } from "../src/content/blog/manifest";
 import type { BlogPostSummary } from "../src/content/blog/types";
+import { ASCII_GLYPHS, ecgHeight, glowFalloff, hashCell, smoothstep, traceGlyphFor } from "../src/lib/ascii-field";
+import { BLOG_LOCALE_LABELS, BLOG_UI } from "../src/lib/blog";
 import { type Project, projects } from "../src/lib/projects";
-import { PROFILE_SNAPSHOT_STATS } from "../src/lib/site-profile";
+import { SITE_PROFILE } from "../src/lib/site-profile";
 
 const width = 1200;
 const height = 630;
@@ -13,26 +15,27 @@ const homeOut = path.join(process.cwd(), "public/images/social-preview.png");
 
 const logoPath = "M84 84 168 96 256 334 344 96 428 84 298 430c-4 10-12 16-23 16h-38c-11 0-19-6-23-16Z";
 
+// The site's light theme tokens (globals.css :root).
 const colors = {
-  ink: "#0b1423",
-  night: "#0a101c",
-  arctic: "#eef2f8",
-  frost: "#f3f7fd",
-  card: "#fbfdff",
+  background: "#eef2f8",
+  foreground: "#0b1423",
   muted: "#51607a",
-  ultramarine: "#2440ff",
-  ultramarineBright: "#3d5afe",
+  accent: "#2440ff",
+  card: "#fbfdff",
 };
 
-const accentColors: Record<Project["accent"], { main: string; soft: string; text: string }> = {
-  amber: { main: "#845cf6", soft: "#f4d06f", text: "#3b1d82" },
-  controlup: { main: "#3887e8", soft: "#fbb03b", text: "#0f3d78" },
-  mint: { main: "#3a80e0", soft: "#94f5d0", text: "#115e59" },
-  quicklizard: { main: "#40a8c4", soft: "#ff8c28", text: "#155e75" },
-  rose: { main: "#e85068", soft: "#eb7846", text: "#881337" },
-  steel: { main: "#6096c4", soft: "#cbd5e1", text: "#334155" },
-  violet: { main: "#9660d6", soft: "#be6ed2", text: "#581c87" },
+const accentColors: Record<Project["accent"], string> = {
+  amber: "#845cf6",
+  controlup: "#3887e8",
+  mint: "#3a80e0",
+  quicklizard: "#40a8c4",
+  rose: "#e85068",
+  steel: "#6096c4",
+  violet: "#9660d6",
 };
+
+const marginX = 80;
+const textColumnWidth = 600;
 
 function escapeXml(value: string) {
   return value
@@ -41,33 +44,6 @@ function escapeXml(value: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
-}
-
-function truncate(value: string, maxLength: number) {
-  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
-}
-
-function splitLine(value: string, maxChars: number) {
-  const words = value.split(/\s+/);
-  const lines: string[] = [];
-  let current = "";
-
-  for (const word of words) {
-    const next = current ? `${current} ${word}` : word;
-
-    if (next.length > maxChars && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = next;
-    }
-  }
-
-  if (current) {
-    lines.push(current);
-  }
-
-  return lines;
 }
 
 function wrapLinesByWidth(value: string, maxWidth: number, fontSize: number) {
@@ -130,10 +106,9 @@ function fittedLines(
   return { lines, fontSize: options.minSize };
 }
 
-// Rough advance-width estimate for MonoLisa at a given size (no font metrics in the
-// SVG pipeline). Tuned for the weights used here; good enough to size pills so
-// they hug their text instead of using fixed widths.
-function approxTextWidth(value: string, fontSize: number, letterSpacing = 0) {
+// Rough advance-width estimate for MonoLisaText at a given size (no font metrics in
+// the SVG pipeline). Heavy weights render wider; callers pass a measureScale for that.
+function approxTextWidth(value: string, fontSize: number) {
   const widths: Record<string, number> = { narrow: 0.34, normal: 0.56, wide: 0.78 };
   let units = 0;
 
@@ -143,455 +118,355 @@ function approxTextWidth(value: string, fontSize: number, letterSpacing = 0) {
     else units += widths.normal;
   }
 
-  return units * fontSize + Math.max(value.length - 1, 0) * letterSpacing;
+  return units * fontSize;
 }
 
-// Auto-width pill that hugs its text with even horizontal padding.
-function pill(
-  x: number,
-  y: number,
-  text: string,
-  options: {
-    fill: string;
-    stroke: string;
-    textClass: string;
-    fontSize: number;
-    padX?: number;
-    height?: number;
-    minWidth?: number;
-  },
-) {
-  const padX = options.padX ?? 22;
-  const height = options.height ?? 40;
-  const textWidth = approxTextWidth(text, options.fontSize);
-  const width = Math.max(options.minWidth ?? 0, Math.round(textWidth + padX * 2));
-  const textY = Math.round(y + height / 2 + options.fontSize * 0.34);
-  const textX = Math.round(x + (width - textWidth) / 2);
+// A stable per-card seed, so a single-slug run draws the same field as a full run.
+function seedFrom(value: string) {
+  let seed = 0;
 
-  return {
-    width,
-    svg: `<g>
-      <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${height / 2}" fill="${options.fill}" stroke="${options.stroke}" stroke-opacity="0.28"/>
-      <text x="${textX}" y="${textY}" class="${options.textClass}">${escapeXml(text)}</text>
-    </g>`,
-  };
+  for (const char of value) {
+    seed = (Math.imul(seed, 31) + char.charCodeAt(0)) | 0;
+  }
+
+  return seed;
 }
 
-function textLines(
-  value: string,
-  options: { x: number; y: number; maxChars: number; lineHeight: number; className: string },
+function textBlock(
+  lines: string[],
+  options: { x: number; y: number; fontSize: number; lineHeight: number; className: string },
 ) {
-  return splitLine(value, options.maxChars)
-    .slice(0, 4)
+  return lines
     .map(
       (line, index) =>
-        `<text x="${options.x}" y="${options.y + index * options.lineHeight}" class="${options.className}">${escapeXml(line)}</text>`,
+        `<text x="${options.x}" y="${options.y + index * options.lineHeight}" class="${options.className}" font-size="${options.fontSize}">${escapeXml(line)}</text>`,
     )
     .join("");
+}
+
+/*
+ * A still frame of the site's hero ASCII field: hashed glyphs that fade in from
+ * the text column, with an ECG trace drawn in slope glyphs along `baselineY`
+ * and a soft accent glow around it. Deterministic per `seed`, so regenerating
+ * an unchanged card produces the same image.
+ */
+function asciiField(options: {
+  seed: number;
+  startX: number;
+  baselineY: number;
+  accent: string;
+  traceStartX?: number;
+  beatOffset?: number;
+}) {
+  const cellWidth = 18;
+  const cellHeight = 26;
+  const beatColumns = 15;
+  const beatPeriod = 27;
+  const beatAmplitude = 118;
+  const glowRadius = 78;
+  const rowOffset = options.baselineY % cellHeight;
+  const firstColumn = Math.floor(options.startX / cellWidth);
+  const lastColumn = Math.ceil(width / cellWidth);
+  const rowCount = Math.ceil(height / cellHeight) + 1;
+  const traceStartX = options.traceStartX ?? options.startX;
+  // The trace may start left of the field (the home card continues the headline pulse).
+  const firstTraceColumn = Math.min(firstColumn, Math.floor(traceStartX / cellWidth));
+  const beatOffset = options.beatOffset ?? 0;
+  const fadeInEnd = options.startX + 240;
+
+  const traceY = (column: number) => {
+    const x = column * cellWidth;
+
+    if (x < traceStartX) {
+      return null;
+    }
+
+    const beatPosition = (((column - firstTraceColumn + beatOffset) % beatPeriod) + beatPeriod) % beatPeriod;
+
+    return options.baselineY - ecgHeight(beatPosition / beatColumns) * beatAmplitude;
+  };
+
+  const traceCells = new Map<string, string>();
+
+  for (let column = firstTraceColumn; column <= lastColumn; column++) {
+    const y = traceY(column);
+
+    if (y === null) {
+      continue;
+    }
+
+    const previous = traceY(column - 1) ?? y;
+    const next = traceY(column + 1) ?? y;
+    const row = Math.round((y - rowOffset) / cellHeight);
+    traceCells.set(`${column}:${row}`, traceGlyphFor((next - previous) / (2 * cellWidth)));
+
+    // Fill the near-vertical walls of the spike so the stroke stays continuous.
+    const previousRow = Math.round((previous - rowOffset) / cellHeight);
+    const step = Math.sign(row - previousRow);
+
+    for (let fillRow = previousRow + step; step !== 0 && fillRow !== row; fillRow += step) {
+      if (!traceCells.has(`${column}:${fillRow}`)) {
+        traceCells.set(`${column}:${fillRow}`, "|");
+      }
+    }
+  }
+
+  const cells: string[] = [];
+
+  for (let row = 0; row < rowCount; row++) {
+    const y = row * cellHeight + rowOffset;
+
+    for (let column = firstTraceColumn; column <= lastColumn; column++) {
+      const x = column * cellWidth;
+      const traceGlyph = traceCells.get(`${column}:${row}`);
+      // Dashes sit at the font's math axis, a few px above the baseline.
+      const textY = y + 5;
+
+      if (traceGlyph) {
+        const traceFade = x < options.startX ? 1 : Math.max(0.35, smoothstep(options.startX, fadeInEnd, x));
+
+        cells.push(
+          `<text x="${x}" y="${textY}" class="field-trace" fill="${options.accent}" fill-opacity="${traceFade.toFixed(2)}">${escapeXml(traceGlyph)}</text>`,
+        );
+        continue;
+      }
+
+      const cell = column * 1009 + row;
+
+      if (hashCell(cell, options.seed) < 0.3) {
+        continue;
+      }
+
+      const fade =
+        smoothstep(options.startX, fadeInEnd, x) * smoothstep(0, 110, y) * smoothstep(height + 10, height - 120, y);
+      const traceAtColumn = traceY(column);
+      const glow = traceAtColumn === null ? 0 : glowFalloff(Math.abs(y - traceAtColumn), glowRadius);
+      const opacity = fade * (0.15 + glow * 0.45);
+
+      if (opacity < 0.02) {
+        continue;
+      }
+
+      const glyph = ASCII_GLYPHS[Math.floor(hashCell(cell, options.seed + 1) * ASCII_GLYPHS.length)];
+      const fill = glow > 0.18 ? options.accent : colors.foreground;
+
+      cells.push(
+        `<text x="${x}" y="${textY}" class="field" fill="${fill}" fill-opacity="${opacity.toFixed(2)}">${escapeXml(glyph)}</text>`,
+      );
+    }
+  }
+
+  return `<g>${cells.join("")}</g>`;
+}
+
+const TRACE_PATH = "M4 60 H56 Q63 46 72 60 H86 L94 68 L106 8 L118 70 L126 44 L134 60 H156 Q166 42 178 60 H236";
+
+// The headline's PulseTrace, scaled so its baseline (y=60 of 72) lands on `baselineY`.
+function pulseTrace(x: number, baselineY: number, traceWidth: number, stroke: string) {
+  const scale = traceWidth / 240;
+  const y = baselineY - 60 * scale;
+  const base = `fill="none" stroke-linecap="round" stroke-linejoin="round" d="${TRACE_PATH}"`;
+
+  return `<g transform="translate(${x} ${y}) scale(${scale})">
+    <path ${base} stroke="${stroke}" stroke-width="${16 / scale}" opacity="0.16" filter="url(#trace-glow)"/>
+    <path ${base} stroke="${stroke}" stroke-width="${6 / scale}"/>
+  </g>`;
+}
+
+// The header lockup: the V mark in an ink disc, the name, and the page's address.
+function brand(address: string) {
+  const discSize = 60;
+  const markSize = 38;
+  const markOffset = (discSize - markSize) / 2;
+  const markScale = markSize / 512;
+
+  return `<g>
+    <circle cx="${marginX + discSize / 2}" cy="${64 + discSize / 2}" r="${discSize / 2}" fill="${colors.foreground}"/>
+    <g transform="translate(${marginX + markOffset} ${64 + markOffset + 2}) scale(${markScale})">
+      <path d="${logoPath}" fill="${colors.card}"/>
+    </g>
+    <text x="${marginX + discSize + 18}" y="90" class="brand">${escapeXml(SITE_PROFILE.name)}</text>
+    <text x="${marginX + discSize + 18}" y="117" class="address">${escapeXml(address)}</text>
+  </g>`;
 }
 
 function baseSvg(inner: string) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="${colors.frost}"/>
-      <stop offset="0.55" stop-color="${colors.arctic}"/>
-      <stop offset="1" stop-color="#dce4f0"/>
-    </linearGradient>
-    <linearGradient id="dark-panel" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#141d30"/>
-      <stop offset="1" stop-color="${colors.night}"/>
-    </linearGradient>
-    <linearGradient id="glass" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="${colors.card}" stop-opacity="0.92"/>
-      <stop offset="1" stop-color="${colors.card}" stop-opacity="0.58"/>
-    </linearGradient>
-    <filter id="shadow" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="150%">
-      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="${colors.ink}" flood-opacity="0.14"/>
-    </filter>
-    <filter id="soft-shadow" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="150%">
-      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="${colors.ink}" flood-opacity="0.10"/>
-    </filter>
-    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
-      <path d="M44 0H0V44" fill="none" stroke="${colors.ink}" stroke-opacity="0.075" stroke-width="1"/>
-    </pattern>
-    <pattern id="grid-dark" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M40 0H0V40" fill="none" stroke="${colors.frost}" stroke-opacity="0.06" stroke-width="1"/>
-    </pattern>
     <filter id="trace-glow" x="-20%" y="-60%" width="140%" height="220%" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="6"/>
+      <feGaussianBlur stdDeviation="5"/>
     </filter>
   </defs>
   <style>
-    .brand { font: 900 30px MonoLisaText, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: ${colors.ink}; }
-    .eyebrow { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 800; font-size: 18px; fill: ${colors.ultramarine}; letter-spacing: 2.2px; text-transform: uppercase; }
-    .headline { font: 900 86px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; }
-    .headline-small { font: 900 62px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; }
-    .project-title { font: 900 58px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; }
-    .body { font: 700 28px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
-    .body-dark { font: 700 22px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.frost}; opacity: 0.88; }
-    .label { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 850; font-size: 18px; fill: ${colors.ink}; }
-    .snapshot-value { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 900; fill: ${colors.ink}; }
-    .stat-label { font: 800 15px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
-    .pill-text { font: 800 17px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.ink}; }
-    .tiny { font: 800 16px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
+    .brand { font: 800 25px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.foreground}; }
+    .address { font: 600 17px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
+    .eyebrow { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.muted}; }
+    .display { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 900; fill: ${colors.foreground}; letter-spacing: -0.02em; }
+    .lede { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 400; fill: ${colors.muted}; }
+    .tags { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.foreground}; }
+    .field { font: 500 15px MonoLisaCode, ui-monospace, monospace; }
+    .field-trace { font: 700 16px MonoLisaCode, ui-monospace, monospace; }
   </style>
-  <rect width="${width}" height="${height}" fill="url(#paper)"/>
-  <rect width="${width}" height="${height}" fill="url(#grid)" opacity="0.62"/>
-  <circle cx="220" cy="120" r="210" fill="${colors.ultramarineBright}" opacity="0.085"/>
-  <circle cx="1030" cy="96" r="180" fill="${colors.ink}" opacity="0.045"/>
+  <rect width="${width}" height="${height}" fill="${colors.background}"/>
   ${inner}
 </svg>`;
 }
 
-function logo(x: number, y: number, size: number, fill = colors.ink) {
-  const scale = size / 512;
-
-  return `<g transform="translate(${x} ${y}) scale(${scale})">
-    <path d="${logoPath}" fill="${fill}"/>
-  </g>`;
-}
-
-// A single stat tile inside the home snapshot panel: large value + 2-line label.
-function snapshotTile(x: number, y: number, width: number, value: string, label: string) {
-  // Shrink long word-values (e.g. "Full-stack") to fit; numbers stay large. The
-  // value is 900-weight, which renders wider than the generic
-  // estimate, so apply a heaviness factor (1.12) and a real right margin so it
-  // never reaches the tile edge. Floor low enough that the longest value fits.
-  const padX = 26;
-  const available = width - padX - 24;
-  // The value is 900-weight MonoLisa; it renders a bit wider than the generic
-  // estimate, so apply a small heaviness factor so long words like "Full-stack"
-  // sit inside the tile with margin while short numbers stay at full size.
-  const estimatedAt50 = approxTextWidth(value, 50) * 1.18;
-  const valueSize = Math.max(24, Math.min(50, (available / estimatedAt50) * 50));
-  return `<g>
-    <rect x="${x}" y="${y}" width="${width}" height="118" rx="24" fill="${colors.card}" stroke="${colors.ink}" stroke-opacity="0.09"/>
-    <text x="${x + padX}" y="${y + 54}" class="snapshot-value" font-size="${valueSize.toFixed(1)}">${escapeXml(value)}</text>
-    ${textLines(label, { x: x + padX, y: y + 82, maxChars: 19, lineHeight: 19, className: "stat-label" })}
-  </g>`;
-}
-
-const TRACE_PATH = "M4 60 H56 Q63 46 72 60 H86 L94 68 L106 8 L118 70 L126 44 L134 60 H156 Q166 42 178 60 H236";
-
-function pulseTrace(
-  x: number,
-  y: number,
-  w: number,
-  options: {
-    stroke: string;
-    strokeWidth?: number;
-    glow?: string;
-    glowOpacity?: number;
-    opacity?: number;
-    maxHeight?: number;
-  },
-) {
-  const scaleX = w / 240;
-  const scaleY = options.maxHeight ? Math.min(scaleX, options.maxHeight / 72) : scaleX;
-  const strokeWidth = (options.strokeWidth ?? 8) / Math.sqrt(scaleX * scaleY);
-  const glow = options.glow ?? options.stroke;
-  const transform = `translate(${x} ${y}) scale(${scaleX} ${scaleY})`;
-  const base = `fill="none" stroke-linecap="round" stroke-linejoin="round" d="${TRACE_PATH}"`;
-
-  return `<g transform="${transform}" opacity="${options.opacity ?? 1}">
-    <path ${base} stroke="${glow}" stroke-width="${strokeWidth * 2.2}" opacity="${options.glowOpacity ?? 0.22}" filter="url(#trace-glow)"/>
-    <path ${base} stroke="${options.stroke}" stroke-width="${strokeWidth}"/>
-  </g>`;
-}
-
-function homeStatsPanel(x: number, y: number, w: number, h: number) {
-  const stats = PROFILE_SNAPSHOT_STATS.map(({ value, socialLabel }) => [value, socialLabel] as const);
-  const gap = 22;
-  const colW = (w - 56 - gap) / 2;
-  const rowY = y + 144;
-  const rowGap = 130;
-
-  return `<g filter="url(#shadow)">
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="40" fill="url(#glass)" stroke="${colors.ink}" stroke-opacity="0.1"/>
-    <circle cx="${x + 30}" cy="${y + 44}" r="6" fill="${colors.ultramarine}"/>
-    <text x="${x + 48}" y="${y + 50}" class="eyebrow" font-size="16">Professional snapshot</text>
-    ${pulseTrace(x + 30, y + 60, w - 60, { stroke: colors.ultramarine, glow: colors.ultramarineBright, strokeWidth: 6, maxHeight: 56 })}
-    ${snapshotTile(x + 28, rowY, colW, stats[0][0], stats[0][1])}
-    ${snapshotTile(x + 28 + colW + gap, rowY, colW, stats[1][0], stats[1][1])}
-    ${snapshotTile(x + 28, rowY + rowGap, colW, stats[2][0], stats[2][1])}
-    ${snapshotTile(x + 28 + colW + gap, rowY + rowGap, colW, stats[3][0], stats[3][1])}
-  </g>`;
-}
-
 function homeSvg() {
-  const headlineX = 92;
-  const bodyX = 96;
-  const leftColumnWidth = 486;
-  const headline = ["Software", "with a pulse"].map(line =>
-    fittedLines(line, {
-      maxWidth: leftColumnWidth,
-      maxLines: 1,
-      idealSize: 86,
-      minSize: 66,
-      measureScale: 1.08,
-    }),
-  );
-  const body = fittedLines("Full-stack products, MCP servers, LLM workflows, and developer tools", {
-    maxWidth: leftColumnWidth,
+  const headlineSize = 100;
+  const lineHeight = 96;
+  const firstBaseline = 252;
+  const pulseBaseline = firstBaseline + lineHeight * 2;
+  const pulseWordEnd = marginX + approxTextWidth("pulse", headlineSize) * 1.02;
+  const traceX = pulseWordEnd + 14;
+  const traceWidth = 170;
+  const lede = fittedLines(SITE_PROFILE.summary, {
+    maxWidth: 560,
     maxLines: 2,
-    idealSize: 28,
+    idealSize: 26,
     minSize: 22,
-    measureScale: 1.06,
   });
 
   return baseSvg(`
-    <rect x="64" y="62" width="1072" height="506" rx="46" fill="${colors.card}" opacity="0.48" stroke="${colors.ink}" stroke-opacity="0.08"/>
-    ${logo(92, 86, 72)}
-    <text x="178" y="126" class="brand">Oleh Vanin</text>
-    <text x="178" y="154" class="tiny">exsesx.dev</text>
-    <text x="${headlineX}" y="242" class="eyebrow">Practical AI systems + product engineering</text>
-    <text x="${headlineX}" y="332" class="headline" style="font-size:${headline[0].fontSize}px">${escapeXml(headline[0].lines[0])}</text>
-    <text x="${headlineX}" y="414" class="headline" style="font-size:${headline[1].fontSize}px">${escapeXml(headline[1].lines[0])}</text>
-    ${body.lines
-      .map(
-        (line, index) =>
-          `<text x="${bodyX}" y="${468 + index * 32}" class="body" style="font-size:${body.fontSize}px">${escapeXml(line)}</text>`,
-      )
-      .join("")}
-    ${homeStatsPanel(626, 92, 488, 446)}
+    ${asciiField({
+      seed: 2,
+      startX: 640,
+      baselineY: pulseBaseline,
+      accent: colors.accent,
+      traceStartX: traceX + traceWidth - 10,
+      beatOffset: 18,
+    })}
+    ${brand(SITE_PROFILE.domain)}
+    ${textBlock(["Software", "with a", "pulse"], {
+      x: marginX - 4,
+      y: firstBaseline,
+      fontSize: headlineSize,
+      lineHeight,
+      className: "display",
+    })}
+    ${pulseTrace(traceX, pulseBaseline, traceWidth, colors.accent)}
+    ${textBlock(lede.lines, { x: marginX, y: 520, fontSize: lede.fontSize, lineHeight: 36, className: "lede" })}
   `);
 }
 
 function projectsSvg() {
-  return baseSvg(`
-    ${logo(82, 76, 74)}
-    <text x="168" y="118" class="brand">Oleh Vanin</text>
-    <text x="168" y="148" class="tiny">exsesx.dev/projects</text>
-    <text x="82" y="248" class="eyebrow">Selected projects</text>
-    <text x="82" y="326" class="headline-small">Built across</text>
-    <text x="82" y="392" class="headline-small">real constraints</text>
-    ${textLines("AI, enterprise IT, pricing, fintech, education, commerce, utilities, and digital assets", {
-      x: 86,
-      y: 448,
-      maxChars: 42,
-      lineHeight: 32,
-      className: "body",
-    })}
-    ${projects
-      .slice(0, 6)
-      .map((project, index) => {
-        const accent = accentColors[project.accent];
-        const x = 628 + (index % 2) * 238;
-        const y = 82 + Math.floor(index / 2) * 154;
-        // Shrink the name to fit the card instead of truncating, with an 18px
-        // ideal and a 13px floor so longer names (e.g. "Clear Street Bank")
-        // stay readable and whole.
-        const nameMaxWidth = 166;
-        const nameSize = Math.max(13, Math.min(18, (nameMaxWidth / approxTextWidth(project.name, 18)) * 18));
+  const names = projects.map(project => project.name).join(", ");
+  const lede = fittedLines("From IT operations to restaurant kitchens, and my part in each.", {
+    maxWidth: textColumnWidth,
+    maxLines: 2,
+    idealSize: 28,
+    minSize: 22,
+  });
+  const list = fittedLines(names, { maxWidth: 1040, maxLines: 1, idealSize: 20, minSize: 15 });
 
-        return `<g filter="url(#soft-shadow)">
-          <rect x="${x}" y="${y}" width="214" height="126" rx="26" fill="${colors.card}" stroke="${accent.main}" stroke-opacity="0.26"/>
-          <circle cx="${x + 34}" cy="${y + 34}" r="12" fill="${accent.main}"/>
-          <rect x="${x + 56}" y="${y + 26}" width="112" height="12" rx="6" fill="${colors.ink}" opacity="0.2"/>
-          <text x="${x + 24}" y="${y + 76}" class="label" font-size="${nameSize.toFixed(1)}">${escapeXml(project.name)}</text>
-          <text x="${x + 24}" y="${y + 102}" class="tiny">${escapeXml(truncate(project.period, 24))}</text>
-        </g>`;
-      })
-      .join("")}
-    <rect x="628" y="550" width="452" height="2" rx="1" fill="${colors.ink}" opacity="0.12"/>
+  return baseSvg(`
+    ${asciiField({ seed: 3, startX: 780, baselineY: 330, accent: colors.accent, beatOffset: 6 })}
+    ${brand(`${SITE_PROFILE.domain}/projects`)}
+    ${textBlock(["Client work"], { x: marginX - 4, y: 320, fontSize: 112, lineHeight: 0, className: "display" })}
+    ${textBlock(lede.lines, { x: marginX, y: 394, fontSize: lede.fontSize, lineHeight: 38, className: "lede" })}
+    ${textBlock(list.lines, { x: marginX, y: 556, fontSize: list.fontSize, lineHeight: 0, className: "tags" })}
   `);
 }
 
 function projectSvg(project: Project) {
   const accent = accentColors[project.accent];
-  const tags = project.tags.slice(0, 3);
-  const textX = 614;
-  const bodyX = 614;
-  const columnRight = 1084;
-  const columnWidth = columnRight - textX;
   const title = fittedLines(project.name, {
-    maxWidth: columnWidth,
-    maxLines: 2,
-    idealSize: 56,
-    minSize: 42,
-    measureScale: 1.08,
+    maxWidth: textColumnWidth,
+    maxLines: 1,
+    idealSize: 96,
+    minSize: 56,
+    measureScale: 1.04,
   });
-  const body = fittedLines(project.detail.headline, {
-    maxWidth: columnWidth,
-    maxLines: 2,
+  const headline = fittedLines(project.detail.headline, {
+    maxWidth: textColumnWidth,
+    maxLines: 3,
     idealSize: 27,
-    minSize: 20,
-    measureScale: 1.06,
+    minSize: 21,
   });
-  const titleLineHeight = 58;
-  const bodyLineHeight = 32;
-
-  const contentTop = 224;
-  const contentBottom = 512;
-
-  const eyebrowToTitle = 62;
-  const titleToBody = 56;
-
-  const pillHeight = 40;
-  const eyebrowY = contentTop + 16;
-  const titleY = eyebrowY + eyebrowToTitle;
-  const titleBlock = title.fontSize + (title.lines.length - 1) * titleLineHeight;
-  const detailY = titleY + titleBlock - title.fontSize + titleToBody;
-  const tagsY = contentBottom - pillHeight;
-
-  const panelX = 112;
-  const panelY = contentTop;
-  const panelW = 438;
-  const panelH = contentBottom - contentTop;
-  const panelMidY = panelY + panelH / 2;
-
-  const traceWidth = 380;
-  const traceX = panelX + (panelW - traceWidth) / 2;
-  const traceBaseline = panelMidY + 8;
-  const traceY = traceBaseline - 60 * (traceWidth / 240);
+  const eyebrow = fittedLines(`${project.period} · ${project.role}`, {
+    maxWidth: textColumnWidth,
+    maxLines: 1,
+    idealSize: 22,
+    minSize: 16,
+    measureScale: 1.04,
+  });
+  // Keep the cap height a fixed distance under the eyebrow when long names shrink.
+  const titleY = Math.round(250 + title.fontSize * 0.73);
 
   return baseSvg(`
-    <rect x="54" y="50" width="1092" height="530" rx="46" fill="${colors.night}"/>
-    <circle cx="1020" cy="90" r="240" fill="${accent.main}" opacity="0.18"/>
-    <circle cx="760" cy="560" r="260" fill="${accent.soft}" opacity="0.10"/>
-    <rect x="84" y="80" width="1032" height="470" rx="36" fill="${colors.frost}" opacity="0.98"/>
-    ${logo(112, 112, 68, colors.ink)}
-    <text x="194" y="154" class="brand">Oleh Vanin</text>
-    <text x="194" y="184" class="tiny">exsesx.dev/project/${escapeXml(project.slug)}</text>
-    <rect x="${panelX}" y="${panelY}" width="${panelW}" height="${panelH}" rx="34" fill="${colors.night}"/>
-    <rect x="${panelX}" y="${panelY}" width="${panelW}" height="${panelH}" rx="34" fill="url(#grid-dark)"/>
-    <circle cx="${panelX + panelW - 74}" cy="${panelY + 64}" r="120" fill="${accent.main}" opacity="0.22"/>
-    <path d="M${traceX} ${traceBaseline} H${traceX + traceWidth}" stroke="${colors.frost}" stroke-width="2" opacity="0.12"/>
-    ${pulseTrace(traceX, traceY, traceWidth, { stroke: accent.soft, glow: accent.main, strokeWidth: 7, glowOpacity: 0.3 })}
-    <text x="${textX}" y="${eyebrowY}" class="eyebrow" fill="${accent.text}">${escapeXml(project.role)}</text>
-    ${title.lines
-      .map(
-        (line, index) =>
-          `<text x="${textX}" y="${titleY + index * titleLineHeight}" class="project-title" style="font-size:${title.fontSize}px">${escapeXml(line)}</text>`,
-      )
-      .join("")}
-    ${body.lines
-      .map(
-        (line, index) =>
-          `<text x="${bodyX}" y="${detailY + index * bodyLineHeight}" class="body" style="font-size:${body.fontSize}px">${escapeXml(line)}</text>`,
-      )
-      .join("")}
-    ${(() => {
-      let cursor = bodyX;
-      return tags
-        .map(tag => {
-          const built = pill(cursor, tagsY, tag, {
-            fill: colors.card,
-            stroke: accent.main,
-            textClass: "pill-text",
-            fontSize: 17,
-            minWidth: 108,
-          });
-          cursor += built.width + 14;
-          return built.svg;
-        })
-        .join("");
-    })()}
+    ${asciiField({ seed: seedFrom(project.slug), startX: 720, baselineY: 344, accent, beatOffset: seedFrom(project.slug) % 20 })}
+    ${brand(`${SITE_PROFILE.domain}/project/${project.slug}`)}
+    ${textBlock(eyebrow.lines, { x: marginX, y: 214, fontSize: eyebrow.fontSize, lineHeight: 0, className: "eyebrow" })}
+    ${textBlock(title.lines, { x: marginX - 3, y: titleY, fontSize: title.fontSize, lineHeight: 0, className: "display" })}
+    ${textBlock(headline.lines, { x: marginX, y: titleY + 70, fontSize: headline.fontSize, lineHeight: 37, className: "lede" })}
+    ${textBlock([project.tags.slice(0, 3).join(", ")], { x: marginX, y: 556, fontSize: 20, lineHeight: 0, className: "tags" })}
   `);
 }
 
 function blogIndexSvg() {
+  const copy = BLOG_UI.en;
+  const title = fittedLines(copy.title, {
+    maxWidth: 660,
+    maxLines: 2,
+    idealSize: 100,
+    minSize: 72,
+    measureScale: 1.04,
+  });
+  const lede = fittedLines(copy.description, {
+    maxWidth: textColumnWidth,
+    maxLines: 3,
+    idealSize: 27,
+    minSize: 22,
+  });
+  const titleLineHeight = Math.round(title.fontSize * 0.98);
+
   return baseSvg(`
-    ${logo(82, 76, 74)}
-    <text x="168" y="118" class="brand">Oleh Vanin</text>
-    <text x="168" y="148" class="tiny">exsesx.dev/blog</text>
-    <text x="82" y="244" class="eyebrow">Technical writing</text>
-    <text x="82" y="326" class="headline-small">Notes from</text>
-    <text x="82" y="394" class="headline-small">the workbench</text>
-    ${textLines("Source-audited field notes on AI systems, product engineering, and developer tools", {
-      x: 86,
-      y: 452,
-      maxChars: 44,
-      lineHeight: 32,
-      className: "body",
+    ${asciiField({ seed: 4, startX: 760, baselineY: 318, accent: colors.accent, beatOffset: 10 })}
+    ${brand(`${SITE_PROFILE.domain}/blog`)}
+    ${textBlock(title.lines, { x: marginX - 4, y: 264, fontSize: title.fontSize, lineHeight: titleLineHeight, className: "display" })}
+    ${textBlock(lede.lines, {
+      x: marginX,
+      y: 264 + titleLineHeight * (title.lines.length - 1) + 74,
+      fontSize: lede.fontSize,
+      lineHeight: 37,
+      className: "lede",
     })}
-    <g filter="url(#shadow)">
-      <rect x="666" y="100" width="430" height="430" rx="38" fill="${colors.night}"/>
-      <rect x="666" y="100" width="430" height="430" rx="38" fill="url(#grid-dark)"/>
-      <circle cx="1024" cy="138" r="160" fill="${colors.ultramarineBright}" opacity="0.24"/>
-      <text x="710" y="176" class="eyebrow" style="fill:${colors.frost}">Build • verify • write</text>
-      ${pulseTrace(710, 214, 330, { stroke: colors.ultramarineBright, glow: colors.ultramarine, strokeWidth: 7 })}
-      <text x="710" y="368" class="body-dark">Primary sources</text>
-      <text x="710" y="408" class="body-dark">Runnable examples</text>
-      <text x="710" y="448" class="body-dark">Practical caveats</text>
-    </g>
   `);
 }
 
 function blogArticleSvg(post: BlogPostSummary) {
   const title = fittedLines(post.title, {
-    maxWidth: 940,
+    maxWidth: 680,
     maxLines: 3,
-    idealSize: 62,
-    minSize: 44,
-    measureScale: 1.08,
+    idealSize: 72,
+    minSize: 46,
+    measureScale: 1.04,
   });
   const description = fittedLines(post.description, {
-    maxWidth: 900,
-    maxLines: 2,
-    idealSize: 24,
+    maxWidth: 680,
+    maxLines: title.lines.length >= 3 ? 2 : 3,
+    idealSize: 25,
     minSize: 20,
-    measureScale: 1.05,
   });
-  const titleY = 260;
-  const titleLineHeight = title.fontSize * 1.08;
-  const metadataY = 472;
-  const descriptionLineHeight = 31;
-  const descriptionY = Math.min(
-    titleY + title.lines.length * titleLineHeight + 38,
-    metadataY - 44 - (description.lines.length - 1) * descriptionLineHeight,
-  );
-  const publishedLabel = new Intl.DateTimeFormat(post.locale === "uk" ? "uk-UA" : "en-US", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-    year: "numeric",
-  })
-    .format(new Date(post.publishedAt))
-    .toUpperCase();
+  const titleLineHeight = Math.round(title.fontSize * 1.04);
+  const titleY = 236 + title.fontSize * 0.55;
+  const descriptionY = titleY + titleLineHeight * (title.lines.length - 1) + 64;
+  const tagsY = Math.min(590, Math.max(566, descriptionY + 34 * (description.lines.length - 1) + 52));
 
   return baseSvg(`
-    <rect x="54" y="50" width="1092" height="530" rx="46" fill="${colors.night}"/>
-    <circle cx="1020" cy="90" r="240" fill="${colors.ultramarineBright}" opacity="0.18"/>
-    <circle cx="760" cy="560" r="260" fill="${colors.ultramarine}" opacity="0.08"/>
-    <rect x="84" y="80" width="1032" height="470" rx="36" fill="${colors.frost}" opacity="0.98"/>
-    ${logo(112, 112, 68, colors.ink)}
-    <text x="194" y="154" class="brand">Oleh Vanin</text>
-    <text x="194" y="184" class="tiny">exsesx.dev/blog/${escapeXml(post.locale)}/${escapeXml(post.slug)}</text>
-    <text x="1084" y="154" text-anchor="end" class="eyebrow">${escapeXml(post.locale.toUpperCase())} • BLOG</text>
-    ${title.lines
-      .map(
-        (line, index) =>
-          `<text x="112" y="${titleY + index * titleLineHeight}" class="project-title" style="font-size:${title.fontSize}px">${escapeXml(line)}</text>`,
-      )
-      .join("")}
-    ${description.lines
-      .map(
-        (line, index) =>
-          `<text x="112" y="${descriptionY + index * descriptionLineHeight}" class="body" style="font-size:${description.fontSize}px">${escapeXml(line)}</text>`,
-      )
-      .join("")}
-    ${(() => {
-      let cursor = 112;
-      return post.tags
-        .slice(0, 3)
-        .map(tag => {
-          const built = pill(cursor, metadataY, tag, {
-            fill: colors.card,
-            stroke: colors.ultramarine,
-            textClass: "pill-text",
-            fontSize: 17,
-            height: 40,
-            padX: 18,
-          });
-          cursor += built.width + 12;
-          return built.svg;
-        })
-        .join("");
-    })()}
-    <text x="1084" y="498" text-anchor="end" class="tiny">${escapeXml(publishedLabel)}</text>
+    ${asciiField({ seed: seedFrom(`${post.locale}/${post.slug}`), startX: 800, baselineY: 370, accent: colors.accent, beatOffset: seedFrom(post.slug) % 20 })}
+    ${brand(`${SITE_PROFILE.domain}/blog/${post.locale}/${post.slug}`)}
+    ${textBlock([`${post.publishedAt.slice(0, 10)} · ${BLOG_LOCALE_LABELS[post.locale]}`], {
+      x: marginX,
+      y: 206,
+      fontSize: 22,
+      lineHeight: 0,
+      className: "eyebrow",
+    })}
+    ${textBlock(title.lines, { x: marginX - 3, y: titleY, fontSize: title.fontSize, lineHeight: titleLineHeight, className: "display" })}
+    ${textBlock(description.lines, { x: marginX, y: descriptionY, fontSize: description.fontSize, lineHeight: 34, className: "lede" })}
+    ${textBlock([post.tags.slice(0, 3).join(", ")], { x: marginX, y: tagsY, fontSize: 20, lineHeight: 0, className: "tags" })}
   `);
 }
 
@@ -599,16 +474,19 @@ async function writePng(svg: string, outputPath: string) {
   await sharp(Buffer.from(svg)).png({ compressionLevel: 9, adaptiveFiltering: true }).toFile(outputPath);
 }
 
+async function writeBlogArticle(post: BlogPostSummary) {
+  const outputPath = path.join(process.cwd(), "public", post.socialImage.path.replace(/^\//, ""));
+
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writePng(blogArticleSvg(post), outputPath);
+}
+
 async function main() {
   const slug = process.argv[2];
   if (slug) {
     const editions = getAllBlogPosts({ includeDrafts: true }).filter(post => post.slug === slug);
     if (editions.length === 0) throw new Error(`Unknown blog slug: ${slug}`);
-    for (const post of editions) {
-      const outputPath = path.join(process.cwd(), "public", post.socialImage.path.replace(/^\//, ""));
-      await mkdir(path.dirname(outputPath), { recursive: true });
-      await writePng(blogArticleSvg(post), outputPath);
-    }
+    await Promise.all(editions.map(post => writeBlogArticle(post)));
     return;
   }
 
@@ -619,12 +497,7 @@ async function main() {
 
   await Promise.all([
     ...projects.map(project => writePng(projectSvg(project), path.join(outDir, `project-${project.slug}.png`))),
-    ...getAllBlogPosts({ includeDrafts: false }).map(async post => {
-      const outputPath = path.join(process.cwd(), "public", post.socialImage.path.replace(/^\//, ""));
-
-      await mkdir(path.dirname(outputPath), { recursive: true });
-      await writePng(blogArticleSvg(post), outputPath);
-    }),
+    ...getAllBlogPosts({ includeDrafts: false }).map(post => writeBlogArticle(post)),
   ]);
 }
 

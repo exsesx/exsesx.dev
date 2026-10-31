@@ -9,7 +9,7 @@ export const siteName = SITE_PROFILE.domain;
 const socialPreviewPath = "/images/social-preview.png";
 // Bump to force social platforms (Telegram, X, LinkedIn, Slack) to re-scrape
 // cached previews — they cache og:image by URL.
-const socialImageVersion = "4";
+const socialImageVersion = "5";
 const previewDeploymentUrl = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
 const socialImageOrigin =
   process.env.VERCEL_ENV === "preview" && previewDeploymentUrl ? `https://${previewDeploymentUrl}` : siteUrl;
@@ -143,7 +143,7 @@ export const rootMetadata: Metadata = {
   description: SITE_PROFILE.description,
   keywords: [
     "Oleh Vanin",
-    "Senior Full Stack Engineer",
+    "Senior Full-Stack Engineer",
     "AI Engineer",
     "React",
     "Next.js",
@@ -161,16 +161,14 @@ export const rootMetadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName,
-    title: "Oleh Vanin - Senior Full Stack Engineer",
-    description:
-      "Senior full-stack engineer and AI engineer building scalable product systems across frontend, backend, cloud, and LLM workflows.",
+    title: `${SITE_PROFILE.name} - ${SITE_PROFILE.role}`,
+    description: SITE_PROFILE.description,
     images: [defaultSocialImage],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Oleh Vanin - Senior Full Stack Engineer",
-    description:
-      "Senior full-stack engineer and AI engineer building scalable product systems across frontend, backend, cloud, and LLM workflows.",
+    title: `${SITE_PROFILE.name} - ${SITE_PROFILE.role}`,
+    description: SITE_PROFILE.description,
     images: [
       {
         url: defaultSocialImage.url,

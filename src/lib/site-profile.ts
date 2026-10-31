@@ -2,13 +2,14 @@ export const SITE_PROFILE = {
   name: "Oleh Vanin",
   domain: "exsesx.dev",
   url: "https://exsesx.dev",
-  role: "Senior Full Stack Engineer / AI Engineer",
+  role: "Senior Full-Stack Engineer, Applied AI",
   nationality: "Ukraine",
   location: "Poland",
   description:
-    "Oleh Vanin is a Ukrainian Senior Full Stack Engineer / AI Engineer based in Poland, building practical AI systems, full-stack products, MCP servers, LLM workflows, and developer tools.",
+    "Oleh Vanin is a senior full-stack engineer in Poland with 9+ years building products, most recently AI features that automate enterprise IT workflows.",
+  summary: "Senior full-stack engineer in Poland who ships AI features to production.",
   introduction:
-    "I am Oleh, a Ukrainian engineer based in Poland. I build practical AI systems, full-stack products, MCP servers, LLM workflows, and developer tools with TypeScript, React, Node.js, Go, and cloud infrastructure.",
+    "I've owned architecture, delivery, and production operations. Most recently, I shipped AI features that automate enterprise IT workflows.",
   links: {
     github: "https://github.com/exsesx",
     linkedin: "https://www.linkedin.com/in/exsesx/",
@@ -21,16 +22,12 @@ export const SITE_PROFILE = {
 } as const;
 
 export const PROFILE_SNAPSHOT_STATS = [
-  { value: "9+", label: "years building web products", socialLabel: "years building web products" },
-  { value: "17+", label: "projects supported as lead engineer", socialLabel: "projects supported as lead engineer" },
+  { value: "9+", label: "years building products", socialLabel: "years building products" },
+  { value: "17+", label: "projects guided as lead engineer", socialLabel: "projects guided as lead engineer" },
+  { value: "10", label: "engineers managed and mentored at peak", socialLabel: "engineers managed at peak" },
   {
     value: "AI",
-    label: "assistant systems, MCP, LLM workflows",
-    socialLabel: "assistant systems, MCP, LLM",
-  },
-  {
-    value: "Full-stack",
-    label: "React, Next.js, Node.js, Go, cloud",
-    socialLabel: "React, Next, Node, Go, cloud",
+    label: "MCP architecture and approval-gated actions in production",
+    socialLabel: "MCP, approval-gated actions",
   },
 ] as const;

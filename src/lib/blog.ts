@@ -3,16 +3,19 @@ import { getRoutePathname } from "./route-path";
 export const BLOG_LOCALES = ["en", "uk"] as const;
 
 export type BlogLocale = (typeof BLOG_LOCALES)[number];
+
+export const BLOG_LOCALE_LABELS: Record<BlogLocale, string> = {
+  en: "EN",
+  uk: "UA",
+};
 export type BlogIndexPath = `/blog/${BlogLocale}`;
 export type BlogPostPath = `/blog/${BlogLocale}/${string}`;
 
 export const BLOG_UI = {
   en: {
-    eyebrow: "Technical writing",
     title: "Notes from the workbench",
     description: "Source-audited writing about AI systems, product engineering, and the tools I use to build them.",
-    featured: "Latest",
-    allPosts: "All posts",
+    tags: "Tags",
     emptyTitle: "Ukrainian writing is coming",
     emptyDescription: "The Blog is ready for Ukrainian editions. The first translation has not been published yet.",
     backToBlog: "Back to Blog",
@@ -24,7 +27,6 @@ export const BLOG_UI = {
     minRead: "min read",
     published: "Published",
     updated: "Updated",
-    readArticle: "Read article",
     focus: "Focus",
     exitFocus: "Exit focus",
     focusModeOn: "Focus mode activated",
@@ -51,11 +53,9 @@ export const BLOG_UI = {
     },
   },
   uk: {
-    eyebrow: "Технічні матеріали",
     title: "Нотатки з майстерні",
     description: "Матеріали з перевіреними джерелами про AI-системи, продуктову інженерію та робочі інструменти.",
-    featured: "Нове",
-    allPosts: "Усі матеріали",
+    tags: "Теги",
     emptyTitle: "Українські матеріали вже готуються",
     emptyDescription: "Блог готовий до українських версій. Перший переклад ще не опубліковано.",
     backToBlog: "Назад до блогу",
@@ -67,7 +67,6 @@ export const BLOG_UI = {
     minRead: "хв читання",
     published: "Опубліковано",
     updated: "Оновлено",
-    readArticle: "Читати матеріал",
     focus: "Фокус",
     exitFocus: "Вийти з фокусу",
     focusModeOn: "Режим фокусу увімкнено",
@@ -94,6 +93,14 @@ export const BLOG_UI = {
     },
   },
 } as const;
+
+// The index sets dates as a fixed-width column, so it uses one ISO-style stamp for every locale.
+const BLOG_DATE_STAMP_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "Europe/Warsaw",
+});
 
 const BLOG_DATE_FORMATTERS: Record<BlogLocale, Intl.DateTimeFormat> = {
   en: new Intl.DateTimeFormat("en-US", {
@@ -141,4 +148,8 @@ export function resolveBlogBackHref(pathname: string): BlogIndexPath | null {
 
 export function formatBlogDate(value: string, locale: BlogLocale) {
   return BLOG_DATE_FORMATTERS[locale].format(new Date(value));
+}
+
+export function formatBlogDateStamp(value: string) {
+  return BLOG_DATE_STAMP_FORMATTER.format(new Date(value));
 }

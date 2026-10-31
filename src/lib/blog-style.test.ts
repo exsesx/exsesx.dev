@@ -22,7 +22,7 @@ describe("Blog production styles", () => {
       Bun.file(blogArticlePageUrl).text(),
     ]);
 
-    expect(indexPage.match(/data-cuelume-press="select"/g)).toHaveLength(3);
+    expect(indexPage.match(/data-cuelume-press="select"/g)).toHaveLength(1);
     expect(articlePage.match(/data-cuelume-press=""/g)).toHaveLength(2);
   });
 
@@ -108,27 +108,30 @@ describe("Blog production styles", () => {
 
     expect(rule).toContain("border: 1px solid color-mix(in oklab, var(--accent)");
     expect(rule).toContain("border-radius: var(--blog-rich-block-radius)");
-    expect(rule).toContain("radial-gradient(");
-    expect(rule).toContain("box-shadow:");
+    expect(rule).toContain("background: var(--blog-rich-block-surface)");
+    expect(rule).not.toContain("radial-gradient(");
+    expect(rule).not.toContain("box-shadow:");
   });
 
-  test("gives the featured Blog card one opaque, evenly weighted outer frame", async () => {
-    const css = await Bun.file(globalsCssUrl).text();
-    const indexRule = css.match(/\.blog-index\s*\{([^}]*)\}/s)?.[1] ?? "";
-    const cardRule = css.match(/\.blog-featured-post,\s*\.blog-empty-state\s*\{([^}]*)\}/s)?.[1] ?? "";
+  test("sets the Blog index as one list parted by space instead of a featured card or rules", async () => {
+    const [css, indexPage] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(blogIndexPageUrl).text()]);
 
-    expect(indexRule).toContain("--blog-index-card-radius: 2rem");
-    expect(indexRule).toContain(
-      "--blog-index-card-surface: color-mix(in oklab, var(--foreground) 3%, var(--background))",
-    );
-    expect(indexRule).toContain("--blog-index-card-border:");
-    expect(indexRule).not.toMatch(/--blog-index-card-(?:surface|border):[^;]*transparent/);
-    expect(cardRule).toContain("overflow: hidden");
-    expect(cardRule).toContain("border: 1px solid var(--blog-index-card-border)");
-    expect(cardRule).toContain("border-radius: var(--blog-index-card-radius)");
-    expect(cardRule).toContain("var(--blog-index-card-surface)");
-    expect(cardRule).not.toContain("box-shadow:");
-    expect(css).not.toContain(".blog-featured-post::before");
+    expect(css).not.toContain(".blog-featured-post");
+    expect(indexPage).toContain("<ol ");
+    expect(indexPage).toContain("<li key={post.slug}>");
+    expect(indexPage).not.toContain("border-border");
+  });
+
+  test("draws the Blog index rail as decoration lit by the post link, with hover only on fine pointers", async () => {
+    const [css, indexPage] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(blogIndexPageUrl).text()]);
+    const hoverBlock = css.match(
+      /@media \(hover: hover\) and \(pointer: fine\) \{\s*\.blog-index-list[\s\S]*?\n\}/,
+    )?.[0];
+
+    expect(indexPage).toContain('<span className="blog-index-node" aria-hidden="true" />');
+    expect(css).toContain(".blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active))");
+    expect(hoverBlock).toContain(".blog-index-list > li:has(.blog-index-link:hover)");
+    expect(css.replace(hoverBlock ?? "", "")).not.toContain(".blog-index-link:hover)");
   });
 
   test("frames semantic tables as one clipped rich block with directional overflow cues", async () => {
@@ -142,9 +145,8 @@ describe("Blog production styles", () => {
       )?.[1] ?? "";
 
     expect(frameRule).toContain("overflow: hidden");
-    expect(frameRule).toContain("border: 1px solid var(--blog-rich-block-border)");
-    expect(frameRule).toContain("border-radius: var(--blog-rich-block-radius)");
-    expect(frameRule).toContain("background: var(--blog-rich-block-surface)");
+    expect(frameRule).not.toContain("border");
+    expect(frameRule).not.toContain("background");
     expect(scrollRule).toContain("overflow-x: auto");
     expect(scrollRule).toContain("overscroll-behavior-x: none");
     expect(tableRule).toContain("font-family: var(--font-sans)");
@@ -153,10 +155,8 @@ describe("Blog production styles", () => {
     expect(tableRule).not.toContain("border-radius");
     expect(tableRule).not.toMatch(/(?:^|\n)\s*border:/);
     expect(rhythmRule).toContain("margin-top: var(--blog-rich-block-gap)");
-    expect(css).toMatch(/\.blog-prose tr > :where\(th, td\):last-child\s*\{[^}]*border-inline-end:\s*0/s);
-    expect(css).toMatch(
-      /\.blog-prose table > :last-child > tr:last-child > :where\(th, td\)\s*\{[^}]*border-block-end:\s*0/s,
-    );
+    expect(css).toMatch(/\.blog-prose :where\(th, td\)\s*\{[^}]*border:\s*0/s);
+    expect(css).toMatch(/\.blog-prose tbody tr:nth-child\(odd\) > td\s*\{[^}]*var\(--blog-rich-block-surface\)/s);
     expect(css).toMatch(/\.blog-table-frame::before,\s*\.blog-table-frame::after\s*\{[^}]*opacity:\s*0/s);
     expect(css).toMatch(/\.blog-table-frame\[data-scroll-left="true"\]::before\s*\{[^}]*opacity:\s*1/s);
     expect(css).toMatch(/\.blog-table-frame\[data-scroll-right="true"\]::after\s*\{[^}]*opacity:\s*1/s);
@@ -174,7 +174,7 @@ describe("Blog production styles", () => {
       "--blog-rich-block-surface: color-mix(in oklab, var(--foreground) 3%, var(--background))",
     );
     expect(proseRule).not.toMatch(/--blog-rich-block-(?:border|divider):[^;]*transparent/);
-    expect(css).toMatch(/\.blog-callout\s*\{[^}]*var\(--blog-rich-block-border\)/s);
+    expect(css).toMatch(/\.blog-callout\s*\{[^}]*var\(--blog-rich-block-surface\)/s);
     expect(css).toMatch(/figure\[data-rehype-pretty-code-figure\]\s*\{[^}]*var\(--blog-rich-block-border\)/s);
     expect(css).toMatch(/\.blog-mermaid\s*\{[^}]*var\(--blog-rich-block-border\)/s);
     expect(css).toMatch(/\.blog-figure img\s*\{[^}]*var\(--blog-rich-block-border\)/s);
@@ -219,7 +219,7 @@ describe("Blog production styles", () => {
     expect(blogCss).not.toContain("text-decoration: underline;");
     expect(blogCss).toContain("a:not(.source-link):is(:hover, :focus-visible)");
     expect(blogCss).toContain(".source-link:is(:hover, :focus-visible) .source-link-label");
-    expect(blogCss).toContain(".blog-read-link:is(:hover, :focus-visible)");
+    expect(blogCss).toContain(".blog-back-link:is(:hover, :focus-visible)");
   });
 
   test("moves both halves of a source citation on one hover timing curve", async () => {
@@ -240,7 +240,7 @@ describe("Blog production styles", () => {
     expect(css).toMatch(
       /@media \(hover: hover\) and \(pointer: fine\)\s*\{[\s\S]*?\.blog-code-action\s*\{[^}]*width:\s*2\.25rem;[^}]*height:\s*2\.25rem/s,
     );
-    expect(css).toMatch(/\.blog-read-link,\s*\.blog-back-link\s*\{[^}]*min-height:\s*2\.75rem/s);
+    expect(css).toMatch(/\.blog-back-link\s*\{[^}]*min-height:\s*2\.75rem/s);
   });
 
   test("keeps code wrapping opt-in, visibly selected, and printable", async () => {
@@ -251,7 +251,7 @@ describe("Blog production styles", () => {
     expect(captionRule).toContain("grid-template-columns: minmax(0, 1fr) auto");
     expect(captionRule).toContain("overflow-wrap: anywhere");
     expect(css).toMatch(/\.blog-code-title\s*\{[^}]*min-width:\s*0/s);
-    expect(css).toMatch(/\.blog-code-language\s*\{[^}]*text-transform:\s*uppercase/s);
+    expect(css).not.toMatch(/\.blog-code-language\s*\{[^}]*text-transform:\s*uppercase/s);
     expect(css).toMatch(
       /\.blog-code-block\[data-wrap="true"\] pre\s*\{[^}]*overflow-x:\s*hidden;[^}]*white-space:\s*pre-wrap/s,
     );
@@ -270,9 +270,7 @@ describe("Blog production styles", () => {
   test("keeps Blog pointer motion gated and transparency preferences effective", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 
-    expect(css).toMatch(
-      /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\.blog-read-link:hover svg[\s\S]*?\.blog-back-link:hover svg/,
-    );
+    expect(css).toMatch(/@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\.blog-back-link:hover svg/);
     expect(css).toMatch(
       /@media \(prefers-reduced-transparency: reduce\) \{[\s\S]*?\.blog-toc-drawer,[\s\S]*?backdrop-filter:\s*none/,
     );
@@ -401,11 +399,11 @@ describe("Blog production styles", () => {
     const drawerHeaderRule = css.match(/\.blog-toc-drawer-header\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(desktopRule).toContain("--blog-toc-heading-size: 0.8rem");
-    expect(desktopRule).toContain("--blog-toc-subheading-size: 0.7rem");
+    expect(desktopRule).toContain("--blog-toc-subheading-size: 0.8rem");
     expect(drawerRule).toContain("--blog-toc-heading-size: 0.84rem");
     expect(drawerRule).toContain("--blog-toc-subheading-size: 0.76rem");
     expect(tickRule).toContain("width: var(--toc-tick-width)");
-    expect(subheadingRule).toContain("padding-left: 0.45rem");
+    expect(subheadingRule).toContain("padding-left: 1rem");
     expect(activeRule).toContain("background: transparent");
     expect(activeTickRule).toContain("background: var(--accent)");
     expect(drawerHeaderRule).toContain("padding: 0 var(--blog-toc-drawer-inline)");
@@ -516,7 +514,6 @@ describe("Blog production styles", () => {
       /\.safari-chrome-sample\s*\{[^}]*top:\s*0;[^}]*background-clip:\s*text;[^}]*-webkit-background-clip:\s*text/s,
     );
     expect(css).not.toMatch(/\[data-blog-focus="true"\][^{]*\.safari-chrome-sample/);
-    expect(css).toContain('[data-blog-focus="true"] .kinetic-backdrop > *');
     expect(css).toContain('[data-blog-focus="true"] .hotkeys-corner-hint');
     expect(css).toContain('[data-blog-focus="true"] .site-version-tag');
     expect(css).not.toMatch(/\[data-blog-focus="true"\][^{]*\.blog-reading-progress/);
@@ -585,7 +582,7 @@ describe("Blog production styles", () => {
     expect(mobileRule).not.toContain("top:");
     expect(mobileRule).not.toContain("transition:");
     expect(desktopRule).toContain("top: calc(env(safe-area-inset-top) + 5.875rem)");
-    expect(desktopRule).toContain("max-height: calc(100svh - env(safe-area-inset-top) - 7.125rem)");
+    expect(desktopRule).toContain("max-height: calc(100svh - env(safe-area-inset-top) - 10.125rem)");
     expect(desktopRule).toContain("transition: top 180ms var(--ease-weight)");
     expect(desktopSection).toMatch(
       /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\],[\s\S]*?\[data-blog-article="true"\]\[data-blog-focus="true"\][\s\S]*?\.blog-toc-desktop\s*\{[^}]*top:\s*calc\(env\(safe-area-inset-top\) \+ 1\.25rem\)[^}]*transition:\s*top 220ms var\(--ease-out\)/s,
@@ -619,8 +616,10 @@ describe("Blog production styles", () => {
   test("does not give Blog articles a second mobile header skin", async () => {
     const css = await Bun.file(globalsCssUrl).text();
 
-    expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-nav-glass\s*\{/);
-    expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-nav-glass::before\s*\{/);
+    // Articles may pin the capsule's size, never repaint its material.
+    expect(css).not.toMatch(
+      /\[data-blog-article="true"\] \.site-nav-(?:glass|surface)[^{]*\{[^}]*(?:background|backdrop-filter|box-shadow|border)/,
+    );
     expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-nav-switcher\s*\{/);
     expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-nav-active-pill\s*\{/);
     expect(css).not.toMatch(/\[data-blog-article="true"\] \.site-header-fade\s*\{[^}]*display:\s*none/s);

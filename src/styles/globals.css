@@ -7,6 +7,23 @@
   --font-sans: MonoLisaText, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: MonoLisaText, ui-sans-serif, system-ui, sans-serif;
   --font-mono: MonoLisaCode, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Type roles. MonoLisa sets wide, so the sizes run a step smaller than a
+     narrower face would need; the hero head shares its screen with the field. */
+  --text-display: clamp(2.75rem, 6.4vw + 0.5rem, 6.75rem);
+  --text-display--line-height: 0.95;
+  --text-section: clamp(2rem, 1.5vw + 1.25rem, 3rem);
+  --text-section--line-height: 1.08;
+  --text-title: clamp(1.25rem, 0.5vw + 1rem, 1.5rem);
+  --text-title--line-height: 1.25;
+  --text-lead: clamp(1.125rem, 0.35vw + 1rem, 1.3125rem);
+  --text-lead--line-height: 1.5;
+  /* Rhythm. One scale for every page: section gaps grow with the screen and
+     stop at 120, 144 and 176px; a head block sits a stack (64px) from its
+     content. Named steps only, never Tailwind's sm/md/lg sizes. */
+  --spacing-section-s: clamp(4rem, 8.5vw, 7.5rem);
+  --spacing-section: clamp(5rem, 10vw, 9rem);
+  --spacing-section-l: clamp(6rem, 12.25vw, 11rem);
+  --spacing-stack: clamp(2.5rem, 4.5vw, 4rem);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -31,8 +48,6 @@
   --color-ring: var(--ring);
   --shadow-menu: var(--menu-shadow);
   --shadow-panel: var(--panel-shadow);
-  --shadow-project-card: var(--project-card-shadow);
-  --shadow-project-cta: var(--project-cta-shadow);
 }
 
 :root {
@@ -104,8 +119,8 @@
   --ring: #3d5afe;
   --menu-shadow: 0 22px 70px rgba(11, 20, 35, 0.16);
   --panel-shadow: 0 24px 70px rgba(11, 20, 35, 0.1);
-  --project-card-shadow: 0 28px 80px rgba(11, 20, 35, 0.1);
-  --project-cta-shadow: 0 28px 80px rgba(11, 20, 35, 0.18);
+  /* The close band's paper: one step off the page, opaque so the edge scale stops. */
+  --paper-band: #e4eaf3;
 }
 
 .dark {
@@ -138,8 +153,7 @@
   --ring: #5ce1ff;
   --menu-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
   --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
-  --project-card-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
-  --project-cta-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
+  --paper-band: #101828;
 }
 
 html,
@@ -151,6 +165,16 @@ body,
 html {
   background: var(--background);
   color-scheme: light;
+  /* Every control carries its own :active press; the browser's tap flash
+     would fight it. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* No double-tap-zoom wait on controls, so a tap answers on press. */
+a,
+button,
+[role="button"] {
+  touch-action: manipulation;
 }
 
 /*
@@ -177,6 +201,9 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: var(--font-features);
   text-rendering: optimizeLegibility;
+  /* Full-bleed hero art (the ASCII field) spans 100vw, which includes the
+     scrollbar gutter; clip it without creating a scroll container. */
+  overflow-x: clip;
 }
 
 h1,
@@ -258,15 +285,54 @@ select {
   }
 }
 
-.hero-viewport {
-  min-height: calc(100vh - 8rem);
-  min-height: calc(100svh - 8rem);
+/* Trims the line box down to the cap height, so a title beside a picture
+   starts its ink exactly at the picture's top edge. Engines without text-box
+   keep the usual leading, a few pixels lower. */
+.cap-top {
+  text-box: trim-start cap alphabetic;
 }
 
-@supports (height: 100dvh) {
-  .hero-viewport {
-    min-height: calc(100dvh - 8rem);
-  }
+.display-title {
+  min-width: 0;
+  overflow-wrap: break-word;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.section-title {
+  min-width: 0;
+  color: var(--foreground);
+  font-size: var(--text-section);
+  font-weight: 900;
+  line-height: var(--text-section--line-height);
+  letter-spacing: -0.025em;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+/* The steps are a real sequence, so the numerals come from the list itself. */
+.workflow-steps {
+  counter-reset: workflow-step;
+}
+
+.workflow-steps > li {
+  counter-increment: workflow-step;
+}
+
+.workflow-steps > li::before {
+  display: block;
+  margin-bottom: 1.25rem;
+  color: var(--accent);
+  content: counter(workflow-step, decimal-leading-zero);
+  font-size: var(--text-title);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.close-band {
+  border-top: 1px solid var(--border);
+  background: var(--paper-band);
 }
 
 * {
@@ -294,72 +360,25 @@ select {
   background-color: color-mix(in oklab, var(--accent) 52%, var(--foreground) 18%);
 }
 
-.page-top-fade {
-  background: linear-gradient(
-    to bottom,
-    var(--background),
-    color-mix(in oklab, var(--background) 86%, transparent),
-    transparent
-  );
-}
-
-.technical-grid {
-  background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--foreground) 8%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 8%, transparent) 1px, transparent 1px),
-    linear-gradient(to right, color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1px);
-  background-position:
-    0 0,
-    0 0,
-    11px 11px,
-    11px 11px;
-  background-size:
-    44px 44px,
-    44px 44px,
-    176px 176px,
-    176px 176px;
-  opacity: 0.42;
-  mask-image: radial-gradient(ellipse at 48% 18%, black 0 36%, transparent 72%);
-}
-
-.dark .technical-grid {
-  opacity: 0.34;
-}
-
 /*
- * Background ECG rows — long flatlines that occasionally spike into a
- * heartbeat, echoing the hero pulse trace. The SVG strokes currentColor so the
- * accent token drives the tint in both themes; the mask fades the rows out
- * toward the top chrome and the footer.
+ * Homepage hero ASCII field (AsciiField.tsx). The canvas reads these tokens:
+ * base glyphs in ink, lit glyphs and the heartbeat in the accent signal. The
+ * spotlight and the clear zones around copy are computed per cell in the
+ * component, so no mask is needed here.
  */
-.signal-traces {
-  color: var(--accent);
-  opacity: 0.2;
-  mask-image: linear-gradient(to bottom, transparent, black 14%, black 72%, transparent 96%);
+.ascii-field {
+  --ascii-base: var(--foreground);
+  --ascii-glow: var(--accent);
+  --ascii-base-alpha: 0.12;
+  --ascii-glow-alpha: 0.75;
+  --ascii-trace-alpha: 0.42;
+  font-family: var(--font-mono);
 }
 
-.dark .signal-traces {
-  opacity: 0.24;
-}
-
-.background-vignette {
-  background:
-    radial-gradient(ellipse 80% 36% at 68% -8%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 62%),
-    radial-gradient(circle at 22% 20%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 28%),
-    radial-gradient(circle at 78% 8%, color-mix(in oklab, var(--foreground) 5%, transparent), transparent 22%),
-    linear-gradient(to bottom, transparent 0 68%, color-mix(in oklab, var(--background) 58%, transparent) 100%);
-}
-
-/* After dark the top wash becomes an aurora: two soft accent-tinted ellipses
-   bleeding down from the sky edge. Plain painted gradients — no blur, no
-   animation. */
-.dark .background-vignette {
-  background:
-    radial-gradient(ellipse 72% 34% at 26% -10%, color-mix(in oklab, var(--accent) 13%, transparent), transparent 64%),
-    radial-gradient(ellipse 54% 26% at 76% -6%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 60%),
-    radial-gradient(circle at 78% 8%, color-mix(in oklab, var(--foreground) 4%, transparent), transparent 22%),
-    linear-gradient(to bottom, transparent 0 68%, color-mix(in oklab, var(--background) 58%, transparent) 100%);
+.dark .ascii-field {
+  --ascii-base-alpha: 0.14;
+  --ascii-glow-alpha: 0.85;
+  --ascii-trace-alpha: 0.5;
 }
 
 .logo-mark-pride {
@@ -444,51 +463,6 @@ html[data-season="pride"] .logo-mark-pride {
     0 10px 30px rgba(0, 0, 0, 0.24);
 }
 
-.project-period-badge {
-  background: rgba(2, 6, 23, 0.72);
-  color: #fff;
-}
-
-.dark .project-period-badge {
-  background: rgba(2, 6, 23, 0.82);
-  color: #fff;
-}
-
-.surface-panel {
-  border: 1px solid color-mix(in oklab, var(--foreground) 9%, transparent);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--card) 90%, transparent),
-      color-mix(in oklab, var(--background) 82%, transparent)
-    ),
-    var(--card);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--foreground) 5%, transparent),
-    0 18px 48px color-mix(in oklab, var(--foreground) 7%, transparent);
-}
-
-.dark .surface-panel {
-  border-color: color-mix(in oklab, var(--foreground) 10%, transparent);
-  background:
-    radial-gradient(circle at 18% 0%, color-mix(in oklab, var(--accent) 5%, transparent), transparent 32%),
-    linear-gradient(135deg, color-mix(in oklab, var(--card) 92%, transparent), var(--card));
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent),
-    0 18px 48px rgba(0, 0, 0, 0.24);
-}
-
-.hero-surface-panel {
-  background:
-    radial-gradient(circle at 18% 0%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 34%),
-    linear-gradient(135deg, color-mix(in oklab, var(--card) 94%, transparent), var(--card));
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--foreground) 7%, transparent),
-    inset 0 0 0 1px color-mix(in oklab, var(--accent) 3%, transparent),
-    0 22px 58px color-mix(in oklab, var(--foreground) 8%, transparent);
-  backdrop-filter: none;
-}
-
 .dropdown-menu.liquid-glass {
   border-color: color-mix(in oklab, var(--foreground) 10%, transparent);
   background:
@@ -560,75 +534,6 @@ html[data-season="pride"] .logo-mark-pride {
   transform: translate3d(0, 2px, 0);
 }
 
-/* Nested snapshot content keeps the surface hierarchy without a blur pass. */
-.snapshot-inner-card {
-  backdrop-filter: none;
-}
-
-@variant max-sm {
-  .snapshot-inner-card {
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .snapshot-stat-card {
-    background:
-      linear-gradient(135deg, color-mix(in oklab, var(--background) 64%, transparent), transparent),
-      color-mix(in oklab, var(--foreground) 4%, transparent);
-    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent);
-  }
-
-  .snapshot-specialty-rail {
-    mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 1.5rem), transparent);
-  }
-
-  .snapshot-specialty-track {
-    animation: snapshot-specialty-marquee 42s linear infinite;
-    transform: translate3d(0, 0, 0);
-  }
-
-  /* Pause the loop when the rail is scrolled out of view (data-visible toggled
-     by an IntersectionObserver) so it doesn't run off-screen. will-change is
-     only promised while it actually animates. */
-  .snapshot-specialty-rail[data-visible="true"] .snapshot-specialty-track {
-    will-change: transform;
-  }
-
-  .snapshot-specialty-rail[data-visible="false"] .snapshot-specialty-track {
-    animation-play-state: paused;
-  }
-}
-
-@keyframes snapshot-specialty-marquee {
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .snapshot-specialty-rail {
-    overflow: visible;
-    mask-image: none;
-  }
-
-  .snapshot-specialty-track {
-    animation: none;
-    transform: none;
-    width: auto;
-  }
-
-  .snapshot-specialty-track > div:first-child {
-    max-width: 100%;
-    flex-wrap: wrap;
-    padding-right: 0;
-  }
-
-  .snapshot-specialty-track > [aria-hidden="true"] {
-    display: none;
-  }
-}
-
 /*
   Safari 26 requires a fixed candidate taller than its 10px thin-border cutoff
   and spanning the viewport edge. Its color sampler reads background-color
@@ -694,11 +599,6 @@ html[data-season="pride"] .logo-mark-pride {
     opacity 180ms var(--ease-out),
     transform var(--duration-ui) var(--ease-in-out),
     visibility 0s linear;
-}
-
-/* attribute flipped by nav-condense.ts; scale/translate only, never layout */
-.site-header-nav-frame[data-condensed="true"] {
-  transform: translate3d(0, -2px, 0) scale(0.955);
 }
 
 @variant sm {
@@ -867,13 +767,6 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   transition: none;
 }
 
-.kinetic-backdrop > * {
-  visibility: visible;
-  transition:
-    opacity 180ms var(--ease-out),
-    visibility 0s linear;
-}
-
 .hotkeys-corner-hint,
 .site-version-tag {
   opacity: 1;
@@ -883,7 +776,6 @@ html[data-blog-focus-bootstrap] .site-header-fade {
     visibility 0s linear;
 }
 
-[data-blog-focus="true"] .kinetic-backdrop > *,
 [data-blog-focus="true"] .hotkeys-corner-hint,
 [data-blog-focus="true"] .site-version-tag {
   opacity: 0;
@@ -973,39 +865,84 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   );
 }
 
+/* The capsule paints nothing itself: its material is the surface layer
+   below, so the glass can fade in as one piece (blur, fill and rim together)
+   on opacity alone, which the compositor runs without repainting. */
+/* No isolation or other group effect here: an ancestor that groups its
+   content can cut the surface's blur off from the page behind it. */
 .site-nav-glass {
   position: relative;
-  isolation: isolate;
   width: 100%;
   max-width: 80rem;
-  border-color: color-mix(in oklab, currentColor 8%, transparent);
-  background:
-    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.38), transparent 36%),
-    linear-gradient(135deg, rgba(251, 253, 255, 0.46), rgba(251, 253, 255, 0.14) 55%, rgba(251, 253, 255, 0.3)),
-    color-mix(in oklab, #fbfdff 36%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.85),
-    inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.68),
-    inset -1.5px -2px 7px -3px rgba(255, 255, 255, 0.32),
-    inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.07),
-    0 15px 36px rgba(11, 20, 35, 0.1);
-  backdrop-filter: blur(14px) saturate(1.5);
-  contain: paint;
-}
-
-.site-nav-glass::before {
-  position: absolute;
-  inset: 1px;
-  z-index: 0;
-  content: "";
-  border-radius: inherit;
-  background: linear-gradient(112deg, transparent 4%, color-mix(in oklab, white 22%, transparent) 34%, transparent 64%);
-  opacity: 0.12;
+  /* Invisible, but it keeps the frame at 4.125rem, which the article TOC's
+     sticky offset is measured against. */
+  border: 1px solid transparent;
+  transform-origin: top center;
 }
 
 .site-nav-glass > * {
   position: relative;
   z-index: 1;
+}
+
+/* A thick frost, opaque enough that copy under it never reads crisply. The
+   edge is light on the material, not a drawn box: a faint outer hairline
+   and a diffuse shadow lift it off light paper, the ring below catches the
+   light along the top. */
+.site-nav-glass > .site-nav-surface {
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  border-color: transparent;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 60%), color-mix(in oklab, #fbfdff 66%, transparent);
+  box-shadow:
+    0 0 0 0.5px rgba(11, 20, 35, 0.09),
+    0 1px 2px rgba(11, 20, 35, 0.04),
+    0 14px 30px -14px rgba(11, 20, 35, 0.22);
+  backdrop-filter: blur(20px) saturate(1.5);
+  pointer-events: none;
+  transition: none;
+}
+
+.dark .site-nav-glass > .site-nav-surface {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 60%), color-mix(in oklab, #0a101c 64%, transparent);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.5),
+    0 16px 34px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* Specular ring: one pixel of light, strongest along the top edge and
+   fading down the sides, with a faint return along the bottom. */
+.site-nav-surface::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.35) 38%,
+    rgba(255, 255, 255, 0.12) 70%,
+    rgba(255, 255, 255, 0.45)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+.dark .site-nav-surface::after {
+  background: linear-gradient(
+    180deg,
+    rgba(214, 232, 255, 0.24),
+    rgba(214, 232, 255, 0.08) 38%,
+    rgba(214, 232, 255, 0.03) 70%,
+    rgba(214, 232, 255, 0.1)
+  );
 }
 
 /*
@@ -1014,12 +951,10 @@ html[data-blog-focus-bootstrap] .site-header-fade {
  * the frosted backdrop at the rim like a convex lens. Other engines drop the
  * entire backdrop-filter when the list contains url(), so this MUST stay
  * behind the .glass-lens gate or Safari/Firefox lose the blur completely.
+ * Menus only: on the scrolling header the lens samples past its rim and
+ * Chromium leaves stale pixels behind as content moves under it.
  */
 @media (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  html.glass-lens .site-nav-glass {
-    backdrop-filter: blur(14px) saturate(1.5) url("#liquid-lens");
-  }
-
   html.glass-lens .dropdown-menu.liquid-glass {
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness))
       url("#liquid-lens");
@@ -1031,20 +966,11 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass,
   .glass-frost,
-  .hero-surface-panel,
-  .site-nav-glass,
-  .site-nav-active-pill,
+  .site-nav-glass > .site-nav-surface,
+  .site-nav-active-pill-body,
   .dropdown-menu.liquid-glass,
-  html.glass-lens .site-nav-glass,
   html.glass-lens .dropdown-menu.liquid-glass {
     background: color-mix(in oklab, var(--background) 94%, var(--foreground) 4%);
-    backdrop-filter: none;
-  }
-
-  .project-period-badge,
-  .dark .project-period-badge {
-    background: #020617;
-    color: #fff;
     backdrop-filter: none;
   }
 }
@@ -1064,25 +990,41 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 
 .site-nav-active-pill {
   width: calc((100% - 1rem) / 3);
-  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in oklab, white 56%, transparent),
-      color-mix(in oklab, white 18%, transparent) 60%,
-      color-mix(in oklab, white 34%, transparent)
-    ),
-    color-mix(in oklab, var(--background) 42%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.95),
-    inset 1px 2px 4px -2px rgba(255, 255, 255, 0.7),
-    inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.08),
-    0 7px 18px color-mix(in oklab, var(--foreground) 11%, transparent);
-  /* no backdrop-filter: the nav's glass already blurs everything behind the pill */
   pointer-events: none;
   transform: translate3d(0, 0, 0);
   transition: transform var(--duration-ui) var(--ease-in-out);
   will-change: transform;
+}
+
+/* nav-pill.ts drives travel with springs once hydrated */
+.site-nav-active-pill[data-driven] {
+  transition: none;
+}
+
+/* A tinted platter, never glass on glass: the nav's frost already blurs
+   what is behind it. Pressed or dragged, it lifts into a clearer lens. */
+.site-nav-active-pill-body {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: color-mix(in oklab, white 64%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--foreground) 8%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 rgba(11, 20, 35, 0);
+  transition:
+    scale 260ms var(--ease-out),
+    background-color 200ms var(--ease-out),
+    box-shadow 200ms var(--ease-out);
+}
+
+.site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
+  scale: 1.14 1.12;
+  background-color: color-mix(in oklab, white 30%, transparent);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 8px 20px -6px rgba(11, 20, 35, 0.2);
 }
 
 .site-nav-active-pill[data-active-nav="projects"] {
@@ -1093,21 +1035,20 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   transform: translate3d(calc(200% + 0.5rem), 0, 0);
 }
 
-.dark .site-nav-active-pill {
-  border-color: color-mix(in oklab, white 9%, transparent);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in oklab, white 14%, transparent),
-      color-mix(in oklab, white 4%, transparent) 60%,
-      color-mix(in oklab, white 9%, transparent)
-    ),
-    color-mix(in oklab, var(--background) 34%, transparent);
+.dark .site-nav-active-pill-body {
+  background-color: color-mix(in oklab, white 11%, transparent);
   box-shadow:
-    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.26),
-    inset 1px 2px 4px -2px rgba(255, 255, 255, 0.14),
-    inset 0 -1px 1px -0.5px rgba(0, 0, 0, 0.45),
-    0 8px 20px color-mix(in oklab, black 26%, transparent);
+    inset 0 0 0 1px color-mix(in oklab, white 8%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 0 rgba(0, 0, 0, 0);
+}
+
+.dark .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
+  background-color: color-mix(in oklab, white 6%, transparent);
+  box-shadow:
+    inset 0 0 0 1px rgba(214, 232, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 10px 24px -8px rgba(0, 0, 0, 0.6);
 }
 
 @variant max-sm {
@@ -1122,6 +1063,14 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   .site-nav-active-pill {
     transition: none;
     will-change: auto;
+  }
+}
+
+/* Lifted keeps its clearer fill, but the pill no longer swells. */
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-active-pill-body,
+  .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
+    scale: none;
   }
 }
 
@@ -1259,63 +1208,92 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   line-height: 1;
 }
 
-.dark .site-nav-glass {
-  background:
-    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.07), transparent 36%),
-    linear-gradient(135deg, rgba(20, 29, 48, 0.52), rgba(10, 16, 28, 0.2) 55%, rgba(20, 29, 48, 0.36)),
-    color-mix(in oklab, #0a101c 40%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.28),
-    inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.18),
-    inset -1.5px -2px 7px -3px rgba(255, 255, 255, 0.08),
-    inset 0 -1px 1px -0.5px rgba(0, 0, 0, 0.55),
-    0 15px 38px rgba(0, 0, 0, 0.3);
+/*
+ * At the top of a page the nav is type on the paper: no capsule and no
+ * switcher track, so the hero owns the first screen. As content scrolls under
+ * it the glass materializes and the capsule draws in slightly. Where scroll
+ * timelines exist that follows the scroll position directly (compositor
+ * driven); elsewhere nav-condense.ts flips data-condensed past a threshold.
+ */
+.site-nav-switcher {
+  isolation: isolate;
+  touch-action: pan-y;
 }
 
-@variant max-sm {
-  .site-nav-glass {
-    background:
-      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.4), transparent 36%),
-      linear-gradient(135deg, rgba(251, 253, 255, 0.48), rgba(251, 253, 255, 0.18) 55%, rgba(251, 253, 255, 0.3)),
-      color-mix(in oklab, #fbfdff 38%, transparent);
-    box-shadow:
-      inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.85),
-      inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.64),
-      inset 0 -1px 1px -0.5px rgba(11, 20, 35, 0.07),
-      0 13px 30px rgba(11, 20, 35, 0.095);
-    backdrop-filter: blur(14px) saturate(1.45);
-  }
-
-  .dark .site-nav-glass {
-    background:
-      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.07), transparent 36%),
-      linear-gradient(135deg, rgba(20, 29, 48, 0.5), rgba(10, 16, 28, 0.24) 55%, rgba(20, 29, 48, 0.34)),
-      color-mix(in oklab, #0a101c 42%, transparent);
-    box-shadow:
-      inset 0 1px 1px -0.5px rgba(255, 255, 255, 0.26),
-      inset 1.5px 3px 7px -3px rgba(255, 255, 255, 0.16),
-      inset 0 -1px 1px -0.5px rgba(0, 0, 0, 0.5),
-      0 13px 30px rgba(0, 0, 0, 0.26);
-  }
-}
-
-.interactive-card {
-  transition:
-    transform 260ms var(--ease-weight),
-    border-color 180ms var(--ease-weight),
-    box-shadow 280ms var(--ease-weight);
-}
-
-/* Static card glow: CSS-only so project cards stay server-rendered. */
-.interactive-card::after {
+.site-nav-switcher::before {
   position: absolute;
   inset: 0;
   z-index: -1;
-  pointer-events: none;
   content: "";
-  background: radial-gradient(circle at 50% 42%, color-mix(in oklab, var(--ring) 16%, transparent), transparent 64%);
-  opacity: 0;
-  transition: opacity 220ms var(--ease-weight);
+  border-radius: inherit;
+  background-color: var(--muted);
+  pointer-events: none;
+}
+
+.site-nav-switcher > a {
+  -webkit-touch-callout: none;
+  transition: transform 220ms var(--ease-out);
+}
+
+.site-nav-switcher[data-dragging] > a {
+  transition: none;
+}
+
+@keyframes nav-materialize {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nav-condense {
+  to {
+    transform: translate3d(0, -2px, 0) scale(0.955);
+  }
+}
+
+/* Transparent unless the timeline says otherwise: a page too short to scroll
+   has an inactive timeline, and nothing ever passes under the nav there. */
+@supports (animation-timeline: scroll()) {
+  .site-nav-glass > .site-nav-surface,
+  .site-nav-switcher::before {
+    opacity: 0;
+    animation: nav-materialize 1ms linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 64px;
+  }
+
+  .site-nav-glass {
+    animation: nav-condense 1ms linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 64px;
+  }
+}
+
+@supports not (animation-timeline: scroll()) {
+  .site-nav-glass > .site-nav-surface,
+  .site-nav-switcher::before {
+    opacity: 0;
+    transition: opacity 220ms var(--ease-out);
+  }
+
+  .site-nav-glass {
+    transition: transform var(--duration-ui) var(--ease-out);
+  }
+
+  .site-header-nav-frame[data-condensed="true"] .site-nav-surface,
+  .site-header-nav-frame[data-condensed="true"] .site-nav-switcher::before {
+    opacity: 1;
+  }
+
+  .site-header-nav-frame[data-condensed="true"] .site-nav-glass {
+    transform: translate3d(0, -2px, 0) scale(0.955);
+  }
+}
+
+/* Article reading keeps the nav at one physical size. */
+[data-blog-article="true"] .site-nav-glass {
+  animation: none;
+  transform: none;
 }
 
 .project-media-frame {
@@ -1330,10 +1308,6 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 .shared-project-media {
   transform: translateZ(0);
   backface-visibility: hidden;
-}
-
-.magnetic-icon {
-  transition: transform 220ms var(--ease-weight);
 }
 
 /*
@@ -1389,13 +1363,13 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* The glow draws in with the trace, then beats twice — finite on purpose,
-     so nothing loops off-screen. */
+  /* The glow draws in with the trace, then beats once. Finite on purpose:
+     the hero's motion settles within its first few seconds. */
   .pulse-trace-glow {
     stroke-dashoffset: 100.5;
     animation:
       pulse-draw 1.25s var(--ease-in-out) 640ms both,
-      pulse-beat 1.7s var(--ease-in-out) 2.1s 2;
+      pulse-beat 1.7s var(--ease-in-out) 2.1s 1;
   }
 
   html:active-view-transition-type(nav-forward) .pulse-trace-glow,
@@ -1555,6 +1529,20 @@ html[data-blog-focus-bootstrap] .site-header-fade {
  * Persistent header isolation. Kept ungated so the fixed header never slides or
  * cross-fades with the page snapshot, on every device and every navigation.
  */
+/*
+ * The header keeps its place across route changes as its own named group,
+ * but only while a transition runs: in Chromium a view-transition-name makes
+ * its element a backdrop root, so a permanent name would stop the header
+ * glass from blurring the page scrolling beneath it.
+ */
+html:active-view-transition .site-header-nav-frame {
+  view-transition-name: persistent-nav;
+}
+
+html:active-view-transition .site-header-fade {
+  view-transition-name: persistent-nav-fade;
+}
+
 ::view-transition-old(persistent-nav),
 ::view-transition-old(persistent-nav-fade) {
   display: none;
@@ -1626,14 +1614,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
-.interactive-card:active {
-  transform: scale(0.995) translateZ(0);
-}
-
-.interactive-card:focus-within::after {
-  opacity: 1;
-}
-
 .project-adjacent-arrow {
   transition:
     opacity var(--duration-press) var(--ease-out),
@@ -1651,42 +1631,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
   .project-adjacent-link-next:hover .project-adjacent-arrow {
     transform: translate3d(2px, 0, 0);
-  }
-
-  .interactive-card:hover {
-    transform: translateY(-5px) scale(1.006) translateZ(0);
-    will-change: transform;
-  }
-
-  .interactive-card:hover::after {
-    opacity: 1;
-  }
-
-  .interactive-card:hover .magnetic-icon {
-    transform: rotate(10deg) translate3d(1px, -1px, 0);
-  }
-
-  .interactive-card:active {
-    transform: translateY(-2px) scale(0.995) translateZ(0);
-  }
-}
-
-@variant max-sm {
-  .technical-grid {
-    opacity: 0.28;
-    background-size:
-      40px 40px,
-      40px 40px,
-      160px 160px,
-      160px 160px;
-  }
-
-  .signal-traces {
-    opacity: 0.16;
-  }
-
-  .dark .signal-traces {
-    opacity: 0.2;
   }
 }
 
@@ -1709,14 +1653,14 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 
   .site-nav-glass,
-  .site-nav-glass::before,
   .site-nav-brand-copy {
     transform: none;
     will-change: auto;
   }
 
-  .site-nav-glass::before {
-    opacity: 0.16;
+  /* The glass still materializes with scroll; the capsule stops resizing. */
+  .site-nav-glass {
+    animation: none;
   }
 
   .site-nav-brand-copy {
@@ -1732,7 +1676,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   .site-nav-glass,
   .site-header-nav-frame,
   .site-header-fade,
-  .kinetic-backdrop > *,
   .hotkeys-corner-hint,
   .site-version-tag,
   .site-nav-active-pill,
@@ -1742,7 +1685,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
   :is([data-blog-passive-hidden="true"], [data-blog-focus="true"]) .site-header-nav-frame,
   :is([data-blog-passive-hidden="true"], [data-blog-focus="true"]) .site-header-fade,
-  [data-blog-focus="true"] .kinetic-backdrop > *,
   [data-blog-focus="true"] .hotkeys-corner-hint,
   [data-blog-focus="true"] .site-version-tag {
     transition: none;
@@ -1834,11 +1776,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     transition: opacity var(--duration-press) var(--ease-out);
   }
 
-  .interactive-card,
-  .interactive-card:hover,
-  .shared-project-media,
-  .magnetic-icon,
-  .interactive-card:hover .magnetic-icon {
+  .shared-project-media {
     transform: none !important;
   }
 }
@@ -1856,21 +1794,19 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
   .liquid-glass,
   .glass-frost,
-  .surface-panel,
+  .site-nav-glass > .site-nav-surface,
   .dropdown-menu.liquid-glass {
     border-color: color-mix(in oklab, var(--foreground) 30%, transparent);
     background: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
     backdrop-filter: none;
   }
+
+  .site-nav-surface::after {
+    display: none;
+  }
 }
 
 /* Blog — a quieter editorial layer that still uses the site's core tokens. */
-.blog-index {
-  --blog-index-card-radius: 2rem;
-  --blog-index-card-surface: color-mix(in oklab, var(--foreground) 3%, var(--background));
-  --blog-index-card-border: color-mix(in oklab, var(--foreground) 16%, var(--blog-index-card-surface));
-}
-
 .blog-locale-switcher {
   display: inline-flex;
   align-items: center;
@@ -1890,7 +1826,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   border-radius: 999px;
   color: var(--muted-foreground);
   font-size: 0.75rem;
-  font-weight: 850;
+  font-weight: 700;
   text-decoration: none;
   touch-action: manipulation;
   transition:
@@ -1941,127 +1877,205 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   color: var(--accent);
 }
 
-.blog-featured-post,
-.blog-empty-state {
-  position: relative;
-  overflow: hidden;
-  padding: clamp(1.25rem, 3vw, 2.5rem);
-  border: 1px solid var(--blog-index-card-border);
-  border-radius: var(--blog-index-card-radius);
-  background:
-    radial-gradient(circle at 88% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 38%),
-    var(--blog-index-card-surface);
-}
-
-.blog-featured-post h2 a,
-.blog-post-row h3 a {
+/* The post title is the index row's one link; the title itself is the hover signal. */
+.blog-index-link {
+  border-radius: 0.12em;
   color: inherit;
   text-decoration: none;
-  transition: color var(--duration-press) ease;
+  transition: color var(--duration-ui) var(--ease-out);
 }
 
-.blog-featured-post h2 a:is(:hover, :focus-visible),
-.blog-post-row h3 a:is(:hover, :focus-visible) {
+.blog-index-link:focus-visible {
   color: var(--accent);
 }
 
-.blog-featured-post h2 a:focus-visible,
-.blog-post-row h3 a:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent);
-  outline-offset: 0.12em;
-  border-radius: 0.12em;
+@media (hover: hover) and (pointer: fine) {
+  .blog-index-link:hover {
+    color: var(--accent);
+  }
 }
 
-.blog-tag {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.9rem;
-  padding: 0.25rem 0.65rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  background: color-mix(in oklab, var(--background) 58%, transparent);
-  font-size: 0.75rem;
-  font-weight: 800;
+/*
+ * The index as a commit log. A rail runs down the list's left edge with a node
+ * on each post's date line; the newest post is HEAD. Each node draws its own
+ * stretch of rail: a line up to the newer post and a line down to the older
+ * one. Rows are spaced with padding rather than gap so they touch, and each row
+ * clips its rail at its own edges, so the lines join exactly whatever height a
+ * row grows to and wherever baseline alignment puts the date. The colors are
+ * opaque because the two lines overlap just above each row.
+ */
+.blog-index-list {
+  --blog-index-inset: 1.75rem;
+  --blog-index-row-space: 3.5rem;
+  --blog-index-node: 0.6875rem;
+  --blog-index-node-ring: 1.5px;
+  --blog-index-line-gap: 3px;
+  --blog-index-line: color-mix(in oklab, var(--foreground) 16%, var(--background));
+  --blog-index-ring: color-mix(in oklab, var(--foreground) 40%, var(--background));
+  /* The long lines must not lengthen the page past the list. The half rem of
+     padding, taken back by the margin, keeps the first title's focus ring. */
+  margin-block-start: -0.5rem;
+  padding-block-start: 0.5rem;
+  overflow-y: clip;
 }
 
-.blog-read-link,
+@media (width >= 40rem) {
+  .blog-index-list {
+    --blog-index-inset: 2.25rem;
+    --blog-index-row-space: 4rem;
+  }
+}
+
+@media (width >= 64rem) {
+  .blog-index-list {
+    --blog-index-row-space: 5rem;
+  }
+}
+
+.blog-index-list > li {
+  /* What lights a node: the row's own link (hover, focus or press) for the node
+     and the line down, the newer row's link for the line coming in. */
+  --blog-index-node-fill: var(--background);
+  --blog-index-node-edge: var(--blog-index-ring);
+  --blog-index-line-in: var(--blog-index-line);
+  --blog-index-line-out: var(--blog-index-line);
+  padding-block-end: var(--blog-index-row-space);
+  padding-inline-start: var(--blog-index-inset);
+  /* A little room above and beside the row keeps the title's focus ring whole. */
+  clip-path: inset(-0.5rem -0.5rem 0 -0.5rem);
+}
+
+.blog-index-list > li:last-child {
+  padding-block-end: 0;
+}
+
+.blog-index-meta {
+  position: relative;
+}
+
+.blog-index-meta time {
+  transition: color var(--duration-press) ease;
+}
+
+/* Centred on the date's 24px line, in the row's left inset. */
+.blog-index-node {
+  position: absolute;
+  inset-block-start: calc(0.75rem - var(--blog-index-node) / 2);
+  inset-inline-start: calc(-1 * var(--blog-index-inset));
+  width: var(--blog-index-node);
+  height: var(--blog-index-node);
+  border: var(--blog-index-node-ring) solid var(--blog-index-node-edge);
+  border-radius: 50%;
+  background: var(--blog-index-node-fill);
+  pointer-events: none;
+  transition:
+    background-color var(--duration-press) ease,
+    border-color var(--duration-press) ease;
+}
+
+/* Both lines stop a hair short of the ring. They run longer than any row needs
+   and the row's clip-path trims them to its edges. */
+.blog-index-node::before,
+.blog-index-node::after {
+  position: absolute;
+  inset-inline-start: calc(50% - 0.5px);
+  block-size: 100rem;
+  border-inline-start: 1px solid;
+  content: "";
+  transition: border-color var(--duration-press) ease;
+}
+
+.blog-index-node::before {
+  inset-block-end: calc(100% + var(--blog-index-node-ring) + var(--blog-index-line-gap));
+  border-inline-start-color: var(--blog-index-line-in);
+}
+
+.blog-index-node::after {
+  inset-block-start: calc(100% + var(--blog-index-node-ring) + var(--blog-index-line-gap));
+  border-inline-start-color: var(--blog-index-line-out);
+}
+
+/* HEAD has nothing newer above it; the oldest post has nothing below. */
+.blog-index-list > li:first-child .blog-index-node::before,
+.blog-index-list > li:last-child .blog-index-node::after {
+  display: none;
+}
+
+.blog-index-list > li:first-child {
+  --blog-index-node-fill: var(--accent);
+  --blog-index-node-edge: var(--accent);
+}
+
+.blog-index-list > li:first-child .blog-index-node {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+/* Lit: the node fills with the signal and its line to the older post follows,
+   so the hovered post reads as the checked-out commit. Color only, no motion,
+   so reduced motion needs nothing of its own. Press lights it too, which is
+   the touch feedback before the article opens. */
+.blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) {
+  --blog-index-node-fill: var(--accent);
+  --blog-index-node-edge: var(--accent);
+  --blog-index-line-out: var(--accent);
+}
+
+.blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) + li {
+  --blog-index-line-in: var(--accent);
+}
+
+.blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) time {
+  color: var(--foreground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .blog-index-list > li:has(.blog-index-link:hover) {
+    --blog-index-node-fill: var(--accent);
+    --blog-index-node-edge: var(--accent);
+    --blog-index-line-out: var(--accent);
+  }
+
+  .blog-index-list > li:has(.blog-index-link:hover) + li {
+    --blog-index-line-in: var(--accent);
+  }
+
+  .blog-index-list > li:has(.blog-index-link:hover) time {
+    color: var(--foreground);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .blog-index-list {
+    --blog-index-line: color-mix(in oklab, var(--foreground) 36%, var(--background));
+    --blog-index-ring: color-mix(in oklab, var(--foreground) 64%, var(--background));
+  }
+}
+
 .blog-back-link {
   display: inline-flex;
   width: fit-content;
   min-height: 2.75rem;
   align-items: center;
   gap: 0.45rem;
-  color: var(--foreground);
+  color: var(--muted-foreground);
   font-size: 0.875rem;
-  font-weight: 850;
   text-decoration: none;
   touch-action: manipulation;
   transition: color var(--duration-press) ease;
 }
 
-.blog-read-link {
-  color: var(--accent);
-}
-
-.blog-read-link svg,
 .blog-back-link svg {
   transition: transform var(--duration-press) ease;
 }
 
-.blog-read-link:is(:hover, :focus-visible),
 .blog-back-link:is(:hover, :focus-visible) {
-  color: color-mix(in oklab, var(--accent) 78%, var(--foreground));
+  color: var(--foreground);
 }
 
-.blog-read-link:focus-visible,
 .blog-back-link:focus-visible {
   outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent);
   outline-offset: 0.25rem;
   border-radius: 0.2rem;
-}
-
-.blog-post-row {
-  display: grid;
-  gap: 1.25rem;
-  padding: 1.25rem 0;
-}
-
-.blog-post-row h3 {
-  color: var(--foreground);
-  font-size: 1.35rem;
-  font-weight: 900;
-  letter-spacing: -0.025em;
-}
-
-.blog-post-row p {
-  margin-top: 0.5rem;
-  color: var(--muted-foreground);
-  line-height: 1.7;
-}
-
-.blog-post-row-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-  font-weight: 750;
-}
-
-.blog-empty-state h2 {
-  color: var(--foreground);
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  font-weight: 900;
-  letter-spacing: -0.035em;
-}
-
-.blog-empty-state p {
-  max-width: 42rem;
-  margin-top: 1rem;
-  color: var(--muted-foreground);
-  font-size: 1.05rem;
-  line-height: 1.8;
 }
 
 .blog-reading-progress {
@@ -2171,27 +2185,29 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 .blog-article-meta {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem 1rem;
+  align-items: baseline;
+  gap: 0.25rem 2rem;
   color: var(--muted-foreground);
-  font-size: 0.8rem;
-  font-weight: 750;
-}
-
-.blog-article-meta > * {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5rem;
 }
 
 .blog-article-meta > a {
   color: var(--foreground);
-  font-weight: 850;
+  font-weight: 700;
   text-decoration: none;
+  transition: color var(--duration-ui) var(--ease-out);
 }
 
-.blog-article-meta > a:is(:hover, :focus-visible) {
+.blog-article-meta > a:focus-visible {
   color: var(--accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .blog-article-meta > a:hover {
+    color: var(--accent);
+  }
 }
 
 .blog-article-meta > a:focus-visible {
@@ -2212,6 +2228,42 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
+/* The 404 monitor's mark draws in like the homepage pulse but never beats:
+   the line is flat until someone restarts it. A little shorter, so on a
+   390px phone a quarter of the width stays free for the field to continue it.
+   The box keeps the viewBox's 240:72 ratio, so the baseline the field reads
+   (60 of 72) is where the line is drawn. */
+.pulse-trace.not-found-trace {
+  width: 1.25em;
+  height: 0.375em;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .not-found-trace .pulse-trace-glow {
+    animation: pulse-draw 1.25s var(--ease-in-out) 640ms both;
+  }
+}
+
+/* The keyboard path to the restart: hidden like the skip link until it has
+   keyboard focus, then a control at the foot of the monitor. Clipped rather
+   than moved off screen, so it never adds scroll. */
+.not-found-revive {
+  position: absolute;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  left: 50%;
+  translate: -50% 0;
+}
+
+.not-found-revive:not(:focus-visible) {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  border-width: 0;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
 @media (max-height: 32rem) and (orientation: landscape) {
   .not-found-shell {
     min-height: 0;
@@ -2225,13 +2277,12 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     font-size: clamp(2.25rem, 7vw, 3.5rem);
   }
 
-  .not-found-signal {
-    height: 1.75rem;
+  .not-found-label {
     margin-top: 0.5rem;
   }
 
   .not-found-copy {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
     font-size: 1rem;
     line-height: 1.5rem;
   }
@@ -2239,13 +2290,34 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   .not-found-actions {
     margin-top: 0.75rem;
   }
+
+  .not-found-revive {
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* The header, the prose and the footer share one reading column: centred on its own
+   below xl, and from xl columns 4 to 10 of the site's 12-column grid, the table of
+   contents on 1 to 3. */
+.blog-article {
+  --blog-measure: 46rem;
+}
+
+.blog-article-header,
+.blog-article-footer {
+  max-width: var(--blog-measure);
+  margin-inline: auto;
 }
 
 .blog-article-grid {
   display: grid;
-  max-width: 69rem;
-  grid-template-columns: minmax(0, 48rem);
+  grid-template-columns: minmax(0, var(--blog-measure));
   justify-content: center;
+}
+
+/* Focus mode is for the text alone: the header's field goes with the rest of the backdrop. */
+[data-blog-focus="true"] .blog-article-field {
+  visibility: hidden;
 }
 
 .blog-toc-mobile-shell {
@@ -2257,14 +2329,16 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 .blog-toc-desktop {
   --blog-toc-heading-size: 0.8rem;
-  --blog-toc-heading-weight: 760;
-  --blog-toc-subheading-size: 0.7rem;
-  --blog-toc-subheading-weight: 620;
+  --blog-toc-heading-weight: 400;
+  --blog-toc-subheading-size: 0.8rem;
+  --blog-toc-subheading-weight: 400;
   position: sticky;
   /* Header frame: 0.75rem top gap + 4.125rem frame + 1rem clearance. */
   top: calc(env(safe-area-inset-top) + 5.875rem);
-  /* Keep one height ceiling so the scrollable region does not resize in motion. */
-  max-height: calc(100svh - env(safe-area-inset-top) - 7.125rem);
+  /* Keep one height ceiling so the scrollable region does not resize in motion.
+     The bottom 4.25rem stays clear of the fixed shortcut hint (1rem + 2.25rem
+     + 1rem gap), which shares the left edge with this column below ~1400px. */
+  max-height: calc(100svh - env(safe-area-inset-top) - 10.125rem);
   overflow-y: auto;
   padding-right: 1rem;
   transition: top 180ms var(--ease-weight);
@@ -2293,11 +2367,9 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-desktop > p {
-  color: var(--muted-foreground);
-  font-size: 0.75rem;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .blog-toc-list {
@@ -2327,7 +2399,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border-radius: 0.5rem;
   color: color-mix(in oklab, var(--muted-foreground) 90%, transparent);
   font-size: var(--blog-toc-heading-size, 0.8rem);
-  font-weight: var(--blog-toc-heading-weight, 760);
+  font-weight: var(--blog-toc-heading-weight, 400);
   line-height: 1.4;
   text-decoration: none;
   touch-action: manipulation;
@@ -2354,10 +2426,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   overflow-wrap: anywhere;
 }
 
+/* Subsections step in by indent, not by a smaller size. */
 .blog-toc-list li[data-depth="3"] .blog-toc-label {
-  padding-left: 0.45rem;
-  font-size: var(--blog-toc-subheading-size, 0.7rem);
-  font-weight: var(--blog-toc-subheading-weight, 620);
+  padding-left: 1rem;
+  font-size: var(--blog-toc-subheading-size, 0.8rem);
+  font-weight: var(--blog-toc-subheading-weight, 400);
 }
 
 .blog-toc-list li[data-depth="3"] a {
@@ -2383,7 +2456,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --toc-tick-scale: 1;
   color: var(--foreground);
   background: transparent;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .blog-toc-list a[aria-current="location"] .blog-toc-tick {
@@ -2392,7 +2465,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-list li[data-depth="3"] a[aria-current="location"] .blog-toc-label {
-  font-weight: 720;
+  font-weight: 700;
 }
 
 .blog-toc-mobile-trigger {
@@ -2452,7 +2525,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-toc-mobile-label {
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
   white-space: nowrap;
 }
@@ -2569,9 +2642,9 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --drawer-bleed-background: var(--blog-toc-drawer-surface);
   --blog-toc-drawer-inline: 1.25rem;
   --blog-toc-heading-size: 0.84rem;
-  --blog-toc-heading-weight: 760;
+  --blog-toc-heading-weight: 400;
   --blog-toc-subheading-size: 0.76rem;
-  --blog-toc-subheading-weight: 620;
+  --blog-toc-subheading-weight: 400;
   display: flex;
   width: min(100%, 42rem);
   max-height: 72dvh;
@@ -2667,10 +2740,9 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --blog-rich-block-radius: var(--radius);
   --blog-rich-block-surface: color-mix(in oklab, var(--foreground) 3%, var(--background));
   --blog-rich-block-border: color-mix(in oklab, var(--foreground) 16%, var(--blog-rich-block-surface));
-  --blog-rich-block-divider: color-mix(in oklab, var(--foreground) 11%, var(--blog-rich-block-surface));
   color: color-mix(in oklab, var(--foreground) 86%, var(--muted-foreground));
   font-size: clamp(1rem, 1.3vw, 1.08rem);
-  line-height: 1.82;
+  line-height: 1.7;
 }
 
 .blog-prose > :first-child {
@@ -2689,18 +2761,19 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   line-height: 1.45;
 }
 
+/* Sections part by space and scale, never by a rule. */
 .blog-prose h2 {
-  margin-top: 3.75rem;
-  margin-bottom: 1rem;
-  font-size: clamp(1.9rem, 4vw, 2.75rem);
-  letter-spacing: -0.03em;
+  margin-top: clamp(3.5rem, 6vw, 5rem);
+  margin-bottom: 1.25rem;
+  font-size: clamp(1.625rem, 1vw + 1.2rem, 2.125rem);
+  letter-spacing: -0.025em;
 }
 
 .blog-prose h3 {
-  margin-top: 2.5rem;
-  margin-bottom: 0.8rem;
-  font-size: clamp(1.35rem, 2.5vw, 1.8rem);
-  letter-spacing: -0.025em;
+  margin-top: 2.75rem;
+  margin-bottom: 0.75rem;
+  font-size: var(--text-title);
+  letter-spacing: -0.02em;
 }
 
 .blog-prose .heading-anchor {
@@ -2751,13 +2824,12 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-prose li::marker {
-  color: var(--accent);
-  font-weight: 850;
+  color: var(--muted-foreground);
 }
 
 .blog-prose strong {
   color: var(--foreground);
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .blog-prose > a,
@@ -2765,7 +2837,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose li > a:not(.source-link) {
   border-radius: 0.22em;
   color: var(--accent);
-  font-weight: 750;
+  font-weight: 700;
   text-decoration: none;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -2788,14 +2860,12 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-prose :not(pre) > code {
-  padding: 0.12em 0.34em;
-  border: 1px solid var(--border);
-  border-radius: 0.38rem;
+  padding: 0.1em 0.32em;
+  border-radius: 0.3rem;
   color: var(--foreground);
-  background: color-mix(in oklab, var(--muted) 76%, transparent);
-  font-family: MonoLisaCode, ui-monospace, monospace;
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  font-family: var(--font-mono);
   font-size: 0.9em;
-  font-weight: 650;
   vertical-align: 0.04em;
   overflow-wrap: anywhere;
   -webkit-box-decoration-break: clone;
@@ -2803,25 +2873,23 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-prose blockquote {
-  padding: 0.1rem 0 0.1rem 1.15rem;
-  border-left: 3px solid var(--accent);
+  padding: 0.1rem 0 0.1rem 1.25rem;
+  border-left: 2px solid var(--border);
   color: var(--muted-foreground);
   font-style: italic;
 }
 
+/* Tables carry no rules: the head is set heavier, and body rows alternate with a soft band. */
 .blog-table-frame {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid var(--blog-rich-block-border);
-  border-radius: var(--blog-rich-block-radius);
-  background: var(--blog-rich-block-surface);
 }
 
 .blog-table-frame::before,
 .blog-table-frame::after {
   position: absolute;
-  inset-block: 1px;
+  inset-block: 0;
   z-index: 2;
   width: 1.5rem;
   pointer-events: none;
@@ -2830,15 +2898,13 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-table-frame::before {
-  inset-inline-start: 1px;
-  border-radius: calc(var(--blog-rich-block-radius) - 1px) 0 0 calc(var(--blog-rich-block-radius) - 1px);
-  background: linear-gradient(to right, color-mix(in oklab, var(--foreground) 14%, transparent), transparent);
+  inset-inline-start: 0;
+  background: linear-gradient(to right, color-mix(in oklab, var(--foreground) 10%, transparent), transparent);
 }
 
 .blog-table-frame::after {
-  inset-inline-end: 1px;
-  border-radius: 0 calc(var(--blog-rich-block-radius) - 1px) calc(var(--blog-rich-block-radius) - 1px) 0;
-  background: linear-gradient(to left, color-mix(in oklab, var(--foreground) 14%, transparent), transparent);
+  inset-inline-end: 0;
+  background: linear-gradient(to left, color-mix(in oklab, var(--foreground) 10%, transparent), transparent);
 }
 
 .blog-table-frame[data-scroll-left="true"]::before {
@@ -2872,32 +2938,42 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-prose :where(th, td) {
   min-width: 9rem;
-  padding: 0.8rem 0.9rem;
+  padding: 0.75rem 1rem;
   border: 0;
-  border-inline-end: 1px solid var(--blog-rich-block-divider);
-  border-block-end: 1px solid var(--blog-rich-block-divider);
   text-align: left;
   vertical-align: top;
 }
 
-.blog-prose tr > :where(th, td):last-child {
-  border-inline-end: 0;
-}
-
-.blog-prose table > :last-child > tr:last-child > :where(th, td) {
-  border-block-end: 0;
-}
-
 .blog-prose th {
   color: var(--foreground);
-  background: color-mix(in oklab, var(--muted) 58%, var(--blog-rich-block-surface));
-  font-weight: 850;
+  font-weight: 700;
 }
 
+.blog-prose tbody tr:nth-child(odd) > td {
+  background: var(--blog-rich-block-surface);
+}
+
+.blog-prose tbody tr > td:first-child {
+  border-start-start-radius: 0.5rem;
+  border-end-start-radius: 0.5rem;
+}
+
+.blog-prose tbody tr > td:last-child {
+  border-start-end-radius: 0.5rem;
+  border-end-end-radius: 0.5rem;
+}
+
+/* A scene break the author asks for is three marks of the code face, not a rule. */
 .blog-prose hr {
   margin: 3rem 0;
   border: 0;
-  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.blog-prose hr::before {
+  content: "* * *";
 }
 
 .source-link {
@@ -2906,7 +2982,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   display: inline;
   border-radius: 0.22em;
   color: var(--accent);
-  font-weight: 780;
+  font-weight: 700;
   text-decoration: none;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -2946,8 +3022,8 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border-radius: 999px;
   color: var(--muted-foreground);
   background: color-mix(in oklab, var(--background) 72%, transparent);
-  font-size: 0.67rem;
-  font-weight: 750;
+  font-size: 0.72rem;
+  font-weight: 400;
   line-height: 1.35;
   text-decoration: none;
   vertical-align: middle;
@@ -2980,45 +3056,36 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   display: inline;
 }
 
+/* A callout is a soft well tinted by its variant's signal, never a ruled or bordered box. */
 .blog-callout {
+  --blog-callout-signal: var(--accent);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 0.8rem;
+  column-gap: 0.75rem;
   row-gap: 0;
-  padding: 1rem 1.1rem;
-  border: 1px solid color-mix(in oklab, var(--accent) 26%, var(--blog-rich-block-border));
+  padding: 1.125rem 1.25rem;
   border-radius: var(--blog-rich-block-radius);
-  background: color-mix(in oklab, var(--accent) 7%, var(--blog-rich-block-surface));
-}
-
-.blog-callout[data-variant="tip"] {
-  border-color: color-mix(in oklab, #22c55e 32%, var(--blog-rich-block-border));
-  background: color-mix(in oklab, #22c55e 7%, var(--blog-rich-block-surface));
+  background: color-mix(in oklab, var(--blog-callout-signal) 4%, var(--blog-rich-block-surface));
 }
 
 .blog-callout[data-variant="warning"] {
-  border-color: color-mix(in oklab, #f59e0b 38%, var(--blog-rich-block-border));
-  background: color-mix(in oklab, #f59e0b 8%, var(--blog-rich-block-surface));
+  --blog-callout-signal: oklch(58% 0.15 60);
+}
+
+.dark .blog-callout[data-variant="warning"] {
+  --blog-callout-signal: oklch(80% 0.13 75);
 }
 
 .blog-callout-icon {
   align-self: center;
-  color: var(--accent);
-}
-
-.blog-callout[data-variant="tip"] .blog-callout-icon {
-  color: #16a34a;
-}
-
-.blog-callout[data-variant="warning"] .blog-callout-icon {
-  color: #d97706;
+  color: var(--blog-callout-signal);
 }
 
 .blog-callout .blog-callout-title {
   min-width: 0;
   margin: 0;
   color: var(--foreground);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .blog-callout-content {
@@ -3036,7 +3103,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border: 1px solid var(--blog-rich-block-border);
   border-radius: var(--blog-rich-block-radius);
   background: var(--blog-rich-block-surface);
-  box-shadow: 0 14px 36px color-mix(in oklab, var(--foreground) 8%, transparent);
 }
 
 .blog-prose figcaption[data-rehype-pretty-code-title] {
@@ -3044,13 +3110,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
   align-items: center;
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid var(--blog-rich-block-divider);
+  padding: 0.85rem 1rem 0;
   color: var(--muted-foreground);
-  background: color-mix(in oklab, var(--muted) 72%, transparent);
-  font-family: MonoLisaCode, ui-monospace, monospace;
-  font-size: 0.73rem;
-  font-weight: 750;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   overflow-wrap: anywhere;
 }
 
@@ -3058,19 +3121,9 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   min-width: 0;
 }
 
+/* The language as written in the fence (ts, toml, nu), a quiet label beside the filename. */
 .blog-prose .blog-code-language {
-  min-width: 1.75rem;
-  padding: 0.15rem 0.45rem;
-  border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--blog-rich-block-border));
-  border-radius: 999px;
-  color: color-mix(in oklab, var(--accent) 78%, var(--foreground));
-  background: color-mix(in oklab, var(--accent) 8%, transparent);
-  font-size: 0.62rem;
-  font-weight: 850;
-  line-height: 1.2;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
   white-space: nowrap;
 }
 
@@ -3135,11 +3188,9 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   min-width: 0;
   margin: 0;
   padding: 0;
-  border: 1px solid color-mix(in oklab, var(--border) 88%, transparent);
+  border: 1px solid var(--blog-rich-block-border);
   border-radius: 0.625rem;
-  background: color-mix(in oklab, var(--background) 88%, transparent);
-  box-shadow: 0 5px 16px color-mix(in oklab, var(--foreground) 6%, transparent);
-  backdrop-filter: blur(16px) saturate(1.12);
+  background: var(--blog-rich-block-surface);
 }
 
 .blog-code-action {
@@ -3252,12 +3303,7 @@ code[data-theme] span {
   padding: clamp(1rem, 3vw, 1.5rem);
   border: 1px solid color-mix(in oklab, var(--accent) 16%, var(--blog-rich-block-border));
   border-radius: var(--blog-rich-block-radius);
-  background:
-    radial-gradient(circle at 12% 0%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 42%),
-    var(--blog-rich-block-surface);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--foreground) 7%, transparent),
-    var(--panel-shadow);
+  background: var(--blog-rich-block-surface);
 }
 
 .blog-mermaid-visual {
@@ -3403,13 +3449,9 @@ code[data-theme] span {
   z-index: 3;
   display: inline-flex;
   overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--border) 88%, transparent);
+  border: 1px solid var(--blog-rich-block-border);
   border-radius: 0.8rem;
-  background: color-mix(in oklab, var(--background) 88%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--foreground) 7%, transparent),
-    0 8px 24px color-mix(in oklab, var(--foreground) 8%, transparent);
-  backdrop-filter: blur(16px) saturate(1.12);
+  background: var(--blog-rich-block-surface);
 }
 
 .blog-mermaid-control {
@@ -3603,8 +3645,7 @@ code[data-theme] span {
 .blog-mermaid figcaption {
   margin-bottom: 0.75rem;
   color: var(--muted-foreground);
-  font-size: 0.78rem;
-  font-weight: 750;
+  font-size: 0.875rem;
 }
 
 .blog-figure img,
@@ -3638,29 +3679,30 @@ html.dark .blog-figure-image--dark {
 }
 
 .blog-figure figcaption {
-  margin-top: 0.65rem;
+  margin-top: 0.75rem;
   color: var(--muted-foreground);
-  font-size: 0.75rem;
-  line-height: 1.6;
-  text-align: center;
-}
-
-@variant sm {
-  .blog-post-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-  }
-
-  .blog-post-row-meta {
-    display: grid;
-    justify-items: end;
-  }
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 @media (min-width: 1280px) {
+  .blog-article-header,
+  .blog-article-footer,
   .blog-article-grid {
-    grid-template-columns: minmax(10rem, 13rem) minmax(0, 48rem);
-    gap: 3rem;
+    display: grid;
+    max-width: none;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 2rem;
+  }
+
+  .blog-article-grid > aside {
+    grid-column: 1 / span 3;
+  }
+
+  .blog-article-header > *,
+  .blog-article-footer > *,
+  .blog-article-grid > article {
+    grid-column: 4 / span 7;
   }
 }
 
@@ -3671,10 +3713,6 @@ html.dark .blog-figure-image--dark {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .blog-read-link:hover svg {
-    transform: translateX(2px);
-  }
-
   .blog-back-link:hover svg {
     transform: translateX(-2px);
   }
@@ -3744,12 +3782,10 @@ html.dark .blog-figure-image--dark {
     transition: none;
   }
 
-  .blog-read-link svg,
   .blog-back-link svg {
     transition: none;
   }
 
-  .blog-read-link:is(:hover, :focus-visible) svg,
   .blog-back-link:is(:hover, :focus-visible) svg {
     transform: none;
   }

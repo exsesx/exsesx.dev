@@ -1,4 +1,3 @@
-import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
@@ -7,182 +6,125 @@ import {
   ROUTE_TRANSITION_TYPES,
   suppressEntryMotionProps,
 } from "@/lib/motion-contract";
-import { getProjectAccentClasses } from "@/lib/project-accents";
 import { getProjectPath, getProjectTransitionType, type Project } from "@/lib/projects";
 import { cn } from "@/lib/utils";
-import { Badge } from "./ui/badge";
-import { buttonVariants } from "./ui/button-variants";
-import { CardAction, CardContent, CardDescription, CardHeader, CardTitle, Card as UiCard } from "./ui/card";
 
-interface ProjectCardProps {
-  project: Project;
-  density?: "default" | "compact";
-  preloadMedia?: boolean;
+function getProjectLinkProps(project: Project) {
+  return {
+    href: getProjectPath(project),
+    transitionTypes: getProjectRouteTransitionTypes(
+      ROUTE_TRANSITION_TYPES.navForward,
+      getProjectTransitionType(project),
+    ),
+    scroll: true,
+    ...suppressEntryMotionProps,
+  };
 }
 
-export default function ProjectCard({ project, density = "default", preloadMedia = false }: ProjectCardProps) {
+/*
+ * The project's picture as a link to its case page. The frame carries the
+ * shared view-transition name, so it morphs into the case page's hero when the
+ * navigation is tagged with this project's transition type. The container has
+ * no overflow clip, so the link's focus ring stays visible around the frame.
+ */
+export function ProjectMediaLink({
+  project,
+  sizes,
+  preload = false,
+  className,
+}: {
+  project: Project;
+  sizes: string;
+  preload?: boolean;
+  className?: string;
+}) {
   const media = project.media;
-  const accentClasses = getProjectAccentClasses(project.accent);
-  const isCompact = density === "compact";
-  const projectPath = getProjectPath(project);
-  const projectTransitionType = getProjectTransitionType(project);
-  const visibleTags = isCompact ? project.tags.slice(0, 3) : project.tags;
-  const mediaMinHeight = isCompact ? 144 : 220;
-  const mediaSizes = isCompact
-    ? "(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-    : "(min-width: 1024px) 33vw, 100vw";
+  const transitionType = getProjectTransitionType(project);
+  const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
 
   return (
-    <UiCard
-      className={cn(
-        "interactive-card group relative isolate overflow-hidden border-border bg-card/85 py-0 shadow-project-card hover:border-ring/30",
-        accentClasses.card.surface,
-        isCompact ? "h-full rounded-[1.25rem]" : "h-full rounded-[1.75rem]",
-      )}
-    >
-      <div
-        className={`pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br ${accentClasses.gradient} opacity-60`}
-      />
-      {accentClasses.topLight ? (
-        <div className={cn("pointer-events-none absolute inset-x-0 top-0 -z-10 h-44", accentClasses.topLight)} />
-      ) : null}
-      <div
-        className={cn("relative overflow-hidden bg-slate-950", isCompact ? "h-36 sm:h-40" : "h-52 sm:h-56")}
-        style={{
-          minHeight: mediaMinHeight,
-          ...(media.type === "image" && media.backgroundColor ? { backgroundColor: media.backgroundColor } : {}),
-        }}
+    <div className={cn("relative rounded-lg bg-muted", className)} style={{ backgroundColor }}>
+      <ViewTransition
+        name={`project-media-${project.id}`}
+        share={{ [transitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
+        default="none"
       >
-        <Link
-          href={projectPath}
-          data-cuelume-press=""
-          transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, projectTransitionType)}
-          scroll
-          {...suppressEntryMotionProps}
-          aria-label={`View ${project.name} project details`}
-          className="absolute inset-0 z-10"
-        />
-        <ViewTransition
-          name={`project-media-${project.id}`}
-          share={{
-            [projectTransitionType]: ROUTE_TRANSITION_TYPES.morph,
-            default: "none",
-          }}
-          default="none"
-        >
-          <div
-            className={cn(
-              "project-media-frame absolute",
-              accentClasses.card.mediaShadow,
-              isCompact ? "inset-2 rounded-[1rem]" : "inset-3 rounded-[1.35rem]",
-            )}
-            style={media.type === "image" && media.backgroundColor ? { backgroundColor: media.backgroundColor } : {}}
-          >
-            <Image
-              src={media.type === "image" ? media.src : media.poster}
-              alt={media.type === "image" ? media.alt : media.label}
-              fill
-              sizes={mediaSizes}
-              preload={preloadMedia}
-              className="shared-project-media object-cover opacity-95 saturate-[0.94]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
-          </div>
-        </ViewTransition>
-        <div
-          className={cn(
-            "absolute glass-frost project-period-badge rounded-full border border-white/15 text-xs font-bold uppercase tracking-[0.18em] text-white",
-            isCompact ? "left-3 top-3 px-2.5 py-1" : "left-4 top-4 px-3 py-1",
-          )}
-        >
-          {project.period}
+        <div className="project-media-frame absolute inset-0 rounded-lg" style={{ backgroundColor }}>
+          <Image
+            src={media.type === "image" ? media.src : media.poster}
+            alt={media.type === "image" ? media.alt : media.label}
+            fill
+            sizes={sizes}
+            preload={preload}
+            className="shared-project-media object-cover"
+          />
         </div>
-      </div>
+      </ViewTransition>
+      <Link
+        {...getProjectLinkProps(project)}
+        data-cuelume-press=""
+        aria-label={`View ${project.name} project details`}
+        className="absolute inset-0 z-10 rounded-lg"
+      />
+    </div>
+  );
+}
 
-      <div className="flex flex-1 flex-col">
-        <CardHeader
-          className={cn(
-            "mb-1 flex flex-row items-start justify-between gap-4 pt-0",
-            isCompact ? "px-5" : "px-6 sm:px-7",
-          )}
-        >
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent">{project.role}</p>
-            <CardTitle
-              className={cn("font-black tracking-tight text-foreground", isCompact ? "mt-2 text-xl" : "mt-3 text-2xl")}
-            >
-              <Link
-                href={projectPath}
-                data-cuelume-press=""
-                transitionTypes={getProjectRouteTransitionTypes(
-                  ROUTE_TRANSITION_TYPES.navForward,
-                  projectTransitionType,
-                )}
-                scroll
-                {...suppressEntryMotionProps}
-                className="hover:text-accent"
-              >
-                {project.name}
-              </Link>
-            </CardTitle>
-          </div>
-          {project.href ? (
-            <CardAction>
-              <a
-                href={project.href}
-                data-cuelume-press=""
-                className={buttonVariants({ variant: "default", size: "icon" })}
-                aria-label={`Open ${project.name} website`}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <ArrowUpRight strokeWidth={2.5} className="magnetic-icon" />
-              </a>
-            </CardAction>
-          ) : null}
-        </CardHeader>
-        <CardContent className={cn("flex flex-1 flex-col", isCompact ? "px-5 pb-5" : "px-6 pb-6 sm:px-7 sm:pb-7")}>
-          <CardDescription
-            className={cn("text-muted-foreground", isCompact ? "text-sm leading-6" : "text-base leading-7")}
-          >
-            {project.description}
-          </CardDescription>
-          <p
-            className={cn(
-              "border-l-2 border-border pl-4 text-sm font-bold leading-6 text-foreground",
-              isCompact ? "mt-4" : "mt-5",
-            )}
-          >
-            {project.impact}
-          </p>
-          <div className={cn("flex flex-wrap gap-2", isCompact ? "mt-5" : "mt-auto pt-5")}>
-            {visibleTags.map(tag => (
-              <Badge key={tag} variant="secondary" className="h-6 bg-secondary/75 px-2.5 text-[11px] font-bold">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-          <div className={cn(isCompact ? "mt-auto pt-5" : "pt-5")}>
-            <Link
-              href={projectPath}
-              transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, projectTransitionType)}
-              scroll
-              {...suppressEntryMotionProps}
-              data-cuelume-press=""
-              className={cn(
-                buttonVariants({
-                  variant: "glass",
-                  size: "sm",
-                }),
-                "w-fit",
-              )}
-            >
-              View details
-              <ArrowUpRight data-icon="inline-end" strokeWidth={2.4} />
-            </Link>
-          </div>
-        </CardContent>
+/* Classes stay out of cn(): its merge reads the custom text-title size as a text color and drops it. */
+export function ProjectTitleLink({ project, as: Heading }: { project: Project; as: "h2" | "h3" }) {
+  return (
+    <Heading className="text-title font-black text-foreground">
+      <Link
+        {...getProjectLinkProps(project)}
+        data-cuelume-press=""
+        className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
+      >
+        {project.name}
+      </Link>
+    </Heading>
+  );
+}
+
+/*
+ * The visible way into the case page, so the row's only underlined link is not
+ * the one that leaves the site. Its name says which case it opens without
+ * repeating the picture link's "View … project details".
+ */
+export function ProjectDetailsLink({ project }: { project: Project }) {
+  return (
+    <Link
+      {...getProjectLinkProps(project)}
+      data-cuelume-press=""
+      className="-my-2 inline-flex min-h-11 items-center rounded-sm text-sm font-bold text-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent hover:decoration-current"
+    >
+      View details<span className="sr-only"> for {project.name}</span>
+    </Link>
+  );
+}
+
+/* Tags read as a quiet line of text, as on the blog index: nothing here is pressable. */
+export function ProjectTags({ project }: { project: Project }) {
+  return (
+    <ul className="text-sm leading-6 text-muted-foreground" aria-label={`${project.name} focus`}>
+      {project.tags.map((tag, index) => (
+        <li key={tag} className="inline">
+          {tag}
+          {index < project.tags.length - 1 ? ", " : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* A compact entry: the picture, then the name and what the product is. */
+export default function ProjectCard({ project }: { project: Project }) {
+  return (
+    <article className="flex min-w-0 flex-col gap-5">
+      <ProjectMediaLink project={project} sizes="(min-width: 768px) 40vw, 100vw" className="aspect-[16/10]" />
+      <div>
+        <ProjectTitleLink project={project} as="h3" />
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">{project.period}</p>
       </div>
-    </UiCard>
+    </article>
   );
 }

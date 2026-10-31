@@ -1,0 +1,46 @@
+# PR-Agent settings: https://docs.pr-agent.ai/usage-guide/configuration_options/
+# Read from the default branch, so changes apply after they merge to main.
+
+[config]
+model = "anthropic/claude-opus-5-5"
+fallback_models = ["anthropic/claude-sonnet-5-5"]
+max_model_tokens = 200000
+enable_claude_adaptive_thinking = true
+reasoning_effort = "high"
+allow_dynamic_context = true
+
+[ignore]
+# Vendored agent skills and lockfiles would crowd out the real diff.
+glob = [".agents/**", "skills-lock.json", "bun.lock"]
+
+[pr_reviewer]
+inline_key_issues = true
+num_max_findings = 5
+require_failure_modes = true
+require_merge_recommendation = true
+require_tests_review = false
+require_ticket_analysis_review = false
+
+# These create labels the repo does not have.
+enable_review_labels_security = false
+enable_review_labels_effort = false
+
+extra_instructions = """\
+Stack: Next.js 16 App Router, React 19, TypeScript 7, Tailwind CSS 4, Bun, Biome, Playwright.
+Next.js 16 has breaking API and convention changes; do not flag code for diverging from older Next.js patterns.
+iOS Safari is the primary target: flag layout, viewport, backdrop-filter, and animation issues specific to WebKit.
+Biome owns formatting and lint style; do not comment on either.
+"""
+
+[pr_description]
+publish_labels = false
+
+[pr_code_suggestions]
+committable_code_suggestions = true
+focus_only_on_problems = true
+suggestions_score_threshold = 7
+
+extra_instructions = """\
+Stack: Next.js 16 App Router, React 19, TypeScript 7, Tailwind CSS 4, Bun, Biome.
+Only suggest changes that fix a bug, accessibility issue, or iOS Safari regression; skip style and formatting.
+"""
