@@ -100,7 +100,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
 
               return (
                 <li key={post.slug}>
-                  <article className="grid gap-y-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:gap-x-8 lg:grid-cols-12">
+                  <article className="grid gap-y-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:items-baseline sm:gap-x-8 lg:grid-cols-12">
                     <p className="flex gap-x-6 text-sm leading-6 tabular-nums text-muted-foreground sm:flex-col lg:col-span-3">
                       <time dateTime={post.publishedAt}>{formatBlogDateStamp(post.publishedAt)}</time>
                       <span>

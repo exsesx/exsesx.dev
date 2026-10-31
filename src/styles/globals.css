@@ -285,15 +285,11 @@ select {
   }
 }
 
-/*
- * Stage hero: the copy on the left, the field as the visual to its right (a
- * band above the copy on phones). svh, not dvh: the smallest viewport never
- * overflows, and the hero does not resize (and repaint the field) as the
- * mobile URL bar slides away. The top padding clears the fixed nav.
- */
-.hero-stage {
-  min-height: 100svh;
-  padding-top: 7rem;
+/* Trims the line box down to the cap height, so a title beside a picture
+   starts its ink exactly at the picture's top edge. Engines without text-box
+   keep the usual leading, a few pixels lower. */
+.cap-top {
+  text-box: trim-start cap alphabetic;
 }
 
 .display-title {

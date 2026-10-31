@@ -138,7 +138,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           runs from just below the nav's first 64px to the foot of the name, so it ends above the
           picture and never sits under it; the headline and action start level with the picture. */}
       <section aria-labelledby="project-title" className="relative isolate" data-ascii-host="">
-        <div className="relative pt-28 lg:pt-32">
+        <div className="relative pt-52 lg:pt-32">
           <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" placement="around" />
           <Container>
             <h1

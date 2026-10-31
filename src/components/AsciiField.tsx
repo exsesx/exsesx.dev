@@ -145,6 +145,20 @@ const FIELD_LAYOUTS: Record<AsciiFieldPlacement, Record<"wide" | "narrow", Field
 };
 const ANCHORED_MIN_SPAN = 0.25;
 
+/* A side field anchored to the headline's mark starts at the mark, not at a
+   fixed fraction of the canvas: on a wide window the copy column ends well
+   left of 44%, and the first beat would land in an empty fade. Full strength
+   arrives within 6% of the width, and the spot centers in what remains. */
+function sideLayoutFrom(start: number): FieldLayout {
+  const reach = 1 - start;
+
+  return {
+    spot: { x: start + reach * 0.42, y: 0.5, radiusX: reach * 0.8, radiusY: 0.62 },
+    region: x => smoothstep(start - 0.03, start + 0.06, x),
+    band: { y: 0.5, from: start, to: 0.97, amplitude: 0.12 },
+  };
+}
+
 type Splash = Omit<SplashShape, "strength"> & { x: number; y: number; born: number; strength: number };
 type Palette = {
   base: string;
@@ -374,12 +388,9 @@ function startAsciiField(
     const origin = canvas.getBoundingClientRect();
     const padding = AVOID_PADDING * dpr;
     const clearance = new Float32Array(cols * rows).fill(1);
-    const range = document.createRange();
 
     for (const element of host.querySelectorAll("[data-ascii-avoid]")) {
-      range.selectNodeContents(element);
-
-      for (const rect of range.getClientRects()) {
+      for (const rect of avoidRects(element)) {
         if (rect.width === 0 || rect.height === 0) {
           continue;
         }
@@ -412,8 +423,6 @@ function startAsciiField(
       }
     }
 
-    range.detach();
-
     return clearance;
   }
 
@@ -424,7 +433,7 @@ function startAsciiField(
     }
 
     const now = performance.now();
-    const layout = FIELD_LAYOUTS[options.placement][width / dpr >= WIDE_MIN_WIDTH ? "wide" : "narrow"];
+    const wide = width / dpr >= WIDE_MIN_WIDTH;
     const origin = canvas.getBoundingClientRect();
     const markElement = host.querySelector<HTMLElement>("[data-ascii-trace]");
     const mark = markElement?.getBoundingClientRect();
@@ -432,9 +441,13 @@ function startAsciiField(
     const markRight = mark ? (mark.right - origin.left) * dpr : 0;
     // "side" anchors on wide screens only (narrow ones get a band above the
     // copy); "around" anchors wherever enough width remains past the mark.
-    const anchorable = options.placement === "around" || width / dpr >= WIDE_MIN_WIDTH;
+    const anchorable = options.placement === "around" || wide;
     const anchored = mark && anchorable && (width - markRight) / width >= ANCHORED_MIN_SPAN;
     const anchor = anchored ? { right: markRight, amplitude: mark.height * 2 * dpr } : null;
+    const layout =
+      anchored && options.placement === "side"
+        ? sideLayoutFrom(markRight / width)
+        : FIELD_LAYOUTS[options.placement][wide ? "wide" : "narrow"];
     const baseline = anchored ? (mark.top - origin.top + mark.height * markBaseline) * dpr : height * layout.band.y;
 
     // Slide the grid so a row's center sits exactly on the trace's baseline,
@@ -1280,6 +1293,59 @@ function startAsciiField(
   }
 
   return { dispose, setRhythm };
+}
+
+const BOXED_ELEMENTS = "svg, img, video, canvas, button, input, select, textarea";
+
+// A box the eye reads as one shape: a fill, a border, or replaced content.
+function paintsBox(element: Element) {
+  if (element.matches(BOXED_ELEMENTS)) {
+    return true;
+  }
+
+  const style = getComputedStyle(element);
+  const hasFill = style.backgroundColor !== "rgba(0, 0, 0, 0)" || style.backgroundImage !== "none";
+  const hasBorder = style.borderTopStyle !== "none" && Number.parseFloat(style.borderTopWidth) > 0;
+
+  return hasFill || hasBorder;
+}
+
+/* The shapes an avoid region actually draws: one rect per line of text, and
+   the whole box of anything that paints one (a button, an image, the pulse
+   mark). A range over the region would also report the box of every element
+   inside it, so a wide heading block would clear far past its words. */
+function avoidRects(root: Element) {
+  const rects: DOMRect[] = [];
+  const range = document.createRange();
+
+  function visit(node: Node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.textContent?.trim()) {
+        range.selectNodeContents(node);
+        rects.push(...range.getClientRects());
+      }
+
+      return;
+    }
+
+    if (!(node instanceof Element)) {
+      return;
+    }
+
+    if (paintsBox(node)) {
+      rects.push(node.getBoundingClientRect());
+
+      return;
+    }
+
+    for (const child of node.childNodes) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+
+  return rects;
 }
 
 function readPalette(canvas: HTMLCanvasElement): Palette {

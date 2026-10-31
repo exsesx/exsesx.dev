@@ -1,13 +1,10 @@
-import { ArrowUpRight, CalendarDays } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import AsciiField from "@/components/AsciiField";
-import { GithubIcon } from "@/components/icons/lucide-github";
-import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
+import ContactBand from "@/components/ContactBand";
 import { ProjectDetailsLink, ProjectMediaLink, ProjectTags, ProjectTitleLink } from "@/components/ProjectCard";
-import { buttonVariants } from "@/components/ui/button-variants";
 import { createPageMetadata, projectsSocialImage } from "@/lib/metadata";
 import { type Project, projects } from "@/lib/projects";
-import { SITE_PROFILE } from "@/lib/site-profile";
 import { buildProjectsStructuredData, serializeStructuredData } from "@/lib/structured-data";
 import { cn } from "@/lib/utils";
 
@@ -38,12 +35,12 @@ function getWebsiteLabel(href: string) {
  */
 function ProjectRow({ project, preloadMedia }: { project: Project; preloadMedia: boolean }) {
   return (
-    <li className="grid gap-x-8 gap-y-5 md:grid-cols-12">
+    <li className="grid gap-x-8 gap-y-5 md:grid-cols-12 md:items-baseline">
       <ProjectMediaLink
         project={project}
         sizes="(min-width: 1024px) 26vw, (min-width: 768px) 38vw, 100vw"
         preload={preloadMedia}
-        className="aspect-[16/10] md:col-span-5 md:row-span-2 lg:col-span-4 lg:row-span-1"
+        className="aspect-[16/10] self-start md:col-span-5 md:row-span-2 lg:col-span-4 lg:row-span-1"
       />
 
       <div className="flex min-w-0 flex-col items-start gap-2 md:col-span-7 lg:col-span-3">
@@ -90,7 +87,7 @@ export default function Projects() {
             columns beside the title (a band above it on phones) and the copy keeps it clear. The
             title stays on one line so the first rows of the list still reach the fold. */}
         <header className="relative isolate" data-ascii-host="">
-          <AsciiField className="absolute inset-0 -z-10" />
+          <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" />
           <Container className="grid gap-8 pb-section-s pt-52 lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
             <div className="min-w-0 lg:col-span-9">
               <div className="motion-rise" data-ascii-avoid="">
@@ -116,56 +113,9 @@ export default function Projects() {
           </ol>
         </Container>
 
-        {/* The close: after the work, the one thing a visitor came to do. */}
-        <section aria-labelledby="projects-contact-title" className="close-band mt-section">
-          <Container className="grid gap-10 py-section-s lg:grid-cols-12 lg:items-end lg:gap-x-8">
-            <div className="lg:col-span-8">
-              <h2 id="projects-contact-title" className="section-title max-w-[20ch]">
-                Hiring for work like this?
-              </h2>
-              <p className="mt-6 max-w-[48ch] text-pretty text-lead text-muted-foreground">
-                Book a short call about your product and team, and we'll see where I fit.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-start gap-6 lg:col-span-4 lg:items-end">
-              <a
-                href={SITE_PROFILE.links.booking}
-                data-cuelume-press=""
-                className={buttonVariants({ variant: "default", size: "lg" })}
-              >
-                <CalendarDays data-icon="inline-start" strokeWidth={2.4} />
-                Schedule a conversation
-              </a>
-              <ul className="flex flex-wrap gap-3" aria-label="Elsewhere">
-                <li>
-                  <a
-                    href={SITE_PROFILE.links.linkedin}
-                    data-cuelume-press=""
-                    className={buttonVariants({ variant: "glass", size: "lg" })}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <LinkedinIcon data-icon="inline-start" strokeWidth={2.4} />
-                    LinkedIn
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href={SITE_PROFILE.links.github}
-                    data-cuelume-press=""
-                    className={buttonVariants({ variant: "glass", size: "lg" })}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
-                    GitHub
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </Container>
-        </section>
+        <ContactBand id="projects-contact-title" title="Hiring for work like this?">
+          Book a short call about your product and team, and we'll see where I fit.
+        </ContactBand>
       </main>
     </>
   );

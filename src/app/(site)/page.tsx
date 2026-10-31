@@ -1,12 +1,11 @@
-import { ArrowRight, ArrowUpRight, CalendarDays } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import AsciiField from "@/components/AsciiField";
+import ContactBand from "@/components/ContactBand";
 import CvMenu from "@/components/CvMenu";
-import { GithubIcon } from "@/components/icons/lucide-github";
-import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
 import PulseTrace from "@/components/PulseTrace";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button-variants";
@@ -120,7 +119,7 @@ function ProjectMedia({ project, sizes, className }: { project: Project; sizes: 
 // Plain classes: cn() reads the custom text-title size as a color and drops it.
 function ProjectTitle({ project }: { project: Project }) {
   return (
-    <h3 className="text-title font-black text-foreground">
+    <h3 className="cap-top text-title font-black text-foreground">
       <Link
         href={getProjectPath(project)}
         transitionTypes={getProjectRouteTransitionTypes(
@@ -188,51 +187,50 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
       />
       <main id="main-content" tabIndex={-1} className="flex w-full flex-col">
-        {/* Stage hero: the copy on clean paper, the field as the visual beside it
-            (above it on phones), the trace leaving the headline's pulse mark. */}
-        <section aria-labelledby="hero-title" className="hero-stage relative isolate flex flex-col" data-ascii-host="">
-          <AsciiField className="absolute inset-0 -z-10" />
-          <div className="flex flex-1 flex-col justify-end lg:justify-center">
-            <Container className="lg:grid lg:grid-cols-12 lg:gap-x-8">
-              <div className="min-w-0 lg:col-span-7">
-                <h1
-                  id="hero-title"
-                  className="display-title motion-rise text-display font-black text-foreground"
-                  data-ascii-avoid=""
-                >
-                  Software with a{" "}
-                  <span className="whitespace-nowrap">
-                    pulse
-                    <PulseTrace />
-                  </span>
-                </h1>
+        {/* The same masthead as the other pages: the title sits under the header,
+            the field beside it (a band above it on phones) starts below the
+            header's first 64px, and the trace leaves the headline's pulse mark. */}
+        <section aria-labelledby="hero-title" className="relative isolate" data-ascii-host="">
+          <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" />
+          <Container className="pb-section-s pt-52 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
+            <div className="min-w-0 lg:col-span-7">
+              <h1
+                id="hero-title"
+                className="display-title motion-rise text-display font-black text-foreground"
+                data-ascii-avoid=""
+              >
+                Software with a{" "}
+                <span className="whitespace-nowrap">
+                  pulse
+                  <PulseTrace />
+                </span>
+              </h1>
 
-                <p
-                  className="motion-rise motion-delay-1 mt-8 max-w-[36ch] text-pretty text-lead text-muted-foreground"
-                  data-ascii-avoid=""
-                >
-                  {SITE_PROFILE.summary}
-                </p>
+              <p
+                className="motion-rise motion-delay-1 mt-8 max-w-[36ch] text-pretty text-lead text-muted-foreground"
+                data-ascii-avoid=""
+              >
+                {SITE_PROFILE.summary}
+              </p>
 
-                <div className="motion-rise motion-delay-2 mt-10 flex flex-wrap items-center gap-3" data-ascii-avoid="">
-                  <Link
-                    href="/projects"
-                    transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
-                    {...suppressEntryMotionProps}
-                    data-cuelume-press=""
-                    className={buttonVariants({ variant: "default", size: "lg" })}
-                  >
-                    See the work
-                    <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
-                  </Link>
-                  <CvMenu />
-                </div>
+              <div className="motion-rise motion-delay-2 mt-10 flex flex-wrap items-center gap-3" data-ascii-avoid="">
+                <Link
+                  href="/projects"
+                  transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
+                  {...suppressEntryMotionProps}
+                  data-cuelume-press=""
+                  className={buttonVariants({ variant: "default", size: "lg" })}
+                >
+                  See the work
+                  <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
+                </Link>
+                <CvMenu />
               </div>
-            </Container>
-          </div>
+            </div>
+          </Container>
         </section>
 
-        <section aria-labelledby="work-title" className="pt-section-s">
+        <section aria-labelledby="work-title">
           <Container>
             <div className="scroll-rise flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
               <h2 id="work-title" className="section-title max-w-[24ch]">
@@ -251,7 +249,7 @@ export default function HomePage() {
             </div>
 
             {/* One project opened as a case, then the next two beneath it. */}
-            <article className="mt-stack grid gap-8 lg:grid-cols-12 lg:items-center lg:gap-x-8">
+            <article className="mt-stack grid gap-8 lg:grid-cols-12 lg:items-start lg:gap-x-8">
               <ProjectMedia
                 project={leadProject}
                 sizes="(min-width: 1024px) 56vw, 100vw"
@@ -363,7 +361,7 @@ export default function HomePage() {
               {experienceHighlights.map(item => (
                 <li
                   key={item.company}
-                  className="grid gap-3 border-b border-border py-8 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:gap-8"
+                  className="grid gap-3 border-b border-border py-8 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:items-baseline sm:gap-8"
                 >
                   <div>
                     <h3 className="text-title font-black text-foreground">{item.company}</h3>
@@ -399,56 +397,9 @@ export default function HomePage() {
           </Container>
         </section>
 
-        {/* The close: a change of paper holding the one thing a visitor came to do. */}
-        <section aria-labelledby="contact-title" className="close-band mt-section">
-          <Container className="grid gap-10 py-section-s lg:grid-cols-12 lg:items-end lg:gap-x-8">
-            <div className="lg:col-span-8">
-              <h2 id="contact-title" className="section-title max-w-[20ch]">
-                Tell me what you're building
-              </h2>
-              <p className="mt-6 max-w-[48ch] text-pretty text-lead text-muted-foreground">
-                Book a short call about the problem and your stack, and I'll say where I can help.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-start gap-6 lg:col-span-4 lg:items-end">
-              <a
-                href={SITE_PROFILE.links.booking}
-                data-cuelume-press=""
-                className={buttonVariants({ variant: "default", size: "lg" })}
-              >
-                <CalendarDays data-icon="inline-start" strokeWidth={2.4} />
-                Schedule a conversation
-              </a>
-              <ul className="flex flex-wrap gap-3" aria-label="Elsewhere">
-                <li>
-                  <a
-                    href={SITE_PROFILE.links.linkedin}
-                    data-cuelume-press=""
-                    className={buttonVariants({ variant: "glass", size: "lg" })}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <LinkedinIcon data-icon="inline-start" strokeWidth={2.4} />
-                    LinkedIn
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href={SITE_PROFILE.links.github}
-                    data-cuelume-press=""
-                    className={buttonVariants({ variant: "glass", size: "lg" })}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <GithubIcon data-icon="inline-start" strokeWidth={2.4} />
-                    GitHub
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </Container>
-        </section>
+        <ContactBand id="contact-title" title="Tell me what you're building">
+          Book a short call about the problem and your stack, and I'll say where I can help.
+        </ContactBand>
       </main>
     </>
   );
