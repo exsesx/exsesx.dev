@@ -467,6 +467,8 @@ function startAsciiField(
     const cssHeight = height / dpr;
     const maskCols = Math.ceil(cssWidth / MASK_CELL);
     const maskRows = Math.ceil(cssHeight / MASK_CELL);
+    // A short band (the blog header on phones) would vanish into a full-width feather.
+    const feather = Math.min(MASK_FEATHER, cssHeight * 0.2);
     const pixels = new ImageData(maskCols, maskRows);
 
     for (let row = 0; row < maskRows; row++) {
@@ -485,13 +487,12 @@ function startAsciiField(
           distance = smoothMin(distance, boxDistance, MASK_ROUNDING);
         }
 
-        let alpha =
-          smoothstep(AVOID_PADDING, AVOID_PADDING + MASK_FEATHER, distance) * region(x / cssWidth, y / cssHeight);
+        let alpha = smoothstep(AVOID_PADDING, AVOID_PADDING + feather, distance) * region(x / cssWidth, y / cssHeight);
 
         if (keep) {
           // The beat rises well above the baseline and dips only a little below it.
           const reach = y < keep.baseline ? keep.above : keep.below;
-          const band = 1 - smoothstep(reach, reach + MASK_FEATHER / 2, Math.abs(y - keep.baseline));
+          const band = 1 - smoothstep(reach, reach + feather / 2, Math.abs(y - keep.baseline));
           alpha = Math.max(alpha, band * smoothstep(keep.from - MASK_CELL, keep.from, x));
         }
 
