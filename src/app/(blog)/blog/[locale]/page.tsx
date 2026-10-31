@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AsciiField from "@/components/AsciiField";
+import BlogIndexTimeline from "@/components/blog/BlogIndexTimeline";
 import BlogLocaleSwitcher from "@/components/blog/BlogLocaleSwitcher";
 import BlogTags from "@/components/blog/BlogTags";
 import BlogTitle from "@/components/blog/BlogTitle";
@@ -94,8 +95,10 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
         {posts.length > 0 ? (
           /* One index, newest first, read as a commit log: a rail runs down the left edge with a
              node on each post's date line, the newest post is HEAD, and the post fills the rest.
-             Entries part by space alone; the rail is drawn in CSS from each row's node. */
-          <ol className="blog-index-list page-safe-inline mx-auto w-full max-w-7xl">
+             Entries part by space alone; the rail is drawn in CSS from each row's node, the
+             title link stretches over its row so the whole post is one target, and one dot
+             slides along the rail to whichever post is lit. */
+          <BlogIndexTimeline className="blog-index-list page-safe-inline mx-auto w-full max-w-7xl">
             {posts.map((post, index) => {
               const styles = INDEX_ROW_STYLES[index === 0 ? "lead" : "rest"];
 
@@ -103,7 +106,9 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                 <li key={post.slug}>
                   <article className="grid gap-y-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:items-baseline sm:gap-x-8 lg:grid-cols-12">
                     <p className="blog-index-meta flex gap-x-6 text-sm leading-6 tabular-nums text-muted-foreground sm:flex-col lg:col-span-3">
-                      <span className="blog-index-node" aria-hidden="true" />
+                      <span className="blog-index-node" aria-hidden="true">
+                        <span className="blog-index-core" />
+                      </span>
                       <time dateTime={post.publishedAt}>{formatBlogDateStamp(post.publishedAt)}</time>
                       <span>
                         {post.readingMinutes} {copy.minRead}
@@ -128,7 +133,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                 </li>
               );
             })}
-          </ol>
+          </BlogIndexTimeline>
         ) : (
           <section className="blog-empty-state page-safe-inline mx-auto w-full max-w-7xl">
             <h2 className="section-title max-w-[24ch]">{copy.emptyTitle}</h2>

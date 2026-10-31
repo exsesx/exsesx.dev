@@ -11,6 +11,7 @@ const mobileTocLauncherUrl = new URL("../components/blog/useMobileTocLauncher.ts
 const scrollToTopUrl = new URL("../components/blog/BlogScrollToTop.tsx", import.meta.url);
 const articleWithTocUrl = new URL("../components/blog/ArticleWithToc.tsx", import.meta.url);
 const blogIndexPageUrl = new URL("../app/(blog)/blog/[locale]/page.tsx", import.meta.url);
+const blogIndexTimelineUrl = new URL("../components/blog/BlogIndexTimeline.tsx", import.meta.url);
 const blogArticlePageUrl = new URL("../app/(blog)/blog/[locale]/[slug]/page.tsx", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 const hotkeysUrl = new URL("../components/Hotkeys.tsx", import.meta.url);
@@ -114,10 +115,15 @@ describe("Blog production styles", () => {
   });
 
   test("sets the Blog index as one list parted by space instead of a featured card or rules", async () => {
-    const [css, indexPage] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(blogIndexPageUrl).text()]);
+    const [css, indexPage, timeline] = await Promise.all([
+      Bun.file(globalsCssUrl).text(),
+      Bun.file(blogIndexPageUrl).text(),
+      Bun.file(blogIndexTimelineUrl).text(),
+    ]);
 
     expect(css).not.toContain(".blog-featured-post");
-    expect(indexPage).toContain("<ol ");
+    expect(indexPage).toContain("<BlogIndexTimeline ");
+    expect(timeline).toContain("<ol ");
     expect(indexPage).toContain("<li key={post.slug}>");
     expect(indexPage).not.toContain("border-border");
   });
@@ -128,7 +134,7 @@ describe("Blog production styles", () => {
       /@media \(hover: hover\) and \(pointer: fine\) \{\s*\.blog-index-list[\s\S]*?\n\}/,
     )?.[0];
 
-    expect(indexPage).toContain('<span className="blog-index-node" aria-hidden="true" />');
+    expect(indexPage).toContain('<span className="blog-index-node" aria-hidden="true">');
     expect(css).toContain(".blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active))");
     expect(hoverBlock).toContain(".blog-index-list > li:has(.blog-index-link:hover)");
     expect(css.replace(hoverBlock ?? "", "")).not.toContain(".blog-index-link:hover)");

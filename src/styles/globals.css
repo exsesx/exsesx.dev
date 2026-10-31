@@ -1885,6 +1885,14 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   transition: color var(--duration-ui) var(--ease-out);
 }
 
+/* The title's link covers its whole row, rail and trailing gap included, so the
+   list has no dead space: anywhere along it lights exactly one post. */
+.blog-index-link::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
 .blog-index-link:focus-visible {
   color: var(--accent);
 }
@@ -1907,15 +1915,15 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 .blog-index-list {
   --blog-index-inset: 1.75rem;
   --blog-index-row-space: 3.5rem;
-  --blog-index-node: 0.6875rem;
   --blog-index-node-ring: 1.5px;
   --blog-index-line-gap: 3px;
   --blog-index-line: color-mix(in oklab, var(--foreground) 16%, var(--background));
   --blog-index-ring: color-mix(in oklab, var(--foreground) 40%, var(--background));
-  /* The long lines must not lengthen the page past the list. The half rem of
-     padding, taken back by the margin, keeps the first title's focus ring. */
-  margin-block-start: -0.5rem;
-  padding-block-start: 0.5rem;
+  /* The long lines must not lengthen the page past the list. The rem of
+     padding at each end, taken back by the margins, keeps the first and last
+     rows' hover surfaces and focus rings whole. */
+  margin-block: -1rem;
+  padding-block: 1rem;
   overflow-y: clip;
 }
 
@@ -1933,20 +1941,48 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-index-list > li {
-  /* What lights a node: the row's own link (hover, focus or press) for the node
-     and the line down, the newer row's link for the line coming in. */
-  --blog-index-node-fill: var(--background);
   --blog-index-node-edge: var(--blog-index-ring);
-  --blog-index-line-in: var(--blog-index-line);
-  --blog-index-line-out: var(--blog-index-line);
-  padding-block-end: var(--blog-index-row-space);
+  --blog-index-core-scale: 0;
+  --blog-index-row-pad: var(--blog-index-row-space);
+  --blog-index-surface: 0;
+  --blog-index-dim: 1;
+  position: relative;
+  padding-block-end: var(--blog-index-row-pad);
   padding-inline-start: var(--blog-index-inset);
-  /* A little room above and beside the row keeps the title's focus ring whole. */
-  clip-path: inset(-0.5rem -0.5rem 0 -0.5rem);
+  /* Room above and beside the row keeps the hover surface, the focus ring and
+     the node's pulse whole. */
+  clip-path: inset(-1rem -1.5rem 0 -1.5rem);
 }
 
 .blog-index-list > li:last-child {
-  padding-block-end: 0;
+  --blog-index-row-pad: 0px;
+  /* No line runs below the oldest post, so its surface may bleed past the row. */
+  clip-path: inset(-1rem -1.5rem -1rem -1.5rem);
+}
+
+/* The lit row's surface: a quiet plate behind the post, clear of the rail, that
+   marks exactly what the click opens. */
+.blog-index-list > li::before {
+  position: absolute;
+  z-index: -1;
+  inset-block: -1rem calc(var(--blog-index-row-pad) - 1rem);
+  inset-inline: calc(var(--blog-index-inset) - 1rem) -1rem;
+  border-radius: var(--radius-xl);
+  /* A wash of the text colour reads as one weight on both themes; the light
+     theme's --muted sits too close to its background to show. */
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  content: "";
+  opacity: var(--blog-index-surface);
+  pointer-events: none;
+  transition: opacity var(--duration-ui) var(--ease-out);
+}
+
+/* Dimming reaches the post's text, never its node, so the rail keeps one
+   strength from end to end. */
+.blog-index-meta > :not(.blog-index-node),
+.blog-index-list > li > article > div {
+  opacity: var(--blog-index-dim);
+  transition: opacity var(--duration-ui) var(--ease-out);
 }
 
 .blog-index-meta {
@@ -1954,7 +1990,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-index-meta time {
-  transition: color var(--duration-press) ease;
+  transition: color var(--duration-ui) var(--ease-out);
 }
 
 /* Centred on the date's 24px line, in the row's left inset. */
@@ -1966,33 +2002,29 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   height: var(--blog-index-node);
   border: var(--blog-index-node-ring) solid var(--blog-index-node-edge);
   border-radius: 50%;
-  background: var(--blog-index-node-fill);
+  background: var(--background);
   pointer-events: none;
-  transition:
-    background-color var(--duration-press) ease,
-    border-color var(--duration-press) ease;
+  transition: border-color var(--duration-ui) var(--ease-out);
 }
 
 /* Both lines stop a hair short of the ring. They run longer than any row needs
-   and the row's clip-path trims them to its edges. */
+   and the row's clip-path trims them to its edges. The rail itself never
+   lights: a lit stretch would join the active post to its neighbour. */
 .blog-index-node::before,
 .blog-index-node::after {
   position: absolute;
   inset-inline-start: calc(50% - 0.5px);
   block-size: 100rem;
-  border-inline-start: 1px solid;
+  border-inline-start: 1px solid var(--blog-index-line);
   content: "";
-  transition: border-color var(--duration-press) ease;
 }
 
 .blog-index-node::before {
   inset-block-end: calc(100% + var(--blog-index-node-ring) + var(--blog-index-line-gap));
-  border-inline-start-color: var(--blog-index-line-in);
 }
 
 .blog-index-node::after {
   inset-block-start: calc(100% + var(--blog-index-node-ring) + var(--blog-index-line-gap));
-  border-inline-start-color: var(--blog-index-line-out);
 }
 
 /* HEAD has nothing newer above it; the oldest post has nothing below. */
@@ -2001,46 +2033,127 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   display: none;
 }
 
+/* The commit fills from its centre, so a node that lights grows its dot rather
+   than flipping colour. */
+.blog-index-core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: scale(var(--blog-index-core-scale));
+  transition: transform var(--duration-ui) var(--ease-out);
+}
+
+/* With script, one dot is the checked-out commit (BlogIndexTimeline): it rests
+   on HEAD and slides along the rail to the lit post, and the rows' own dots stay
+   empty except under a press, which is the touch feedback. Without script the
+   rows fill their own dots, so the index reads the same either way. */
+.blog-index-timeline {
+  /* Shared by the rows' nodes and the sliding dot, which sits beside the list. */
+  --blog-index-node: 0.6875rem;
+  position: relative;
+}
+
+.blog-index-dot {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: var(--blog-index-node);
+  height: var(--blog-index-node);
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  /* Ease-out, not ease-in-out: the pointer retargets the dot mid-slide, and each
+     retarget should answer at once instead of restarting from rest. */
+  transition: transform var(--duration-ui) var(--ease-out);
+}
+
+.blog-index-dot[data-instant] {
+  transition: none;
+}
+
+.blog-index-timeline[data-timeline-ready] > .blog-index-dot {
+  opacity: 1;
+}
+
+.blog-index-timeline[data-timeline-ready] .blog-index-list > li:not(:has(.blog-index-link:active)) {
+  --blog-index-core-scale: 0;
+}
+
 .blog-index-list > li:first-child {
-  --blog-index-node-fill: var(--accent);
   --blog-index-node-edge: var(--accent);
+  --blog-index-core-scale: 1;
 }
 
 .blog-index-list > li:first-child .blog-index-node {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+  transition:
+    border-color var(--duration-ui) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-out);
 }
 
-/* Lit: the node fills with the signal and its line to the older post follows,
-   so the hovered post reads as the checked-out commit. Color only, no motion,
-   so reduced motion needs nothing of its own. Press lights it too, which is
-   the touch feedback before the article opens. */
+/* Lit: the post under the pointer, keyboard focus or a press reads as the
+   checked-out commit. Its surface fades in, its node lights and the date
+   brightens, while the other posts dim and HEAD steps back to an outline so
+   only one commit is ever lit. Press lights it too, the touch feedback before
+   the article opens. */
 .blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) {
-  --blog-index-node-fill: var(--accent);
   --blog-index-node-edge: var(--accent);
-  --blog-index-line-out: var(--accent);
+  --blog-index-core-scale: 1;
+  --blog-index-surface: 1;
 }
 
-.blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) + li {
-  --blog-index-line-in: var(--accent);
+.blog-index-list:has(.blog-index-link:focus-visible) > li:not(:has(.blog-index-link:focus-visible)) {
+  --blog-index-dim: 0.6;
 }
 
 .blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) time {
   color: var(--foreground);
 }
 
+.blog-index-list:has(.blog-index-link:focus-visible) > li:first-child:not(:has(.blog-index-link:focus-visible)) {
+  --blog-index-core-scale: 0;
+}
+
+.blog-index-list:has(.blog-index-link:focus-visible)
+  > li:first-child:not(:has(.blog-index-link:focus-visible))
+  .blog-index-node {
+  box-shadow: none;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .blog-index-list > li:has(.blog-index-link:hover) {
-    --blog-index-node-fill: var(--accent);
     --blog-index-node-edge: var(--accent);
-    --blog-index-line-out: var(--accent);
+    --blog-index-core-scale: 1;
+    --blog-index-surface: 1;
   }
 
-  .blog-index-list > li:has(.blog-index-link:hover) + li {
-    --blog-index-line-in: var(--accent);
+  /* The other posts step back, so the lit one reads at a glance. */
+  .blog-index-list:has(.blog-index-link:hover) > li:not(:has(.blog-index-link:hover)) {
+    --blog-index-dim: 0.6;
   }
 
   .blog-index-list > li:has(.blog-index-link:hover) time {
     color: var(--foreground);
+  }
+
+  .blog-index-list:has(.blog-index-link:hover) > li:first-child:not(:has(.blog-index-link:hover)) {
+    --blog-index-core-scale: 0;
+  }
+
+  .blog-index-list:has(.blog-index-link:hover) > li:first-child:not(:has(.blog-index-link:hover)) .blog-index-node {
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-index-core {
+    transition: none;
+  }
+
+  .blog-index-dot {
+    transition: none;
   }
 }
 
