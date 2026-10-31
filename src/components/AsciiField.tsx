@@ -10,6 +10,7 @@ import {
   glyphIndexFor,
   hashCell,
   rippleProfile,
+  smoothMin,
   smoothstep,
   traceGlyphFor,
 } from "@/lib/ascii-field";
@@ -49,6 +50,9 @@ const MAX_DPR = 2;
 const MAX_PIXELS = 8_000_000;
 const WIDE_MIN_WIDTH = 1024;
 const AVOID_PADDING = 24;
+const MASK_CELL = 8;
+const MASK_FEATHER = 64;
+const MASK_ROUNDING = 48;
 const SHIMMER_INTERVAL_MS = 400;
 const SPARKLE_INTERVAL_MS = 1600;
 const FADE_IN_MS = 600;
@@ -159,6 +163,7 @@ function sideLayoutFrom(start: number): FieldLayout {
   };
 }
 
+type CopyBox = { left: number; right: number; top: number; bottom: number };
 type Splash = Omit<SplashShape, "strength"> & { x: number; y: number; born: number; strength: number };
 type Palette = {
   base: string;
@@ -251,6 +256,8 @@ function startAsciiField(
     speed: 0,
   };
   let tap: { id: number; x: number; y: number; time: number } | null = null;
+  const maskCanvas = document.createElement("canvas");
+  const maskContext = maskCanvas.getContext("2d") as CanvasRenderingContext2D;
   let palette = readPalette(canvas);
 
   // Geometry, all in device pixels.
@@ -380,14 +387,13 @@ function startAsciiField(
     measure();
   }
 
-  /* Clearance around the line boxes of [data-ascii-avoid] content: 0 on the
-     text, 1 past AVOID_PADDING. Line boxes, not element boxes, so the field
-     can sit beside a short line instead of under the whole block. Given the
-     pulse mark, its box is left out, so the trace can start flush against it. */
-  function measureClearance(mark?: DOMRect) {
+  /* The line boxes of [data-ascii-avoid] content, in CSS pixels from the
+     canvas's corner. Line boxes, not element boxes, so the field can sit
+     beside a short line instead of under the whole block. Given the pulse
+     mark, its box is left out, so the trace can start flush against it. */
+  function copyBoxes(mark?: DOMRect) {
     const origin = canvas.getBoundingClientRect();
-    const padding = AVOID_PADDING * dpr;
-    const clearance = new Float32Array(cols * rows).fill(1);
+    const boxes: CopyBox[] = [];
 
     for (const element of host.querySelectorAll("[data-ascii-avoid]")) {
       for (const rect of avoidRects(element)) {
@@ -402,28 +408,108 @@ function startAsciiField(
           continue;
         }
 
-        const left = (rect.left - origin.left) * dpr;
-        const right = ((onMarkLine ? mark.left : rect.right) - origin.left) * dpr;
-        const top = (rect.top - origin.top) * dpr;
-        const bottom = (rect.bottom - origin.top) * dpr;
-        const colStart = Math.max(0, Math.floor((left - padding - offsetX) / cellWidth));
-        const colEnd = Math.min(cols - 1, Math.floor((right + padding - offsetX) / cellWidth));
-        const rowStart = Math.max(0, Math.floor((top - padding - offsetY) / cellHeight));
-        const rowEnd = Math.min(rows - 1, Math.floor((bottom + padding - offsetY) / cellHeight));
+        boxes.push({
+          left: rect.left - origin.left,
+          right: (onMarkLine ? mark.left : rect.right) - origin.left,
+          top: rect.top - origin.top,
+          bottom: rect.bottom - origin.top,
+        });
+      }
+    }
 
-        for (let row = rowStart; row <= rowEnd; row++) {
-          for (let col = colStart; col <= colEnd; col++) {
-            const x = offsetX + (col + 0.5) * cellWidth;
-            const y = offsetY + (row + 0.5) * cellHeight;
-            const distance = Math.hypot(Math.max(left - x, 0, x - right), Math.max(top - y, 0, y - bottom));
-            const index = row * cols + col;
-            clearance[index] = Math.min(clearance[index], smoothstep(0, padding, distance));
-          }
+    return boxes;
+  }
+
+  /* Per cell: 0 on the copy, 1 past AVOID_PADDING. A hard floor that keeps
+     glyphs off the text; the mask draws the soft edge on top of it. */
+  function measureClearance(boxes: CopyBox[]) {
+    const padding = AVOID_PADDING * dpr;
+    const clearance = new Float32Array(cols * rows).fill(1);
+
+    for (const box of boxes) {
+      const left = box.left * dpr;
+      const right = box.right * dpr;
+      const top = box.top * dpr;
+      const bottom = box.bottom * dpr;
+      const colStart = Math.max(0, Math.floor((left - padding - offsetX) / cellWidth));
+      const colEnd = Math.min(cols - 1, Math.floor((right + padding - offsetX) / cellWidth));
+      const rowStart = Math.max(0, Math.floor((top - padding - offsetY) / cellHeight));
+      const rowEnd = Math.min(rows - 1, Math.floor((bottom + padding - offsetY) / cellHeight));
+
+      for (let row = rowStart; row <= rowEnd; row++) {
+        for (let col = colStart; col <= colEnd; col++) {
+          const x = offsetX + (col + 0.5) * cellWidth;
+          const y = offsetY + (row + 0.5) * cellHeight;
+          const distance = Math.hypot(Math.max(left - x, 0, x - right), Math.max(top - y, 0, y - bottom));
+          const index = row * cols + col;
+          clearance[index] = Math.min(clearance[index], smoothstep(0, padding, distance));
         }
       }
     }
 
     return clearance;
+  }
+
+  /* The field's soft edges, as a CSS mask over the canvas: the copy sits in
+     one rounded clearing (line boxes joined by a smooth minimum, so the gaps
+     between lines round off instead of stepping), a side field's leading edge
+     fades in, and the top and bottom fade out. A coarse alpha map the browser
+     scales up smoothly, so glyphs fade across their own pixels instead of
+     cell by cell. An anchored trace keeps its run from the pulse mark
+     unmasked, so the line still leaves the mark at full strength. Rebuilt per
+     measure, never per frame. */
+  function paintMask(
+    boxes: CopyBox[],
+    region: FieldLayout["region"],
+    keep: { from: number; baseline: number; above: number; below: number } | null,
+  ) {
+    const cssWidth = width / dpr;
+    const cssHeight = height / dpr;
+    const maskCols = Math.ceil(cssWidth / MASK_CELL);
+    const maskRows = Math.ceil(cssHeight / MASK_CELL);
+    const pixels = new ImageData(maskCols, maskRows);
+
+    for (let row = 0; row < maskRows; row++) {
+      const y = (row + 0.5) * MASK_CELL;
+      const vertical = smoothstep(0, cssHeight * 0.14, y) * smoothstep(0, cssHeight * 0.12, cssHeight - y);
+
+      for (let col = 0; col < maskCols; col++) {
+        const x = (col + 0.5) * MASK_CELL;
+        let distance = Number.POSITIVE_INFINITY;
+
+        for (const box of boxes) {
+          const boxDistance = Math.hypot(
+            Math.max(box.left - x, 0, x - box.right),
+            Math.max(box.top - y, 0, y - box.bottom),
+          );
+          distance = smoothMin(distance, boxDistance, MASK_ROUNDING);
+        }
+
+        let alpha =
+          smoothstep(AVOID_PADDING, AVOID_PADDING + MASK_FEATHER, distance) * region(x / cssWidth, y / cssHeight);
+
+        if (keep) {
+          // The beat rises well above the baseline and dips only a little below it.
+          const reach = y < keep.baseline ? keep.above : keep.below;
+          const band = 1 - smoothstep(reach, reach + MASK_FEATHER / 2, Math.abs(y - keep.baseline));
+          alpha = Math.max(alpha, band * smoothstep(keep.from - MASK_CELL, keep.from, x));
+        }
+
+        pixels.data[(row * maskCols + col) * 4 + 3] = Math.round(alpha * vertical * 255);
+      }
+    }
+
+    maskCanvas.width = maskCols;
+    maskCanvas.height = maskRows;
+    maskContext.putImageData(pixels, 0, 0);
+
+    const image = `url(${maskCanvas.toDataURL()})`;
+
+    for (const prefix of ["", "-webkit-"]) {
+      canvas.style.setProperty(`${prefix}mask-image`, image);
+      canvas.style.setProperty(`${prefix}mask-size`, "100% 100%");
+      canvas.style.setProperty(`${prefix}mask-repeat`, "no-repeat");
+    }
   }
 
   /* Region, spotlight, clear zones, glyph timing and the trace, per cell. */
@@ -454,8 +540,9 @@ function startAsciiField(
     // and the field's line continues the headline's mark without a step.
     offsetY = Math.round((((baseline - cellHeight / 2) % cellHeight) + cellHeight) % cellHeight) - cellHeight;
 
-    const clearance = measureClearance();
-    const edges = (y: number) => smoothstep(0, height * 0.14, y) * smoothstep(0, height * 0.12, height - y);
+    const boxes = copyBoxes();
+    const traceBoxes = mark ? copyBoxes(mark) : boxes;
+    const clearance = measureClearance(boxes);
     const shownCells: number[] = [];
 
     for (let index = 0; index < clearance.length; index++) {
@@ -466,7 +553,7 @@ function startAsciiField(
         (y - height * layout.spot.y) / (height * layout.spot.radiusY),
       );
       const spot = 1 - smoothstep(0.3, 1, spotDistance);
-      const weight = clearance[index] * edges(y) * layout.region(x / width, y / height);
+      const weight = clearance[index] * layout.region(x / width, y / height);
       const seed = hashCell(index, 7);
 
       fieldWeight[index] = weight;
@@ -482,7 +569,16 @@ function startAsciiField(
 
     shown = Int32Array.from(shownCells);
     shimmerCursor = 0;
-    measureTrace(layout, mark ? measureClearance(mark) : clearance, edges, anchor, baseline);
+    measureTrace(layout, mark ? measureClearance(traceBoxes) : clearance, anchor, baseline);
+
+    const keep = anchor && {
+      from: anchor.right / dpr,
+      baseline: baseline / dpr,
+      above: anchor.amplitude / dpr + ROW_HEIGHT,
+      below: (anchor.amplitude / dpr) * 0.19 + ROW_HEIGHT,
+    };
+
+    paintMask(traceBoxes, layout.region, keep);
   }
 
   /* Places the trace: leaving the headline's pulse mark when there is room
@@ -490,7 +586,6 @@ function startAsciiField(
   function measureTrace(
     layout: FieldLayout,
     clearance: Float32Array,
-    edges: (y: number) => number,
     anchor: { right: number; amplitude: number } | null,
     baseline: number,
   ) {
@@ -548,8 +643,7 @@ function startAsciiField(
 
       for (let fillRow = firstRow; fillRow <= lastRow; fillRow++) {
         const index = fillRow * cols + col;
-        const cellY = offsetY + (fillRow + 0.5) * cellHeight;
-        const weight = ends * edges(cellY) * clearance[index];
+        const weight = ends * clearance[index];
 
         if (weight < MIN_WEIGHT || clearance[index] < 0.5) {
           continue;

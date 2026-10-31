@@ -363,8 +363,8 @@ select {
 /*
  * Homepage hero ASCII field (AsciiField.tsx). The canvas reads these tokens:
  * base glyphs in ink, lit glyphs and the heartbeat in the accent signal. The
- * spotlight and the clear zones around copy are computed per cell in the
- * component, so no mask is needed here.
+ * spotlight is computed per cell, and the component sets the canvas's mask
+ * (the rounded clearing around the copy, the top and bottom fades) inline.
  */
 .ascii-field {
   --ascii-base: var(--foreground);

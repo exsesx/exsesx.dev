@@ -74,6 +74,14 @@ export function smoothstep(edge0: number, edge1: number, value: number): number 
   return t * t * (3 - 2 * t);
 }
 
+/* Polynomial smooth minimum: min(a, b), rounded off where the two come within
+   `radius` of each other, so the union of two shapes has no inside corner. */
+export function smoothMin(a: number, b: number, radius: number): number {
+  const h = Math.max(radius - Math.abs(a - b), 0) / radius;
+
+  return Math.min(a, b) - h * h * radius * 0.25;
+}
+
 /*
  * One heartbeat in the shape of the headline's PulseTrace (P wave, QRS, T
  * wave), as [position across the beat, height] pairs. Height 1 is the R peak;
