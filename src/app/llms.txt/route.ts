@@ -17,7 +17,7 @@ export function GET() {
   const body = [
     "# Oleh Vanin - exsesx.dev",
     "",
-    "> Personal portfolio of Oleh Vanin, a senior full-stack engineer and AI engineer based in Poland, building scalable product systems with React, Next.js, Node.js, Go, cloud infrastructure, and LLM workflows.",
+    `> ${SITE_PROFILE.description}`,
     "",
     `Specialties: ${specialties.join(", ")}.`,
     "",

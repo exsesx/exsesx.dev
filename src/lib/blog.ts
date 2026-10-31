@@ -3,6 +3,11 @@ import { getRoutePathname } from "./route-path";
 export const BLOG_LOCALES = ["en", "uk"] as const;
 
 export type BlogLocale = (typeof BLOG_LOCALES)[number];
+
+export const BLOG_LOCALE_LABELS: Record<BlogLocale, string> = {
+  en: "EN",
+  uk: "UA",
+};
 export type BlogIndexPath = `/blog/${BlogLocale}`;
 export type BlogPostPath = `/blog/${BlogLocale}/${string}`;
 

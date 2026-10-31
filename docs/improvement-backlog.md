@@ -37,8 +37,6 @@ Each item is independent. Read the **invariants** section before touching anythi
 - **Projects page scroll reveals.** Home has `.scroll-rise` (CSS view-timeline); the projects grid
   and detail-page sections could adopt it. The utility is generic — add the class, nothing else.
 - **`not-found.tsx`** still uses only `motion-rise`; could get the ECG/glass treatment.
-- **OG / social images** (`scripts/generate-social-images.ts`) predate the Bricolage Grotesque
-  headings — regenerate with the display font so share cards match the live site.
 - **Hotkeys chord preview.** When `g` is pending, the bottom-left pill could preview available
   second keys (`h p t d g`) from the sequencer state instead of just showing `g …`.
 
