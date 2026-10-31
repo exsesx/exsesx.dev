@@ -1180,6 +1180,28 @@ function startAsciiField(
     tap = null;
   }
 
+  /* Quick clicks on the field send splashes, and the browser would count them
+     as double and triple clicks that select the nearest heading. Off the copy's
+     own lines they select nothing; on a word they still select it. */
+  function handleMouseDown(event: MouseEvent) {
+    const onControl = event.target instanceof Element && event.target.closest(INTERACTIVE_SELECTOR);
+
+    if (event.detail < 2 || event.button !== 0 || onControl || !toLocal(event.clientX, event.clientY).inside) {
+      return;
+    }
+
+    const { clientX, clientY } = event;
+    const onText = Array.from(host.querySelectorAll("[data-ascii-avoid]")).some(element =>
+      avoidRects(element).some(
+        rect => clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom,
+      ),
+    );
+
+    if (!onText) {
+      event.preventDefault();
+    }
+  }
+
   function handlePointerLeave() {
     pointer.inside = false;
     wake();
@@ -1245,6 +1267,7 @@ function startAsciiField(
   window.addEventListener("pointerdown", handlePointerDown, { passive: true });
   window.addEventListener("pointerup", handlePointerUp, { passive: true });
   window.addEventListener("pointercancel", handlePointerCancel, { passive: true });
+  window.addEventListener("mousedown", handleMouseDown);
   document.documentElement.addEventListener("pointerleave", handlePointerLeave);
   window.addEventListener("blur", handlePointerLeave);
 
@@ -1288,6 +1311,7 @@ function startAsciiField(
     window.removeEventListener("pointerdown", handlePointerDown);
     window.removeEventListener("pointerup", handlePointerUp);
     window.removeEventListener("pointercancel", handlePointerCancel);
+    window.removeEventListener("mousedown", handleMouseDown);
     document.documentElement.removeEventListener("pointerleave", handlePointerLeave);
     window.removeEventListener("blur", handlePointerLeave);
   }
