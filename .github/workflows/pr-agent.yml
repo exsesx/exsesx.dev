@@ -16,7 +16,8 @@ concurrency:
 
 jobs:
   pr-agent:
-    if: ${{ github.event.sender.type != 'Bot' && (github.event_name == 'pull_request' || github.event.issue.pull_request) }}
+    # Comment commands spend the Anthropic key, so only the repo owner can run them.
+    if: ${{ github.event.sender.type != 'Bot' && (github.event_name == 'pull_request' || (github.event.issue.pull_request && github.event.comment.author_association == 'OWNER')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: the-pr-agent/pr-agent@v0.49.0
