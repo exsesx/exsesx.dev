@@ -1895,6 +1895,162 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
+/*
+ * The index as a commit log. A rail runs down the list's left edge with a node
+ * on each post's date line; the newest post is HEAD. Each node draws its own
+ * stretch of rail: a line up to the newer post and a line down to the older
+ * one. Rows are spaced with padding rather than gap so they touch, and each row
+ * clips its rail at its own edges, so the lines join exactly whatever height a
+ * row grows to and wherever baseline alignment puts the date. The colors are
+ * opaque because the two lines overlap just above each row.
+ */
+.blog-index-list {
+  --blog-index-inset: 1.75rem;
+  --blog-index-row-space: 3.5rem;
+  --blog-index-node: 0.6875rem;
+  --blog-index-node-ring: 1.5px;
+  --blog-index-line-gap: 3px;
+  --blog-index-line: color-mix(in oklab, var(--foreground) 16%, var(--background));
+  --blog-index-ring: color-mix(in oklab, var(--foreground) 40%, var(--background));
+  /* The long lines must not lengthen the page past the list. The half rem of
+     padding, taken back by the margin, keeps the first title's focus ring. */
+  margin-block-start: -0.5rem;
+  padding-block-start: 0.5rem;
+  overflow-y: clip;
+}
+
+@media (width >= 40rem) {
+  .blog-index-list {
+    --blog-index-inset: 2.25rem;
+    --blog-index-row-space: 4rem;
+  }
+}
+
+@media (width >= 64rem) {
+  .blog-index-list {
+    --blog-index-row-space: 5rem;
+  }
+}
+
+.blog-index-list > li {
+  /* What lights a node: the row's own link (hover, focus or press) for the node
+     and the line down, the newer row's link for the line coming in. */
+  --blog-index-node-fill: var(--background);
+  --blog-index-node-edge: var(--blog-index-ring);
+  --blog-index-line-in: var(--blog-index-line);
+  --blog-index-line-out: var(--blog-index-line);
+  padding-block-end: var(--blog-index-row-space);
+  padding-inline-start: var(--blog-index-inset);
+  /* A little room above and beside the row keeps the title's focus ring whole. */
+  clip-path: inset(-0.5rem -0.5rem 0 -0.5rem);
+}
+
+.blog-index-list > li:last-child {
+  padding-block-end: 0;
+}
+
+.blog-index-meta {
+  position: relative;
+}
+
+.blog-index-meta time {
+  transition: color var(--duration-press) ease;
+}
+
+/* Centred on the date's 24px line, in the row's left inset. */
+.blog-index-node {
+  position: absolute;
+  inset-block-start: calc(0.75rem - var(--blog-index-node) / 2);
+  inset-inline-start: calc(-1 * var(--blog-index-inset));
+  width: var(--blog-index-node);
+  height: var(--blog-index-node);
+  border: var(--blog-index-node-ring) solid var(--blog-index-node-edge);
+  border-radius: 50%;
+  background: var(--blog-index-node-fill);
+  pointer-events: none;
+  transition:
+    background-color var(--duration-press) ease,
+    border-color var(--duration-press) ease;
+}
+
+/* Both lines stop a hair short of the ring. They run longer than any row needs
+   and the row's clip-path trims them to its edges. */
+.blog-index-node::before,
+.blog-index-node::after {
+  position: absolute;
+  inset-inline-start: calc(50% - 0.5px);
+  block-size: 100rem;
+  border-inline-start: 1px solid;
+  content: "";
+  transition: border-color var(--duration-press) ease;
+}
+
+.blog-index-node::before {
+  inset-block-end: calc(100% + var(--blog-index-node-ring) + var(--blog-index-line-gap));
+  border-inline-start-color: var(--blog-index-line-in);
+}
+
+.blog-index-node::after {
+  inset-block-start: calc(100% + var(--blog-index-node-ring) + var(--blog-index-line-gap));
+  border-inline-start-color: var(--blog-index-line-out);
+}
+
+/* HEAD has nothing newer above it; the oldest post has nothing below. */
+.blog-index-list > li:first-child .blog-index-node::before,
+.blog-index-list > li:last-child .blog-index-node::after {
+  display: none;
+}
+
+.blog-index-list > li:first-child {
+  --blog-index-node-fill: var(--accent);
+  --blog-index-node-edge: var(--accent);
+}
+
+.blog-index-list > li:first-child .blog-index-node {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+/* Lit: the node fills with the signal and its line to the older post follows,
+   so the hovered post reads as the checked-out commit. Color only, no motion,
+   so reduced motion needs nothing of its own. Press lights it too, which is
+   the touch feedback before the article opens. */
+.blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) {
+  --blog-index-node-fill: var(--accent);
+  --blog-index-node-edge: var(--accent);
+  --blog-index-line-out: var(--accent);
+}
+
+.blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) + li {
+  --blog-index-line-in: var(--accent);
+}
+
+.blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) time {
+  color: var(--foreground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .blog-index-list > li:has(.blog-index-link:hover) {
+    --blog-index-node-fill: var(--accent);
+    --blog-index-node-edge: var(--accent);
+    --blog-index-line-out: var(--accent);
+  }
+
+  .blog-index-list > li:has(.blog-index-link:hover) + li {
+    --blog-index-line-in: var(--accent);
+  }
+
+  .blog-index-list > li:has(.blog-index-link:hover) time {
+    color: var(--foreground);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .blog-index-list {
+    --blog-index-line: color-mix(in oklab, var(--foreground) 36%, var(--background));
+    --blog-index-ring: color-mix(in oklab, var(--foreground) 64%, var(--background));
+  }
+}
+
 .blog-back-link {
   display: inline-flex;
   width: fit-content;

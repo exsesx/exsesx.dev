@@ -122,6 +122,18 @@ describe("Blog production styles", () => {
     expect(indexPage).not.toContain("border-border");
   });
 
+  test("draws the Blog index rail as decoration lit by the post link, with hover only on fine pointers", async () => {
+    const [css, indexPage] = await Promise.all([Bun.file(globalsCssUrl).text(), Bun.file(blogIndexPageUrl).text()]);
+    const hoverBlock = css.match(
+      /@media \(hover: hover\) and \(pointer: fine\) \{\s*\.blog-index-list[\s\S]*?\n\}/,
+    )?.[0];
+
+    expect(indexPage).toContain('<span className="blog-index-node" aria-hidden="true" />');
+    expect(css).toContain(".blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active))");
+    expect(hoverBlock).toContain(".blog-index-list > li:has(.blog-index-link:hover)");
+    expect(css.replace(hoverBlock ?? "", "")).not.toContain(".blog-index-link:hover)");
+  });
+
   test("frames semantic tables as one clipped rich block with directional overflow cues", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const frameRule = css.match(/\.blog-table-frame\s*\{([^}]*)\}/s)?.[1] ?? "";
