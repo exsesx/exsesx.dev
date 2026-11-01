@@ -96,10 +96,10 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
 
         {posts.length > 0 ? (
           /* One index, newest first, read as a commit log: a rail runs down the left edge with a
-             node on each post's date line, the newest post is HEAD, and the post fills the rest.
+             node centred on each post, the newest post is HEAD, and the post fills the rest.
              Entries part by space alone; the rail is drawn in CSS from each row's node, the
              title link stretches over its row so the whole post is one target, and one dot
-             slides along the rail to whichever post is lit. */
+             rides the rail to whichever post is lit. */
           <BlogIndexTimeline className="blog-index-list page-safe-inline mx-auto w-full max-w-7xl">
             {posts.map((post, index) => {
               const styles = INDEX_ROW_STYLES[index === 0 ? "lead" : "rest"];

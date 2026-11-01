@@ -1881,11 +1881,11 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 /*
  * The index as a commit log. A rail runs down the list's left edge with a node
- * on each post's date line; the newest post is HEAD. Each node draws its own
+ * centred on each post; the newest post is HEAD. Each node draws its own
  * stretch of rail: a line up to the newer post and a line down to the older
  * one. Rows are spaced with padding rather than gap so they touch, and each row
  * clips its rail at its own edges, so the lines join exactly whatever height a
- * row grows to and wherever baseline alignment puts the date. The colors are
+ * row grows to. The colors are
  * opaque because the two lines overlap just above each row.
  */
 .blog-index-list {
@@ -1961,19 +1961,16 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   transition: opacity var(--duration-ui) var(--ease-out);
 }
 
-.blog-index-meta {
-  position: relative;
-}
-
 .blog-index-meta time {
   transition: color var(--duration-ui) var(--ease-out);
 }
 
-/* Centred on the date's 24px line, in the row's left inset. */
+/* Centred on the post itself (the row less its trailing gap), in the row's
+   left inset, so the pointer dot has room to lean both ways. */
 .blog-index-node {
   position: absolute;
-  inset-block-start: calc(0.75rem - var(--blog-index-node) / 2);
-  inset-inline-start: calc(-1 * var(--blog-index-inset));
+  inset-block-start: calc((100% - var(--blog-index-row-pad)) / 2 - var(--blog-index-node) / 2);
+  inset-inline-start: 0;
   width: var(--blog-index-node);
   height: var(--blog-index-node);
   border: var(--blog-index-node-ring) solid var(--blog-index-node-edge);
@@ -2020,12 +2017,13 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   transition: transform var(--duration-ui) var(--ease-out);
 }
 
-/* With script, one dot is the checked-out commit (BlogIndexTimeline): it rests
-   on HEAD and slides along the rail to the lit post, and the rows' own dots stay
-   empty except under a press, which is the touch feedback. Without script the
-   rows fill their own dots, so the index reads the same either way. */
+/* With script, HEAD keeps its own dot until a post is lit, and one pointer dot
+   (blog-index-dot.ts) marks that post: a bead on the rail that leans toward the
+   cursor and hops between posts. The other rows' own dots stay empty except
+   under a press, which is the touch feedback. Without script the rows fill
+   their own dots, so the index reads the same either way. */
 .blog-index-timeline {
-  /* Shared by the rows' nodes and the sliding dot, which sits beside the list. */
+  /* Shared by the rows' nodes and the pointer dot, which sits beside the list. */
   --blog-index-node: 0.6875rem;
   position: relative;
 }
@@ -2040,20 +2038,12 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   background: var(--accent);
   opacity: 0;
   pointer-events: none;
-  /* Ease-out, not ease-in-out: the pointer retargets the dot mid-slide, and each
-     retarget should answer at once instead of restarting from rest. */
-  transition: transform var(--duration-ui) var(--ease-out);
+  /* A frame loop writes transform and opacity every frame; its own layer keeps
+     the small dot from shifting a pixel as the browser hands it to the GPU. */
+  will-change: transform, opacity;
 }
 
-.blog-index-dot[data-instant] {
-  transition: none;
-}
-
-.blog-index-timeline[data-timeline-ready] > .blog-index-dot {
-  opacity: 1;
-}
-
-.blog-index-timeline[data-timeline-ready] .blog-index-list > li:not(:has(.blog-index-link:active)) {
+.blog-index-timeline[data-timeline-ready] .blog-index-list > li:not(:first-child):not(:has(.blog-index-link:active)) {
   --blog-index-core-scale: 0;
 }
 
@@ -2121,14 +2111,15 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   .blog-index-list:has(.blog-index-link:hover) > li:first-child:not(:has(.blog-index-link:hover)) .blog-index-node {
     box-shadow: none;
   }
+
+  /* With script the pointer dot marks a lit HEAD, and it leans off the node. */
+  .blog-index-timeline[data-timeline-ready] .blog-index-list > li:first-child:has(.blog-index-link:hover) {
+    --blog-index-core-scale: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .blog-index-core {
-    transition: none;
-  }
-
-  .blog-index-dot {
     transition: none;
   }
 }
