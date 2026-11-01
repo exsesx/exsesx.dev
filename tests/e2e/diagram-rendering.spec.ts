@@ -7,9 +7,14 @@ const ARTICLES = [
 ];
 
 async function selectTheme(page: Page, theme: "Light" | "Dark") {
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   const trigger = page.getByRole("button", { name: /^Theme:/ });
-  await expect(trigger).toBeVisible();
+
+  // Focusing the diagram starts a smooth scroll that can land after the jump
+  // to the top and hide the Blog header again, so repeat until it shows.
+  await expect(async () => {
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await expect(trigger).toBeVisible({ timeout: 500 });
+  }).toPass();
   await trigger.click();
   await page.getByRole("menuitemradio", { name: theme, exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme-mode", theme.toLowerCase());
