@@ -43,9 +43,14 @@ export function createProjectSocialImage(slug: string, name: string) {
   );
 }
 
-export function createBlogIndexMetadata(locale: BlogLocale, hasPublishedPosts: boolean): Metadata {
+export function createBlogIndexMetadata(locale: BlogLocale, publishedLocales: readonly BlogLocale[]): Metadata {
   const path = getBlogIndexPath(locale);
   const url = getCanonicalUrl(path);
+  const hasPublishedPosts = publishedLocales.includes(locale);
+  const languageAlternates = Object.fromEntries(
+    publishedLocales.map(published => [published, getCanonicalUrl(getBlogIndexPath(published))]),
+  );
+  const defaultLocale = publishedLocales.includes("en") ? "en" : locale;
   const isEnglish = locale === "en";
   const title = isEnglish ? "Blog" : "Блог";
   const documentTitle = `${SITE_PROFILE.name} - ${title}`;
@@ -58,7 +63,9 @@ export function createBlogIndexMetadata(locale: BlogLocale, hasPublishedPosts: b
     description,
     alternates: {
       canonical: url,
-      languages: hasPublishedPosts ? { [locale]: url, "x-default": `${siteUrl}/blog/en` } : undefined,
+      languages: hasPublishedPosts
+        ? { ...languageAlternates, "x-default": getCanonicalUrl(getBlogIndexPath(defaultLocale)) }
+        : undefined,
       types: hasPublishedPosts ? { "application/rss+xml": `${siteUrl}${path}/rss.xml` } : undefined,
     },
     robots: hasPublishedPosts ? undefined : { index: false, follow: true },

@@ -8,7 +8,7 @@ import BlogLocaleSwitcher from "@/components/blog/BlogLocaleSwitcher";
 import BlogTags from "@/components/blog/BlogTags";
 import BlogTitle from "@/components/blog/BlogTitle";
 import { getBlogPostSummaries, getBlogPosts } from "@/content/blog/manifest";
-import { BLOG_UI, formatBlogDateStamp, getBlogPostPath, isBlogLocale } from "@/lib/blog";
+import { BLOG_LOCALES, BLOG_UI, formatBlogDateStamp, getBlogPostPath, isBlogLocale } from "@/lib/blog";
 import { createBlogIndexMetadata } from "@/lib/metadata";
 import { buildBlogIndexStructuredData, serializeStructuredData } from "@/lib/structured-data";
 
@@ -35,9 +35,11 @@ export async function generateMetadata({ params }: BlogIndexPageProps): Promise<
     notFound();
   }
 
-  const hasPublishedPosts = getBlogPosts(locale, { includeDrafts: false }).length > 0;
+  const publishedLocales = BLOG_LOCALES.filter(
+    published => getBlogPosts(published, { includeDrafts: false }).length > 0,
+  );
 
-  return createBlogIndexMetadata(locale, hasPublishedPosts);
+  return createBlogIndexMetadata(locale, publishedLocales);
 }
 
 export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
