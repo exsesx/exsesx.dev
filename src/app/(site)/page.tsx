@@ -333,16 +333,18 @@ export default function HomePage() {
                 </ul>
               </div>
 
-              {/* A readout: the value first, what it measures beside it. */}
+              {/* A readout: the value first, what it measures beside it. The
+                  term leads in the markup, so grid placement swaps them. */}
               <dl className="border-t border-border lg:col-span-6 lg:col-start-7">
                 {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => (
                   <div
                     key={label}
                     className="grid grid-cols-[minmax(0,6rem)_minmax(0,1fr)] items-baseline gap-6 border-b border-border py-5"
                   >
-                    <dt className="sr-only">{label}</dt>
-                    <dd className="text-title font-black tabular-nums text-foreground">{value}</dd>
-                    <dd className="text-base leading-7 text-muted-foreground">{label}</dd>
+                    <dt className="col-start-2 row-start-1 text-base leading-7 text-muted-foreground">{label}</dt>
+                    <dd className="col-start-1 row-start-1 text-title font-black tabular-nums text-foreground">
+                      {value}
+                    </dd>
                   </div>
                 ))}
               </dl>
