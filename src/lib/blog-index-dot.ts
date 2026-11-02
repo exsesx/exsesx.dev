@@ -1,10 +1,17 @@
 /*
  * The blog index's pointer dot as a bead on the rail. It marks the post under
- * the pointer: it grows in on that post's node, leans up or down the rail
- * toward the cursor (more strongly the closer the cursor is to the rail, never
- * far enough to leave its own post), and hops to the next post on a spring that carries
- * its velocity, stretching along the rail with speed. Once no post is lit it
- * fades out where it sits rather than travelling anywhere.
+ * the pointer: it grows in on that post's node and stays centred there while
+ * the cursor moves about the post. Once the cursor leaves the post into its half
+ * of the gap to a neighbour, that neighbour starts to pull the dot along the
+ * rail (harder the nearer the cursor gets to it), so the dot
+ * leans into the hop before making it, either way. HEAD has nothing above and
+ * the oldest post nothing below to pull. It hops on a
+ * spring that carries its velocity and stretches along the rail with speed. The
+ * lit node's ring, an element of its own over the rail's lines, is tugged a
+ * little after it and, once the dot moves on, let go
+ * to spring back. Once no post is lit the dot fades out where it sits rather
+ * than travelling anywhere, except on HEAD, whose own dot it stands in for: there
+ * it takes over at full size and, on leaving, springs home and hands back.
  *
  * One frame loop drives position, stretch and presence together, and runs only
  * while something is moving. Keyboard focus places the dot instantly (keyboard
@@ -12,26 +19,27 @@
  * the fade.
  */
 
-type Spring = { response: number; dampingRatio: number };
-type Axis = { x: number; v: number };
+import { isAtRest, type Spring, type SpringState, stepSpring } from "@/lib/spring";
+
+type Ring = SpringState & { circle: HTMLElement };
 
 const NODE_SELECTOR = ".blog-index-node";
+const CIRCLE_SELECTOR = ".blog-index-circle";
+const CORE_SELECTOR = ".blog-index-core";
 
-// The nav pill's release spring, so both read as the same material.
-const TRACK_SPRING: Spring = { response: 0.36, dampingRatio: 0.8 };
+// The nav pill's release spring with more bounce: a hop overshoots its node by
+// a few pixels and settles.
+const TRACK_SPRING: Spring = { response: 0.36, dampingRatio: 0.7 };
 const PRESENCE_SPRING: Spring = { response: 0.2, dampingRatio: 1 };
 
-const REST_DISTANCE = 0.2;
-const REST_VELOCITY = 4;
 const PRESENCE_REST = 0.002;
 // Below this the dot reads as gone, so a new post places it instead of sliding.
 const APPEARED = 0.05;
 
-// Lean: up to MAX_LEAN px toward the cursor, scaled to the post's own height so
-// its edges pull about as hard on a short post as on a tall one, and weakening
-// with horizontal distance from the rail.
-const MAX_LEAN = 16;
-const LEAN_FALLOFF = 480;
+// Magnet: across a post's half of the gap to a neighbour, the dot leans toward
+// that neighbour, growing with the square of nearness to MAX_LEAN px at the
+// boundary. Only height counts, so a band pulls the same anywhere across the row.
+const MAX_LEAN = 10;
 
 // The nav pill's stretch, turned to the rail's vertical axis.
 const STRETCH_PER_VELOCITY = 0.00018;
@@ -39,21 +47,20 @@ const MAX_STRETCH = 0.22;
 const SQUASH = 0.5;
 const ENTER_SCALE = 0.6;
 
-function advance(axis: Axis, target: number, spring: Spring, ms: number) {
-  const stiffness = ((2 * Math.PI) / spring.response) ** 2;
-  const damping = (4 * Math.PI * spring.dampingRatio) / spring.response;
-
-  for (let elapsed = 0; elapsed < ms; elapsed += 1) {
-    axis.v += (-stiffness * (axis.x - target) - damping * axis.v) / 1000;
-    axis.x += axis.v / 1000;
-  }
-}
+// The ring follows a third of the lean while held, and is let go on a loose
+// spring that wobbles about a pixel past rest before settling.
+const RING_FOLLOW = 0.3;
+const RING_HOLD_SPRING: Spring = { response: 0.3, dampingRatio: 0.6 };
+const RING_RELEASE_SPRING: Spring = { response: 0.5, dampingRatio: 0.3 };
+const RING_REST = 0.05;
 
 export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HTMLElement): () => void {
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const y: Axis = { x: 0, v: 0 };
-  const presence: Axis = { x: 0, v: 0 };
+  const y: SpringState = { x: 0, v: 0 };
+  const presence: SpringState = { x: 0, v: 0 };
+  // Rings still moving: the held one and any let go that have not settled yet.
+  const rings = new Map<HTMLElement, Ring>();
   let lit: HTMLElement | null = null;
   let hovered: HTMLElement | null = null;
   let visible = false;
@@ -62,36 +69,86 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
   // Geometry in root coordinates; the root's page offset turns the pointer into them.
   let railX = 0;
   let nodeY = 0;
-  let halfPost = 1;
-  let rootPageLeft = 0;
+  let postTop = 0;
+  let contentTop = 0;
+  let contentBottom = 0;
+  let postBottom = 0;
+  let railAbove = false;
+  let railBelow = false;
+  // Leaving HEAD, the dot springs back onto its node before handing over.
+  let homing = false;
+  // HEAD's own dot, hidden while the pointer dot stands in for it.
+  let heldCore: HTMLElement | null = null;
   let rootPageTop = 0;
-  let pointer: { clientX: number; clientY: number } | null = null;
+  let pointerClientY: number | null = null;
   let frame = 0;
   let frameTime = 0;
 
   function measure(node: HTMLElement) {
     const rootRect = root.getBoundingClientRect();
     const nodeRect = node.getBoundingClientRect();
-    const postTop = node.closest("li")?.getBoundingClientRect().top ?? nodeRect.top;
+    const post = node.closest("li");
+    const nodeCenter = nodeRect.top + nodeRect.height / 2;
+    const postRect = post?.getBoundingClientRect();
 
     railX = nodeRect.left + nodeRect.width / 2 - rootRect.left;
-    nodeY = nodeRect.top + nodeRect.height / 2 - rootRect.top;
-    // The node sits mid-post, so its distance from the row's top is half the post.
-    halfPost = Math.max(1, nodeRect.top + nodeRect.height / 2 - postTop);
-    rootPageLeft = rootRect.left + window.scrollX;
+    nodeY = nodeCenter - rootRect.top;
+    // Between the post's content and the row's edges lie its halves of the gaps.
+    const contentRect = post?.querySelector("article")?.getBoundingClientRect();
+
+    contentTop = (contentRect?.top ?? nodeCenter) - rootRect.top;
+    contentBottom = (contentRect?.bottom ?? nodeCenter) - rootRect.top;
+    postTop = (postRect?.top ?? nodeCenter) - rootRect.top;
+    postBottom = (postRect?.bottom ?? nodeCenter) - rootRect.top;
+    // HEAD has no rail above it and the oldest post none below.
+    railAbove = Boolean(post?.previousElementSibling);
+    railBelow = Boolean(post?.nextElementSibling);
     rootPageTop = rootRect.top + window.scrollY;
   }
 
   function leanedGoal() {
-    if (!leaning || !pointer || reducedMotion.matches) {
+    if (!leaning || pointerClientY === null || reducedMotion.matches) {
       return nodeY;
     }
 
-    const pointerX = pointer.clientX + window.scrollX - rootPageLeft;
-    const pointerY = pointer.clientY + window.scrollY - rootPageTop;
-    const pull = 1 / (1 + Math.max(0, pointerX - railX) / LEAN_FALLOFF);
+    const pointerY = pointerClientY + window.scrollY - rootPageTop;
+    const gapBelow = postBottom - contentBottom;
+    const gapAbove = contentTop - postTop;
 
-    return nodeY + MAX_LEAN * pull * Math.tanh((pointerY - nodeY) / halfPost);
+    if (railBelow && gapBelow > 0 && pointerY > contentBottom) {
+      const nearness = Math.min(1, (pointerY - contentBottom) / gapBelow);
+
+      return nodeY + MAX_LEAN * nearness * nearness;
+    }
+
+    if (railAbove && gapAbove > 0 && pointerY < contentTop) {
+      const nearness = Math.min(1, (contentTop - pointerY) / gapAbove);
+
+      return nodeY - MAX_LEAN * nearness * nearness;
+    }
+
+    // Over the body of the post the dot stays on its node.
+    return nodeY;
+  }
+
+  function holdCore(node: HTMLElement) {
+    const core = node.querySelector<HTMLElement>(CORE_SELECTOR);
+
+    if (!core || core === heldCore) {
+      return;
+    }
+
+    releaseCore();
+    // Visibility switches at once, so the two dots trade places in one frame.
+    core.style.visibility = "hidden";
+    heldCore = core;
+  }
+
+  function releaseCore() {
+    if (heldCore) {
+      heldCore.style.visibility = "";
+      heldCore = null;
+    }
   }
 
   function render() {
@@ -103,6 +160,44 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
     dot.style.transform = `translate3d(${railX}px, ${y.x}px, 0) translate(-50%, -50%) scale(${grow * (1 - stretch * SQUASH)}, ${grow * (1 + stretch)})`;
   }
 
+  // Steps every moving ring and reports whether they have all settled.
+  function stepRings(ms: number) {
+    let settled = true;
+
+    for (const [node, ring] of rings) {
+      const held = visible && node === lit;
+      const target = held ? RING_FOLLOW * (goal - nodeY) : 0;
+
+      stepSpring(ring, target, held ? RING_HOLD_SPRING : RING_RELEASE_SPRING, ms);
+
+      if (isAtRest(ring, target, RING_REST)) {
+        ring.x = target;
+        ring.v = 0;
+
+        if (!held) {
+          rings.delete(node);
+          ring.circle.style.transform = "";
+
+          continue;
+        }
+      } else {
+        settled = false;
+      }
+
+      ring.circle.style.transform = `translate3d(0, ${ring.x}px, 0)`;
+    }
+
+    return settled;
+  }
+
+  function resetRings() {
+    for (const ring of rings.values()) {
+      ring.circle.style.transform = "";
+    }
+
+    rings.clear();
+  }
+
   function stop() {
     cancelAnimationFrame(frame);
     frame = 0;
@@ -110,7 +205,7 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
 
   function step(time: number) {
     const elapsed = Math.min(32, frameTime ? time - frameTime : 1000 / 60);
-    const presenceTarget = visible ? 1 : 0;
+    const presenceTarget = visible || homing ? 1 : 0;
 
     frameTime = time;
 
@@ -123,21 +218,27 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
       y.x = goal;
       y.v = 0;
     } else {
-      advance(y, goal, TRACK_SPRING, elapsed);
+      stepSpring(y, goal, TRACK_SPRING, elapsed);
     }
 
-    advance(presence, presenceTarget, PRESENCE_SPRING, elapsed);
+    stepSpring(presence, presenceTarget, PRESENCE_SPRING, elapsed);
 
-    const settled =
-      Math.abs(y.x - goal) < REST_DISTANCE &&
-      Math.abs(y.v) < REST_VELOCITY &&
-      Math.abs(presence.x - presenceTarget) < PRESENCE_REST;
+    const ringsSettled = stepRings(elapsed);
+    const settled = ringsSettled && isAtRest(y, goal) && Math.abs(presence.x - presenceTarget) < PRESENCE_REST;
 
     if (settled) {
       y.x = goal;
       y.v = 0;
       presence.x = presenceTarget;
       presence.v = 0;
+
+      // Home on HEAD's node: its own dot takes back over in the same frame.
+      if (homing) {
+        homing = false;
+        presence.x = 0;
+        releaseCore();
+      }
+
       render();
       frame = 0;
 
@@ -160,11 +261,19 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
 
     lit = node;
     visible = true;
+    homing = false;
     leaning = animate;
     measure(node);
 
+    const head = !railAbove;
+
+    if (head) {
+      holdCore(node);
+    }
+
     if (!animate) {
       stop();
+      resetRings();
       goal = nodeY;
       y.x = goal;
       y.v = 0;
@@ -175,27 +284,52 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
       return;
     }
 
-    // From nothing it grows in on its post; still fading out, it glides back.
+    // From nothing it grows in on its post; still fading out, it glides back. On
+    // HEAD it replaces the dot already there, so it starts on the node at full size.
     if (appearing) {
       goal = leanedGoal();
-      y.x = goal;
+      y.x = head ? nodeY : goal;
       y.v = 0;
+
+      if (head) {
+        presence.x = 1;
+        presence.v = 0;
+        render();
+      }
+    }
+
+    const circle = node.querySelector<HTMLElement>(CIRCLE_SELECTOR);
+
+    if (circle && !reducedMotion.matches && !rings.has(node)) {
+      rings.set(node, { x: 0, v: 0, circle });
     }
 
     wake();
   }
 
   function hide(animate: boolean) {
+    const leavingHead = lit !== null && !railAbove;
+
     lit = null;
     visible = false;
 
     if (animate) {
+      if (leavingHead) {
+        homing = true;
+        goal = nodeY;
+      } else if (!homing) {
+        releaseCore();
+      }
+
       wake();
 
       return;
     }
 
     stop();
+    resetRings();
+    homing = false;
+    releaseCore();
     presence.x = 0;
     presence.v = 0;
     render();
@@ -213,7 +347,7 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
 
     const node = nodeFor(event.target);
 
-    pointer = { clientX: event.clientX, clientY: event.clientY };
+    pointerClientY = event.clientY;
 
     // The list's padding lights no post, so the dot leaves with the highlight.
     if (!node) {
@@ -234,7 +368,7 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
       return;
     }
 
-    pointer = { clientX: event.clientX, clientY: event.clientY };
+    pointerClientY = event.clientY;
 
     if (visible && leaning) {
       wake();
@@ -243,7 +377,7 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
 
   const onPointerLeave = () => {
     hovered = null;
-    pointer = null;
+    pointerClientY = null;
     hide(true);
   };
 
@@ -293,6 +427,8 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
 
   return () => {
     stop();
+    resetRings();
+    releaseCore();
     resizeObserver.disconnect();
     list.removeEventListener("pointerover", onPointerOver);
     list.removeEventListener("pointermove", onPointerMove);

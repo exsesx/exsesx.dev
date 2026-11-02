@@ -1862,9 +1862,12 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 /* The title's link covers its whole row, rail and trailing gap included, so the
-   list has no dead space: anywhere along it lights exactly one post. */
+   list has no dead space: anywhere along it lights exactly one post. It sits
+   above the row's text, which dimming lifts into its own stacking layer while
+   its opacity is below 1; under it, the cursor would flick to a text cursor. */
 .blog-index-link::after {
   position: absolute;
+  z-index: 1;
   inset: 0;
   content: "";
 }
@@ -1883,9 +1886,11 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
  * The index as a commit log. A rail runs down the list's left edge with a node
  * centred on each post; the newest post is HEAD. Each node draws its own
  * stretch of rail: a line up to the newer post and a line down to the older
- * one. Rows are spaced with padding rather than gap so they touch, and each row
- * clips its rail at its own edges, so the lines join exactly whatever height a
- * row grows to. The colors are
+ * one. Rows are spaced with padding rather than gap so they touch, half above
+ * and half below each post, so every row owns the space around its own hover
+ * surface and the pointer lights the post it is visibly over. Each row clips
+ * its rail at its own edges, so the lines join exactly whatever height a row
+ * grows to. The colors are
  * opaque because the two lines overlap just above each row.
  */
 .blog-index-list {
@@ -1919,19 +1924,28 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 .blog-index-list > li {
   --blog-index-node-edge: var(--blog-index-ring);
   --blog-index-core-scale: 0;
-  --blog-index-row-pad: var(--blog-index-row-space);
+  --blog-index-pad-top: calc(var(--blog-index-row-space) / 2);
+  --blog-index-pad-bottom: calc(var(--blog-index-row-space) / 2);
   --blog-index-surface: 0;
   --blog-index-dim: 1;
   position: relative;
-  padding-block-end: var(--blog-index-row-pad);
+  padding-block: var(--blog-index-pad-top) var(--blog-index-pad-bottom);
   padding-inline-start: var(--blog-index-inset);
+  /* Every point of the row opens its post. Set outright rather than left to the
+     link's auto cursor, which Chrome sometimes resolves to the arrow while the
+     pointer dot restyles the rail under a resting cursor. */
+  cursor: pointer;
   /* Room above and beside the row keeps the hover surface, the focus ring and
      the node's pulse whole. */
   clip-path: inset(-1rem -1.5rem 0 -1.5rem);
 }
 
+.blog-index-list > li:first-child {
+  --blog-index-pad-top: 0px;
+}
+
 .blog-index-list > li:last-child {
-  --blog-index-row-pad: 0px;
+  --blog-index-pad-bottom: 0px;
   /* No line runs below the oldest post, so its surface may bleed past the row. */
   clip-path: inset(-1rem -1.5rem -1rem -1.5rem);
 }
@@ -1941,7 +1955,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 .blog-index-list > li::before {
   position: absolute;
   z-index: -1;
-  inset-block: -1rem calc(var(--blog-index-row-pad) - 1rem);
+  inset-block: calc(var(--blog-index-pad-top) - 1rem) calc(var(--blog-index-pad-bottom) - 1rem);
   inset-inline: calc(var(--blog-index-inset) - 1rem) -1rem;
   border-radius: var(--radius-xl);
   /* A wash of the text colour reads as one weight on both themes; the light
@@ -1965,18 +1979,32 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   transition: color var(--duration-ui) var(--ease-out);
 }
 
-/* Centred on the post itself (the row less its trailing gap), in the row's
-   left inset, so the pointer dot has room to lean both ways. */
+/* Centred on the post itself (the row less its share of the gaps), in the
+   row's left inset, so the pointer dot has room to lean both ways. */
 .blog-index-node {
   position: absolute;
-  inset-block-start: calc((100% - var(--blog-index-row-pad)) / 2 - var(--blog-index-node) / 2);
+  inset-block-start: calc(
+    50% +
+    (var(--blog-index-pad-top) - var(--blog-index-pad-bottom)) /
+    2 -
+    var(--blog-index-node) /
+    2
+  );
   inset-inline-start: 0;
   width: var(--blog-index-node);
   height: var(--blog-index-node);
+  pointer-events: none;
+}
+
+/* The node's ring, an element of its own so the pointer dot can tug it along the
+   rail while the lines stay put; it rides over them like a bead on a wire. */
+.blog-index-circle {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
   border: var(--blog-index-node-ring) solid var(--blog-index-node-edge);
   border-radius: 50%;
   background: var(--background);
-  pointer-events: none;
   transition: border-color var(--duration-ui) var(--ease-out);
 }
 
@@ -2052,7 +2080,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   --blog-index-core-scale: 1;
 }
 
-.blog-index-list > li:first-child .blog-index-node {
+.blog-index-list > li:first-child .blog-index-circle {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
   transition:
     border-color var(--duration-ui) var(--ease-out),
@@ -2084,7 +2112,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 .blog-index-list:has(.blog-index-link:focus-visible)
   > li:first-child:not(:has(.blog-index-link:focus-visible))
-  .blog-index-node {
+  .blog-index-circle {
   box-shadow: none;
 }
 
@@ -2108,13 +2136,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     --blog-index-core-scale: 0;
   }
 
-  .blog-index-list:has(.blog-index-link:hover) > li:first-child:not(:has(.blog-index-link:hover)) .blog-index-node {
+  .blog-index-list:has(.blog-index-link:hover) > li:first-child:not(:has(.blog-index-link:hover)) .blog-index-circle {
     box-shadow: none;
-  }
-
-  /* With script the pointer dot marks a lit HEAD, and it leans off the node. */
-  .blog-index-timeline[data-timeline-ready] .blog-index-list > li:first-child:has(.blog-index-link:hover) {
-    --blog-index-core-scale: 0;
   }
 }
 
