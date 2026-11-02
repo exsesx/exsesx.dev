@@ -1,5 +1,6 @@
 import Script from "next/script";
 import { BlogFocusProvider } from "./blog/BlogFocusProvider";
+import ConsoleSignature from "./ConsoleSignature";
 import DocumentBootstrapScripts from "./DocumentBootstrapScripts";
 import Header from "./Header";
 import HotkeysLoader from "./HotkeysLoader";
@@ -41,6 +42,7 @@ export default function AppDocument({ children, lang }: AppDocumentProps) {
           <LiquidGlassLens />
           <RouteMotionGuard />
           <InteractionSounds />
+          <ConsoleSignature />
           <BlogFocusProvider>
             <KineticBackdrop />
             <Header />

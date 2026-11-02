@@ -119,7 +119,7 @@ function BlogFocusStateProvider({ children }: BlogFocusProviderProps) {
   return (
     <BlogFocusContext.Provider value={value}>
       <div
-        className="relative isolate min-h-full w-full overflow-x-clip text-foreground transition-colors duration-300"
+        className="relative isolate min-h-full w-full overflow-x-clip text-foreground"
         data-blog-article={isBlogArticle ? "true" : undefined}
         data-blog-focus={isFocusMode ? "true" : undefined}
         data-blog-focus-toast={isFocusToastActive ? "true" : undefined}

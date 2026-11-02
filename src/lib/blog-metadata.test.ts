@@ -5,12 +5,12 @@ import { createBlogArticleMetadata, createBlogIndexMetadata, createPageMetadata,
 describe("Blog metadata", () => {
   test("formats document titles with the site name first without changing Blog social titles", () => {
     expect(rootMetadata.title).toEqual({
-      default: "Oleh Vanin - Senior Full Stack Engineer / AI Engineer",
+      default: "Oleh Vanin - Senior Full-Stack Engineer, Applied AI",
       template: "Oleh Vanin - %s",
     });
 
     const page = createPageMetadata({ title: "Projects", description: "Projects" });
-    const blog = createBlogIndexMetadata("en", true);
+    const blog = createBlogIndexMetadata("en", ["en", "uk"]);
 
     expect(page.title).toEqual({ absolute: "Oleh Vanin - Projects" });
     expect(page.openGraph).toMatchObject({ title: "Oleh Vanin - Projects" });
@@ -57,11 +57,25 @@ describe("Blog metadata", () => {
     });
   });
 
+  test("links each published Blog index to the other as a language alternate", () => {
+    const english = createBlogIndexMetadata("en", ["en", "uk"]);
+    const ukrainian = createBlogIndexMetadata("uk", ["en", "uk"]);
+    const languages = {
+      en: "https://exsesx.dev/blog/en",
+      uk: "https://exsesx.dev/blog/uk",
+      "x-default": "https://exsesx.dev/blog/en",
+    };
+
+    expect(english.alternates?.languages).toEqual(languages);
+    expect(ukrainian.alternates?.languages).toEqual(languages);
+  });
+
   test("keeps the empty Ukrainian index followable but out of search results", () => {
-    const metadata = createBlogIndexMetadata("uk", false);
+    const metadata = createBlogIndexMetadata("uk", ["en"]);
 
     expect(metadata.alternates?.canonical).toBe("https://exsesx.dev/blog/uk");
     expect(metadata.robots).toEqual({ index: false, follow: true });
     expect(metadata.alternates?.types).toBeUndefined();
+    expect(metadata.alternates?.languages).toBeUndefined();
   });
 });

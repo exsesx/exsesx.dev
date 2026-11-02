@@ -28,7 +28,7 @@ describe("buildHomeStructuredData", () => {
     expect(person).toMatchObject({
       "@id": "https://exsesx.dev/#person",
       name: "Oleh Vanin",
-      jobTitle: "Senior Full Stack Engineer / AI Engineer",
+      jobTitle: "Senior Full-Stack Engineer, Applied AI",
       url: "https://exsesx.dev",
       nationality: {
         "@type": "Country",

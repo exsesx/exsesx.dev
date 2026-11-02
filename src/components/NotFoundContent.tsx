@@ -1,47 +1,91 @@
+"use client";
+
 import { ArrowRight, Home } from "lucide-react";
 import Link from "next/link";
+import { type MouseEvent, useState } from "react";
 import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { cn } from "@/lib/utils";
+import AsciiField from "./AsciiField";
 import { buttonVariants } from "./ui/button-variants";
 
+/*
+ * The 404 as a patient monitor: the heading's flat line runs on across the
+ * ASCII field. A click or tap on the field (or the button that appears on
+ * keyboard focus) restarts the pulse: the field beats again, the mark gets its
+ * beat back and the heading follows. The page itself stays missing. On
+ * phones the copy sits low, as on the homepage, so the field's line runs clear
+ * above the heading.
+ */
+const FLAT_PATH = "M4 60 H236";
+const BEAT_PATH = "M4 60 H70 L80 68 L94 8 L108 70 L118 60 H236";
+const CONTROL_SELECTOR = "a, button, input, textarea, select, label, [role='button']";
+
 export default function NotFoundContent() {
+  const [revived, setRevived] = useState(false);
+  const tracePath = revived ? BEAT_PATH : FLAT_PATH;
+
+  // Controls keep their own job, and selecting text is not a shock.
+  function handleFieldClick(event: MouseEvent<HTMLElement>) {
+    const onControl = event.target instanceof Element && event.target.closest(CONTROL_SELECTOR);
+    const selecting = window.getSelection()?.isCollapsed === false;
+
+    if (onControl || selecting) {
+      return;
+    }
+
+    setRevived(true);
+  }
+
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: Pointer shortcut only; the restart button below is the keyboard path.
     <main
       id="main-content"
       tabIndex={-1}
       lang="en"
-      className="not-found-shell page-safe-inline mx-auto flex min-h-[calc(100svh-8rem)] w-full max-w-7xl flex-col justify-center pb-20 pt-28 lg:pt-32"
+      className="not-found-shell relative isolate flex min-h-svh w-full flex-col justify-end pb-20 pt-28 lg:justify-center lg:pt-32"
+      data-ascii-host=""
+      onClick={handleFieldClick}
     >
-      <section className="max-w-3xl">
-        <p className="motion-rise flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-accent">
+      <AsciiField className="absolute inset-0 -z-10" rhythm={revived ? "sinus" : "flatline"} placement="around" />
+
+      <div className="page-safe-inline mx-auto w-full max-w-7xl">
+        <h1
+          className="not-found-title display-title motion-rise motion-delay-1 text-display font-black text-foreground"
+          data-ascii-avoid=""
+        >
+          <span className="whitespace-nowrap">
+            {revived ? "Stable." : "Flatlined."}
+            <svg
+              className="pulse-trace not-found-trace"
+              viewBox="0 0 240 72"
+              aria-hidden="true"
+              focusable="false"
+              // The field continues this line from its baseline (y=60 of 72).
+              data-ascii-trace=""
+              data-ascii-baseline={60 / 72}
+            >
+              <path className="pulse-trace-glow" pathLength={100} d={tracePath} />
+              <path className="pulse-trace-path" pathLength={100} d={tracePath} />
+            </svg>
+          </span>
+        </h1>
+
+        <p
+          className="not-found-label motion-rise motion-delay-2 mt-6 text-sm text-muted-foreground"
+          data-ascii-avoid=""
+        >
           Error 404
         </p>
 
-        <h1 className="not-found-title motion-rise motion-delay-1 mt-4 text-balance text-[clamp(3.25rem,8.2vw,8.9rem)] font-black leading-[0.88] tracking-tight text-foreground">
-          Flatlined.
-        </h1>
-
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 420 40"
-          preserveAspectRatio="none"
-          className="not-found-signal motion-rise motion-delay-2 mt-4 h-12 w-full max-w-xl text-accent"
+        <p
+          className="not-found-copy motion-rise motion-delay-2 mt-8 max-w-xl text-pretty text-lead text-muted-foreground"
+          data-ascii-avoid=""
         >
-          <polyline
-            points="0,20 150,20 165,20 172,9 180,31 188,20 420,20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-
-        <p className="not-found-copy motion-rise motion-delay-2 mt-8 max-w-xl text-pretty text-xl leading-8 text-muted-foreground sm:text-2xl sm:leading-10">
           This page wandered off. The link may be old, or a project was renamed. The work itself is still very much
           alive.
         </p>
 
-        <div className="not-found-actions motion-rise motion-delay-3 mt-10 flex flex-wrap gap-3">
+        <div className="not-found-actions motion-rise motion-delay-3 mt-10 flex flex-wrap gap-3" data-ascii-avoid="">
           <Link
             href="/"
             {...suppressEntryMotionProps}
@@ -59,14 +103,25 @@ export default function NotFoundContent() {
             className={buttonVariants({ variant: "glass", size: "lg" })}
           >
             See the work
-            <ArrowRight
-              data-icon="inline-end"
-              strokeWidth={2.5}
-              className="transition group-hover/button:translate-x-0.5"
-            />
+            <ArrowRight data-icon="inline-end" strokeWidth={2.5} />
           </Link>
         </div>
-      </section>
+      </div>
+
+      {/* Hidden like the skip link until keyboard focus; it stays mounted after
+          the restart so focus never drops. */}
+      <button
+        type="button"
+        className={cn(buttonVariants({ variant: "glass", size: "lg" }), "not-found-revive")}
+        aria-disabled={revived || undefined}
+        onClick={() => setRevived(true)}
+      >
+        {revived ? "Pulse restored" : "Restart the pulse"}
+      </button>
+
+      <p className="sr-only" role="status">
+        {revived ? "Pulse restored. This page is still missing." : ""}
+      </p>
     </main>
   );
 }

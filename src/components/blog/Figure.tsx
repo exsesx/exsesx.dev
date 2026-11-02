@@ -44,8 +44,7 @@ export default function Figure({
       {caption || credit ? (
         <figcaption>
           {caption}
-          {caption && credit ? " · " : null}
-          {credit}
+          {credit ? <span className="block">{credit}</span> : null}
         </figcaption>
       ) : null}
     </figure>

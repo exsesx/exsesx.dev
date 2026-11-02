@@ -1,7 +1,7 @@
 import { cn } from "../lib/utils";
 
 const tagClassName =
-  "flex items-center gap-2 font-mono text-[0.6875rem] font-semibold tracking-[0.18em] text-muted-foreground/55 transition-colors duration-200 hover:text-muted-foreground/80";
+  "flex items-center gap-2 text-xs font-semibold text-muted-foreground/55 transition-colors duration-200 hover:text-muted-foreground/80";
 
 export default function VersionTag() {
   const commitHash = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;

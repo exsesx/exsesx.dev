@@ -9,6 +9,7 @@ type ProbeAnimation = {
 
 type ProbeCall = {
   animations: ProbeAnimation[];
+  headerNames?: string[];
   finished?: number;
   ready?: number;
   sourceProjectMediaNames: string[];
@@ -62,6 +63,10 @@ if (!("Bun" in globalThis)) {
         const ready = transition.ready.then(() => {
           call.ready = performance.now();
           call.types = Array.from(transition.types ?? []);
+          call.headerNames = [".site-header-nav-frame", ".site-header-fade"].map(selector => {
+            const element = document.querySelector(selector);
+            return element ? getComputedStyle(element).viewTransitionName : "missing";
+          });
           call.animations = document.getAnimations().flatMap(animation => {
             const effect = animation.effect;
 
@@ -153,9 +158,11 @@ if (!("Bun" in globalThis)) {
       expect(probe.calls[0]?.types).toContain("nav-back");
       expect(probe.calls[0]?.types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
       expect(morphAnimationPseudoNames(probe)).toContain(expectedName);
+      expect(probe.calls[0]?.headerNames).toEqual(["persistent-nav", "persistent-nav-fade"]);
       expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
-      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
-      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
+      // Named only while a transition runs, so the header glass can blur the page at rest.
+      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("none");
+      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("none");
       expectRuntimeClean(errors);
     });
 
@@ -574,14 +581,19 @@ if (!("Bun" in globalThis)) {
       expect(active.back.height).toBeGreaterThanOrEqual(40);
       await expect(chromeSample).toHaveAttribute("data-safari-chrome-sample", "true");
       await expect(page.locator(".site-header")).not.toHaveAttribute("data-safari-chrome-sample");
-      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
-      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
+      // Named only while a transition runs, so the header glass can blur the page at rest.
+      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("none");
+      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("none");
 
       await Promise.all([page.waitForURL("**/projects"), backButton.click()]);
       await expect(backButton).toBeDisabled();
       await expect(backButton).toHaveAttribute("aria-hidden", "true");
       await expect(backButton).toHaveCSS("opacity", "0");
       await expect.poll(async () => (await measureHeaderGeometry(page)).back.layoutWidth).toBeLessThanOrEqual(1);
+      // Back restores the list's scroll, and the capsule draws in with scroll;
+      // compare at the top, where it is full size as in the first reading.
+      await page.evaluate(() => window.scrollTo({ behavior: "instant", top: 0 }));
+      await expect.poll(async () => (await measureHeaderGeometry(page)).brand.x).toBeCloseTo(initial.brand.x, 0);
       const restored = await measureHeaderGeometry(page);
       expect(restored.back.layoutWidth).toBeLessThanOrEqual(1);
       expect(Math.abs(restored.switcher.centerX - initial.switcher.centerX)).toBeLessThanOrEqual(1);
@@ -600,8 +612,9 @@ if (!("Bun" in globalThis)) {
       await expect(backButton).toHaveCSS("opacity", "1");
       expect(reducedActive.back.layoutWidth).toBeGreaterThanOrEqual(40);
       await expect(chromeSample).toHaveAttribute("data-safari-chrome-sample", "true");
-      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("persistent-nav");
-      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("persistent-nav-fade");
+      // Named only while a transition runs, so the header glass can blur the page at rest.
+      expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("none");
+      expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("none");
       const reducedDurations = await backButton.evaluate(element =>
         getComputedStyle(element).transitionDuration.split(","),
       );

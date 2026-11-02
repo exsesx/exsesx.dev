@@ -25,14 +25,14 @@ export function ArticleWithToc({ children, headings, locale }: ArticleWithTocPro
     <>
       <div
         ref={mobileTocShellRef}
-        className="blog-toc-mobile-shell mx-auto max-w-3xl xl:hidden"
+        className="blog-toc-mobile-shell mx-auto max-w-(--blog-measure) xl:hidden"
         data-toc-launcher-motion="instant"
         data-toc-launcher-state="inline"
       >
         <ArticleToc activeHeadingId={activeHeadingId} headings={headings} locale={locale} mode="mobile" />
       </div>
 
-      <div className="blog-article-grid mx-auto mt-4 xl:mt-10">
+      <div className="blog-article-grid mx-auto mt-6 xl:mt-0">
         <aside className="hidden xl:block">
           <ArticleToc activeHeadingId={activeHeadingId} headings={headings} locale={locale} mode="desktop" />
         </aside>
