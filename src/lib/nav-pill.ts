@@ -11,8 +11,8 @@
  * frame loop.
  */
 
-type Spring = { response: number; dampingRatio: number };
-type SpringSample = { x: number; v: number };
+import { isAtRest, type Spring, type SpringState, stepSpring } from "@/lib/spring";
+
 type Geometry = { tabLefts: number[]; tabWidth: number; pillWidth: number; scale: number };
 
 type Drag = {
@@ -38,8 +38,6 @@ const DRAG_SPRING: Spring = { response: 0.16, dampingRatio: 0.9 };
 
 const SAMPLE_MS = 1000 / 120;
 const MAX_SPRING_MS = 1600;
-const REST_DISTANCE = 0.2;
-const REST_VELOCITY = 4;
 
 const DRAG_THRESHOLD = 6;
 const HOLD_LIFT_MS = 120;
@@ -52,17 +50,13 @@ const MAX_STRETCH = 0.22;
 const SQUASH = 0.5;
 const MAGNIFY = 0.08;
 
-export function simulateSpring(from: number, velocity: number, to: number, spring: Spring): SpringSample[] {
-  const stiffness = ((2 * Math.PI) / spring.response) ** 2;
-  const damping = (4 * Math.PI * spring.dampingRatio) / spring.response;
-  const samples: SpringSample[] = [{ x: from, v: velocity }];
-  let x = from;
-  let v = velocity;
+export function simulateSpring(from: number, velocity: number, to: number, spring: Spring): SpringState[] {
+  const samples: SpringState[] = [{ x: from, v: velocity }];
+  const state: SpringState = { x: from, v: velocity };
   let nextSample = SAMPLE_MS;
 
   for (let elapsed = 1; elapsed <= MAX_SPRING_MS; elapsed += 1) {
-    v += (-stiffness * (x - to) - damping * v) / 1000;
-    x += v / 1000;
+    stepSpring(state, to, spring, 1);
 
     if (elapsed < nextSample) {
       continue;
@@ -70,11 +64,11 @@ export function simulateSpring(from: number, velocity: number, to: number, sprin
 
     nextSample += SAMPLE_MS;
 
-    if (Math.abs(x - to) < REST_DISTANCE && Math.abs(v) < REST_VELOCITY) {
+    if (isAtRest(state, to)) {
       break;
     }
 
-    samples.push({ x, v });
+    samples.push({ x: state.x, v: state.v });
   }
 
   samples.push({ x: to, v: 0 });
@@ -105,7 +99,7 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const cssIndex = () => options.names.indexOf(pill.dataset.activeNav ?? "");
   let target = Math.max(0, cssIndex());
-  let samples: SpringSample[] | null = null;
+  let samples: SpringState[] | null = null;
   let glide: Animation | null = null;
   let stretch: Animation | null = null;
   let drag: Drag | null = null;
@@ -134,7 +128,7 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
     };
   }
 
-  function presented(): SpringSample {
+  function presented(): SpringState {
     if (drag?.dragging) {
       return { x, v };
     }
@@ -167,13 +161,13 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
     pill.style.transform = cssIndex() === index ? "" : `translate3d(${measure().tabLefts[index] ?? 0}px, 0, 0)`;
   }
 
-  function glideTo(index: number, from: SpringSample, spring: Spring) {
+  function glideTo(index: number, from: SpringState, spring: Spring) {
     const to = measure().tabLefts[index] ?? 0;
 
     stopGlide();
     body.style.transform = "";
 
-    if (reducedMotion.matches || (Math.abs(from.x - to) < REST_DISTANCE && Math.abs(from.v) < REST_VELOCITY)) {
+    if (reducedMotion.matches || isAtRest(from, to)) {
       settle(index);
 
       return;
@@ -254,15 +248,12 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
 
   function step(time: number) {
     const elapsed = Math.min(32, frameTime ? time - frameTime : SAMPLE_MS);
-    const stiffness = ((2 * Math.PI) / DRAG_SPRING.response) ** 2;
-    const damping = (4 * Math.PI * DRAG_SPRING.dampingRatio) / DRAG_SPRING.response;
+    const state: SpringState = { x, v };
 
     frameTime = time;
-
-    for (let ms = 0; ms < elapsed; ms += 1) {
-      v += (-stiffness * (x - dragTarget) - damping * v) / 1000;
-      x += v / 1000;
-    }
+    stepSpring(state, dragTarget, DRAG_SPRING, elapsed);
+    x = state.x;
+    v = state.v;
 
     pill.style.transform = `translate3d(${x}px, 0, 0)`;
     body.style.transform = reducedMotion.matches ? "" : stretchTransform(v);
