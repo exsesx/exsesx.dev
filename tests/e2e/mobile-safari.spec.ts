@@ -587,7 +587,18 @@ if (!("Bun" in globalThis)) {
       expect(diagramBounds).not.toBeNull();
       expect(toolbarBounds).not.toBeNull();
       expect(pageViewport).not.toBeNull();
-      expect(bounds?.height).toBeCloseTo(320, 0);
+      // The camera viewport bleeds to the frame on touch, so it fills the figure inside its 1px border, and the
+      // drawing keeps its 20rem resting area inside the viewport's gutter padding.
+      expect(bounds?.x).toBeCloseTo((diagramBounds?.x ?? 0) + 1, 0);
+      expect(bounds?.y).toBeCloseTo((diagramBounds?.y ?? 0) + 1, 0);
+      expect(bounds?.height).toBeCloseTo((diagramBounds?.height ?? 0) - 2, 0);
+      expect(
+        await viewport.evaluate(element => {
+          const style = getComputedStyle(element);
+
+          return element.clientHeight - Number.parseFloat(style.paddingTop) - Number.parseFloat(style.paddingBottom);
+        }),
+      ).toBeCloseTo(320, 0);
       expect(bounds?.x ?? -1).toBeGreaterThanOrEqual(0);
       expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(pageViewport?.width ?? 0);
       const toolbarRightInset =
