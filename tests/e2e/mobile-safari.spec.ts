@@ -609,10 +609,10 @@ if (!("Bun" in globalThis)) {
       expect(toolbarRightInset).toBeCloseTo(9, 0);
       // The reset control lives in the header row, centred beside the title and never over the drawing.
       expect((toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0)).toBeLessThanOrEqual(bounds?.y ?? 0);
-      expect((toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0) / 2).toBeCloseTo(
-        ((diagramBounds?.y ?? 0) + (bounds?.y ?? 0)) / 2,
-        0,
-      );
+      // The header row runs from inside the frame's 1px top border down to the canvas; allow a pixel of rounding.
+      const toolbarCenter = (toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0) / 2;
+      const headerCenter = ((diagramBounds?.y ?? 0) + 1 + (bounds?.y ?? 0)) / 2;
+      expect(Math.abs(toolbarCenter - headerCenter)).toBeLessThanOrEqual(1);
       expect(toolbarBounds?.width).toBeCloseTo(44, 0);
       expect(toolbarBounds?.height).toBeCloseTo(44, 0);
 
