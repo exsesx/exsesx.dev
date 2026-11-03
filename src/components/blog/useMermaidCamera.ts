@@ -521,9 +521,9 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
           return;
         }
 
-        // A zoomed diagram scrolls like any other overflowing surface. Once the camera reaches an edge along the
-        // dominant scroll axis the event is left alone, so the page keeps scrolling instead of getting trapped by the
-        // small cross-axis drift trackpads add to an ordinary vertical swipe.
+        // A zoomed diagram owns every wheel and trackpad gesture over it, edges included. Releasing at an edge let
+        // trackpad momentum spill into the page mid-gesture, which scrolled the article and woke the sticky header.
+        // Reset the zoom, or move the pointer off the canvas, to scroll the page again.
         const viewport = getViewport(visual);
         const lineHeight = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? WHEEL_LINE_HEIGHT : 1;
         const unit = event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? viewport.height : lineHeight;
@@ -532,16 +532,9 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
           x: (event.deltaX * unit) / clientScale,
           y: (event.deltaY * unit) / clientScale,
         });
-        const isHorizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
-        const movesDominantAxis = isHorizontal
-          ? nextViewBox.x !== currentViewBox.x
-          : nextViewBox.y !== currentViewBox.y;
-
-        if (!movesDominantAxis) {
-          return;
-        }
 
         event.preventDefault();
+        event.stopPropagation();
         queueCamera(nextViewBox, false);
         return;
       }

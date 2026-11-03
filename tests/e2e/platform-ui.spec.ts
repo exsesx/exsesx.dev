@@ -414,7 +414,8 @@ if (!("Bun" in globalThis)) {
       await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeWheelPan);
       expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeWheelPan);
 
-      // Pan to the bottom edge, then scroll with the small horizontal drift a trackpad adds: the page must scroll.
+      // Pan past the bottom edge, then keep scrolling with the small horizontal drift a trackpad adds. A zoomed diagram
+      // owns the gesture, so the page must not move even once the camera has nowhere left to go.
       for (let step = 0; step < 8; step += 1) {
         await page.mouse.wheel(0, 400);
       }
@@ -427,9 +428,13 @@ if (!("Bun" in globalThis)) {
       );
       const viewBoxAtCameraEdge = await svg.getAttribute("viewBox");
       const scrollAtCameraEdge = await page.evaluate(() => window.scrollY);
-      await page.mouse.wheel(-3, 240);
-      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollAtCameraEdge);
-      await expect(svg).toHaveAttribute("viewBox", viewBoxAtCameraEdge ?? "");
+      for (let step = 0; step < 4; step += 1) {
+        await page.mouse.wheel(-3, 240);
+      }
+      // The drift still pans sideways, but the camera stays pinned to the bottom edge and the page stays put.
+      const edgeY = Number((viewBoxAtCameraEdge ?? "").split(/\s+/)[1]);
+      await expect.poll(async () => Number(((await svg.getAttribute("viewBox")) ?? "").split(/\s+/)[1])).toBe(edgeY);
+      expect(await page.evaluate(() => window.scrollY)).toBe(scrollAtCameraEdge);
       await resetZoom.click();
 
       await zoomIn.click();
@@ -492,7 +497,14 @@ if (!("Bun" in globalThis)) {
       await expect(wrapButton).toHaveAttribute("aria-pressed", "false");
       await expect(pre).toHaveCSS("overscroll-behavior-x", "none");
 
-      const [wrapBounds, copyBounds] = await Promise.all([wrapButton.boundingBox(), copyButton.boundingBox()]);
+      const [wrapBounds, copyBounds, toolbarBounds, preBounds] = await Promise.all([
+        wrapButton.boundingBox(),
+        copyButton.boundingBox(),
+        toolbar.boundingBox(),
+        pre.boundingBox(),
+      ]);
+      // The actions sit in the header row, above the code, so no line can run underneath them.
+      expect((toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0)).toBeLessThanOrEqual((preBounds?.y ?? 0) + 0.5);
       const expectedButtonSize = isMobile ? 40 : 36;
       expect(wrapBounds?.width).toBeCloseTo(expectedButtonSize, 1);
       expect(wrapBounds?.height).toBeCloseTo(expectedButtonSize, 1);
