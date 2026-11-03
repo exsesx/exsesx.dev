@@ -458,9 +458,9 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
 
     const visual = visualRef.current;
     const svg = visual?.querySelector("svg");
-    const parsedViewBox = parseViewBox(svg?.getAttribute("viewBox") ?? "");
+    const drawingViewBox = parseViewBox(svg?.getAttribute("viewBox") ?? "");
 
-    if (!visual || !svg || !parsedViewBox) {
+    if (!visual || !svg || !drawingViewBox) {
       baseViewBoxRef.current = null;
       cameraRef.current = null;
       return;
@@ -471,18 +471,31 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
 
     // The viewport bleeds to the frame edges and carries the breathing room as padding, which the absolutely
     // positioned SVG ignores. Moving that gutter into the viewBox keeps the resting layout unchanged while letting
-    // zoomed content run all the way to the frame instead of being cut at an invisible inner edge.
-    const gutter = Number.parseFloat(getComputedStyle(visual).paddingTop) || 0;
-    const nextBase = padViewBox(parsedViewBox, { height: visual.clientHeight, width: visual.clientWidth }, gutter);
-    const previousBase = baseViewBoxRef.current;
-    const previousCamera = cameraRef.current;
-    const nextCamera =
-      previousBase && previousCamera ? rebaseViewBox(previousBase, previousCamera, nextBase) : nextBase;
+    // zoomed content run all the way to the frame instead of being cut at an invisible inner edge. The gutter and
+    // the viewport height follow the window width, so the padded base is refreshed whenever the viewport resizes,
+    // even when the frame width (and therefore the rendered drawing) stays the same.
+    const syncBaseViewBox = () => {
+      const gutter = Number.parseFloat(getComputedStyle(visual).paddingTop) || 0;
+      const nextBase = padViewBox(drawingViewBox, { height: visual.clientHeight, width: visual.clientWidth }, gutter);
+      const previousBase = baseViewBoxRef.current;
+      const previousCamera = cameraRef.current;
+      const nextCamera =
+        previousBase && previousCamera ? rebaseViewBox(previousBase, previousCamera, nextBase) : nextBase;
 
-    baseViewBoxRef.current = nextBase;
-    cameraRef.current = nextCamera;
-    svg.setAttribute("viewBox", formatViewBox(nextCamera));
-  }, [renderedSvg]);
+      cancelQueuedCamera();
+      baseViewBoxRef.current = nextBase;
+      cameraRef.current = nextCamera;
+      svg.setAttribute("viewBox", formatViewBox(nextCamera));
+    };
+
+    syncBaseViewBox();
+
+    const observer = new ResizeObserver(syncBaseViewBox);
+
+    observer.observe(visual);
+
+    return () => observer.disconnect();
+  }, [cancelQueuedCamera, renderedSvg]);
 
   useEffect(() => {
     if (!isReady) {
@@ -508,8 +521,9 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
           return;
         }
 
-        // A zoomed diagram scrolls like any other overflowing surface. Once the camera reaches an edge in the
-        // scroll direction the event is left alone, so the page keeps scrolling instead of getting trapped.
+        // A zoomed diagram scrolls like any other overflowing surface. Once the camera reaches an edge along the
+        // dominant scroll axis the event is left alone, so the page keeps scrolling instead of getting trapped by the
+        // small cross-axis drift trackpads add to an ordinary vertical swipe.
         const viewport = getViewport(visual);
         const lineHeight = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? WHEEL_LINE_HEIGHT : 1;
         const unit = event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? viewport.height : lineHeight;
@@ -518,8 +532,12 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
           x: (event.deltaX * unit) / clientScale,
           y: (event.deltaY * unit) / clientScale,
         });
+        const isHorizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+        const movesDominantAxis = isHorizontal
+          ? nextViewBox.x !== currentViewBox.x
+          : nextViewBox.y !== currentViewBox.y;
 
-        if (nextViewBox.x === currentViewBox.x && nextViewBox.y === currentViewBox.y) {
+        if (!movesDominantAxis) {
           return;
         }
 

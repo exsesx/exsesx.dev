@@ -401,6 +401,38 @@ if (!("Bun" in globalThis)) {
       await resetZoom.click();
 
       await zoomIn.click();
+      await viewport.scrollIntoViewIfNeeded();
+      const panBounds = await viewport.boundingBox();
+      expect(panBounds).not.toBeNull();
+      await page.mouse.move(
+        (panBounds?.x ?? 0) + (panBounds?.width ?? 0) / 2,
+        (panBounds?.y ?? 0) + (panBounds?.height ?? 0) / 2,
+      );
+      const viewBoxBeforeWheelPan = await svg.getAttribute("viewBox");
+      const scrollBeforeWheelPan = await page.evaluate(() => window.scrollY);
+      await page.mouse.wheel(120, 0);
+      await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeWheelPan);
+      expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeWheelPan);
+
+      // Pan to the bottom edge, then scroll with the small horizontal drift a trackpad adds: the page must scroll.
+      for (let step = 0; step < 8; step += 1) {
+        await page.mouse.wheel(0, 400);
+      }
+      await viewport.scrollIntoViewIfNeeded();
+      const edgeBounds = await viewport.boundingBox();
+      expect(edgeBounds).not.toBeNull();
+      await page.mouse.move(
+        (edgeBounds?.x ?? 0) + (edgeBounds?.width ?? 0) / 2,
+        (edgeBounds?.y ?? 0) + (edgeBounds?.height ?? 0) / 2,
+      );
+      const viewBoxAtCameraEdge = await svg.getAttribute("viewBox");
+      const scrollAtCameraEdge = await page.evaluate(() => window.scrollY);
+      await page.mouse.wheel(-3, 240);
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollAtCameraEdge);
+      await expect(svg).toHaveAttribute("viewBox", viewBoxAtCameraEdge ?? "");
+      await resetZoom.click();
+
+      await zoomIn.click();
       const viewBoxBeforeDrag = await svg.getAttribute("viewBox");
       const [baseX = 0, baseY = 0] = (baseViewBox ?? "").split(/\s+/).map(Number);
       const [currentX = 0, currentY = 0] = (viewBoxBeforeDrag ?? "").split(/\s+/).map(Number);
