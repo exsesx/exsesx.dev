@@ -3,6 +3,7 @@ import {
   formatViewBox,
   getViewBoxZoom,
   nudgeViewBox,
+  padViewBox,
   panViewBox,
   parseViewBox,
   zoomViewBoxAtClientPoint,
@@ -124,5 +125,24 @@ describe("Mermaid viewBox camera", () => {
     expect(getViewBoxZoom({ x: 0, y: 0, width: 1000, height: 500 }, { x: 120, y: 80, width: 400, height: 200 })).toBe(
       2.5,
     );
+  });
+
+  test("pads a width-limited viewBox so the gutter is exact on the limiting axis", () => {
+    const padded = padViewBox({ x: 0, y: 0, width: 400, height: 100 }, { width: 448, height: 400 }, 24);
+
+    expect(padded).toEqual({ x: -24, y: -24, width: 448, height: 148 });
+  });
+
+  test("scales the gutter into viewBox units when the drawing is height-limited", () => {
+    const padded = padViewBox({ x: 10, y: 10, width: 100, height: 200 }, { width: 600, height: 120 }, 10);
+
+    expect(padded).toEqual({ x: -10, y: -10, width: 140, height: 240 });
+  });
+
+  test("leaves the viewBox alone when there is no room for a gutter", () => {
+    const base = { x: 0, y: 0, width: 100, height: 100 };
+
+    expect(padViewBox(base, { width: 40, height: 400 }, 24)).toBe(base);
+    expect(padViewBox(base, { width: 400, height: 400 }, 0)).toBe(base);
   });
 });

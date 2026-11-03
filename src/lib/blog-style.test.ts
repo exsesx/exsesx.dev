@@ -41,18 +41,24 @@ describe("Blog production styles", () => {
     expect(css).toMatch(/\.blog-mermaid-source\s*\{[^}]*font-family:\s*var\(--font-mono\)/s);
   });
 
-  test("keeps narrow fine-pointer Mermaid controls below the canvas without shrinking targets", async () => {
+  test("keeps fine-pointer Mermaid controls below the canvas without shrinking targets", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const mobileMermaidRules = css.slice(css.lastIndexOf("@variant max-sm"));
     const mobileToolbarRule = mobileMermaidRules.match(/\.blog-mermaid-toolbar\s*\{([^}]*)\}/s)?.[1] ?? "";
     const mobileControlRule = mobileMermaidRules.match(/\.blog-mermaid-control svg\s*\{([^}]*)\}/s)?.[1] ?? "";
     const mobileResetRule = mobileMermaidRules.match(/\.blog-mermaid-reset\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const toolbarRule =
+      Array.from(css.matchAll(/^\.blog-mermaid-toolbar\s*\{([^}]*)\}/gms), match => match[1] ?? "").find(rule =>
+        rule.includes("border-radius"),
+      ) ?? "";
     const controlRule = css.match(/\.blog-mermaid-control\s*\{([^}]*)\}/s)?.[1] ?? "";
 
-    expect(mobileToolbarRule).toContain("position: static");
-    expect(mobileToolbarRule).toContain("display: flex");
-    expect(mobileToolbarRule).toContain("width: max-content");
-    expect(mobileToolbarRule).toContain("margin: 0.75rem 0 0 auto");
+    expect(toolbarRule).toContain("position: static");
+    expect(toolbarRule).toContain("display: flex");
+    expect(toolbarRule).toContain("width: max-content");
+    expect(toolbarRule).toContain("margin: var(--blog-mermaid-footer-gap) 0 0 auto");
+    expect(toolbarRule).not.toContain("overflow: hidden");
+    expect(controlRule).toContain("backdrop-filter: none");
     expect(mobileToolbarRule).toContain("background: color-mix(in oklab, var(--foreground) 6%, var(--background))");
     expect(mobileToolbarRule).toContain("backdrop-filter: none");
     expect(mobileToolbarRule).not.toContain("saturate(");
