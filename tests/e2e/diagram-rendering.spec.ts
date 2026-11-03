@@ -9,14 +9,22 @@ const ARTICLES = [
 async function selectTheme(page: Page, theme: "Light" | "Dark") {
   const trigger = page.getByRole("button", { name: /^Theme:/ });
 
+  const option = page.getByRole("menuitemradio", { name: theme, exact: true });
+
   // Focusing the diagram starts a smooth scroll that can land after the jump
-  // to the top and hide the Blog header again, so repeat until it shows.
+  // to the top and hide the Blog header again, even between the visibility
+  // check and the click, so retry until the menu is actually open.
   await expect(async () => {
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await expect(trigger).toBeVisible({ timeout: 500 });
+
+    if (!(await option.isVisible())) {
+      await trigger.click({ timeout: 1_000 });
+    }
+
+    await expect(option).toBeVisible({ timeout: 500 });
   }).toPass();
-  await trigger.click();
-  await page.getByRole("menuitemradio", { name: theme, exact: true }).click();
+  await option.click();
   await expect(page.locator("html")).toHaveAttribute("data-theme-mode", theme.toLowerCase());
 }
 
