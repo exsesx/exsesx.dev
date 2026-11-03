@@ -107,7 +107,12 @@ function MermaidDiagramViewForSource({
       data-theme={resolvedTheme}
       data-zoom={camera.zoomPercent}
     >
-      <figcaption id={labelId} className={isCurrentError ? undefined : "sr-only"} lang={locale}>
+      <figcaption
+        id={labelId}
+        className="blog-mermaid-caption"
+        data-error={isCurrentError ? "true" : undefined}
+        lang={locale}
+      >
         {isCurrentError ? `${ui.diagramUnavailable}: ${state.message}` : accessibleLabel}
       </figcaption>
 
@@ -122,6 +127,8 @@ function MermaidDiagramViewForSource({
 
       {isReady ? (
         <>
+          <MermaidToolbar camera={camera} ui={ui} />
+
           <div
             ref={camera.visualRef}
             className="blog-mermaid-visual blog-mermaid-svg"
@@ -142,8 +149,6 @@ function MermaidDiagramViewForSource({
             //biome-ignore lint/security/noDangerouslySetInnerHtml: Pele escapes labels from trusted local MDX and disables links and images.
             dangerouslySetInnerHTML={{ __html: state.svg }}
           />
-
-          <MermaidToolbar camera={camera} ui={ui} />
         </>
       ) : isCurrentError ? (
         <pre className="blog-mermaid-visual blog-mermaid-source">

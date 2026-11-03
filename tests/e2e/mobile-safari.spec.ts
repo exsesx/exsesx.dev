@@ -587,11 +587,14 @@ if (!("Bun" in globalThis)) {
       expect(diagramBounds).not.toBeNull();
       expect(toolbarBounds).not.toBeNull();
       expect(pageViewport).not.toBeNull();
-      // The camera viewport bleeds to the frame on touch, so it fills the figure inside its 1px border, and the
-      // drawing keeps its 20rem resting area inside the viewport's gutter padding.
+      // The camera viewport spans the frame below the header row, inside the figure's 1px border, and the drawing
+      // keeps its 20rem resting area inside the viewport's gutter padding.
       expect(bounds?.x).toBeCloseTo((diagramBounds?.x ?? 0) + 1, 0);
-      expect(bounds?.y).toBeCloseTo((diagramBounds?.y ?? 0) + 1, 0);
-      expect(bounds?.height).toBeCloseTo((diagramBounds?.height ?? 0) - 2, 0);
+      expect(bounds?.width).toBeCloseTo((diagramBounds?.width ?? 0) - 2, 0);
+      expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeCloseTo(
+        (diagramBounds?.y ?? 0) + (diagramBounds?.height ?? 0) - 1,
+        0,
+      );
       expect(
         await viewport.evaluate(element => {
           const style = getComputedStyle(element);
@@ -604,7 +607,12 @@ if (!("Bun" in globalThis)) {
       const toolbarRightInset =
         (diagramBounds?.x ?? 0) + (diagramBounds?.width ?? 0) - ((toolbarBounds?.x ?? 0) + (toolbarBounds?.width ?? 0));
       expect(toolbarRightInset).toBeCloseTo(9, 0);
-      expect(toolbarBounds?.y).toBeCloseTo((diagramBounds?.y ?? 0) + 9, 0);
+      // The reset control lives in the header row, centred beside the title and never over the drawing.
+      expect((toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0)).toBeLessThanOrEqual(bounds?.y ?? 0);
+      expect((toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0) / 2).toBeCloseTo(
+        ((diagramBounds?.y ?? 0) + (bounds?.y ?? 0)) / 2,
+        0,
+      );
       expect(toolbarBounds?.width).toBeCloseTo(44, 0);
       expect(toolbarBounds?.height).toBeCloseTo(44, 0);
 
