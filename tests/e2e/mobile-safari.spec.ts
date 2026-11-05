@@ -587,13 +587,32 @@ if (!("Bun" in globalThis)) {
       expect(diagramBounds).not.toBeNull();
       expect(toolbarBounds).not.toBeNull();
       expect(pageViewport).not.toBeNull();
-      expect(bounds?.height).toBeCloseTo(320, 0);
+      // The camera viewport spans the frame below the header row, inside the figure's 1px border, and the drawing
+      // keeps its 20rem resting area inside the viewport's gutter padding.
+      expect(bounds?.x).toBeCloseTo((diagramBounds?.x ?? 0) + 1, 0);
+      expect(bounds?.width).toBeCloseTo((diagramBounds?.width ?? 0) - 2, 0);
+      expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeCloseTo(
+        (diagramBounds?.y ?? 0) + (diagramBounds?.height ?? 0) - 1,
+        0,
+      );
+      expect(
+        await viewport.evaluate(element => {
+          const style = getComputedStyle(element);
+
+          return element.clientHeight - Number.parseFloat(style.paddingTop) - Number.parseFloat(style.paddingBottom);
+        }),
+      ).toBeCloseTo(320, 0);
       expect(bounds?.x ?? -1).toBeGreaterThanOrEqual(0);
       expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(pageViewport?.width ?? 0);
       const toolbarRightInset =
         (diagramBounds?.x ?? 0) + (diagramBounds?.width ?? 0) - ((toolbarBounds?.x ?? 0) + (toolbarBounds?.width ?? 0));
       expect(toolbarRightInset).toBeCloseTo(9, 0);
-      expect(toolbarBounds?.y).toBeCloseTo((diagramBounds?.y ?? 0) + 9, 0);
+      // The reset control lives in the header row, centred beside the title and never over the drawing.
+      expect((toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0)).toBeLessThanOrEqual(bounds?.y ?? 0);
+      // The header row runs from inside the frame's 1px top border down to the canvas; allow a pixel of rounding.
+      const toolbarCenter = (toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0) / 2;
+      const headerCenter = ((diagramBounds?.y ?? 0) + 1 + (bounds?.y ?? 0)) / 2;
+      expect(Math.abs(toolbarCenter - headerCenter)).toBeLessThanOrEqual(1);
       expect(toolbarBounds?.width).toBeCloseTo(44, 0);
       expect(toolbarBounds?.height).toBeCloseTo(44, 0);
 

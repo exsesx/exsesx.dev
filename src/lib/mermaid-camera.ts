@@ -75,6 +75,30 @@ export function formatViewBox({ x, y, width, height }: ViewBox): string {
   return `${x} ${y} ${width} ${height}`;
 }
 
+/**
+ * Grows a viewBox so the drawing keeps at least `gutter` CSS pixels of empty space on every side once it is fitted
+ * into a viewport of the given size. The gutter lives inside the camera's world, so a zoomed diagram can still be
+ * panned until its outermost nodes clear the frame instead of stopping flush against it.
+ */
+export function padViewBox(base: ViewBox, size: Readonly<{ width: number; height: number }>, gutter: number): ViewBox {
+  const innerWidth = size.width - gutter * 2;
+  const innerHeight = size.height - gutter * 2;
+
+  if (!(gutter > 0) || innerWidth <= 0 || innerHeight <= 0) {
+    return base;
+  }
+
+  const scale = Math.min(innerWidth / base.width, innerHeight / base.height);
+  const padding = gutter / scale;
+
+  return {
+    x: base.x - padding,
+    y: base.y - padding,
+    width: base.width + padding * 2,
+    height: base.height + padding * 2,
+  };
+}
+
 export function getViewBoxZoom(base: ViewBox, current: ViewBox): number {
   return clamp(base.width / current.width, MIN_MERMAID_ZOOM, MAX_MERMAID_ZOOM);
 }

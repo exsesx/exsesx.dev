@@ -40,4 +40,21 @@ describe("CodeBlock", () => {
     expect(markup).toContain('aria-label="Копіювати код"');
     expect(markup).toContain('lang="uk"');
   });
+
+  test("labels the header row with the fence language so untitled blocks keep their actions off the code", () => {
+    const markup = renderToStaticMarkup(
+      <CodeBlock data-language="ts">
+        <code>export const answer = 42;</code>
+      </CodeBlock>,
+    );
+    const unlabelled = renderToStaticMarkup(
+      <CodeBlock>
+        <code>plain</code>
+      </CodeBlock>,
+    );
+
+    expect(markup).toContain('<span class="blog-code-header-language">ts</span>');
+    expect(markup.indexOf("blog-code-header-language")).toBeLessThan(markup.indexOf("<pre"));
+    expect(unlabelled).not.toContain("blog-code-header-language");
+  });
 });
