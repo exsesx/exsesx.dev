@@ -41,25 +41,46 @@ describe("Blog production styles", () => {
     expect(css).toMatch(/\.blog-mermaid-source\s*\{[^}]*font-family:\s*var\(--font-mono\)/s);
   });
 
-  test("keeps narrow fine-pointer Mermaid controls below the canvas without shrinking targets", async () => {
+  test("sets Mermaid controls in a header row beside the diagram title, never over the canvas", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const mobileMermaidRules = css.slice(css.lastIndexOf("@variant max-sm"));
     const mobileToolbarRule = mobileMermaidRules.match(/\.blog-mermaid-toolbar\s*\{([^}]*)\}/s)?.[1] ?? "";
     const mobileControlRule = mobileMermaidRules.match(/\.blog-mermaid-control svg\s*\{([^}]*)\}/s)?.[1] ?? "";
     const mobileResetRule = mobileMermaidRules.match(/\.blog-mermaid-reset\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const toolbarRule =
+      Array.from(css.matchAll(/^\.blog-mermaid-toolbar\s*\{([^}]*)\}/gms), match => match[1] ?? "").find(rule =>
+        rule.includes("border-radius"),
+      ) ?? "";
     const controlRule = css.match(/\.blog-mermaid-control\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const frameRule = css.match(/\.blog-mermaid\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const captionRule = css.match(/\.blog-mermaid-caption\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const visualRule = css.match(/\.blog-mermaid-visual\s*\{([^}]*)\}/s)?.[1] ?? "";
 
-    expect(mobileToolbarRule).toContain("position: static");
-    expect(mobileToolbarRule).toContain("display: flex");
-    expect(mobileToolbarRule).toContain("width: max-content");
-    expect(mobileToolbarRule).toContain("margin: 0.75rem 0 0 auto");
+    expect(frameRule).toContain("display: grid");
+    expect(frameRule).toContain("--blog-mermaid-control-size: 2.75rem");
+    expect(css).toMatch(
+      /@media \(hover: hover\) and \(pointer: fine\)\s*\{\s*\.blog-mermaid\s*\{\s*--blog-mermaid-control-size:\s*2\.25rem/s,
+    );
+    expect(captionRule).toContain("grid-row: 1");
+    expect(captionRule).toContain("grid-column: 1");
+    expect(captionRule).toContain(
+      "min-height: calc(var(--blog-mermaid-toolbar-size) + var(--blog-mermaid-header-inset) * 2)",
+    );
+    expect(toolbarRule).toContain("grid-row: 1");
+    expect(toolbarRule).toContain("grid-column: 2");
+    expect(toolbarRule).not.toContain("position: absolute");
+    expect(toolbarRule).not.toContain("overflow: hidden");
+    expect(visualRule).toContain("grid-row: 2");
+    expect(visualRule).toContain("grid-column: 1 / -1");
+    expect(visualRule).toContain("padding: var(--blog-mermaid-gutter)");
+    expect(controlRule).toContain("backdrop-filter: none");
     expect(mobileToolbarRule).toContain("background: color-mix(in oklab, var(--foreground) 6%, var(--background))");
     expect(mobileToolbarRule).toContain("backdrop-filter: none");
     expect(mobileToolbarRule).not.toContain("saturate(");
     expect(mobileToolbarRule).toContain("0 4px 12px");
     expect(controlRule).toContain("appearance: none");
-    expect(controlRule).toContain("width: 2.75rem");
-    expect(controlRule).toContain("height: 2.75rem");
+    expect(controlRule).toContain("width: var(--blog-mermaid-control-size)");
+    expect(controlRule).toContain("height: var(--blog-mermaid-control-size)");
     expect(mobileControlRule).toContain("width: 0.9rem");
     expect(mobileControlRule).toContain("height: 0.9rem");
     expect(mobileResetRule).toContain("width: 3rem");
@@ -75,9 +96,7 @@ describe("Blog production styles", () => {
     const resetRule = coarseRules.match(/\.blog-mermaid-reset\s*\{([^}]*)\}/s)?.[1] ?? "";
     const chipRule = coarseRules.match(/\.blog-mermaid-reset-chip\s*\{([^}]*)\}/s)?.[1] ?? "";
 
-    expect(toolbarRule).toContain("position: absolute");
-    expect(toolbarRule).toContain("top: 0.5rem");
-    expect(toolbarRule).toContain("right: 0.5rem");
+    expect(toolbarRule).not.toContain("position: absolute");
     expect(toolbarRule).toContain("width: 2.75rem");
     expect(toolbarRule).toContain("height: 2.75rem");
     expect(toolbarRule).toContain("background: transparent");
@@ -253,9 +272,18 @@ describe("Blog production styles", () => {
     const css = await Bun.file(globalsCssUrl).text();
     const captionRule = css.match(/figcaption\[data-rehype-pretty-code-title\]\s*\{([^}]*)\}/s)?.[1] ?? "";
 
+    const codeToolbarRule = css.match(/\.blog-code-toolbar\s*\{([^}]*)\}/s)?.[1] ?? "";
+
     expect(captionRule).toContain("display: grid");
     expect(captionRule).toContain("grid-template-columns: minmax(0, 1fr) auto");
+    expect(captionRule).toContain("grid-row: 1");
     expect(captionRule).toContain("overflow-wrap: anywhere");
+    expect(css).toMatch(/figure\[data-rehype-pretty-code-figure\] > \.blog-code-block\s*\{\s*display:\s*contents/s);
+    expect(codeToolbarRule).toContain("grid-row: 1");
+    expect(codeToolbarRule).toContain("grid-column: 2");
+    expect(codeToolbarRule).not.toContain("position: absolute");
+    expect(css).toMatch(/\.blog-code-block pre\s*\{[^}]*grid-row:\s*2;[^}]*grid-column:\s*1 \/ -1/s);
+    expect(css).not.toMatch(/\[data-line\]:first-child\s*\{[^}]*padding-right/s);
     expect(css).toMatch(/\.blog-code-title\s*\{[^}]*min-width:\s*0/s);
     expect(css).not.toMatch(/\.blog-code-language\s*\{[^}]*text-transform:\s*uppercase/s);
     expect(css).toMatch(

@@ -5,6 +5,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -15,6 +16,7 @@ import {
   type NudgeDirection,
   nudgeViewBox,
   type Point,
+  padViewBox,
   panViewBox,
   parseViewBox,
   type ViewBox,
@@ -50,6 +52,7 @@ const ZOOM_BUTTON_STEP = 0.25;
 const ZOOM_WHEEL_SENSITIVITY = 0.0022;
 const PAN_INPUT_GAIN = 1.08;
 const PINCH_ZOOM_EXPONENT = 1.12;
+const WHEEL_LINE_HEIGHT = 16;
 
 function midpoint(first: Point, second: Point): Point {
   return {
@@ -448,15 +451,16 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
     [isZoomed, nudge, resetCamera, zoomBy],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!renderedSvg) {
       return;
     }
 
-    const svg = visualRef.current?.querySelector("svg");
-    const parsedViewBox = parseViewBox(svg?.getAttribute("viewBox") ?? "");
+    const visual = visualRef.current;
+    const svg = visual?.querySelector("svg");
+    const drawingViewBox = parseViewBox(svg?.getAttribute("viewBox") ?? "");
 
-    if (!svg || !parsedViewBox) {
+    if (!visual || !svg || !drawingViewBox) {
       baseViewBoxRef.current = null;
       cameraRef.current = null;
       return;
@@ -465,15 +469,33 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
     svg.setAttribute("aria-hidden", "true");
     svg.setAttribute("focusable", "false");
 
-    const previousBase = baseViewBoxRef.current;
-    const previousCamera = cameraRef.current;
-    const nextCamera =
-      previousBase && previousCamera ? rebaseViewBox(previousBase, previousCamera, parsedViewBox) : parsedViewBox;
+    // The viewport bleeds to the frame edges and carries the breathing room as padding, which the absolutely
+    // positioned SVG ignores. Moving that gutter into the viewBox keeps the resting layout unchanged while letting
+    // zoomed content run all the way to the frame instead of being cut at an invisible inner edge. The gutter and
+    // the viewport height follow the window width, so the padded base is refreshed whenever the viewport resizes,
+    // even when the frame width (and therefore the rendered drawing) stays the same.
+    const syncBaseViewBox = () => {
+      const gutter = Number.parseFloat(getComputedStyle(visual).paddingTop) || 0;
+      const nextBase = padViewBox(drawingViewBox, { height: visual.clientHeight, width: visual.clientWidth }, gutter);
+      const previousBase = baseViewBoxRef.current;
+      const previousCamera = cameraRef.current;
+      const nextCamera =
+        previousBase && previousCamera ? rebaseViewBox(previousBase, previousCamera, nextBase) : nextBase;
 
-    baseViewBoxRef.current = parsedViewBox;
-    cameraRef.current = nextCamera;
-    svg.setAttribute("viewBox", formatViewBox(nextCamera));
-  }, [renderedSvg]);
+      cancelQueuedCamera();
+      baseViewBoxRef.current = nextBase;
+      cameraRef.current = nextCamera;
+      svg.setAttribute("viewBox", formatViewBox(nextCamera));
+    };
+
+    syncBaseViewBox();
+
+    const observer = new ResizeObserver(syncBaseViewBox);
+
+    observer.observe(visual);
+
+    return () => observer.disconnect();
+  }, [cancelQueuedCamera, renderedSvg]);
 
   useEffect(() => {
     if (!isReady) {
@@ -487,14 +509,33 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
     }
 
     const handleWheel = (event: WheelEvent) => {
-      if (!event.ctrlKey && !event.metaKey) {
-        return;
-      }
-
       const baseViewBox = baseViewBoxRef.current;
       const currentViewBox = cameraRef.current;
 
       if (!baseViewBox || !currentViewBox) {
+        return;
+      }
+
+      if (!event.ctrlKey && !event.metaKey) {
+        if (getViewBoxZoom(baseViewBox, currentViewBox) <= MIN_MERMAID_ZOOM) {
+          return;
+        }
+
+        // A zoomed diagram owns every wheel and trackpad gesture over it, edges included. Releasing at an edge let
+        // trackpad momentum spill into the page mid-gesture, which scrolled the article and woke the sticky header.
+        // Reset the zoom, or move the pointer off the canvas, to scroll the page again.
+        const viewport = getViewport(visual);
+        const lineHeight = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? WHEEL_LINE_HEIGHT : 1;
+        const unit = event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? viewport.height : lineHeight;
+        const clientScale = getClientScale(currentViewBox, viewport);
+        const nextViewBox = panViewBox(baseViewBox, currentViewBox, {
+          x: (event.deltaX * unit) / clientScale,
+          y: (event.deltaY * unit) / clientScale,
+        });
+
+        event.preventDefault();
+        event.stopPropagation();
+        queueCamera(nextViewBox, false);
         return;
       }
 

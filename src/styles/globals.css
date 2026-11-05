@@ -3200,7 +3200,13 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   margin-top: 0.3rem;
 }
 
+/* Code blocks read as a header row over the code: title and language on the left, actions on the right. The
+   actions never float over the code, so no line can run under them. The figure is the grid and the client wrapper
+   steps aside, which lets the server-rendered caption and the client toolbar share one row. */
 .blog-prose figure[data-rehype-pretty-code-figure] {
+  --blog-code-header-inset: 0.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   overflow: hidden;
   margin-top: 1.5rem;
   border: 1px solid var(--blog-rich-block-border);
@@ -3208,12 +3214,19 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   background: var(--blog-rich-block-surface);
 }
 
+.blog-prose figure[data-rehype-pretty-code-figure] > .blog-code-block {
+  display: contents;
+}
+
 .blog-prose figcaption[data-rehype-pretty-code-title] {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  grid-row: 1;
+  grid-column: 1;
   gap: 0.75rem;
   align-items: center;
-  padding: 0.85rem 1rem 0;
+  align-self: stretch;
+  padding: var(--blog-code-header-inset) 0.75rem 0 1rem;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: 0.8rem;
@@ -3231,13 +3244,37 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-code-block {
-  position: relative;
+  --blog-code-header-inset: 0.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+/* Untitled fences still get the header row, labelled with their language so the row is never empty. */
+.blog-code-header-language {
+  display: flex;
+  grid-row: 1;
+  grid-column: 1;
+  align-items: center;
+  align-self: stretch;
+  min-width: 0;
+  padding: var(--blog-code-header-inset) 0.75rem 0 1rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.blog-prose figure[data-rehype-pretty-code-figure]:has(> figcaption) .blog-code-header-language {
+  display: none;
 }
 
 .blog-code-block pre {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  min-width: 0;
   overflow-x: auto;
   overscroll-behavior-x: none;
-  padding: 1.15rem 1rem;
+  padding: 0.85rem 1rem 1.15rem;
   color: var(--foreground);
   background: transparent;
   font-family: MonoLisaCode, ui-monospace, monospace;
@@ -3255,19 +3292,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   padding: 0;
 }
 
-.blog-code-block [data-line]:first-child {
-  padding-right: 5.75rem;
-}
-
 .blog-code-block [data-highlighted-line] {
   margin-inline: -1rem;
   padding-inline: 1rem;
   border-left: 2px solid var(--accent);
   background: color-mix(in oklab, var(--accent) 9%, transparent);
-}
-
-.blog-code-block [data-highlighted-line]:first-child {
-  padding-right: 6.75rem;
 }
 
 .blog-code-block[data-wrap="true"] pre {
@@ -3283,13 +3312,12 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-code-toolbar {
-  position: absolute;
-  top: 0.65rem;
-  right: 0.65rem;
-  z-index: 2;
   display: inline-flex;
+  grid-row: 1;
+  grid-column: 2;
+  align-self: start;
   min-width: 0;
-  margin: 0;
+  margin: var(--blog-code-header-inset) var(--blog-code-header-inset) 0 0;
   padding: 0;
   border: 1px solid var(--blog-rich-block-border);
   border-radius: 0.625rem;
@@ -3382,11 +3410,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
     overflow-wrap: anywhere;
     white-space: pre-wrap;
   }
-
-  .blog-code-block [data-line]:first-child,
-  .blog-code-block [data-highlighted-line]:first-child {
-    padding-right: 0;
-  }
 }
 
 code[data-theme] span {
@@ -3399,18 +3422,61 @@ code[data-theme] span {
   background-color: var(--shiki-dark-bg);
 }
 
+/* A diagram reads like a code block: a header row with its title on the left and the camera controls on the right,
+   then the canvas. The controls never cover the drawing, and the header row carries the label instead of empty space. */
 .blog-mermaid {
+  --blog-mermaid-gutter: clamp(1rem, 3vw, 1.5rem);
+  --blog-mermaid-header-inset: 0.5rem;
+  --blog-mermaid-control-size: 2.75rem;
+  --blog-mermaid-toolbar-size: calc(var(--blog-mermaid-control-size) + 2px);
   position: relative;
   isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   overflow: hidden;
-  padding: clamp(1rem, 3vw, 1.5rem);
   border: 1px solid color-mix(in oklab, var(--accent) 16%, var(--blog-rich-block-border));
   border-radius: var(--blog-rich-block-radius);
   background: var(--blog-rich-block-surface);
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .blog-mermaid {
+    --blog-mermaid-control-size: 2.25rem;
+  }
+}
+
+/* The canvas spans the frame below the header. Its padding is the resting gutter: the absolutely positioned SVG
+   ignores it, and the camera folds it into the viewBox, so zoomed content still clips at the frame's own edge. */
 .blog-mermaid-visual {
+  box-sizing: content-box;
+  grid-row: 2;
+  grid-column: 1 / -1;
+  min-width: 0;
   block-size: clamp(20rem, 65vw, 32rem);
+  padding: var(--blog-mermaid-gutter);
+  border-top: 1px solid color-mix(in oklab, var(--border) 64%, transparent);
+}
+
+/* The caption holds the header row's height while the diagram loads, so the controls do not shift the article. */
+.blog-mermaid-caption {
+  display: flex;
+  grid-row: 1;
+  grid-column: 1;
+  align-items: center;
+  align-self: stretch;
+  min-width: 0;
+  min-height: calc(var(--blog-mermaid-toolbar-size) + var(--blog-mermaid-header-inset) * 2);
+  margin: 0;
+  padding: var(--blog-mermaid-header-inset) 0.75rem var(--blog-mermaid-header-inset) 1rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.blog-mermaid:has(> .blog-mermaid-svg:focus-visible) {
+  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline-offset: 2px;
 }
 
 .blog-mermaid[data-state="loading"] {
@@ -3457,7 +3523,7 @@ code[data-theme] span {
   --pele-bold-weight: 800;
   --pele-radius: 10px;
   position: relative;
-  border-radius: calc(var(--blog-rich-block-radius) - 0.35rem);
+  overflow: hidden;
   outline: none;
   cursor: default;
   touch-action: pan-y;
@@ -3475,8 +3541,8 @@ code[data-theme] span {
 }
 
 .blog-mermaid-svg:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: none;
 }
 
 .blog-mermaid-svg svg {
@@ -3546,12 +3612,13 @@ code[data-theme] span {
 }
 
 .blog-mermaid-toolbar {
-  position: absolute;
-  top: clamp(0.75rem, 2vw, 1rem);
-  right: clamp(0.75rem, 2vw, 1rem);
+  position: relative;
   z-index: 3;
-  display: inline-flex;
-  overflow: hidden;
+  display: flex;
+  grid-row: 1;
+  grid-column: 2;
+  align-self: center;
+  margin: var(--blog-mermaid-header-inset) var(--blog-mermaid-header-inset) var(--blog-mermaid-header-inset) 0;
   border: 1px solid var(--blog-rich-block-border);
   border-radius: 0.8rem;
   background: var(--blog-rich-block-surface);
@@ -3559,17 +3626,33 @@ code[data-theme] span {
 
 .blog-mermaid-control {
   appearance: none;
-  width: 2.75rem;
-  min-width: 2.75rem;
-  height: 2.75rem;
+  width: var(--blog-mermaid-control-size);
+  min-width: var(--blog-mermaid-control-size);
+  height: var(--blog-mermaid-control-size);
   padding: 0;
   border: 0;
   border-radius: 0;
   color: var(--muted-foreground);
   background: transparent;
   box-shadow: none;
+  /* The bar is opaque, and a backdrop filter escapes the bar's rounded clip in WebKit. */
+  backdrop-filter: none;
   cursor: pointer;
   touch-action: manipulation;
+}
+
+.blog-mermaid-control:first-child {
+  border-radius: calc(0.8rem - 1px) 0 0 calc(0.8rem - 1px);
+}
+
+.blog-mermaid-control:last-child {
+  border-radius: 0 calc(0.8rem - 1px) calc(0.8rem - 1px) 0;
+}
+
+.blog-mermaid-control:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline-offset: -3px;
+  box-shadow: none;
 }
 
 .blog-mermaid-control + .blog-mermaid-control {
@@ -3600,10 +3683,6 @@ code[data-theme] span {
 
 @variant max-sm {
   .blog-mermaid-toolbar {
-    position: static;
-    display: flex;
-    width: max-content;
-    margin: 0.75rem 0 0 auto;
     border-color: color-mix(in oklab, var(--border) 68%, transparent);
     background: color-mix(in oklab, var(--foreground) 6%, var(--background));
     box-shadow:
@@ -3626,13 +3705,9 @@ code[data-theme] span {
 
 @media (hover: none) and (pointer: coarse) {
   .blog-mermaid-toolbar {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
     display: block;
     width: 2.75rem;
     height: 2.75rem;
-    margin: 0;
     overflow: visible;
     border: 0;
     background: transparent;
@@ -3745,10 +3820,8 @@ code[data-theme] span {
   line-height: 1.7;
 }
 
-.blog-mermaid figcaption {
-  margin-bottom: 0.75rem;
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
+.blog-mermaid-caption[data-error="true"] {
+  grid-column: 1 / -1;
 }
 
 .blog-figure img,

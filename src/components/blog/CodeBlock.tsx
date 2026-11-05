@@ -129,11 +129,14 @@ export default function CodeBlock({ children, ...props }: ComponentPropsWithoutR
     setWrapped(false);
   }
 
+  const language = (props as Record<string, unknown>)["data-language"];
   const copyLabel = copyState === "copied" ? ui.copied : copyState === "error" ? ui.copyFailed : ui.copy;
   const copyIcon = copyState === "copied" ? Check : copyState === "error" ? X : Copy;
 
   return (
     <div className="blog-code-block" data-wrap={wrapped ? "true" : "false"}>
+      {typeof language === "string" ? <span className="blog-code-header-language">{language}</span> : null}
+
       <pre ref={preRef} {...props}>
         {children}
       </pre>

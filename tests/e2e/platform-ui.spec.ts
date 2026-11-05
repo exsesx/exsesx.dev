@@ -401,6 +401,43 @@ if (!("Bun" in globalThis)) {
       await resetZoom.click();
 
       await zoomIn.click();
+      await viewport.scrollIntoViewIfNeeded();
+      const panBounds = await viewport.boundingBox();
+      expect(panBounds).not.toBeNull();
+      await page.mouse.move(
+        (panBounds?.x ?? 0) + (panBounds?.width ?? 0) / 2,
+        (panBounds?.y ?? 0) + (panBounds?.height ?? 0) / 2,
+      );
+      const viewBoxBeforeWheelPan = await svg.getAttribute("viewBox");
+      const scrollBeforeWheelPan = await page.evaluate(() => window.scrollY);
+      await page.mouse.wheel(120, 0);
+      await expect.poll(() => svg.getAttribute("viewBox")).not.toBe(viewBoxBeforeWheelPan);
+      expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeWheelPan);
+
+      // Pan past the bottom edge, then keep scrolling with the small horizontal drift a trackpad adds. A zoomed diagram
+      // owns the gesture, so the page must not move even once the camera has nowhere left to go.
+      for (let step = 0; step < 8; step += 1) {
+        await page.mouse.wheel(0, 400);
+      }
+      await viewport.scrollIntoViewIfNeeded();
+      const edgeBounds = await viewport.boundingBox();
+      expect(edgeBounds).not.toBeNull();
+      await page.mouse.move(
+        (edgeBounds?.x ?? 0) + (edgeBounds?.width ?? 0) / 2,
+        (edgeBounds?.y ?? 0) + (edgeBounds?.height ?? 0) / 2,
+      );
+      const viewBoxAtCameraEdge = await svg.getAttribute("viewBox");
+      const scrollAtCameraEdge = await page.evaluate(() => window.scrollY);
+      for (let step = 0; step < 4; step += 1) {
+        await page.mouse.wheel(-3, 240);
+      }
+      // The drift still pans sideways, but the camera stays pinned to the bottom edge and the page stays put.
+      const edgeY = Number((viewBoxAtCameraEdge ?? "").split(/\s+/)[1]);
+      await expect.poll(async () => Number(((await svg.getAttribute("viewBox")) ?? "").split(/\s+/)[1])).toBe(edgeY);
+      expect(await page.evaluate(() => window.scrollY)).toBe(scrollAtCameraEdge);
+      await resetZoom.click();
+
+      await zoomIn.click();
       const viewBoxBeforeDrag = await svg.getAttribute("viewBox");
       const [baseX = 0, baseY = 0] = (baseViewBox ?? "").split(/\s+/).map(Number);
       const [currentX = 0, currentY = 0] = (viewBoxBeforeDrag ?? "").split(/\s+/).map(Number);
@@ -460,7 +497,14 @@ if (!("Bun" in globalThis)) {
       await expect(wrapButton).toHaveAttribute("aria-pressed", "false");
       await expect(pre).toHaveCSS("overscroll-behavior-x", "none");
 
-      const [wrapBounds, copyBounds] = await Promise.all([wrapButton.boundingBox(), copyButton.boundingBox()]);
+      const [wrapBounds, copyBounds, toolbarBounds, preBounds] = await Promise.all([
+        wrapButton.boundingBox(),
+        copyButton.boundingBox(),
+        toolbar.boundingBox(),
+        pre.boundingBox(),
+      ]);
+      // The actions sit in the header row, above the code, so no line can run underneath them.
+      expect((toolbarBounds?.y ?? 0) + (toolbarBounds?.height ?? 0)).toBeLessThanOrEqual((preBounds?.y ?? 0) + 0.5);
       const expectedButtonSize = isMobile ? 40 : 36;
       expect(wrapBounds?.width).toBeCloseTo(expectedButtonSize, 1);
       expect(wrapBounds?.height).toBeCloseTo(expectedButtonSize, 1);
