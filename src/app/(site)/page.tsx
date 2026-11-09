@@ -258,7 +258,7 @@ export default function HomePage() {
               <ProjectMedia
                 project={leadProject}
                 sizes="(min-width: 1280px) 56vw, 100vw"
-                className="aspect-[40/21] xl:col-span-7 xl:self-stretch"
+                className="aspect-[40/21] xl:col-span-7 xl:w-full xl:min-w-0 xl:self-stretch"
               />
               <div className="flex min-w-0 max-w-3xl flex-col gap-5 xl:col-span-5 xl:max-w-none">
                 <div>
