@@ -190,7 +190,8 @@ describe("Blog production styles", () => {
 
   test("uses one strong outer-edge contract across rounded article rich blocks", async () => {
     const css = await Bun.file(globalsCssUrl).text();
-    const proseRule = css.match(/\.blog-prose\s*\{([^}]*)\}/s)?.[1] ?? "";
+    // Case-study evidence figures share the article's rich-block tokens, so both read from one rule.
+    const proseRule = css.match(/\.blog-prose,\s*\.case-evidence\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(proseRule).toContain("--blog-rich-block-radius: var(--radius)");
     expect(proseRule).toContain("--blog-rich-block-gap: 1.5rem");

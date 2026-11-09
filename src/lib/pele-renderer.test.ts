@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "./mermaid-theme";
 import { renderPeleDiagram } from "./pele-renderer";
+import { projects } from "./projects";
 
 const contentRoot = new URL("../content/blog/", import.meta.url).pathname;
 const diagrams: { path: string; source: string }[] = [];
@@ -61,6 +62,24 @@ describe("Pele flowchart renderer", () => {
     expect(second).toContain('id="second-title"');
     expect(second).not.toContain('id="first-title"');
   });
+
+  for (const { detail, evidence, slug } of projects) {
+    if (!evidence) {
+      continue;
+    }
+
+    test(`renders the ${slug} case-study evidence diagram at desktop and mobile widths`, () => {
+      expect(detail.contribution[evidence.contributionIndex]).toBeDefined();
+
+      for (const width of [320, 900]) {
+        const svg = renderDiagram(evidence.diagram, width);
+
+        expect(svg).toContain(getMermaidAccessibleLabel(evidence.diagram));
+        expect(svg).toContain(getMermaidAccessibleDescription(evidence.diagram) ?? "");
+        expect(svg).not.toMatch(/NaN|Infinity/);
+      }
+    });
+  }
 
   test("adapts a wide left-to-right diagram to a narrow container", () => {
     const source = diagrams.find(diagram => diagram.path === "safari-26-invisible-tint-sampler/en.mdx")?.source;

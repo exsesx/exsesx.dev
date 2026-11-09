@@ -1,6 +1,18 @@
 import type { Route } from "next";
 import type { StaticImageData } from "next/image";
 
+/*
+ * One diagram that shows the engineering behind a contribution. Every node, edge, and label restates
+ * a fact already written in the project's own copy; nothing is added that the copy does not say.
+ */
+export interface ProjectEvidence {
+  /** Mermaid flowchart source. Its accTitle heads the frame and its accDescr is the no-script fallback. */
+  diagram: string;
+  caption: string;
+  /** Zero-based index into `detail.contribution` of the item the diagram illustrates. */
+  contributionIndex: number;
+}
+
 export interface Project {
   id: string;
   slug: string;
@@ -19,6 +31,7 @@ export interface Project {
     outcome: string;
     scope: string[];
   };
+  evidence?: ProjectEvidence;
   accent: "amber" | "controlup" | "mint" | "quicklizard" | "rose" | "steel" | "violet";
   media:
     | {
@@ -63,6 +76,24 @@ export const projects: Project[] = [
         "Assistant actions IT admins can trust: approved together, scoped to their organization's license, and checked in production with Langfuse traces.",
       scope: ["Human-in-the-loop approvals", "MCP architecture", "Assistant frontend", "Agent-assisted delivery"],
     },
+    evidence: {
+      diagram: `flowchart TD
+  accTitle: Approving several changes in one turn
+  accDescr: Before, Mastra's flow at the time blocked the turn on one approval after another. After, the approval layer shows every pending approval in the turn at once, an IT admin approves or rejects them together, and the stream carries on.
+  subgraph before["Before: turn blocked"]
+    direction LR
+    beforeFirst["Approval"] --> beforeNext["Next approval"]
+  end
+  subgraph after["After: approval layer"]
+    pending["Every pending approval in the turn, at once"] --> admin["IT admin approves or rejects them together"]
+    admin --> stream["Stream carries on"]
+  end
+  before ~~~ after
+  class pending focus`,
+      caption:
+        "Mastra's flow at the time blocked the turn on one approval after another. The approval layer shows every pending approval at once, so an IT admin can review several changes in one turn.",
+      contributionIndex: 0,
+    },
     accent: "controlup",
     media: {
       type: "image",
@@ -96,6 +127,20 @@ export const projects: Project[] = [
       outcome:
         "Pricing features that shipped behind feature flags and improved on production feedback, on a simpler stack and CI.",
       scope: ["Pricing dashboards", "Go backend endpoints", "Stack modernization"],
+    },
+    evidence: {
+      diagram: `flowchart TD
+  accTitle: Each feature, from scoping to production feedback
+  accDescr: Each pricing feature went from scoping with stakeholders to a feature-flagged rollout, then through monitoring and production feedback, and improved on that feedback.
+  feature["Pricing feature"] --> scoping["Scoping with stakeholders"]
+  scoping --> rollout["Feature-flagged rollout"]
+  rollout --> monitoring["Monitoring"]
+  monitoring --> feedback["Production feedback"]
+  feedback -. "improved on" .-> feature
+  class rollout focus`,
+      caption:
+        "Dashboards, localization, authentication, and bulk overrides each went from scoping with stakeholders to a feature-flagged rollout, then improved on production feedback.",
+      contributionIndex: 0,
     },
     accent: "quicklizard",
     media: {
@@ -131,6 +176,18 @@ export const projects: Project[] = [
       outcome:
         "A live commerce system where a bad architecture call would have hit the kitchens, drivers, and payments.",
       scope: ["Solution architecture", "Team leadership", "Preview environments", "Delivery operations"],
+    },
+    evidence: {
+      diagram: `flowchart TD
+  accTitle: A preview environment per pull request
+  accDescr: Labeling a pull request deploys it to its own namespace with a database, test data, RabbitMQ, and Jaeger tracing. GitHub Actions and Go handle the deploy and the cleanup, and the CTO, QA, and PM try the branch there before merge.
+  label["Label a pull request"] --> deploy["GitHub Actions and Go deploy and clean up"]
+  deploy --> namespace["Its own namespace: database, test data, RabbitMQ, Jaeger tracing"]
+  namespace --> review["CTO, QA, and PM try the branch before merge"]
+  class deploy focus`,
+      caption:
+        "Preview environments: a label on a pull request deploys the branch to its own namespace, so the CTO, QA, and PM could try it before merge.",
+      contributionIndex: 3,
     },
     accent: "rose",
     media: {
@@ -252,6 +309,18 @@ export const projects: Project[] = [
       ],
       outcome: "A frontend and data-layer move that kept the live product working.",
       scope: ["AngularJS to React", "PostGraphQL APIs", "Utility operations"],
+    },
+    evidence: {
+      diagram: `flowchart TD
+  accTitle: Stored procedures as GraphQL APIs
+  accDescr: The frontend moved from AngularJS to React. The React frontend queries GraphQL APIs directly, and PostGraphQL exposes the PostgreSQL stored procedures as those APIs.
+  angular["AngularJS frontend"] -- "migrated to" --> react["React frontend"]
+  react -- "queries directly" --> api["GraphQL APIs"]
+  api -- "exposed with PostGraphQL" --> procs["PostgreSQL stored procedures"]
+  class api focus`,
+      caption:
+        "PostGraphQL exposed the PostgreSQL stored procedures as GraphQL APIs, so the React frontend from the AngularJS migration could query them directly.",
+      contributionIndex: 1,
     },
     accent: "violet",
     media: {

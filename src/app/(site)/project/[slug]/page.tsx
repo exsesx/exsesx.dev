@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
 import AsciiField from "@/components/AsciiField";
 import AutoPauseVideo from "@/components/AutoPauseVideo";
+import MermaidDiagram from "@/components/blog/MermaidDiagram";
 import ProjectCard from "@/components/ProjectCard";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { createPageMetadata, createProjectSocialImage } from "@/lib/metadata";
@@ -16,6 +17,7 @@ import {
   getProjectPath,
   getProjectTransitionType,
   type Project,
+  type ProjectEvidence,
   projects,
 } from "@/lib/projects";
 import { cn } from "@/lib/utils";
@@ -107,6 +109,31 @@ function ProjectHeroMedia({ project }: { project: Project }) {
   );
 }
 
+/* Contributions are numbered 01, 02, … in the list and wherever the evidence figure points back to one. */
+function formatContributionNumber(index: number) {
+  return String(index + 1).padStart(2, "0");
+}
+
+/*
+ * The case's evidence: one diagram of the engineering behind a contribution, in the article diagram's
+ * frame, with a caption that names the contribution it illustrates. The brand art stays the cover.
+ */
+function EvidenceFigure({ evidence }: { evidence: ProjectEvidence }) {
+  return (
+    <figure className="case-evidence mt-stack grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-x-8">
+      <div className="min-w-0 lg:col-span-7">
+        <MermaidDiagram source={evidence.diagram} />
+      </div>
+      <figcaption className="max-w-[48ch] text-pretty text-base leading-7 text-muted-foreground lg:col-span-4 lg:col-start-9">
+        <span className="font-bold text-foreground">
+          Contribution {formatContributionNumber(evidence.contributionIndex)}.
+        </span>{" "}
+        {evidence.caption}
+      </figcaption>
+    </figure>
+  );
+}
+
 /* A readout row: what is measured on the left, the value beside it. */
 function ReadoutRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -189,6 +216,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             {project.impact}
           </p>
 
+          {project.evidence ? <EvidenceFigure evidence={project.evidence} /> : null}
+
           <div className="mt-stack grid gap-12 lg:grid-cols-12 lg:gap-x-8">
             <div className="flex flex-col gap-6 lg:col-span-6">
               <p className="text-pretty text-lead text-foreground">{project.description}</p>
@@ -231,7 +260,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   className="grid grid-cols-[minmax(0,2.5rem)_minmax(0,1fr)] items-baseline gap-4 sm:gap-6"
                 >
                   <span aria-hidden="true" className="text-title font-bold tabular-nums text-accent">
-                    {String(index + 1).padStart(2, "0")}
+                    {formatContributionNumber(index)}
                   </span>
                   <p className="max-w-[60ch] text-base leading-7 text-foreground">{item}</p>
                 </li>

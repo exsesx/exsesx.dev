@@ -2834,11 +2834,16 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   background: transparent;
 }
 
-.blog-prose {
+/* A case study's evidence figure reuses the article diagram frame, so it shares the article's block surfaces. */
+.blog-prose,
+.case-evidence {
   --blog-rich-block-gap: 1.5rem;
   --blog-rich-block-radius: var(--radius);
   --blog-rich-block-surface: color-mix(in oklab, var(--foreground) 3%, var(--background));
   --blog-rich-block-border: color-mix(in oklab, var(--foreground) 16%, var(--blog-rich-block-surface));
+}
+
+.blog-prose {
   color: color-mix(in oklab, var(--foreground) 86%, var(--muted-foreground));
   font-size: clamp(1rem, 1.3vw, 1.08rem);
   line-height: 1.7;
@@ -3488,6 +3493,12 @@ code[data-theme] span {
   block-size: clamp(20rem, 65vw, 32rem);
   padding: var(--blog-mermaid-gutter);
   border-top: 1px solid color-mix(in oklab, var(--border) 64%, transparent);
+}
+
+/* An evidence diagram is one narrow vertical flow, so its canvas runs taller than an article's to keep the
+   labels near body size on a phone. */
+.case-evidence .blog-mermaid-visual {
+  block-size: 34rem;
 }
 
 /* The caption holds the header row's height while the diagram loads, so the controls do not shift the article. */
