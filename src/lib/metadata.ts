@@ -9,7 +9,7 @@ export const siteName = SITE_PROFILE.domain;
 const socialPreviewPath = "/images/social-preview.png";
 // Bump to force social platforms (Telegram, X, LinkedIn, Slack) to re-scrape
 // cached previews — they cache og:image by URL.
-const socialImageVersion = "5";
+const socialImageVersion = "6";
 const previewDeploymentUrl = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
 const socialImageOrigin =
   process.env.VERCEL_ENV === "preview" && previewDeploymentUrl ? `https://${previewDeploymentUrl}` : siteUrl;
@@ -138,7 +138,7 @@ export function createBlogArticleMetadata(article: BlogPostEntry, availableLocal
   };
 }
 
-const faviconVersion = "v=4";
+const faviconVersion = "v=5";
 const faviconAsset = (path: string) => `${path}?${faviconVersion}`;
 
 export const rootMetadata: Metadata = {
@@ -203,7 +203,7 @@ export const rootMetadata: Metadata = {
     ],
     shortcut: faviconAsset("/favicon.ico"),
     apple: [{ url: faviconAsset("/favicon/apple-touch-icon.png"), sizes: "180x180" }],
-    other: [{ rel: "mask-icon", url: faviconAsset("/favicon/safari-pinned-tab.svg"), color: "#0b1423" }],
+    other: [{ rel: "mask-icon", url: faviconAsset("/favicon/safari-pinned-tab.svg"), color: "#171717" }],
   },
   manifest: faviconAsset("/favicon/site.webmanifest"),
 };

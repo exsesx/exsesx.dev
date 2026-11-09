@@ -17,11 +17,11 @@ const logoPath = "M84 84 168 96 256 334 344 96 428 84 298 430c-4 10-12 16-23 16h
 
 // The site's light theme tokens (globals.css :root).
 const colors = {
-  background: "#eef2f8",
-  foreground: "#0b1423",
-  muted: "#51607a",
-  accent: "#2440ff",
-  card: "#fbfdff",
+  background: "#f5f5f5",
+  foreground: "#171717",
+  muted: "#5f5f5f",
+  accent: "#007346",
+  card: "#ffffff",
 };
 
 const accentColors: Record<Project["accent"], string> = {
@@ -147,8 +147,8 @@ function textBlock(
 /*
  * A still frame of the site's hero ASCII field: hashed glyphs that fade in from
  * the text column, with an ECG trace drawn in slope glyphs along `baselineY`
- * and a soft accent glow around it. Deterministic per `seed`, so regenerating
- * an unchanged card produces the same image.
+ * and a faint lift in the glyphs right around it. Deterministic per `seed`, so
+ * regenerating an unchanged card produces the same image.
  */
 function asciiField(options: {
   seed: number;
@@ -233,7 +233,7 @@ function asciiField(options: {
 
       const cell = column * 1009 + row;
 
-      if (hashCell(cell, options.seed) < 0.3) {
+      if (hashCell(cell, options.seed) < 0.4) {
         continue;
       }
 
@@ -241,14 +241,14 @@ function asciiField(options: {
         smoothstep(options.startX, fadeInEnd, x) * smoothstep(0, 110, y) * smoothstep(height + 10, height - 120, y);
       const traceAtColumn = traceY(column);
       const glow = traceAtColumn === null ? 0 : glowFalloff(Math.abs(y - traceAtColumn), glowRadius);
-      const opacity = fade * (0.15 + glow * 0.45);
+      const opacity = fade * (0.12 + glow * 0.32);
 
       if (opacity < 0.02) {
         continue;
       }
 
       const glyph = ASCII_GLYPHS[Math.floor(hashCell(cell, options.seed + 1) * ASCII_GLYPHS.length)];
-      const fill = glow > 0.18 ? options.accent : colors.foreground;
+      const fill = glow > 0.5 ? options.accent : colors.foreground;
 
       cells.push(
         `<text x="${x}" y="${textY}" class="field" fill="${fill}" fill-opacity="${opacity.toFixed(2)}">${escapeXml(glyph)}</text>`,
@@ -268,7 +268,6 @@ function pulseTrace(x: number, baselineY: number, traceWidth: number, stroke: st
   const base = `fill="none" stroke-linecap="round" stroke-linejoin="round" d="${TRACE_PATH}"`;
 
   return `<g transform="translate(${x} ${y}) scale(${scale})">
-    <path ${base} stroke="${stroke}" stroke-width="${16 / scale}" opacity="0.16" filter="url(#trace-glow)"/>
     <path ${base} stroke="${stroke}" stroke-width="${6 / scale}"/>
   </g>`;
 }
@@ -293,18 +292,13 @@ function brand(address: string) {
 function baseSvg(inner: string) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="trace-glow" x="-20%" y="-60%" width="140%" height="220%" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="5"/>
-    </filter>
-  </defs>
   <style>
     .brand { font: 800 25px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.foreground}; }
     .address { font: 600 17px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
     .eyebrow { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.muted}; }
-    .display { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 900; fill: ${colors.foreground}; letter-spacing: -0.02em; }
+    .display { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 800; fill: ${colors.foreground}; letter-spacing: -0.02em; }
     .lede { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 400; fill: ${colors.muted}; }
-    .tags { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.foreground}; }
+    .tags { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.muted}; }
     .field { font: 500 15px MonoLisaCode, ui-monospace, monospace; }
     .field-trace { font: 700 16px MonoLisaCode, ui-monospace, monospace; }
   </style>
