@@ -4,6 +4,7 @@ const bindMock = mock(() => {});
 const playMock = mock((_sound: string) => {});
 const setEnabledMock = mock((_enabled: boolean) => {});
 const setVolumeMock = mock((_volume: number) => {});
+const unlockMock = mock(() => Promise.resolve(true));
 
 mock.module("cuelume", () => ({
   bind: bindMock,
@@ -11,6 +12,7 @@ mock.module("cuelume", () => ({
   setEnabled: setEnabledMock,
   setVolume: setVolumeMock,
   sounds: ["error", "loading", "tap", "ready", "success", "select", "toggle"],
+  unlock: unlockMock,
 }));
 
 const {
@@ -21,6 +23,7 @@ const {
   INTERACTION_SOUND_VOLUME,
   persistSoundEffectsEnabled,
   playPopupToggleSound,
+  scheduleAudioOutputWarmup,
   setSoundEffectsEnabled,
   subscribeToSoundEffects,
 } = await import("./interaction-sounds");
@@ -80,6 +83,7 @@ beforeEach(() => {
   playMock.mockClear();
   setEnabledMock.mockClear();
   setVolumeMock.mockClear();
+  unlockMock.mockClear();
 });
 
 afterEach(() => {
@@ -196,6 +200,54 @@ describe("popup sound decisions", () => {
     queued.shift()?.();
 
     expect(playMock.mock.calls).toEqual([["toggle"]]);
+  });
+
+  test("warms audio on the first intent, then unlocks it inside a popup press", () => {
+    const { testWindow } = installTestWindow();
+    const queued: Array<() => void> = [];
+    let audioContextsCreated = 0;
+
+    Object.assign(testWindow, {
+      AudioContext: class {
+        constructor() {
+          audioContextsCreated += 1;
+        }
+
+        close() {
+          return Promise.resolve();
+        }
+      },
+      cancelAnimationFrame: () => {},
+      clearTimeout: () => {},
+      requestAnimationFrame: (callback: () => void) => queued.push(callback),
+      setTimeout: (callback: () => void) => queued.push(callback),
+    });
+
+    function runQueued() {
+      while (queued.length > 0) {
+        queued.shift()?.();
+      }
+    }
+
+    const cancelWarmup = scheduleAudioOutputWarmup();
+    playPopupToggleSound(true, "trigger-press");
+    runQueued();
+
+    expect(audioContextsCreated).toBe(0);
+    expect(unlockMock).not.toHaveBeenCalled();
+
+    window.dispatchEvent(new Event("pointermove"));
+    runQueued();
+    window.dispatchEvent(new Event("keydown"));
+    runQueued();
+
+    expect(audioContextsCreated).toBe(1);
+
+    playPopupToggleSound(true, "trigger-press");
+
+    expect(unlockMock).toHaveBeenCalledTimes(1);
+
+    cancelWarmup();
   });
 });
 

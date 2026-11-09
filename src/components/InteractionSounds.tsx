@@ -10,6 +10,7 @@ import {
   scheduleAudioOutputWarmup,
   subscribeToSoundEffects,
   syncInteractionSoundsEnabled,
+  unlockInteractionAudio,
 } from "@/lib/interaction-sounds";
 
 function isUnavailableControl(element: Element) {
@@ -53,6 +54,22 @@ export default function InteractionSounds() {
     document.addEventListener("click", handleKeyboardActivation, true);
 
     return () => document.removeEventListener("click", handleKeyboardActivation, true);
+  }, []);
+
+  // Base UI opens a menu a frame after its mousedown, so the popup's own cue code runs outside the gesture.
+  // Unlocking here, in the mousedown itself, is what WebKit counts. A tap dispatches the same mousedown.
+  useEffect(() => {
+    function handlePopupTriggerPress(event: MouseEvent) {
+      if (event.button !== 0 || !(event.target instanceof Element) || !event.target.closest("[aria-haspopup]")) {
+        return;
+      }
+
+      unlockInteractionAudio();
+    }
+
+    document.addEventListener("mousedown", handlePopupTriggerPress, true);
+
+    return () => document.removeEventListener("mousedown", handlePopupTriggerPress, true);
   }, []);
 
   return null;

@@ -1,4 +1,4 @@
-import { bind, play, type SoundName, setEnabled, setVolume, sounds } from "cuelume";
+import { bind, play, type SoundName, setEnabled, setVolume, sounds, unlock } from "cuelume";
 
 const SOUND_EFFECTS_CHANGE_EVENT = "exsesx:sound-effects-change";
 const SOUND_EFFECTS_STORAGE_KEY = "exsesx:sound-effects";
@@ -57,16 +57,20 @@ export function initializeInteractionSounds() {
 
 /*
  * The first AudioContext a browser process creates opens its audio output
- * synchronously, about 200-400ms of main thread in Chrome; every later one
- * takes about 1ms. Cuelume creates its context inside the first press, so that
- * cost froze the first tap. A throwaway context made while the page is idle
- * pays it off the gesture. With no sink it never sounds or claims audio, and it
- * is closed at once: the warmth belongs to the process, not the context.
+ * synchronously, 200-600ms of main thread in Chrome; every later one takes a
+ * few milliseconds. Cuelume creates its context inside the first press, so that
+ * cost froze the first tap. A throwaway context made ahead of the press pays it
+ * off the gesture. With no sink it never sounds or claims audio, and it is
+ * closed at once: the warmth belongs to the process, not the context.
+ *
+ * It waits for the first sign of intent rather than for idle after load: a
+ * visitor who never touches the page never pays the long task, and a pointer
+ * or key usually moves well before the first press lands. A pointer that moves
+ * during the hero's entrance can hitch its main-thread drawing once, which
+ * costs less than a long task on every visit.
  */
-// Right after load, while the hero's entrance still runs on the compositor:
-// the headline's mark starts drawing 640ms in and the field's first sweep
-// follows it, both on the main thread, so a later warm-up would hitch them.
-const AUDIO_WARMUP_IDLE_TIMEOUT_MS = 500;
+const AUDIO_WARMUP_INTENT_EVENTS = ["pointerdown", "pointermove", "touchstart", "keydown"] as const;
+const AUDIO_WARMUP_LISTENER_OPTIONS: AddEventListenerOptions = { capture: true, passive: true };
 
 let audioOutputWarmed = false;
 
@@ -100,36 +104,57 @@ export function scheduleAudioOutputWarmup(): () => void {
     return () => {};
   }
 
-  let idleHandle: number | null = null;
+  let frameHandle: number | null = null;
   let timeoutHandle: number | null = null;
 
-  function schedule() {
-    if (typeof window.requestIdleCallback === "function") {
-      idleHandle = window.requestIdleCallback(warmAudioOutput, { timeout: AUDIO_WARMUP_IDLE_TIMEOUT_MS });
-
-      return;
+  function removeIntentListeners() {
+    for (const type of AUDIO_WARMUP_INTENT_EVENTS) {
+      window.removeEventListener(type, handleIntent, AUDIO_WARMUP_LISTENER_OPTIONS);
     }
-
-    timeoutHandle = window.setTimeout(warmAudioOutput, 0);
   }
 
-  if (document.readyState === "complete") {
-    schedule();
-  } else {
-    window.addEventListener("load", schedule, { once: true });
+  // After the frame that answers the intent, so a first key or touch paints its own feedback before the warm-up runs.
+  function handleIntent() {
+    removeIntentListeners();
+
+    frameHandle = window.requestAnimationFrame(() => {
+      frameHandle = null;
+      timeoutHandle = window.setTimeout(warmAudioOutput, 0);
+    });
+  }
+
+  for (const type of AUDIO_WARMUP_INTENT_EVENTS) {
+    window.addEventListener(type, handleIntent, AUDIO_WARMUP_LISTENER_OPTIONS);
   }
 
   return () => {
-    window.removeEventListener("load", schedule);
+    removeIntentListeners();
 
-    if (idleHandle !== null) {
-      window.cancelIdleCallback(idleHandle);
+    if (frameHandle !== null) {
+      window.cancelAnimationFrame(frameHandle);
     }
 
     if (timeoutHandle !== null) {
       window.clearTimeout(timeoutHandle);
     }
   };
+}
+
+/*
+ * WebKit starts audio only from inside a user gesture, and a popup's cue plays
+ * a frame later, outside it. Creating or resuming Cuelume's context while the
+ * press is still on the stack keeps the first cue audible when opening a popup
+ * is the visitor's first press. Only once the process is warm, though: a cold
+ * first context would put the 200-600ms long task back inside the press. A
+ * pointer moves or a finger lands before the press, so the warm-up has nearly
+ * always run by then; when it has not, the cue creates its context late.
+ */
+export function unlockInteractionAudio() {
+  if (!audioOutputWarmed || !getStoredSoundEffectsEnabled()) {
+    return;
+  }
+
+  void unlock();
 }
 
 export function syncInteractionSoundsEnabled(enabled: boolean) {
@@ -188,6 +213,8 @@ function playAfterNextPaint(sound: SoundName) {
     return;
   }
 
+  // Keyboard opens and shortcuts reach here inside their keydown or click; pointer opens are covered in InteractionSounds.
+  unlockInteractionAudio();
   window.requestAnimationFrame(() => window.setTimeout(() => playInteractionSound(sound), 0));
 }
 
