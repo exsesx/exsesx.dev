@@ -321,16 +321,8 @@ function CvMenu() {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] sm:w-52">
+              {/* Opening the CV is the split button's own action; the menu only holds the other one. */}
               <DropdownMenuGroup>
-                <DropdownMenuLinkItem
-                  data-cuelume-press=""
-                  href={RESUME_PDF_URL}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <FileText size={16} strokeWidth={2.3} />
-                  Open CV
-                </DropdownMenuLinkItem>
                 {secondaryAction === "share" ? (
                   <DropdownMenuItem closeOnClick={false} disabled={isShareBusy} onClick={handleShareCv}>
                     <span className="cv-share-state relative grid min-w-0 flex-1" aria-live="polite">
