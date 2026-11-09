@@ -27,6 +27,25 @@ type BlogPostQueryOptions = {
   includeDrafts?: boolean;
 };
 
+// Topic tags are written in English once per post; the Ukrainian editions show them in Ukrainian. Names of
+// products and technologies (Codex, Safari, macOS, CSS) are not translated, so unknown tags pass through as written.
+const UK_TAG_LABELS: Readonly<Record<string, string>> = {
+  "AI engineering": "AI-інженерія",
+  Apps: "Застосунки",
+  "Developer tools": "Інструменти розробника",
+  Memory: "Пам’ять",
+  Performance: "Продуктивність",
+  "Personal setup": "Особисте налаштування",
+};
+
+function localizeTags(tags: readonly string[], locale: BlogLocale) {
+  if (locale !== "uk") {
+    return tags;
+  }
+
+  return tags.map(tag => UK_TAG_LABELS[tag] ?? tag);
+}
+
 export function getBlogPosts(
   locale: BlogLocale,
   { includeDrafts = process.env.NODE_ENV === "development" }: BlogPostQueryOptions = {},
@@ -62,7 +81,7 @@ export function getBlogPost(
     ...edition,
     locale,
     slug: post.slug,
-    tags: post.tags,
+    tags: localizeTags(post.tags, locale),
   };
 }
 

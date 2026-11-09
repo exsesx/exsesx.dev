@@ -2500,6 +2500,14 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   padding-bottom: max(var(--spacing-section-s), calc(max(1rem, env(safe-area-inset-bottom)) + 3.75rem));
 }
 
+/* Between tablet and wide desktop the prose sits at 17px in the same column, which runs lines past 70 characters;
+   a shorter text measure holds them near 65. */
+@media (48rem <= width < 80rem) {
+  .blog-article {
+    --blog-text-measure: 37rem;
+  }
+}
+
 .blog-article-header,
 .blog-article-footer {
   max-width: var(--blog-measure);
