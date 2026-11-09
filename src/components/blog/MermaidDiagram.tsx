@@ -144,9 +144,6 @@ function MermaidDiagramViewForSource({
       {isReady ? (
         <>
           <MermaidToolbar camera={camera} ui={ui} />
-          <span className="blog-mermaid-touch-hint" aria-hidden="true" lang={locale}>
-            {ui.touchHint}
-          </span>
 
           <div
             ref={camera.visualRef}

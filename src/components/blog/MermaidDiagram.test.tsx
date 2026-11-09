@@ -94,7 +94,6 @@ describe("MermaidDiagram", () => {
     expect(markup).toContain('class="blog-mermaid-reset-chip">100%</span>');
     expect(markup).not.toContain('aria-label="Move"');
     expect(markup).not.toContain("blog-mermaid-gesture-hint");
-    expect(markup).toMatch(/class="blog-mermaid-touch-hint" aria-hidden="true"[^>]*>Pinch to zoom</);
     expect(markup).not.toContain("<noscript>");
     expect(markup).toContain('aria-hidden="true" focusable="false"');
     expect(markup).toContain("A root agent delegates work.");

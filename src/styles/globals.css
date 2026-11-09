@@ -3784,32 +3784,6 @@ code[data-theme] span {
   animation: none;
 }
 
-/* Touch screens hide the zoom steps, so the header names the gesture until the reader zooms. It shares the toolbar's
-   cell, which stays an empty 44px target at rest. */
-.blog-mermaid-touch-hint {
-  display: none;
-  grid-row: 1;
-  grid-column: 2;
-  justify-self: end;
-  align-self: center;
-  margin-right: var(--blog-mermaid-header-inset);
-  padding-inline: 0.75rem;
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .blog-mermaid[data-zoom="100"] .blog-mermaid-touch-hint {
-    display: block;
-  }
-
-  .blog-mermaid:has(.blog-mermaid-zoom-step:focus-visible) .blog-mermaid-touch-hint {
-    display: none;
-  }
-}
-
 .blog-figure img,
 .blog-figure video {
   corner-shape: squircle;
