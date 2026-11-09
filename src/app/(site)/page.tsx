@@ -340,19 +340,31 @@ export default function HomePage() {
               </div>
 
               {/* A readout: the value first, what it measures beside it. The
-                  term leads in the markup, so grid placement swaps them. */}
+                  term leads in the markup, so grid placement swaps them. Counts
+                  set as figures; a value that is a word, not a count, stays at
+                  title size so it does not pose as one. */}
               <dl className="border-t border-border lg:col-span-6 lg:col-start-7">
-                {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => (
-                  <div
-                    key={label}
-                    className="grid grid-cols-[minmax(0,6rem)_minmax(0,1fr)] items-baseline gap-6 border-b border-border py-5"
-                  >
-                    <dt className="col-start-2 row-start-1 text-base leading-7 text-muted-foreground">{label}</dt>
-                    <dd className="col-start-1 row-start-1 text-title font-bold tabular-nums text-foreground">
-                      {value}
-                    </dd>
-                  </div>
-                ))}
+                {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => {
+                  const isCount = /\d/.test(value);
+
+                  return (
+                    <div
+                      key={label}
+                      className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] items-baseline gap-6 border-b border-border py-5"
+                    >
+                      <dt className="col-start-2 row-start-1 text-base leading-7 text-muted-foreground">{label}</dt>
+                      <dd
+                        className={
+                          isCount
+                            ? "col-start-1 row-start-1 text-section leading-none font-bold tabular-nums text-foreground"
+                            : "col-start-1 row-start-1 text-title font-bold text-foreground"
+                        }
+                      >
+                        {value}
+                      </dd>
+                    </div>
+                  );
+                })}
               </dl>
             </div>
           </Container>
