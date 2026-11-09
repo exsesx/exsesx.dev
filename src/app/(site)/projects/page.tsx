@@ -88,7 +88,7 @@ export default function Projects() {
             title stays on one line so the first rows of the list still reach the fold. */}
         <header className="relative isolate" data-ascii-host="">
           <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" />
-          <Container className="grid gap-8 pb-section-s pt-52 lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
+          <Container className="grid gap-8 pb-section-s pt-36 lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
             <div className="min-w-0 lg:col-span-9">
               <div className="motion-rise" data-ascii-avoid="">
                 <h1 id="projects-title" className="display-title text-display font-black text-foreground">

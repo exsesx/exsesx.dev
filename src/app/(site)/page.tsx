@@ -45,7 +45,7 @@ const experienceHighlights = [
     role: "Solution architecture and full-stack delivery",
     period: "2021 – 2026",
     detail:
-      "Led Tso 3.0's technical direction and cross-functional team while staying hands-on. Built isolated branch previews so the CTO, QA, and PM could validate changes before merge.",
+      "Led Tso 3.0's technical direction and cross-functional team. Built isolated branch previews so the CTO, QA, and PM could validate changes before merge.",
   },
   {
     company: "S-PRO",
@@ -192,7 +192,7 @@ export default function HomePage() {
             header's first 64px, and the trace leaves the headline's pulse mark. */}
         <section aria-labelledby="hero-title" className="relative isolate" data-ascii-host="">
           <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" />
-          <Container className="pb-section-s pt-52 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
+          <Container className="pb-section-s pt-36 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
             <div className="min-w-0 lg:col-span-7">
               <h1
                 id="hero-title"
@@ -356,7 +356,7 @@ export default function HomePage() {
           <Container className="grid gap-12 lg:grid-cols-12 lg:gap-x-8">
             <div className="lg:col-span-5">
               <h2 id="experience-title" className="section-title max-w-[22ch] lg:sticky lg:top-32">
-                Recent roles and what I did in each
+                Recent roles
               </h2>
             </div>
             <ol className="border-t border-border lg:col-span-7">

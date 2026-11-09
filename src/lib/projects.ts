@@ -129,7 +129,7 @@ export const projects: Project[] = [
         "Led a cross-functional team of about 7 to 9 while staying hands-on, setting priorities with the CTO and coordinating delivery with the PM. Later, as a consultant, documented the migration in phases across off-hours windows, with cutover failure scenarios and mitigations, and presented it to the team.",
       ],
       outcome:
-        "A live commerce system where a bad architecture call would have hit real kitchens, drivers, and payments.",
+        "A live commerce system where a bad architecture call would have hit the kitchens, drivers, and payments.",
       scope: ["Solution architecture", "Team leadership", "Preview environments", "Delivery operations"],
     },
     accent: "rose",
@@ -143,25 +143,22 @@ export const projects: Project[] = [
     id: "project-clear-street-bank",
     slug: "clear-street-bank",
     name: "Clear Street Bank",
-    role: "Fintech engineering",
+    role: "Backend engineering",
     // No stable public URL for the product I worked on.
     href: null,
     period: "Banking",
-    description:
-      "Banking product work where reliability and restraint mattered more than flash. The specifics stay private.",
-    impact: "Fintech-facing product engineering; the details are confidential.",
-    tags: ["Fintech", "Banking", "Systems"],
+    description: "Backend work on a banking product, built against other teams' contracts. The specifics stay private.",
+    impact: "Nest.js microservices and the business logic around a Plaid integration.",
+    tags: ["Fintech", "Nest.js", "Plaid"],
     detail: {
-      headline: "A banking surface where reliability came first.",
-      context:
-        "I can't say much about the specifics, but it was the same careful product engineering any banking surface needs.",
+      headline: "Banking backend services, built ahead of integration.",
+      context: "I was on a team of backend engineers. Most of my work was in Nest.js microservices.",
       contribution: [
-        "Built fintech-facing product surfaces with reliability and restraint as the defaults.",
-        "Kept the implementation practical: clear surfaces, real service detail, low-noise UX.",
-        "Stayed inside what I can share publicly without touching confidential specifics.",
+        "Implemented contracts from other teams before the integration, which happened later.",
+        "Integrated Plaid and wrote the business logic around Plaid and the other services.",
       ],
-      outcome: "Solid banking product work that I keep deliberately light on public detail.",
-      scope: ["Fintech product UI", "Confidential delivery", "Service reliability"],
+      outcome: "I assembled the pieces against agreed contracts and schemas rather than live counterparts.",
+      scope: ["Nest.js microservices", "Plaid integration", "Contract-first services"],
     },
     accent: "steel",
     media: {
@@ -189,11 +186,9 @@ export const projects: Project[] = [
       contribution: [
         "Built the asynchronous frontend architecture for real-time verification, so verification status and updates reached users as they happened.",
         "Delivered the functionality required for regulatory certification by the deadline.",
-        "Worked in a regulated setting where correctness and timing were both business-critical.",
-        "Adapted fast as requirements shifted on the way to a key certification milestone.",
       ],
       outcome:
-        "Met a critical regulatory certification deadline, clearing the way for operations across the MENA region.",
+        "Verification status reached users as it happened, and the certification functionality shipped by the deadline.",
       scope: ["Async frontend architecture", "Real-time verification", "Regulated crypto"],
     },
     accent: "mint",
@@ -255,7 +250,7 @@ export const projects: Project[] = [
         "Exposed PostgreSQL stored procedures as GraphQL APIs with PostGraphQL, so the React frontend could query them directly.",
         "Turned utility-management requirements into maintainable frontend screens.",
       ],
-      outcome: "A frontend and data-layer move that kept the live product working for everyday users.",
+      outcome: "A frontend and data-layer move that kept the live product working.",
       scope: ["AngularJS to React", "PostGraphQL APIs", "Utility operations"],
     },
     accent: "violet",
