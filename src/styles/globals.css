@@ -2428,9 +2428,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   opacity: 0.72;
 }
 
+/* Inset: the desktop TOC scrolls, so an outside ring loses its left edge to
+   the scroller's clip. */
 .blog-toc-list a:focus-visible {
   outline: 2px solid var(--ring);
-  outline-offset: 1px;
+  outline-offset: -2px;
 }
 
 .blog-toc-list a[aria-current="location"] {
@@ -3106,6 +3108,17 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-prose figure[data-rehype-pretty-code-figure] > .blog-code-block {
   display: contents;
+}
+
+/* The frame clips its corners, so a focused (scrollable) pre would lose its
+   ring on three sides; draw it on the frame instead, as diagrams do. */
+.blog-prose figure[data-rehype-pretty-code-figure]:has(pre:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.blog-prose figure[data-rehype-pretty-code-figure] pre:focus-visible {
+  outline: none;
 }
 
 .blog-prose figcaption[data-rehype-pretty-code-title] {
