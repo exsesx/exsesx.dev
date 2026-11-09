@@ -1,5 +1,4 @@
 import { resolveBlogBackHref } from "./blog";
-import { getRoutePathname } from "./route-path";
 
 export type PrimaryNavHref = "/" | "/projects" | "/blog/en";
 export type NavbarHotkeyDirection = "left" | "right";
@@ -37,8 +36,4 @@ export function isBlogSectionPath(pathname: string) {
 
 export function isBlogPostPath(pathname: string) {
   return resolveBlogBackHref(pathname) !== null;
-}
-
-export function isProjectsIndexRoutePath(routePath: string) {
-  return getRoutePathname(routePath) === "/projects";
 }
