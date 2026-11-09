@@ -269,9 +269,7 @@ if (!("Bun" in globalThis)) {
       expectRuntimeClean(errors);
     });
 
-    test("mobile project navigation has no animated view-transition pseudos", { tag: "@mobile-only" }, async ({
-      page,
-    }) => {
+    test("mobile forward taps get a short morph and Back stays instant", { tag: "@mobile-only" }, async ({ page }) => {
       const errors = collectRuntimeErrors(page);
 
       await page.goto("/projects");
@@ -280,8 +278,19 @@ if (!("Bun" in globalThis)) {
       await Promise.all([page.waitForURL(/\/project\//), card.click()]);
       await waitForProbe(page);
 
-      const probe = await readProbe(page);
-      expect(nonZeroAnimations(probe)).toEqual([]);
+      const forward = await readProbe(page);
+      expect(forward.calls[0]?.types).toContain("nav-forward");
+      expect(morphAnimations(forward).length).toBeGreaterThan(0);
+      expect(nonZeroAnimations(forward).every(animation => animation.computedDuration <= 220)).toBe(true);
+      expect(nonZeroAnimations(forward).some(animation => animation.pseudoElement?.includes("persistent-nav"))).toBe(
+        false,
+      );
+
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(/\/projects/), page.getByRole("button", { name: "Back" }).click()]);
+      await waitForProbe(page);
+
+      expect(nonZeroAnimations(await readProbe(page))).toEqual([]);
       expectRuntimeClean(errors);
     });
 

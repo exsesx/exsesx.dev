@@ -1491,6 +1491,45 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
+/*
+ * Touch exception: a forward tap (going deeper: a project, the next case) gets
+ * a short crossfade, and the project picture its morph, so the new page reads
+ * as the place the tap led. Back, the swipe-back gesture (the browser already
+ * animated it) and the lateral tab bar carry no nav-forward type and stay
+ * instant. Engines without type selectors drop these rules and stay instant.
+ */
+@media (prefers-reduced-motion: no-preference) and (not ((min-width: 768px) and (hover: hover) and (pointer: fine))) {
+  html:active-view-transition-type(nav-forward)::view-transition-old(root),
+  html:active-view-transition-type(nav-forward)::view-transition-new(root) {
+    animation-duration: 200ms !important;
+    animation-timing-function: var(--ease-out) !important;
+  }
+
+  html:active-view-transition-type(nav-forward)::view-transition-group(.morph),
+  html:active-view-transition-type(nav-forward)::view-transition-old(.morph),
+  html:active-view-transition-type(nav-forward)::view-transition-new(.morph) {
+    animation-duration: 220ms !important;
+    animation-timing-function: var(--ease-drawer) !important;
+  }
+
+  ::view-transition-group(.morph) {
+    overflow: hidden;
+    z-index: 20;
+  }
+
+  ::view-transition-old(.morph),
+  ::view-transition-new(.morph) {
+    mix-blend-mode: normal;
+    overflow: clip;
+  }
+
+  ::view-transition-image-pair(.morph) {
+    animation: none;
+    border-radius: inherit;
+    overflow: clip;
+  }
+}
+
 .project-adjacent-arrow {
   transition:
     opacity var(--duration-press) var(--ease-out),
