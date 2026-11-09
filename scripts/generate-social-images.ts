@@ -24,16 +24,6 @@ const colors = {
   card: "#fefdfa",
 };
 
-const accentColors: Record<Project["accent"], string> = {
-  amber: "#845cf6",
-  controlup: "#3887e8",
-  mint: "#3a80e0",
-  quicklizard: "#40a8c4",
-  rose: "#e85068",
-  steel: "#6096c4",
-  violet: "#9660d6",
-};
-
 const marginX = 80;
 const textColumnWidth = 600;
 
@@ -300,7 +290,6 @@ function baseSvg(inner: string) {
     .eyebrow { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.muted}; }
     .display { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 800; fill: ${colors.foreground}; letter-spacing: -0.02em; }
     .lede { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 400; fill: ${colors.muted}; }
-    .tags { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.muted}; }
     .field { font: 500 15px MonoLisaCode, ui-monospace, monospace; }
     .field-trace { font: 700 16px MonoLisaCode, ui-monospace, monospace; }
   </style>
@@ -347,56 +336,46 @@ function homeSvg() {
 }
 
 function projectsSvg() {
-  const names = projects.map(project => project.name).join(", ");
   const lede = fittedLines("From IT operations to restaurant kitchens, and my part in each.", {
     maxWidth: textColumnWidth,
     maxLines: 2,
     idealSize: 28,
     minSize: 22,
   });
-  const list = fittedLines(names, { maxWidth: 1040, maxLines: 1, idealSize: 20, minSize: 15 });
 
   return baseSvg(`
     ${asciiField({ seed: 3, startX: 780, baselineY: 330, accent: colors.accent, beatOffset: 6 })}
     ${brand(`${SITE_PROFILE.domain}/projects`)}
     ${textBlock(["Client work"], { x: marginX - 4, y: 320, fontSize: 112, lineHeight: 0, className: "display" })}
     ${textBlock(lede.lines, { x: marginX, y: 394, fontSize: lede.fontSize, lineHeight: 38, className: "lede" })}
-    ${textBlock(list.lines, { x: marginX, y: 556, fontSize: list.fontSize, lineHeight: 0, className: "tags" })}
   `);
 }
 
+/*
+ * A project card holds what reads at thumbnail size: the name and one short line saying what the
+ * product is. The trace is the site's cobalt on every card; client colors stay in client media.
+ */
 function projectSvg(project: Project) {
-  const accent = accentColors[project.accent];
   const title = fittedLines(project.name, {
     maxWidth: textColumnWidth,
     maxLines: 1,
-    idealSize: 96,
-    minSize: 56,
+    idealSize: 104,
+    minSize: 60,
     measureScale: 1.04,
   });
-  const headline = fittedLines(project.detail.headline, {
-    maxWidth: textColumnWidth,
-    maxLines: 3,
-    idealSize: 27,
-    minSize: 21,
-  });
-  const eyebrow = fittedLines(`${project.period} · ${project.role}`, {
+  const product = fittedLines(project.period, {
     maxWidth: textColumnWidth,
     maxLines: 1,
-    idealSize: 22,
-    minSize: 16,
-    measureScale: 1.04,
+    idealSize: 36,
+    minSize: 28,
   });
-  // Keep the cap height a fixed distance under the eyebrow when long names shrink.
-  const titleY = Math.round(250 + title.fontSize * 0.73);
+  const titleY = 336;
 
   return baseSvg(`
-    ${asciiField({ seed: seedFrom(project.slug), startX: 720, baselineY: 344, accent, beatOffset: seedFrom(project.slug) % 20 })}
+    ${asciiField({ seed: seedFrom(project.slug), startX: 720, baselineY: 344, accent: colors.accent, beatOffset: seedFrom(project.slug) % 20 })}
     ${brand(`${SITE_PROFILE.domain}/project/${project.slug}`)}
-    ${textBlock(eyebrow.lines, { x: marginX, y: 214, fontSize: eyebrow.fontSize, lineHeight: 0, className: "eyebrow" })}
     ${textBlock(title.lines, { x: marginX - 3, y: titleY, fontSize: title.fontSize, lineHeight: 0, className: "display" })}
-    ${textBlock(headline.lines, { x: marginX, y: titleY + 70, fontSize: headline.fontSize, lineHeight: 37, className: "lede" })}
-    ${textBlock([project.tags.slice(0, 3).join(", ")], { x: marginX, y: 556, fontSize: 20, lineHeight: 0, className: "tags" })}
+    ${textBlock(product.lines, { x: marginX, y: titleY + 78, fontSize: product.fontSize, lineHeight: 0, className: "lede" })}
   `);
 }
 
