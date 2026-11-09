@@ -1278,6 +1278,25 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   backface-visibility: hidden;
 }
 
+/* Case-study running text: the article body's size on a shorter measure than the article column. */
+.case-body {
+  max-width: 38rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+@media (min-width: 48rem) {
+  .case-body {
+    font-size: 1.0625rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  .case-body {
+    font-size: 1.125rem;
+  }
+}
+
 /*
  * Hero ECG trace — "Software with a pulse", literally. The path uses
  * pathLength=100 so the draw-in is a plain dashoffset sweep. The base state

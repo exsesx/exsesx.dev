@@ -128,20 +128,6 @@ export const projects: Project[] = [
         "Pricing features that shipped behind feature flags and improved on production feedback, on a simpler stack and CI.",
       scope: ["Pricing dashboards", "Go backend endpoints", "Stack modernization"],
     },
-    evidence: {
-      diagram: `flowchart TD
-  accTitle: Each feature, from scoping to production feedback
-  accDescr: Each pricing feature went from scoping with stakeholders to a feature-flagged rollout, then through monitoring and production feedback, and improved on that feedback.
-  feature["Pricing feature"] --> scoping["Scoping with stakeholders"]
-  scoping --> rollout["Feature-flagged rollout"]
-  rollout --> monitoring["Monitoring"]
-  monitoring --> feedback["Production feedback"]
-  feedback -. "improved on" .-> feature
-  class rollout focus`,
-      caption:
-        "Dashboards, localization, authentication, and bulk overrides each went from scoping with stakeholders to a feature-flagged rollout, then improved on production feedback.",
-      contributionIndex: 0,
-    },
     accent: "quicklizard",
     media: {
       type: "image",
