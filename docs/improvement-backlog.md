@@ -19,21 +19,17 @@ Each item is independent. Read the **invariants** section before touching anythi
    standard property: LightningCSS collapses the pair and emits only the `-webkit-` form, which
    Chrome rejects — Chrome silently loses all glass blur. Standard property only; the pipeline
    owns prefixing. (This bug shipped once already.)
-3. **Liquid lens gating.** `backdrop-filter: url(#liquid-lens)` renders only in Chromium; other
-   engines drop the whole declaration list. Keep it behind `html.glass-lens`
-   (set from `navigator.userAgentData` in the noflash script).
+3. ~~**Liquid lens gating.**~~ Superseded 2026-11-09: the graphite restyle removed the Chromium
+   SVG lens (`LiquidGlassLens.tsx`, `html.glass-lens`). Floating chrome is now a near-opaque
+   sheet with a light blur, a hairline and a short shadow.
 4. **`bun run build` must keep `/` and `/projects` as `○ (Static)`.**
 5. Don't run `next build` while `next dev` is serving — it can wedge the dev server's module
    graph (happened during this slice; fix is restarting dev).
 
 ## Design / visual
 
-- **Hover specular sweep on the nav glass.** `.site-nav-glass::before` already carries a
-  scroll-driven sheen; add a pointer-driven highlight (CSS `--pointer-x` like
-  `InteractiveCardShell`) so the glass responds to the mouse. Desktop-only, compositor props.
-- **Lens displacement tuning.** `LiquidGlassLens.tsx` — `scale="0.024"` and the map's neutral-plate
-  inset (16px on a 480×128 map) are tuned by eye at 1372px. Worth revisiting on an ultrawide and
-  at 768–1024px widths.
+- ~~Hover specular sweep and lens displacement tuning~~: superseded 2026-11-09 by the graphite
+  restyle, which dropped specular rims and the SVG lens on purpose.
 - **Projects page scroll reveals.** Home has `.scroll-rise` (CSS view-timeline); the projects grid
   and detail-page sections could adopt it. The utility is generic — add the class, nothing else.
 - **`not-found.tsx`** still uses only `motion-rise`; could get the ECG/glass treatment.

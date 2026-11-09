@@ -95,8 +95,10 @@
      signal is ink on paper by day and a phosphor trace at night: cobalt in
      light (blue keeps full chroma at text-safe contrast, where a 4.5:1 green
      goes dull), monitor green in dark. It marks the pulse, links, focus and
-     selection; it never fills a surface, a button or a heading. Depth comes
-     from small lightness steps, hairlines and short real shadows. */
+     selection. Faint washes of it (a few percent) may tint callouts and
+     pressed controls, and a focused diagram node may take it solid; it never
+     fills a page surface, a resting button or a heading. Depth comes from
+     small lightness steps, hairlines and short real shadows. */
   --background: #f6f3ef;
   /* Solid color Safari 26 samples for chrome tint; mirrors --background, painted
      inline by the no-flash script so the live observer retints the bars. */
@@ -1048,11 +1050,6 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 .glass-frost.hotkeys-corner-hint {
   width: auto;
   min-width: 0;
-  border-color: color-mix(in oklab, var(--foreground) 7%, transparent);
-  background: color-mix(in oklab, var(--background) 72%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, white 12%),
-    0 4px 14px color-mix(in oklab, var(--foreground) 7%, transparent);
 }
 
 .hotkeys-wait-sequence {
