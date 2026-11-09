@@ -109,12 +109,14 @@ function fittedLines(
 // Rough advance-width estimate for MonoLisaText at a given size (no font metrics in
 // the SVG pipeline). Heavy weights render wider; callers pass a measureScale for that.
 function approxTextWidth(value: string, fontSize: number) {
-  const widths: Record<string, number> = { narrow: 0.34, normal: 0.56, wide: 0.78 };
+  const widths: Record<string, number> = { narrow: 0.34, normal: 0.56, cyrillic: 0.62, wide: 0.78 };
   let units = 0;
 
   for (const char of value) {
     if (".,:;!|'i l".includes(char)) units += widths.narrow;
-    else if ("mwMW—".includes(char)) units += widths.wide;
+    else if ("mwMWшщжмюЖШЩМЮ—".includes(char)) units += widths.wide;
+    // Cyrillic letters set wider than the Latin average.
+    else if (/[\u0400-\u04ff]/.test(char)) units += widths.cyrillic;
     else units += widths.normal;
   }
 
@@ -429,6 +431,38 @@ function blogIndexSvg() {
   `);
 }
 
+/*
+ * The card's deck: the description's first sentence, whole. A sentence that cannot
+ * fit falls back to its first clause (up to a semicolon); if that cannot fit either,
+ * the run fails so the description gets rewritten instead of cut mid-word.
+ */
+function socialDeck(
+  post: BlogPostSummary,
+  options: { maxWidth: number; maxLines: number; idealSize: number; minSize: number },
+) {
+  const firstSentence = post.description.trim().split(/(?<=[.!?])\s+/)[0];
+  const firstClause = firstSentence.includes(";") ? `${firstSentence.split(";")[0].trimEnd()}.` : null;
+
+  for (const candidate of [firstSentence, firstClause]) {
+    if (!candidate) {
+      continue;
+    }
+
+    for (let fontSize = options.idealSize; fontSize >= options.minSize; fontSize -= 1) {
+      const lines = wrapLinesByWidth(candidate, options.maxWidth, fontSize);
+
+      if (
+        lines.length <= options.maxLines &&
+        lines.every(line => approxTextWidth(line, fontSize) <= options.maxWidth)
+      ) {
+        return { lines, fontSize };
+      }
+    }
+  }
+
+  throw new Error(`No complete social deck fits for ${post.locale}/${post.slug}: shorten its first sentence.`);
+}
+
 function blogArticleSvg(post: BlogPostSummary) {
   const title = fittedLines(post.title, {
     maxWidth: 680,
@@ -437,20 +471,21 @@ function blogArticleSvg(post: BlogPostSummary) {
     minSize: 46,
     measureScale: 1.04,
   });
-  const description = fittedLines(post.description, {
-    maxWidth: 680,
-    maxLines: title.lines.length >= 3 ? 2 : 3,
-    idealSize: 25,
-    minSize: 20,
-  });
   const titleLineHeight = Math.round(title.fontSize * 1.04);
   const titleY = 236 + title.fontSize * 0.55;
-  const descriptionY = titleY + titleLineHeight * (title.lines.length - 1) + 64;
-  const tagsY = Math.min(590, Math.max(566, descriptionY + 34 * (description.lines.length - 1) + 52));
+  const deckY = titleY + titleLineHeight * (title.lines.length - 1) + 68;
+  const deckLineHeight = 38;
+  // As many deck lines as fit above a 58px bottom margin, never more than three.
+  const deck = socialDeck(post, {
+    maxWidth: 680,
+    maxLines: Math.min(3, Math.floor((height - 58 - deckY) / deckLineHeight) + 1),
+    idealSize: 28,
+    minSize: 24,
+  });
 
   return baseSvg(`
     ${asciiField({ seed: seedFrom(`${post.locale}/${post.slug}`), startX: 800, baselineY: 370, accent: colors.accent, beatOffset: seedFrom(post.slug) % 20 })}
-    ${brand(`${SITE_PROFILE.domain}/blog/${post.locale}/${post.slug}`)}
+    ${brand(`${SITE_PROFILE.domain}/blog`)}
     ${textBlock([`${post.publishedAt.slice(0, 10)} · ${BLOG_LOCALE_LABELS[post.locale]}`], {
       x: marginX,
       y: 206,
@@ -459,8 +494,7 @@ function blogArticleSvg(post: BlogPostSummary) {
       className: "eyebrow",
     })}
     ${textBlock(title.lines, { x: marginX - 3, y: titleY, fontSize: title.fontSize, lineHeight: titleLineHeight, className: "display" })}
-    ${textBlock(description.lines, { x: marginX, y: descriptionY, fontSize: description.fontSize, lineHeight: 34, className: "lede" })}
-    ${textBlock([post.tags.slice(0, 3).join(", ")], { x: marginX, y: tagsY, fontSize: 20, lineHeight: 0, className: "tags" })}
+    ${textBlock(deck.lines, { x: marginX, y: deckY, fontSize: deck.fontSize, lineHeight: deckLineHeight, className: "lede" })}
   `);
 }
 
