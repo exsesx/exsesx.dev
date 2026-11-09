@@ -237,11 +237,12 @@ describe("Blog production styles", () => {
     expect(articlePage).toMatch(/<h1\s+className="[^"]*leading-\[1\.08\]/);
   });
 
-  test("uses contrast and surface feedback instead of underlining Blog links", async () => {
+  test("underlines Blog prose links at rest so they never rely on color alone", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const blogCss = css.slice(css.indexOf("/* Blog"));
 
-    expect(blogCss).not.toContain("text-decoration: underline;");
+    expect(css).toMatch(/\.blog-prose li > a:not\(\.source-link\) \{[^}]*text-decoration-line:\s*underline/s);
+    expect(css).toMatch(/\.source-link-label \{[^}]*text-decoration-line:\s*underline/s);
     expect(blogCss).toContain("a:not(.source-link):is(:hover, :focus-visible)");
     expect(blogCss).toContain(".source-link:is(:hover, :focus-visible) .source-link-label");
     expect(blogCss).toContain(".blog-back-link:is(:hover, :focus-visible)");

@@ -290,7 +290,7 @@ function CvMenu() {
         <a
           data-cuelume-press=""
           href={RESUME_PDF_URL}
-          className="inline-flex h-full min-w-0 flex-none items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97]"
+          className="inline-flex h-full min-w-0 flex-none items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:outline-offset-[-3px]! active:scale-[0.97]"
           rel="noopener noreferrer"
           target="_blank"
         >
@@ -310,7 +310,7 @@ function CvMenu() {
                   variant="glass"
                   size="icon"
                   aria-label="Show CV actions"
-                  className="h-full w-12 rounded-none border-0 bg-transparent text-inherit shadow-none backdrop-blur-none hover:border-transparent hover:bg-transparent hover:text-inherit focus-visible:z-10 sm:w-12"
+                  className="h-full w-12 rounded-none border-0 bg-transparent text-inherit shadow-none backdrop-blur-none hover:border-transparent hover:bg-transparent hover:text-inherit focus-visible:z-10 focus-visible:outline-offset-[-3px]! sm:w-12"
                 />
               }
             >

@@ -218,7 +218,18 @@ select {
 
 * {
   box-sizing: border-box;
-  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+}
+
+/* One focus cue for the whole site: a solid outline survives forced colors,
+   where a box-shadow ring disappears. Controls clipped by their own frame draw
+   an inset outline in the same color below. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 ::selection {
@@ -1699,7 +1710,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 .blog-locale-link:focus-visible,
 .blog-rss-link:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 52%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -1739,8 +1750,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 /* The title's link covers its whole row, rail and trailing gap included, so the
    list has no dead space: anywhere along it lights exactly one post. It sits
-   above the row's text, which dimming lifts into its own stacking layer while
-   its opacity is below 1; under it, the cursor would flick to a text cursor. */
+   above the row's text; under it, the cursor would flick to a text cursor. */
 .blog-index-link::after {
   position: absolute;
   z-index: 1;
@@ -1803,7 +1813,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   --blog-index-pad-top: calc(var(--blog-index-row-space) / 2);
   --blog-index-pad-bottom: calc(var(--blog-index-row-space) / 2);
   --blog-index-surface: 0;
-  --blog-index-dim: 1;
   position: relative;
   padding-block: var(--blog-index-pad-top) var(--blog-index-pad-bottom);
   padding-inline-start: var(--blog-index-inset);
@@ -1840,14 +1849,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   content: "";
   opacity: var(--blog-index-surface);
   pointer-events: none;
-  transition: opacity var(--duration-ui) var(--ease-out);
-}
-
-/* Dimming reaches the post's text, never its node, so the rail keeps one
-   strength from end to end. */
-.blog-index-meta > :not(.blog-index-node),
-.blog-index-list > li > article > div {
-  opacity: var(--blog-index-dim);
   transition: opacity var(--duration-ui) var(--ease-out);
 }
 
@@ -1965,7 +1966,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 /* Lit: the post under the pointer, keyboard focus or a press reads as the
    checked-out commit. Its surface fades in, its node lights and the date
-   brightens, while the other posts dim and HEAD steps back to an outline so
+   brightens, while the other titles step down to the muted text colour (never
+   below it, so they keep their contrast) and HEAD steps back to an outline so
    only one commit is ever lit. Press lights it too, the touch feedback before
    the article opens. */
 .blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) {
@@ -1974,8 +1976,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   --blog-index-surface: 1;
 }
 
-.blog-index-list:has(.blog-index-link:focus-visible) > li:not(:has(.blog-index-link:focus-visible)) {
-  --blog-index-dim: 0.6;
+.blog-index-list:has(.blog-index-link:focus-visible) > li:not(:has(.blog-index-link:focus-visible)) .blog-index-link {
+  color: var(--muted-foreground);
 }
 
 .blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) time {
@@ -2000,8 +2002,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 
   /* The other posts step back, so the lit one reads at a glance. */
-  .blog-index-list:has(.blog-index-link:hover) > li:not(:has(.blog-index-link:hover)) {
-    --blog-index-dim: 0.6;
+  .blog-index-list:has(.blog-index-link:hover) > li:not(:has(.blog-index-link:hover)) .blog-index-link {
+    color: var(--muted-foreground);
   }
 
   .blog-index-list > li:has(.blog-index-link:hover) time {
@@ -2052,7 +2054,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-back-link:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.25rem;
   border-radius: 0.2rem;
 }
@@ -2176,21 +2178,25 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   color: var(--foreground);
   font-weight: 700;
   text-decoration: none;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
   transition: color var(--duration-ui) var(--ease-out);
 }
 
 .blog-article-meta > a:focus-visible {
   color: var(--accent);
+  text-decoration-line: underline;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .blog-article-meta > a:hover {
     color: var(--accent);
+    text-decoration-line: underline;
   }
 }
 
 .blog-article-meta > a:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.2rem;
   border-radius: 0.15rem;
 }
@@ -2376,7 +2382,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   gap: 0.45rem;
   padding: 0.2rem 0.3rem;
   border-radius: 0.5rem;
-  color: color-mix(in oklab, var(--muted-foreground) 90%, transparent);
+  color: var(--muted-foreground);
   font-size: var(--blog-toc-heading-size, 0.8rem);
   font-weight: var(--blog-toc-heading-weight, 400);
   line-height: 1.4;
@@ -2412,10 +2418,6 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   font-weight: var(--blog-toc-subheading-weight, 400);
 }
 
-.blog-toc-list li[data-depth="3"] a {
-  color: color-mix(in oklab, var(--muted-foreground) 74%, transparent);
-}
-
 .blog-toc-list a:is(:hover, :focus-visible) {
   --toc-tick-scale: 0.82;
   color: var(--foreground);
@@ -2427,7 +2429,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-list a:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--foreground) 34%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 1px;
 }
 
@@ -2494,7 +2496,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-mobile-trigger:focus-visible {
-  outline: 3px solid color-mix(in oklab, var(--ring) 38%, transparent);
+  outline: 3px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -2677,7 +2679,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-drawer-close:focus-visible {
-  outline: 3px solid color-mix(in oklab, var(--ring) 38%, transparent);
+  outline: 3px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -2765,7 +2767,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-prose .heading-anchor:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.16em;
   border-radius: 0.12em;
 }
@@ -2817,16 +2819,23 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border-radius: 0.22em;
   color: var(--accent);
   font-weight: 700;
-  text-decoration: none;
+  /* Underlined at rest, so a link never relies on its colour alone. */
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  transition: color var(--duration-press) ease;
+  transition:
+    color var(--duration-press) ease,
+    text-decoration-color var(--duration-press) ease;
 }
 
 .blog-prose > a:is(:hover, :focus-visible),
 .blog-prose p > a:not(.source-link):is(:hover, :focus-visible),
 .blog-prose li > a:not(.source-link):is(:hover, :focus-visible) {
   color: var(--foreground);
+  text-decoration-color: var(--accent);
   background: color-mix(in oklab, var(--accent) 10%, transparent);
   box-shadow: 0 0 0 0.14em color-mix(in oklab, var(--accent) 10%, transparent);
 }
@@ -2834,7 +2843,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose > a:focus-visible,
 .blog-prose p > a:not(.source-link):focus-visible,
 .blog-prose li > a:not(.source-link):focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 52%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.18em;
 }
 
@@ -2970,6 +2979,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .source-link-label {
   border-radius: 0.22em;
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   transition:
@@ -2982,12 +2995,13 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .source-link:is(:hover, :focus-visible) .source-link-label {
+  text-decoration-color: var(--accent);
   background: color-mix(in oklab, var(--accent) 10%, transparent);
   box-shadow: 0 0 0 0.14em color-mix(in oklab, var(--accent) 10%, transparent);
 }
 
 .source-link:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 52%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.18em;
 }
 
@@ -3243,10 +3257,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-code-action[aria-pressed="true"] {
   color: var(--accent);
   background: color-mix(in oklab, var(--accent) 14%, var(--background));
+  box-shadow: inset 0 0 0 1px currentColor;
 }
 
 .blog-code-action:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline: 2px solid var(--ring);
   outline-offset: -3px;
 }
 
@@ -3351,7 +3366,7 @@ code[data-theme] span {
 }
 
 .blog-mermaid:has(> .blog-mermaid-svg:focus-visible) {
-  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -3526,7 +3541,7 @@ code[data-theme] span {
 }
 
 .blog-mermaid-control:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline: 2px solid var(--ring);
   outline-offset: -3px;
   box-shadow: none;
 }
@@ -3542,8 +3557,13 @@ code[data-theme] span {
   background: color-mix(in oklab, var(--muted) 72%, transparent);
 }
 
+.blog-mermaid-control[aria-expanded="true"] {
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
 .blog-mermaid-control:disabled {
-  cursor: default;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .blog-mermaid-reset {
@@ -3853,5 +3873,25 @@ html.dark .blog-figure-image--dark {
   [data-slot="tooltip-content"] {
     animation: none;
     transition: none;
+  }
+}
+
+/* Forced colours drop backgrounds and shadows, which carry the nav pill, the
+   pressed and expanded controls and the lit index post. A system-colour edge or
+   fill keeps each state visible. */
+@media (forced-colors: active) {
+  .site-nav-active-pill,
+  .blog-locale-link[aria-current="page"],
+  .blog-code-action[aria-pressed="true"],
+  .blog-mermaid-control[aria-expanded="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .blog-toc-list a[aria-current="location"] .blog-toc-tick,
+  .blog-index-core,
+  .blog-index-dot {
+    forced-color-adjust: none;
+    background: Highlight;
   }
 }

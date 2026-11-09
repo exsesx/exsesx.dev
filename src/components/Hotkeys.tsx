@@ -418,8 +418,8 @@ function HotkeyModal({
           </kbd>
           <span className="truncate leading-5">toggles this menu</span>
         </span>
-        <span className="flex h-8 shrink-0 items-center gap-1.5 text-xs font-semibold text-muted-foreground/60">
-          <kbd className="grid place-items-center rounded-md border border-border/70 bg-secondary/70 px-1.5 py-0.5 font-mono text-[0.6875rem] leading-none text-secondary-foreground/70">
+        <span className="flex h-8 shrink-0 items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+          <kbd className="grid place-items-center rounded-md border border-border/70 bg-secondary/70 px-1.5 py-0.5 font-mono text-[0.6875rem] leading-none text-muted-foreground">
             .
           </kbd>
           <span className="hidden leading-none sm:inline">repeats last</span>
