@@ -114,7 +114,7 @@ export default function AutoPauseVideo({ className, label, ...props }: AutoPause
         variant="glass"
         size="icon"
         aria-label={`${isPlaying ? "Pause" : "Play"} ${label}`}
-        className="glass-frost absolute right-4 bottom-4 z-10 rounded-full border-white/20 bg-slate-950/55 text-white shadow-lg hover:bg-slate-900/70 hover:text-white focus-visible:ring-white/50"
+        className="glass-frost absolute right-4 bottom-4 z-10 rounded-full border-white/20 bg-neutral-950/60 text-white shadow-lg hover:bg-neutral-900/75 hover:text-white focus-visible:ring-white/50"
         onClick={togglePlayback}
       >
         {isPlaying ? (

@@ -6,7 +6,6 @@ import Header from "./Header";
 import HotkeysLoader from "./HotkeysLoader";
 import InteractionSounds from "./InteractionSounds";
 import KineticBackdrop from "./KineticBackdrop";
-import LiquidGlassLens from "./LiquidGlassLens";
 import RouteMotionGuard from "./RouteMotionGuard";
 import { TooltipProvider } from "./ui/tooltip";
 import VersionTag from "./VersionTag";
@@ -39,7 +38,6 @@ export default function AppDocument({ children, lang }: AppDocumentProps) {
           <a className="skip-to-content" href="#main-content">
             {skipLinkLabel}
           </a>
-          <LiquidGlassLens />
           <RouteMotionGuard />
           <InteractionSounds />
           <ConsoleSignature />

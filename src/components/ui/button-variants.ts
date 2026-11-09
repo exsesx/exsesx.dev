@@ -5,9 +5,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground",
+        default: "bg-primary text-primary-foreground hover:bg-primary/85",
         glass:
-          "border-border bg-secondary text-secondary-foreground shadow-foreground/5 backdrop-blur-xl hover:border-ring/50 hover:bg-muted hover:text-accent",
+          "border-border bg-secondary text-secondary-foreground shadow-foreground/5 hover:border-foreground/20 hover:bg-secondary-hover",
       },
       size: {
         default: "h-10 gap-2 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",

@@ -120,16 +120,6 @@ function noFlashScript(themeColorDark: string, themeColorLight: string) {
 
   applyTheme();
 
-  // Chromium is the only engine that renders SVG filter references inside
-  // backdrop-filter; everywhere else the whole backdrop-filter would be
-  // dropped. navigator.userAgentData exists only in Chromium, so gate the
-  // liquid-lens refraction behind it and let Safari/Firefox keep frosted glass.
-  var chromiumNavigator = navigator as Navigator & { userAgentData?: unknown };
-
-  if (chromiumNavigator.userAgentData) {
-    element.classList.add("glass-lens");
-  }
-
   setSeason();
   window.setInterval(setSeason, 60 * 60 * 1000);
   window.addEventListener("storage", applyTheme);

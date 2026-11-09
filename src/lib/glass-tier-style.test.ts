@@ -15,7 +15,7 @@ function getRuleBody(css: string, selector: string) {
 }
 
 describe("glass tier contracts", () => {
-  test("reserves refractive liquid glass for nav and dropdown chrome", async () => {
+  test("keeps floating chrome to the nav and dropdown, without refraction", async () => {
     const [css, header, dropdown] = await Promise.all([
       Bun.file(globalsUrl).text(),
       Bun.file(headerUrl).text(),
@@ -24,11 +24,7 @@ describe("glass tier contracts", () => {
 
     expect(header).toMatch(/liquid-glass site-nav-surface/);
     expect(dropdown).toMatch(/dropdown-menu liquid-glass/);
-    // The lens refracts menus only; the scrolling header keeps a plain frost.
-    expect(css).toMatch(
-      /@media \(min-width: 768px\) and \(hover: hover\) and \(pointer: fine\)[\s\S]*?html\.glass-lens \.dropdown-menu\.liquid-glass/,
-    );
-    expect(css).not.toMatch(/html\.glass-lens \.site-nav-glass\s*\{/);
+    expect(css).not.toContain("glass-lens");
     expect(css).not.toContain("-webkit-backdrop-filter");
   });
 

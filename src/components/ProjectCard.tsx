@@ -73,7 +73,7 @@ export function ProjectMediaLink({
 /* Classes stay out of cn(): its merge reads the custom text-title size as a text color and drops it. */
 export function ProjectTitleLink({ project, as: Heading }: { project: Project; as: "h2" | "h3" }) {
   return (
-    <Heading className="text-title font-black text-foreground">
+    <Heading className="text-title font-bold text-foreground">
       <Link
         {...getProjectLinkProps(project)}
         data-cuelume-press=""

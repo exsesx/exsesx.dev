@@ -19,7 +19,7 @@ const INDEX_ROW_STYLES = {
     summary: "text-lead",
   },
   rest: {
-    title: "text-balance text-title font-black text-foreground",
+    title: "text-balance text-title font-bold text-foreground",
     summary: "text-base leading-7",
   },
 } as const;

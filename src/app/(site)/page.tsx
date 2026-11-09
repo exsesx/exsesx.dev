@@ -119,7 +119,7 @@ function ProjectMedia({ project, sizes, className }: { project: Project; sizes: 
 // Plain classes: cn() reads the custom text-title size as a color and drops it.
 function ProjectTitle({ project }: { project: Project }) {
   return (
-    <h3 className="cap-top text-title font-black text-foreground">
+    <h3 className="cap-top text-title font-bold text-foreground">
       <Link
         href={getProjectPath(project)}
         transitionTypes={getProjectRouteTransitionTypes(
@@ -342,7 +342,7 @@ export default function HomePage() {
                     className="grid grid-cols-[minmax(0,6rem)_minmax(0,1fr)] items-baseline gap-6 border-b border-border py-5"
                   >
                     <dt className="col-start-2 row-start-1 text-base leading-7 text-muted-foreground">{label}</dt>
-                    <dd className="col-start-1 row-start-1 text-title font-black tabular-nums text-foreground">
+                    <dd className="col-start-1 row-start-1 text-title font-bold tabular-nums text-foreground">
                       {value}
                     </dd>
                   </div>
@@ -366,7 +366,7 @@ export default function HomePage() {
                   className="grid gap-3 border-b border-border py-8 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:items-baseline sm:gap-8"
                 >
                   <div>
-                    <h3 className="text-title font-black text-foreground">{item.company}</h3>
+                    <h3 className="text-title font-bold text-foreground">{item.company}</h3>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.role}</p>
                     <p className="mt-2 text-sm tabular-nums text-muted-foreground">{item.period}</p>
                   </div>
@@ -391,7 +391,7 @@ export default function HomePage() {
             <ol className="workflow-steps mt-stack grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
               {agentWorkflow.map(item => (
                 <li key={item.title} className="border-t border-border pt-6">
-                  <h3 className="text-title font-black text-foreground">{item.title}</h3>
+                  <h3 className="text-title font-bold text-foreground">{item.title}</h3>
                   <p className="mt-3 text-base leading-7 text-muted-foreground">{item.detail}</p>
                 </li>
               ))}

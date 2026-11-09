@@ -181,7 +181,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       {/* The result first, then what the product is and the facts of the engagement. */}
       <section className="pt-section">
         <Container>
-          <p className="scroll-rise min-w-0 max-w-[34ch] text-balance break-words text-title font-black tracking-[-0.025em] text-foreground sm:text-section">
+          <p className="scroll-rise min-w-0 max-w-[34ch] text-balance break-words text-title font-bold tracking-[-0.025em] text-foreground sm:text-section">
             {project.impact}
           </p>
 
@@ -226,7 +226,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   key={item}
                   className="grid grid-cols-[minmax(0,2.5rem)_minmax(0,1fr)] items-baseline gap-4 sm:gap-6"
                 >
-                  <span aria-hidden="true" className="text-title font-black tabular-nums text-accent">
+                  <span aria-hidden="true" className="text-title font-bold tabular-nums text-accent">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <p className="max-w-[60ch] text-base leading-7 text-foreground">{item}</p>

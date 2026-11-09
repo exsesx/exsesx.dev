@@ -6,6 +6,9 @@
 @theme inline {
   --font-sans: MonoLisaText, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: MonoLisaText, ui-sans-serif, system-ui, sans-serif;
+  /* One heavy weight. 900 in a wide mono reads loud; 800 keeps the
+     headline's presence and gives prose room. */
+  --font-weight-black: 800;
   --font-mono: MonoLisaCode, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   /* Type roles. MonoLisa sets wide, so the sizes run a step smaller than a
      narrower face would need; the hero head shares its screen with the field. */
@@ -82,78 +85,65 @@
   --duration-floating-control-enter: 220ms;
   --duration-progress-retract: 280ms;
   --duration-move: 280ms;
-  /* Liquid glass: the rim is drawn with layered inset shadows (a crisp top
-     specular, soft curved corner light, and a bottom counter-shade) so every
-     glass surface reads as a curved lens instead of flat frosted plastic. */
-  --glass-blur: 12px;
-  --glass-saturate: 1.6;
-  --glass-brightness: 1.03;
-  --glass-rim-spec: rgba(255, 255, 255, 0.9);
-  --glass-rim-soft: rgba(255, 255, 255, 0.7);
-  --glass-rim-faint: rgba(255, 255, 255, 0.38);
-  --glass-rim-shade: rgba(11, 20, 35, 0.1);
-  /* Polar palette: arctic porcelain field, polar ink, electric ultramarine
-     signal that turns ice cyan at night. Winner of the 2026-06 palette lab
-     (vs indigo/periwinkle and the cross-pairs) — picked for boldness.
-     Cold axis throughout; the dark theme is the same world after sundown. */
-  --background: #eef2f8;
+  /* Floating chrome (nav, back chip) is a near-opaque sheet with a light
+     blur, so copy scrolling under it never reads crisply. No tinted rims,
+     no refraction: depth comes from a hairline and a short shadow. */
+  --glass-blur: 8px;
+  /* Graphite palette: achromatic neutrals (chroma 0, so no hue drifts into
+     the foundation) and one signal, the phosphor green of a monitor trace.
+     The signal marks the pulse, links, focus and selection; it never fills a
+     surface, a button or a heading. Depth comes from small lightness steps,
+     hairlines and short real shadows. */
+  --background: #f5f5f5;
   /* Solid color Safari 26 samples for chrome tint; mirrors --background, painted
      inline by the no-flash script so the live observer retints the bars. */
-  --safari-chrome-color: #eef2f8;
-  --foreground: #0b1423;
-  --card: color-mix(in oklab, #fbfdff 82%, transparent);
-  --card-foreground: #0b1423;
-  --primary: #0b1423;
-  --primary-foreground: #f3f7fd;
-  --secondary: color-mix(in oklab, #fbfdff 74%, white);
-  --secondary-foreground: #1c2638;
+  --safari-chrome-color: #f5f5f5;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #ffffff;
+  --secondary-foreground: #171717;
   --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
-  --muted: color-mix(in oklab, #fbfdff 66%, #dbe3ee);
-  --muted-foreground: #51607a;
-  --accent: #2440ff;
-  --accent-foreground: #f3f7fd;
-  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--ring) 18%);
+  --muted: #e8e8e8;
+  --muted-foreground: #5f5f5f;
+  --accent: #007346;
+  --accent-foreground: #ffffff;
+  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--foreground) 12%);
   --destructive: #be123c;
-  --border: color-mix(in oklab, #0b1423 12%, transparent);
-  --input: color-mix(in oklab, #0b1423 10%, transparent);
-  --ring: #3d5afe;
-  --menu-shadow: 0 22px 70px rgba(11, 20, 35, 0.16);
-  --panel-shadow: 0 24px 70px rgba(11, 20, 35, 0.1);
+  --border: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --input: color-mix(in oklab, var(--foreground) 14%, transparent);
+  --ring: var(--accent);
+  --menu-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 16px 40px -8px rgb(0 0 0 / 0.14);
+  --panel-shadow: 0 1px 2px rgb(0 0 0 / 0.03), 0 24px 60px -16px rgb(0 0 0 / 0.1);
   /* The close band's paper: one step off the page, opaque so the edge scale stops. */
-  --paper-band: #e4eaf3;
+  --paper-band: #ececec;
 }
 
 .dark {
-  --glass-saturate: 1.55;
-  --glass-brightness: 1.12;
-  /* Specular rims pick up a faint ice tint at night so the glass reads as
-     frozen, not neutral plastic. */
-  --glass-rim-spec: rgba(205, 233, 255, 0.26);
-  --glass-rim-soft: rgba(205, 233, 255, 0.15);
-  --glass-rim-faint: rgba(205, 233, 255, 0.07);
-  --glass-rim-shade: rgba(0, 0, 0, 0.5);
-  --background: #0a101c;
-  --safari-chrome-color: #0a101c;
-  --foreground: #eaf2fc;
-  --card: color-mix(in oklab, #111a2c 76%, transparent);
-  --card-foreground: #eaf2fc;
-  --primary: #eaf2fc;
-  --primary-foreground: #0b1423;
-  --secondary: color-mix(in oklab, #ffffff 8%, transparent);
-  --secondary-foreground: #e8eef8;
+  --background: #131313;
+  --safari-chrome-color: #131313;
+  --foreground: #ececec;
+  --card: #1c1c1c;
+  --card-foreground: #ececec;
+  --primary: #ececec;
+  --primary-foreground: #131313;
+  --secondary: #232323;
+  --secondary-foreground: #ececec;
   --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
-  --muted: color-mix(in oklab, #ffffff 7%, transparent);
-  --muted-foreground: #94a3b8;
-  --accent: #5ce1ff;
-  --accent-foreground: #0a101c;
-  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--ring) 18%);
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #6ad895;
+  --accent-foreground: #131313;
+  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--foreground) 12%);
   --destructive: #fb7185;
-  --border: color-mix(in oklab, #ffffff 12%, transparent);
-  --input: color-mix(in oklab, #ffffff 14%, transparent);
-  --ring: #5ce1ff;
-  --menu-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
-  --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
-  --paper-band: #101828;
+  --border: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --input: color-mix(in oklab, var(--foreground) 16%, transparent);
+  --ring: var(--accent);
+  --menu-shadow: 0 0 0 1px rgb(255 255 255 / 0.04), 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  --panel-shadow: 0 24px 60px -16px rgb(0 0 0 / 0.5);
+  --paper-band: #191919;
 }
 
 html,
@@ -246,14 +236,16 @@ select {
   border-radius: 0.75rem;
   color: var(--foreground);
   background: var(--background);
-  box-shadow: var(--menu-shadow);
   font-size: 0.875rem;
-  font-weight: 850;
+  font-weight: 800;
   text-decoration: none;
   transform: translateY(calc(-100% - max(env(safe-area-inset-top), 1rem)));
 }
 
+/* The shadow waits for focus: parked above the viewport, it would still
+   spill a smudge onto the top edge. */
 .skip-to-content:focus-visible {
+  box-shadow: var(--menu-shadow);
   transform: translateY(0);
 }
 
@@ -303,7 +295,7 @@ select {
   min-width: 0;
   color: var(--foreground);
   font-size: var(--text-section);
-  font-weight: 900;
+  font-weight: 800;
   line-height: var(--text-section--line-height);
   letter-spacing: -0.025em;
   overflow-wrap: break-word;
@@ -326,7 +318,7 @@ select {
   content: counter(workflow-step, decimal-leading-zero);
   font-size: var(--text-title);
   font-variant-numeric: tabular-nums;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -370,14 +362,14 @@ select {
   --ascii-base: var(--foreground);
   --ascii-glow: var(--accent);
   --ascii-base-alpha: 0.12;
-  --ascii-glow-alpha: 0.75;
+  --ascii-glow-alpha: 0.68;
   --ascii-trace-alpha: 0.42;
   font-family: var(--font-mono);
 }
 
 .dark .ascii-field {
   --ascii-base-alpha: 0.14;
-  --ascii-glow-alpha: 0.85;
+  --ascii-glow-alpha: 0.72;
   --ascii-trace-alpha: 0.5;
 }
 
@@ -412,18 +404,13 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
+/* Floating chrome material: a near-opaque sheet of the card surface with a
+   light blur behind it. Depth is a hairline and a short shadow, not a lens. */
 .liquid-glass {
-  border: 1px solid color-mix(in oklab, currentColor 10%, transparent);
-  background:
-    linear-gradient(135deg, rgba(251, 253, 255, 0.4), rgba(251, 253, 255, 0.12) 58%, rgba(251, 253, 255, 0.22)),
-    color-mix(in oklab, #fbfdff 24%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px var(--glass-rim-spec),
-    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
-    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
-    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 18px 50px rgba(11, 20, 35, 0.09);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  box-shadow: var(--menu-shadow);
+  backdrop-filter: blur(var(--glass-blur));
   transition:
     border-color 180ms var(--ease-weight),
     background-color 180ms var(--ease-weight),
@@ -431,72 +418,28 @@ html[data-season="pride"] .logo-mark-pride {
     transform 240ms var(--ease-weight);
 }
 
-.dark .liquid-glass {
-  background:
-    linear-gradient(135deg, rgba(20, 29, 48, 0.42), rgba(10, 16, 28, 0.14) 58%, rgba(20, 29, 48, 0.28)),
-    color-mix(in oklab, #0a101c 26%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px var(--glass-rim-spec),
-    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
-    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
-    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 18px 50px rgba(0, 0, 0, 0.26);
-}
-
 .glass-frost {
-  border: 1px solid color-mix(in oklab, currentColor 9%, transparent);
-  background:
-    linear-gradient(135deg, rgba(251, 253, 255, 0.46), rgba(251, 253, 255, 0.2)),
-    color-mix(in oklab, var(--background) 46%, transparent);
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 88%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white 58%, transparent),
-    0 10px 30px color-mix(in oklab, var(--foreground) 9%, transparent);
-  backdrop-filter: blur(7px) saturate(1.25);
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 8px 24px -8px rgb(0 0 0 / 0.12);
+  backdrop-filter: blur(7px);
 }
 
 .dark .glass-frost {
-  background:
-    linear-gradient(135deg, rgba(20, 29, 48, 0.48), rgba(10, 16, 28, 0.24)),
-    color-mix(in oklab, var(--background) 52%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white 14%, transparent),
-    0 10px 30px rgba(0, 0, 0, 0.24);
+    0 0 0 1px rgb(255 255 255 / 0.03),
+    0 8px 24px -8px rgb(0 0 0 / 0.5);
 }
 
+/* Menus are opaque: a popover is a surface step above the page, lifted by a
+   hairline and the menu shadow. */
 .dropdown-menu.liquid-glass {
-  border-color: color-mix(in oklab, var(--foreground) 10%, transparent);
-  background:
-    radial-gradient(circle at 78% 76%, color-mix(in oklab, var(--foreground) 5%, transparent), transparent 34%),
-    linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--background) 64%, transparent),
-      color-mix(in oklab, var(--background) 34%, transparent)
-    ),
-    color-mix(in oklab, var(--background) 44%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px var(--glass-rim-spec),
-    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
-    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
-    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 22px 70px rgba(11, 20, 35, 0.16);
-}
-
-.dark .dropdown-menu.liquid-glass {
-  border-color: color-mix(in oklab, var(--foreground) 13%, transparent);
-  background:
-    radial-gradient(circle at 78% 76%, color-mix(in oklab, white 6%, transparent), transparent 34%),
-    linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--background) 70%, transparent),
-      color-mix(in oklab, var(--background) 42%, transparent)
-    ),
-    color-mix(in oklab, var(--background) 50%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px var(--glass-rim-spec),
-    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
-    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
-    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 22px 70px rgba(0, 0, 0, 0.34);
+  border-color: var(--border);
+  background: var(--card);
+  box-shadow: var(--menu-shadow);
+  backdrop-filter: none;
 }
 
 .dropdown-menu-item[data-highlighted]:not([data-checked]) {
@@ -885,93 +828,43 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   z-index: 1;
 }
 
-/* A thick frost, opaque enough that copy under it never reads crisply. The
-   edge is light on the material, not a drawn box: a faint outer hairline
-   and a diffuse shadow lift it off light paper, the ring below catches the
-   light along the top. */
+/* A near-opaque sheet of the page, so copy under it never reads crisply. The
+   edge is a hairline and a short shadow, nothing drawn on the material. */
 .site-nav-glass > .site-nav-surface {
   position: absolute;
   inset: -1px;
   z-index: 0;
   border-color: transparent;
   border-radius: inherit;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 60%), color-mix(in oklab, #fbfdff 66%, transparent);
+  background: color-mix(in oklab, var(--background) 88%, transparent);
   box-shadow:
-    0 0 0 0.5px rgba(11, 20, 35, 0.09),
-    0 1px 2px rgba(11, 20, 35, 0.04),
-    0 14px 30px -14px rgba(11, 20, 35, 0.22);
-  backdrop-filter: blur(20px) saturate(1.5);
+    0 0 0 1px var(--border),
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 12px 28px -14px rgb(0 0 0 / 0.18);
+  backdrop-filter: blur(var(--glass-blur));
   pointer-events: none;
   transition: none;
 }
 
 .dark .site-nav-glass > .site-nav-surface {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 60%), color-mix(in oklab, #0a101c 64%, transparent);
   box-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.5),
-    0 16px 34px -12px rgba(0, 0, 0, 0.6);
-}
-
-/* Specular ring: one pixel of light, strongest along the top edge and
-   fading down the sides, with a faint return along the bottom. */
-.site-nav-surface::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  padding: 1px;
-  border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.95),
-    rgba(255, 255, 255, 0.35) 38%,
-    rgba(255, 255, 255, 0.12) 70%,
-    rgba(255, 255, 255, 0.45)
-  );
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  pointer-events: none;
-}
-
-.dark .site-nav-surface::after {
-  background: linear-gradient(
-    180deg,
-    rgba(214, 232, 255, 0.24),
-    rgba(214, 232, 255, 0.08) 38%,
-    rgba(214, 232, 255, 0.03) 70%,
-    rgba(214, 232, 255, 0.1)
-  );
-}
-
-/*
- * Liquid lens refraction — Chromium only (html.glass-lens, set by the layout
- * bootstrap script). The SVG displacement filter in <LiquidGlassLens /> bends
- * the frosted backdrop at the rim like a convex lens. Other engines drop the
- * entire backdrop-filter when the list contains url(), so this MUST stay
- * behind the .glass-lens gate or Safari/Firefox lose the blur completely.
- * Menus only: on the scrolling header the lens samples past its rim and
- * Chromium leaves stale pixels behind as content moves under it.
- */
-@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  html.glass-lens .dropdown-menu.liquid-glass {
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness))
-      url("#liquid-lens");
-  }
+    0 0 0 1px var(--border),
+    0 14px 32px -12px rgb(0 0 0 / 0.6);
 }
 
 /* Transparency is a preference, not a requirement: collapse every glass
-   surface to a near-solid panel and drop the expensive blur entirely. */
+   surface to an opaque panel and drop the blur entirely. */
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass,
   .glass-frost,
   .site-nav-glass > .site-nav-surface,
-  .site-nav-active-pill-body,
-  .dropdown-menu.liquid-glass,
-  html.glass-lens .dropdown-menu.liquid-glass {
-    background: color-mix(in oklab, var(--background) 94%, var(--foreground) 4%);
+  .dropdown-menu.liquid-glass {
+    background: var(--card);
     backdrop-filter: none;
+  }
+
+  .site-nav-glass > .site-nav-surface {
+    background: var(--background);
   }
 }
 
@@ -1001,17 +894,16 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   transition: none;
 }
 
-/* A tinted platter, never glass on glass: the nav's frost already blurs
-   what is behind it. Pressed or dragged, it lifts into a clearer lens. */
+/* A raised platter on the nav sheet: the secondary surface, a hairline and a
+   whisper of shadow. Pressed or dragged, it lifts a step. */
 .site-nav-active-pill-body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-color: color-mix(in oklab, white 64%, transparent);
+  background-color: var(--secondary);
   box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--foreground) 8%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 0 0 rgba(11, 20, 35, 0);
+    inset 0 0 0 1px var(--border),
+    0 1px 2px rgb(0 0 0 / 0.06);
   transition:
     scale 260ms var(--ease-out),
     background-color 200ms var(--ease-out),
@@ -1019,12 +911,10 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
-  scale: 1.14 1.12;
-  background-color: color-mix(in oklab, white 30%, transparent);
+  scale: 1.06 1.05;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.75),
-    inset 0 1px 0 rgba(255, 255, 255, 1),
-    0 8px 20px -6px rgba(11, 20, 35, 0.2);
+    inset 0 0 0 1px var(--border),
+    0 8px 20px -6px rgb(0 0 0 / 0.2);
 }
 
 .site-nav-active-pill[data-active-nav="projects"] {
@@ -1035,20 +925,10 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   transform: translate3d(calc(200% + 0.5rem), 0, 0);
 }
 
-.dark .site-nav-active-pill-body {
-  background-color: color-mix(in oklab, white 11%, transparent);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, white 8%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 0 rgba(0, 0, 0, 0);
-}
-
 .dark .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
-  background-color: color-mix(in oklab, white 6%, transparent);
   box-shadow:
-    inset 0 0 0 1px rgba(214, 232, 255, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 10px 24px -8px rgba(0, 0, 0, 0.6);
+    inset 0 0 0 1px var(--border),
+    0 10px 24px -8px rgb(0 0 0 / 0.6);
 }
 
 @variant max-sm {
@@ -1066,7 +946,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   }
 }
 
-/* Lifted keeps its clearer fill, but the pill no longer swells. */
+/* Lifted keeps its shadow, but the pill no longer swells. */
 @media (prefers-reduced-motion: reduce) {
   .site-nav-active-pill-body,
   .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
@@ -1298,7 +1178,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 
 .project-media-frame {
   overflow: hidden;
-  background: #060a14;
+  background: #0a0a0a;
   contain: paint;
   isolation: isolate;
   transform: translateZ(0);
@@ -1759,13 +1639,13 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 @media (prefers-contrast: more) {
   :root {
-    --muted-foreground: #344156;
-    --border: color-mix(in oklab, #0b1423 24%, transparent);
+    --muted-foreground: #404040;
+    --border: color-mix(in oklab, var(--foreground) 24%, transparent);
   }
 
   .dark {
-    --muted-foreground: #c2cfdf;
-    --border: color-mix(in oklab, #ffffff 26%, transparent);
+    --muted-foreground: #cfcfcf;
+    --border: color-mix(in oklab, var(--foreground) 26%, transparent);
   }
 
   .liquid-glass,
@@ -1773,12 +1653,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   .site-nav-glass > .site-nav-surface,
   .dropdown-menu.liquid-glass {
     border-color: color-mix(in oklab, var(--foreground) 30%, transparent);
-    background: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
+    background: var(--card);
     backdrop-filter: none;
-  }
-
-  .site-nav-surface::after {
-    display: none;
   }
 }
 
@@ -2775,7 +2651,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-drawer-heading {
   min-width: 0;
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.015em;
 }
 
@@ -2855,7 +2731,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose :where(h2, h3) {
   scroll-margin-top: 7.5rem;
   color: var(--foreground);
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1.15;
   text-wrap: balance;
 }
