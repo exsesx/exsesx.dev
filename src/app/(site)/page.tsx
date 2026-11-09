@@ -152,7 +152,7 @@ function ProjectTags({ project }: { project: Project }) {
   );
 }
 
-function ProjectWebsiteLink({ project }: { project: Project }) {
+function ProjectWebsiteLink({ project, className }: { project: Project; className?: string }) {
   if (!project.href) {
     return null;
   }
@@ -161,7 +161,7 @@ function ProjectWebsiteLink({ project }: { project: Project }) {
     <a
       href={project.href}
       data-cuelume-press=""
-      className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start")}
+      className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start", className)}
       rel="noopener noreferrer"
       target="_blank"
     >
@@ -249,14 +249,18 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* One project opened as a case, then the next two beneath it. */}
-            <article className="mt-stack grid gap-8 lg:grid-cols-12 lg:items-start lg:gap-x-8">
+            {/* One project opened as a case, then the next two beneath it. Side by side, the
+                picture and the copy share both edges: the picture keeps at least its 40:21
+                frame and stretches to the copy's height, and the website link sits on the
+                picture's bottom edge. Below xl they stack, so the brand art is never cropped
+                to a portrait. */}
+            <article className="mt-stack grid gap-8 xl:grid-cols-12 xl:gap-x-8">
               <ProjectMedia
                 project={leadProject}
-                sizes="(min-width: 1024px) 56vw, 100vw"
-                className="aspect-[40/21] lg:col-span-7"
+                sizes="(min-width: 1280px) 56vw, 100vw"
+                className="aspect-[40/21] xl:col-span-7 xl:self-stretch"
               />
-              <div className="flex min-w-0 flex-col gap-5 lg:col-span-5">
+              <div className="flex min-w-0 max-w-3xl flex-col gap-5 xl:col-span-5 xl:max-w-none">
                 <div>
                   <ProjectTitle project={leadProject} />
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -267,7 +271,7 @@ export default function HomePage() {
                 <p className="text-base leading-7 text-muted-foreground">{leadProject.description}</p>
                 <p className="text-base font-bold leading-7 text-foreground">{leadProject.impact}</p>
                 <ProjectTags project={leadProject} />
-                <ProjectWebsiteLink project={leadProject} />
+                <ProjectWebsiteLink project={leadProject} className="xl:mt-auto" />
               </div>
             </article>
 
@@ -290,7 +294,8 @@ export default function HomePage() {
                     </p>
                   </div>
                   <p className="max-w-[60ch] text-base leading-7 text-muted-foreground">{project.description}</p>
-                  <ProjectWebsiteLink project={project} />
+                  {/* Both cards stretch to the row, so their website links share one line. */}
+                  <ProjectWebsiteLink project={project} className="mt-auto" />
                 </article>
               ))}
             </div>
