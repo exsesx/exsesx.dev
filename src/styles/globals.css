@@ -1278,6 +1278,32 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   backface-visibility: hidden;
 }
 
+/*
+ * A project picture link answers hover and press on the picture inside its frame, never on the
+ * named frame, so the morph still measures the frame's own box. Reduced motion pins the picture
+ * (see the reduced-motion block); the title's tint still marks the hover.
+ */
+.project-media .shared-project-media {
+  transition: transform var(--duration-move) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .project-media:hover .shared-project-media {
+    transform: translateZ(0) scale(1.02);
+  }
+
+  :is(article, li):has(> .project-media:hover) :is(h2, h3) > a {
+    color: var(--accent);
+  }
+}
+
+@media (hover: none) {
+  .project-media:active .shared-project-media {
+    transform: translateZ(0) scale(0.985);
+    transition-duration: var(--duration-press);
+  }
+}
+
 /* Case-study running text: the article body's size on a shorter measure than the article column. */
 .case-body {
   max-width: 38rem;
