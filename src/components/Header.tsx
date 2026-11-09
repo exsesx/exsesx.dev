@@ -29,7 +29,7 @@ const navigation: Array<{ href: PrimaryNavHref; label: string; icon: typeof Home
 const navNames = ["home", "projects", "blog"] as const;
 
 const navActionBaseClassName =
-  "relative z-10 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-0 text-sm font-bold whitespace-nowrap text-foreground outline-none select-none active:scale-[0.97] sm:px-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
+  "site-nav-tab relative z-10 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-0 text-sm font-bold whitespace-nowrap outline-none select-none active:scale-[0.97] sm:px-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
 function scrollToPageTop() {
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
@@ -132,8 +132,10 @@ export default function Header() {
           inert={isReadingHeaderHidden ? true : undefined}
           onFocusCapture={revealHeader}
         >
-          <nav className="site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1 rounded-full px-2 py-2 sm:flex sm:justify-between sm:gap-3 sm:px-3">
-            <span aria-hidden="true" className="liquid-glass site-nav-surface" />
+          {/* Three columns at every width, so the tabs hold one position on
+              every route whatever the leading column carries. */}
+          <nav className="site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1 rounded-full px-2 py-2 sm:gap-3 sm:px-3">
+            <span aria-hidden="true" className="site-nav-surface" />
             <div
               className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1 min-[390px]:gap-x-1.5 sm:gap-x-0" : "gap-x-0"}`}
             >
@@ -154,7 +156,7 @@ export default function Header() {
                 <span className="logo-tile site-nav-logo grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground">
                   <LogoMark className="size-8" />
                 </span>
-                <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
+                <span className="site-nav-brand-copy min-w-0 flex-col leading-none">
                   <span className="text-sm font-black tracking-tight">Oleh Vanin</span>
                   <span className="mt-1 text-[11px] font-bold tracking-normal text-muted-foreground">exsesx.dev</span>
                 </span>
@@ -175,7 +177,7 @@ export default function Header() {
               >
                 <span className="site-nav-active-pill-body" />
               </span>
-              {navigation.map(item => {
+              {navigation.map((item, index) => {
                 const Icon = item.icon;
 
                 return (
@@ -187,6 +189,7 @@ export default function Header() {
                     aria-label={item.label}
                     aria-current={activeNavHref === item.href ? "page" : undefined}
                     draggable={false}
+                    data-nav-name={navNames[index]}
                     className={cn(navActionBaseClassName, item.href === "/" && "site-nav-home-tab")}
                     onClick={event => handleNavLinkClick(event, item.href)}
                     onPointerDown={event => {
@@ -206,7 +209,7 @@ export default function Header() {
               <a
                 data-cuelume-press=""
                 href={SITE_PROFILE.links.github}
-                className={cn(buttonVariants({ variant: "glass", size: "icon" }), "md:w-auto md:gap-2 md:px-4 md:pl-3")}
+                className={cn(buttonVariants({ variant: "nav", size: "icon" }), "md:w-auto md:gap-2 md:px-4 md:pl-3")}
               >
                 <GithubIcon data-icon="inline-start" strokeWidth={2.2} />
                 <span className="sr-only md:not-sr-only">GitHub</span>

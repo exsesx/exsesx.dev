@@ -55,13 +55,14 @@ describe("semantic animation styles", () => {
     expect(themeSwitcher).not.toContain("origin-top-right");
   });
 
-  test("morphs only the stateful sound icon and honors reduced motion", async () => {
+  test("morphs only the stateful sound and motion icons and honors reduced motion", async () => {
     const themeSwitcher = await readSource(themeSwitcherUrl);
 
-    expect(themeSwitcher).toContain('import { Volume2, VolumeX } from "lucide"');
+    expect(themeSwitcher).toContain('import { Activity, Pause, Volume2, VolumeX } from "lucide"');
     expect(themeSwitcher).toContain('import { Check, Monitor, Moon, Sun } from "lucide-react"');
     expect(themeSwitcher).toMatch(/<MorphIcon[\s\S]*?icon=\{soundEffectsEnabled \? Volume2 : VolumeX\}/);
-    expect(themeSwitcher).toMatch(/<MorphIcon[\s\S]*?spring="snappy"[\s\S]*?reducedMotion="user"/);
+    expect(themeSwitcher).toMatch(/<MorphIcon[\s\S]*?icon=\{motionOn \? Activity : Pause\}/);
+    expect(themeSwitcher.match(/spring="snappy"\s+reducedMotion="user"/g)).toHaveLength(2);
   });
 
   test("separates fast button press feedback from visual hover feedback", async () => {

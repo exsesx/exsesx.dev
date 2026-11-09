@@ -15,6 +15,7 @@ import {
   traceGlyphFor,
 } from "@/lib/ascii-field";
 import { MOTION_DATASET_KEYS } from "@/lib/motion-contract";
+import { getMotionSnapshot, subscribeToMotion } from "@/lib/motion-preference";
 import { cn } from "@/lib/utils";
 
 /*
@@ -27,7 +28,8 @@ import { cn } from "@/lib/utils";
  * the headline's mark finishes drawing. The cursor gets a lens that follows it
  * and stays where it rests; quick moves leave a wake, a click or a tap a
  * splash. Pulses run only while the hero is on screen and the tab is visible;
- * reduced motion gets one still frame.
+ * reduced motion, or the visitor's Motion setting turned off, gets one still
+ * frame with the trace drawn in.
  *
  * Cost model, Canvas 2D on a single canvas, at the display's refresh rate:
  * - The grid lives in device pixels with whole-pixel cells, so every cell owns
@@ -151,6 +153,11 @@ const ANCHORED_MIN_SPAN = 0.25;
 // A phone's width is short; a quarter of it is less than the run that still
 // reads as the mark going on.
 const NARROW_ANCHORED_MIN_SPAN = 0.15;
+// On a phone the run past the mark is a few dozen cells, so it carries the
+// mark's weight: it leaves the screen at full strength instead of fading out
+// before the edge, and rests brighter than the wide trace.
+const TRACE_REST = 0.55;
+const NARROW_TRACE_REST = 0.8;
 // Where a headline line's own trace sits, as a fraction of its line box: just
 // above the baseline, so the beat reads as the line going on.
 const TEXT_TRACE_BASELINE = 0.7;
@@ -251,7 +258,7 @@ function startAsciiField(
   options: { rhythm: AsciiFieldRhythm; placement: AsciiFieldPlacement },
 ): FieldController {
   let rhythm = options.rhythm;
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let motionSetting = getMotionSnapshot();
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
   const atlas = atlasContext.canvas;
   const rampGlyphs = Array.from(DENSITY_RAMP, glyph => ASCII_GLYPHS.indexOf(glyph));
@@ -321,13 +328,14 @@ function startAsciiField(
   let traceTo = 0;
   let traceY: (x: number) => number = () => 0;
   let traceAmplitude = 0;
+  let traceRest = TRACE_REST;
 
   // The beam: the running sweep's start (or -1), the last one's, and whether
   // the trace already shows ahead of a sweep (after the first one, or when the
   // page arrives without an entrance).
   let sweepStart = -1;
   let lastSweepEnd = -1;
-  let traceDrawn = navigated || reducedMotion.matches;
+  let traceDrawn = navigated || motionSetting !== "on";
   let phosphorUntil = 0;
   let beamSpeed = 0;
   let beamHead = -1;
@@ -345,7 +353,7 @@ function startAsciiField(
   let faded = false;
   let disposed = false;
 
-  const motionAllowed = () => !reducedMotion.matches;
+  const motionAllowed = () => motionSetting === "on";
   const running = () => !disposed && width > 0 && intersecting && !document.hidden && motionAllowed();
 
   function buildAtlas() {
@@ -683,7 +691,11 @@ function startAsciiField(
     let amplitude = anchor ? anchor.amplitude : height * layout.band.amplitude;
 
     traceFrom = anchor ? anchor.right : width * layout.band.from;
-    traceTo = width * (anchor ? 0.98 : layout.band.to);
+    // A phone's trace runs off the edge; elsewhere it fades out before it.
+    const offEdge = anchor?.fit === true;
+
+    traceTo = offEdge ? width + cellWidth : width * (anchor ? 0.98 : layout.band.to);
+    traceRest = offEdge ? NARROW_TRACE_REST : TRACE_REST;
 
     const span = traceTo - traceFrom;
     const flat = rhythm === "flatline";
@@ -700,7 +712,7 @@ function startAsciiField(
 
     traceAmplitude = amplitude;
 
-    const fadeEnd = span * 0.1;
+    const fadeEnd = offEdge ? 0 : span * 0.1;
     const fadeStart = anchored ? 0 : span * 0.1;
 
     traceY = (x: number) => {
@@ -736,7 +748,7 @@ function startAsciiField(
       const lastRow = previousRow < 0 ? row : Math.max(row, previousRow - 1);
       const ends =
         (fadeStart > 0 ? smoothstep(traceFrom, traceFrom + fadeStart, x) : 1) *
-        smoothstep(traceTo, traceTo - fadeEnd, x);
+        (fadeEnd > 0 ? smoothstep(traceTo, traceTo - fadeEnd, x) : 1);
 
       for (let fillRow = firstRow; fillRow <= lastRow; fillRow++) {
         const index = fillRow * cols + col;
@@ -812,7 +824,7 @@ function startAsciiField(
      elsewhere, and absent in the erase gap or before the first sweep. */
   function traceAlphaAt(slot: number, now: number) {
     const weight = traceWeight[slot];
-    const rest = palette.traceAlpha * 0.55 * weight;
+    const rest = palette.traceAlpha * traceRest * weight;
     let age: number;
 
     if (beamHead >= 0) {
@@ -1248,6 +1260,7 @@ function startAsciiField(
     if (!motionAllowed()) {
       splashes = [];
       sweepStart = -1;
+      phosphorUntil = 0;
       traceDrawn = true;
     }
 
@@ -1413,6 +1426,17 @@ function startAsciiField(
     }
   }
 
+  function handleMotionChange() {
+    const next = getMotionSnapshot();
+
+    if (next === motionSetting) {
+      return;
+    }
+
+    motionSetting = next;
+    schedule();
+  }
+
   function remeasure() {
     if (width > 0) {
       measure();
@@ -1450,7 +1474,7 @@ function startAsciiField(
   hostObserver.observe(host);
   intersectionObserver.observe(canvas);
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-  reducedMotion.addEventListener("change", schedule);
+  const unsubscribeMotion = subscribeToMotion(handleMotionChange);
   finePointer.addEventListener("change", schedule);
   document.addEventListener("visibilitychange", schedule);
   window.addEventListener("pointermove", handlePointerMove, { passive: true });
@@ -1494,7 +1518,7 @@ function startAsciiField(
     hostObserver.disconnect();
     intersectionObserver.disconnect();
     themeObserver.disconnect();
-    reducedMotion.removeEventListener("change", schedule);
+    unsubscribeMotion();
     finePointer.removeEventListener("change", schedule);
     document.removeEventListener("visibilitychange", schedule);
     window.removeEventListener("pointermove", handlePointerMove);

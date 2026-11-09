@@ -58,7 +58,7 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
   return (
     <Button
       type="button"
-      variant="glass"
+      variant="nav"
       size="icon"
       aria-label="Back"
       aria-hidden={active ? undefined : "true"}

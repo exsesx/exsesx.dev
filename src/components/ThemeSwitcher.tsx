@@ -1,6 +1,6 @@
 "use client";
 
-import { Volume2, VolumeX } from "lucide";
+import { Activity, Pause, Volume2, VolumeX } from "lucide";
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { MorphIcon } from "morphicons/react";
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -12,6 +12,12 @@ import {
   setSoundEffectsEnabled,
   subscribeToSoundEffects,
 } from "@/lib/interaction-sounds";
+import {
+  getMotionSnapshot,
+  getServerMotionSnapshot,
+  setMotionEnabled,
+  subscribeToMotion,
+} from "@/lib/motion-preference";
 import {
   getServerThemeSnapshot,
   getThemeSnapshot,
@@ -105,6 +111,9 @@ export default function ThemeSwitcher() {
     getSoundEffectsSnapshot,
     getServerSoundEffectsSnapshot,
   );
+  const motionSetting = useSyncExternalStore(subscribeToMotion, getMotionSnapshot, getServerMotionSnapshot);
+  const motionOn = motionSetting === "on";
+  const motionReduced = motionSetting === "reduced";
   const { mode, resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const isDark = resolvedTheme === "dark";
   const activeOption = themeOptions.find(option => option.mode === mode) ?? systemThemeOption;
@@ -149,17 +158,17 @@ export default function ThemeSwitcher() {
         render={
           <Button
             type="button"
-            variant="glass"
+            variant="nav"
             size="icon"
-            className="relative cursor-pointer active:scale-[0.97]"
-            aria-label={`Theme: ${activeOption.label}. Sound effects: ${soundEffectsEnabled ? "on" : "off"}`}
+            className="relative cursor-pointer"
+            aria-label={`Theme: ${activeOption.label}. Sound effects: ${soundEffectsEnabled ? "on" : "off"}. Motion: ${motionOn ? "on" : "off"}`}
           />
         }
       >
         <ActiveIcon strokeWidth={2.2} />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuContent align="end" className="w-52" prewarm>
         <DropdownMenuRadioGroup
           value={mode}
           onValueChange={value => {
@@ -201,6 +210,29 @@ export default function ThemeSwitcher() {
             />
             <span className="min-w-0 flex-1 font-bold leading-none">Sound effects</span>
             <span className="text-xs font-bold text-muted-foreground">{soundEffectsEnabled ? "On" : "Off"}</span>
+          </DropdownMenuCheckboxItem>
+          {/* The OS setting outranks this one: with reduced motion on, the item
+              reports it and stays off. */}
+          <DropdownMenuCheckboxItem
+            checked={motionOn}
+            closeOnClick={false}
+            disabled={motionReduced}
+            onCheckedChange={checked => {
+              playInteractionSound("toggle");
+              setMotionEnabled(checked);
+            }}
+          >
+            <MorphIcon
+              icon={motionOn ? Activity : Pause}
+              data-icon="inline-start"
+              strokeWidth={2.2}
+              spring="snappy"
+              reducedMotion="user"
+            />
+            <span className="min-w-0 flex-1 font-bold leading-none">Motion</span>
+            <span className="text-xs font-bold text-muted-foreground">
+              {motionReduced ? "Reduced" : motionOn ? "On" : "Off"}
+            </span>
           </DropdownMenuCheckboxItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

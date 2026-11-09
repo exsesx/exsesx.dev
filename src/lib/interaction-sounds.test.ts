@@ -178,6 +178,25 @@ describe("popup sound decisions", () => {
 
     expect(playMock.mock.calls).toEqual([["toggle"], ["toggle"], ["toggle"], ["toggle"]]);
   });
+
+  test("plays the popup cue after the frame that shows the popup", () => {
+    const { testWindow } = installTestWindow();
+    const queued: Array<() => void> = [];
+
+    Object.assign(testWindow, {
+      requestAnimationFrame: (callback: () => void) => queued.push(callback),
+      setTimeout: (callback: () => void) => queued.push(callback),
+    });
+
+    playPopupToggleSound(true, "trigger-press");
+
+    expect(playMock).not.toHaveBeenCalled();
+
+    queued.shift()?.();
+    queued.shift()?.();
+
+    expect(playMock.mock.calls).toEqual([["toggle"]]);
+  });
 });
 
 describe("delayed preparation sounds", () => {

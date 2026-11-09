@@ -91,9 +91,9 @@
   --duration-floating-control-enter: 220ms;
   --duration-progress-retract: 280ms;
   --duration-move: 280ms;
-  /* Floating chrome (nav, back chip) is a near-opaque sheet with a light
-     blur, so copy scrolling under it never reads crisply. No tinted rims,
-     no refraction: depth comes from a hairline and a short shadow. */
+  /* The light blur of a .liquid-glass sheet. The nav bar and menus are
+     opaque. No tinted rims, no refraction: depth comes from a hairline and a
+     short shadow. */
   --glass-blur: 8px;
   /* Graphite palette. Light is warm graphite: paper and ink with a hair of
      warmth (Tailwind's stone family, pulled lighter), so the page reads as
@@ -837,11 +837,9 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   );
 }
 
-/* The capsule paints nothing itself: its material is the surface layer
-   below, so the glass can fade in as one piece (blur, fill and rim together)
-   on opacity alone, which the compositor runs without repainting. */
-/* No isolation or other group effect here: an ancestor that groups its
-   content can cut the surface's blur off from the page behind it. */
+/* The capsule paints nothing itself: its surface is the layer below, so the
+   bar can fade in as one piece (fill, hairline and shadow together) on
+   opacity alone, which the compositor runs without repainting. */
 .site-nav-glass {
   position: relative;
   width: 100%;
@@ -857,20 +855,18 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   z-index: 1;
 }
 
-/* A near-opaque sheet of the page, so copy under it never reads crisply. The
-   edge is a hairline and a short shadow, nothing drawn on the material. */
+/* An opaque strip of the page: nothing under it shows through, so copy never
+   smears behind the tabs. The edge is a hairline and a short shadow. */
 .site-nav-glass > .site-nav-surface {
   position: absolute;
   inset: -1px;
   z-index: 0;
-  border-color: transparent;
   border-radius: inherit;
-  background: color-mix(in oklab, var(--background) 88%, transparent);
+  background: var(--background);
   box-shadow:
     0 0 0 1px var(--border),
     0 1px 2px rgb(26 22 19 / 0.05),
-    0 12px 28px -14px rgb(26 22 19 / 0.18);
-  backdrop-filter: blur(var(--glass-blur));
+    0 10px 24px -14px rgb(26 22 19 / 0.16);
   pointer-events: none;
   transition: none;
 }
@@ -878,7 +874,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 .dark .site-nav-glass > .site-nav-surface {
   box-shadow:
     0 0 0 1px var(--border),
-    0 14px 32px -12px rgb(0 0 0 / 0.6);
+    0 12px 28px -12px rgb(0 0 0 / 0.6);
 }
 
 /* Transparency is a preference, not a requirement: collapse every glass
@@ -886,15 +882,60 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass,
   .glass-frost,
-  .site-nav-glass > .site-nav-surface,
   .dropdown-menu.liquid-glass {
     background: var(--card);
     backdrop-filter: none;
   }
+}
 
-  .site-nav-glass > .site-nav-surface {
-    background: var(--background);
+/*
+ * Inside the bar there is one fill at rest: the active tab's pill, a tint of
+ * the ink with no edge or shadow, so it reads as "you are here" rather than as
+ * one more button. Inactive tabs are quieter ink; utility controls (Back,
+ * GitHub, theme) are flat until the pointer or a press gives them a wash.
+ */
+.site-nav-glass {
+  --nav-pill: color-mix(in oklab, var(--foreground) 10%, var(--background));
+  --nav-pill-lifted: color-mix(in oklab, var(--foreground) 14%, var(--background));
+  --nav-wash: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --nav-wash-press: color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.dark .site-nav-glass {
+  --nav-pill: color-mix(in oklab, var(--foreground) 15%, var(--background));
+  --nav-pill-lifted: color-mix(in oklab, var(--foreground) 20%, var(--background));
+  --nav-wash: color-mix(in oklab, var(--foreground) 7%, transparent);
+  --nav-wash-press: color-mix(in oklab, var(--foreground) 11%, transparent);
+}
+
+.site-nav-tab {
+  color: var(--muted-foreground);
+}
+
+.site-nav-switcher[data-active-nav="home"] > [data-nav-name="home"],
+.site-nav-switcher[data-active-nav="projects"] > [data-nav-name="projects"],
+.site-nav-switcher[data-active-nav="blog"] > [data-nav-name="blog"] {
+  color: var(--foreground);
+}
+
+.nav-control {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-nav-tab:hover {
+    color: var(--foreground);
   }
+
+  .nav-control:hover {
+    background-color: var(--nav-wash);
+  }
+}
+
+.nav-control:active,
+.nav-control[data-popup-open] {
+  background-color: var(--nav-wash-press);
 }
 
 .site-nav-brand-link {
@@ -923,27 +964,21 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   transition: none;
 }
 
-/* A raised platter on the nav sheet: the secondary surface, a hairline and a
-   whisper of shadow. Pressed or dragged, it lifts a step. */
+/* The ink tint marking the active tab. Pressed or dragged, it swells and
+   deepens a step. */
 .site-nav-active-pill-body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-color: var(--secondary);
-  box-shadow:
-    inset 0 0 0 1px var(--border),
-    0 1px 2px rgb(26 22 19 / 0.07);
+  background-color: var(--nav-pill);
   transition:
     scale 260ms var(--ease-out),
-    background-color 200ms var(--ease-out),
-    box-shadow 200ms var(--ease-out);
+    background-color 200ms var(--ease-out);
 }
 
 .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
   scale: 1.06 1.05;
-  box-shadow:
-    inset 0 0 0 1px var(--border),
-    0 8px 20px -6px rgb(26 22 19 / 0.2);
+  background-color: var(--nav-pill-lifted);
 }
 
 .site-nav-active-pill[data-active-nav="projects"] {
@@ -952,12 +987,6 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 
 .site-nav-active-pill[data-active-nav="blog"] {
   transform: translate3d(calc(200% + 0.5rem), 0, 0);
-}
-
-.dark .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
-  box-shadow:
-    inset 0 0 0 1px var(--border),
-    0 10px 24px -8px rgb(0 0 0 / 0.6);
 }
 
 @variant max-sm {
@@ -979,7 +1008,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   }
 }
 
-/* Lifted keeps its shadow, but the pill no longer swells. */
+/* Lifted keeps its deeper tint, but the pill no longer swells. */
 @media (prefers-reduced-motion: reduce) {
   .site-nav-active-pill-body,
   .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
@@ -988,7 +1017,30 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 .site-nav-brand-copy {
+  display: none;
   flex-shrink: 0;
+}
+
+/* From sm the leading column is a container sized by the grid alone, so what
+   it holds never moves the tabs. The name shows where it fits beside the logo
+   and, on a detail page, the Back chip. */
+@variant sm {
+  .site-nav-leading {
+    container: nav-leading / inline-size;
+  }
+}
+
+/* The brand link with its name is 8.5rem; the Back chip adds 2.5rem. */
+@container nav-leading (width >= 8.5rem) {
+  .site-nav-brand-copy {
+    display: flex;
+  }
+}
+
+@container nav-leading (width < 11rem) {
+  .nav-back-button[data-active="true"] + .site-nav-brand-link .site-nav-brand-copy {
+    display: none;
+  }
 }
 
 /* Contextual back chip at the nav's left edge. The slot folds on the live
@@ -1118,11 +1170,11 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 /*
- * At the top of a page the nav is type on the paper: no capsule and no
- * switcher track, so the hero owns the first screen. As content scrolls under
- * it the glass materializes and the capsule draws in slightly. Where scroll
- * timelines exist that follows the scroll position directly (compositor
- * driven); elsewhere nav-condense.ts flips data-condensed past a threshold.
+ * At the top of a page the nav is type on the paper: no capsule, so the hero
+ * owns the first screen. As content scrolls under it the bar materializes and
+ * the capsule draws in slightly. Where scroll timelines exist that follows the
+ * scroll position directly (compositor driven); elsewhere nav-condense.ts
+ * flips data-condensed past a threshold.
  */
 .site-nav-switcher {
   isolation: isolate;
@@ -1183,16 +1235,6 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   }
 }
 
-.site-nav-switcher::before {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  content: "";
-  border-radius: inherit;
-  background-color: var(--muted);
-  pointer-events: none;
-}
-
 .site-nav-switcher > a {
   -webkit-touch-callout: none;
   transition: transform 220ms var(--ease-out);
@@ -1217,8 +1259,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 /* Transparent unless the timeline says otherwise: a page too short to scroll
    has an inactive timeline, and nothing ever passes under the nav there. */
 @supports (animation-timeline: scroll()) {
-  .site-nav-glass > .site-nav-surface,
-  .site-nav-switcher::before {
+  .site-nav-glass > .site-nav-surface {
     opacity: 0;
     animation: nav-materialize 1ms linear both;
     animation-timeline: scroll(root block);
@@ -1233,8 +1274,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 @supports not (animation-timeline: scroll()) {
-  .site-nav-glass > .site-nav-surface,
-  .site-nav-switcher::before {
+  .site-nav-glass > .site-nav-surface {
     opacity: 0;
     transition: opacity 220ms var(--ease-out);
   }
@@ -1243,8 +1283,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
     transition: transform var(--duration-ui) var(--ease-out);
   }
 
-  .site-header-nav-frame[data-condensed="true"] .site-nav-surface,
-  .site-header-nav-frame[data-condensed="true"] .site-nav-switcher::before {
+  .site-header-nav-frame[data-condensed="true"] .site-nav-surface {
     opacity: 1;
   }
 
@@ -1254,7 +1293,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 /* On touch the capsule keeps its size as it condenses: shrinking it would
-   take the 44px targets back under a fingertip's reach. The glass still
+   take the 44px targets back under a fingertip's reach. The bar still
    materializes. */
 @media (pointer: coarse) {
   .site-nav-glass,
@@ -1692,7 +1731,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     will-change: auto;
   }
 
-  /* The glass still materializes with scroll; the capsule stops resizing. */
+  /* The bar still materializes with scroll; the capsule stops resizing. */
   .site-nav-glass {
     animation: none;
   }

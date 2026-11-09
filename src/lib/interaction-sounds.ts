@@ -174,6 +174,23 @@ function isSoundOwningControlTarget(target: EventTarget | null | undefined) {
   return typeof closest === "function" && closest.call(target, SOUND_OWNING_CONTROL_SELECTOR) !== null;
 }
 
+/*
+ * A popup's cue starts right after the frame that shows it. The first cue a
+ * page plays builds Cuelume's audio graph (about 7ms of main thread, 30ms at
+ * 4x CPU), and inside the press that cost held back the popup's first frame.
+ * One frame later is still well inside the window where sound and sight read
+ * as one event.
+ */
+function playAfterNextPaint(sound: SoundName) {
+  if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") {
+    playInteractionSound(sound);
+
+    return;
+  }
+
+  window.requestAnimationFrame(() => window.setTimeout(() => playInteractionSound(sound), 0));
+}
+
 export function playPopupToggleSound(open: boolean, reason: string, eventTarget?: EventTarget | null) {
   if (!open && SILENT_POPUP_CLOSE_REASONS.has(reason)) {
     return;
@@ -183,5 +200,5 @@ export function playPopupToggleSound(open: boolean, reason: string, eventTarget?
     return;
   }
 
-  playInteractionSound("toggle");
+  playAfterNextPaint("toggle");
 }

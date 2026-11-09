@@ -8,6 +8,9 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/85",
         glass:
           "border-border bg-secondary text-secondary-foreground shadow-foreground/5 hover:border-foreground/20 hover:bg-secondary-hover",
+        // Flat at rest: a control sitting inside the nav bar, which is already
+        // the surface. Pointer and press add a quiet wash (.nav-control).
+        nav: "nav-control text-foreground shadow-none",
       },
       size: {
         default: "h-10 gap-2 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",

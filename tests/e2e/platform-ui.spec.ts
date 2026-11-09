@@ -127,11 +127,11 @@ if (!("Bun" in globalThis)) {
       await expect(githubIcon).toHaveAttribute("stroke-width", "2.2");
       await expect(themeIcon).toHaveAttribute("stroke-width", "2.2");
 
-      const [githubBounds, navBounds, githubBorderColor, themeBorderColor] = await Promise.all([
+      const [githubBounds, navBounds, githubRest, themeRest] = await Promise.all([
         githubLink.boundingBox(),
         nav.boundingBox(),
-        githubLink.evaluate(element => getComputedStyle(element).borderColor),
-        themeButton.evaluate(element => getComputedStyle(element).borderColor),
+        githubLink.evaluate(element => getComputedStyle(element).backgroundColor),
+        themeButton.evaluate(element => getComputedStyle(element).backgroundColor),
       ]);
       const viewport = page.viewportSize();
 
@@ -139,8 +139,9 @@ if (!("Bun" in globalThis)) {
       expect(navBounds).not.toBeNull();
       expect(viewport).not.toBeNull();
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
-      expect(githubBorderColor).toBe(themeBorderColor);
-      expect(githubBorderColor).not.toBe("rgba(0, 0, 0, 0)");
+      // Utility controls sit flat on the bar at rest; only the active tab's pill is filled.
+      expect(githubRest).toBe("rgba(0, 0, 0, 0)");
+      expect(themeRest).toBe(githubRest);
 
       if (isMobile) {
         // Touch controls are 44px from 360px up (Apple's minimum touch target).
@@ -254,7 +255,7 @@ if (!("Bun" in globalThis)) {
       expect(snapshots.length).toBeGreaterThan(0);
       expect(snapshots.every(snapshot => snapshot.className.includes("dark"))).toBe(true);
       expect(snapshots.every(snapshot => snapshot.mode === "system")).toBe(true);
-      expect(snapshots.every(snapshot => snapshot.label === "Theme: Device. Sound effects: on")).toBe(true);
+      expect(snapshots.every(snapshot => snapshot.label === "Theme: Device. Sound effects: on. Motion: on")).toBe(true);
       expect(consoleErrors).not.toContainEqual(expect.stringContaining("Encountered a script tag"));
     });
 
@@ -875,7 +876,7 @@ if (!("Bun" in globalThis)) {
 
       const menu = page.getByRole("menu");
       await expect(menu).toBeVisible();
-      await expect(menu).toHaveAccessibleName("Theme: Light. Sound effects: on");
+      await expect(menu).toHaveAccessibleName("Theme: Light. Sound effects: on. Motion: on");
 
       const bounds = await menu.boundingBox();
       const viewport = page.viewportSize();

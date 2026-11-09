@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const dropdownMenuItemClass =
@@ -55,16 +55,57 @@ function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
+// After load, past the hero's entrance and the audio warm-up.
+const PREWARM_IDLE_TIMEOUT_MS = 2000;
+
+/*
+ * A menu's first open used to pay for rendering its popup (and the icons in
+ * it) inside the press. Prewarmed, the popup renders once while the page is
+ * idle, hidden, as an interruptible transition, and every open only reveals it.
+ */
+function usePrewarmedPopup(enabled: boolean) {
+  const [warm, setWarm] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    function mount() {
+      startTransition(() => setWarm(true));
+    }
+
+    if (typeof window.requestIdleCallback !== "function") {
+      const timeout = window.setTimeout(mount, PREWARM_IDLE_TIMEOUT_MS);
+
+      return () => window.clearTimeout(timeout);
+    }
+
+    const handle = window.requestIdleCallback(mount, { timeout: PREWARM_IDLE_TIMEOUT_MS });
+
+    return () => window.cancelIdleCallback(handle);
+  }, [enabled]);
+
+  return enabled && warm;
+}
+
 function DropdownMenuContent({
   align = "start",
   alignOffset = 0,
   side = "bottom",
   sideOffset = 8,
+  prewarm = false,
   className,
   ...props
-}: MenuPrimitive.Popup.Props & Pick<MenuPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">) {
+}: MenuPrimitive.Popup.Props &
+  Pick<MenuPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset"> & {
+    /** Render the closed popup on idle so the first open costs no more than the next. */
+    prewarm?: boolean;
+  }) {
+  const keepMounted = usePrewarmedPopup(prewarm);
+
   return (
-    <MenuPrimitive.Portal>
+    <MenuPrimitive.Portal keepMounted={keepMounted}>
       <MenuPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}

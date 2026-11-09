@@ -320,7 +320,7 @@ function CvMenu() {
               />
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] sm:w-52">
+            <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] sm:w-52" prewarm>
               {/* Opening the CV is the split button's own action; the menu only holds the other one. */}
               <DropdownMenuGroup>
                 {secondaryAction === "share" ? (
