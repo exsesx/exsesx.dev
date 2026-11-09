@@ -23,16 +23,14 @@ function getRuleBody(css: string, selector: string) {
 
 function getReducedMotionActivePillRule(css: string) {
   const rule = css.match(
-    /@media \(prefers-reduced-motion: reduce\) \{(?:\s*\/\*[\s\S]*?\*\/)?\s*\.site-nav-active-pill\s*\{(?<body>[\s\S]*?)\n\s*\}\s*\n\}/,
+    /@variant reduced-motion \{(?:\s*\/\*[\s\S]*?\*\/)?\s*\.site-nav-active-pill\s*\{(?<body>[\s\S]*?)\n\s*\}\s*\n\}/,
   );
 
   return rule?.groups?.body ?? "";
 }
 
 function getReducedMotionBackButtonRule(css: string) {
-  const rule = css.match(
-    /@media \(prefers-reduced-motion: reduce\) \{\s*\.nav-back-button\s*\{(?<body>[\s\S]*?)\n\s*\}/,
-  );
+  const rule = css.match(/@variant reduced-motion \{\s*\.nav-back-button\s*\{(?<body>[\s\S]*?)\n\s*\}/);
 
   return rule?.groups?.body ?? "";
 }

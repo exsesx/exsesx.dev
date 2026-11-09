@@ -15,6 +15,7 @@ import {
 import type { ArticleHeading } from "@/content/blog/reading";
 import { BLOG_UI, type BlogLocale } from "@/lib/blog";
 import { playPopupToggleSound } from "@/lib/interaction-sounds";
+import { isMotionReduced } from "@/lib/motion-preference";
 import { useBlogTocNavigation } from "./BlogFocusProvider";
 
 type ArticleTocProps = {
@@ -51,7 +52,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
     const tocNavigation = beginTocNavigation();
     const topOffset = Math.max((triggerRef.current?.getBoundingClientRect().height ?? 0) + 16, 76);
     const top = Math.max(0, window.scrollY + heading.getBoundingClientRect().top - topOffset);
-    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    const behavior = isMotionReduced() ? "auto" : "smooth";
 
     const settleHeading = () => {
       if (!tocNavigation.isActive()) {

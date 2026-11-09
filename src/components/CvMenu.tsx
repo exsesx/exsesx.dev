@@ -280,10 +280,13 @@ function CvMenu() {
 
   return (
     <DropdownMenu onOpenChange={handleMenuOpenChange} open={isOpen}>
+      {/* Each half presses on its own. The shell takes scale-none, not
+          scale-100: an identity scale is still a new transform, and its first
+          press made the menu's first open pay for compositing setup. */}
       <div
         className={cn(
           buttonVariants({ variant: "glass", size: "lg" }),
-          "gap-0 overflow-hidden !p-0 active:scale-100 hover:!bg-secondary",
+          "gap-0 overflow-hidden !p-0 active:scale-none hover:!bg-secondary",
           isOpen && "border-ring/50 text-accent",
         )}
       >

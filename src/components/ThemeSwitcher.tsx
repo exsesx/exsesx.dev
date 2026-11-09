@@ -206,7 +206,7 @@ export default function ThemeSwitcher() {
               data-icon="inline-start"
               strokeWidth={2.2}
               spring="snappy"
-              reducedMotion="user"
+              reducedMotion={motionOn ? "user" : "always"}
             />
             <span className="min-w-0 flex-1 font-bold leading-none">Sound effects</span>
             <span className="text-xs font-bold text-muted-foreground">{soundEffectsEnabled ? "On" : "Off"}</span>
@@ -227,7 +227,7 @@ export default function ThemeSwitcher() {
               data-icon="inline-start"
               strokeWidth={2.2}
               spring="snappy"
-              reducedMotion="user"
+              reducedMotion={motionOn ? "user" : "always"}
             />
             <span className="min-w-0 flex-1 font-bold leading-none">Motion</span>
             <span className="text-xs font-bold text-muted-foreground">

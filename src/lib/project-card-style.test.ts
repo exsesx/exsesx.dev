@@ -30,7 +30,7 @@ describe("project card performance styles", () => {
     const css = await Bun.file(globalsUrl).text();
 
     expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.shared-project-media\s*\{[\s\S]*?transform:\s*none !important/,
+      /@variant reduced-motion[\s\S]*?\.shared-project-media\s*\{[\s\S]*?transform:\s*none !important/,
     );
     expect(css).not.toContain("No pointer tracking under reduced motion");
   });

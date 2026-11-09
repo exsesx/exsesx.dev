@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import type { MouseEvent, PointerEvent } from "react";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import { MOTION_ATTRIBUTES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { isMotionReduced } from "@/lib/motion-preference";
 import { attachNavCondense } from "@/lib/nav-condense";
 import { attachNavPill, type NavPillController } from "@/lib/nav-pill";
 import { shouldScrollToTopForNavClick } from "@/lib/nav-scroll";
@@ -32,7 +33,7 @@ const navActionBaseClassName =
   "site-nav-tab relative z-10 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-0 text-sm font-bold whitespace-nowrap outline-none select-none active:scale-[0.97] sm:px-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
 function scrollToPageTop() {
-  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  const behavior = isMotionReduced() ? "auto" : "smooth";
 
   window.scrollTo({ behavior, top: 0 });
 }

@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { getMotionSnapshot, setMotionEnabled } from "./motion-preference";
+import { getMotionSnapshot, isMotionReduced, setMotionEnabled } from "./motion-preference";
 
 const originalWindow = globalThis.window;
+const originalDocument = globalThis.document;
 
 function installTestWindow({ reduced }: { reduced: boolean }) {
   const eventTarget = new EventTarget();
   const storedValues = new Map<string, string>();
+  const dataset: Record<string, string> = {};
 
   globalThis.window = {
     addEventListener: eventTarget.addEventListener.bind(eventTarget),
@@ -17,10 +19,14 @@ function installTestWindow({ reduced }: { reduced: boolean }) {
     matchMedia: () => ({ matches: reduced }),
     removeEventListener: eventTarget.removeEventListener.bind(eventTarget),
   } as unknown as Window & typeof globalThis;
+  globalThis.document = { documentElement: { dataset } } as unknown as Document;
+
+  return { dataset };
 }
 
 afterEach(() => {
   globalThis.window = originalWindow;
+  globalThis.document = originalDocument;
 });
 
 describe("motion preference", () => {
@@ -32,6 +38,20 @@ describe("motion preference", () => {
     setMotionEnabled(false);
 
     expect(getMotionSnapshot()).toBe("off");
+  });
+
+  test("marks the root at once so CSS treats Motion off as reduced motion", () => {
+    const { dataset } = installTestWindow({ reduced: false });
+
+    setMotionEnabled(false);
+
+    expect(dataset.motion).toBe("off");
+    expect(isMotionReduced()).toBe(true);
+
+    setMotionEnabled(true);
+
+    expect(dataset.motion).toBeUndefined();
+    expect(isMotionReduced()).toBe(false);
   });
 
   test("lets the OS reduced-motion setting outrank it", () => {

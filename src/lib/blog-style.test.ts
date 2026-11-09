@@ -417,9 +417,7 @@ describe("Blog production styles", () => {
     expect(css).toMatch(
       /\[data-blog-focus-toast="true"\] \.blog-scroll-top\s*\{[^}]*visibility:\s*hidden;[^}]*pointer-events:\s*none/s,
     );
-    expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-scroll-top,[\s\S]*?transition:\s*none/s,
-    );
+    expect(css).toMatch(/@variant reduced-motion\s*\{[\s\S]*?\.blog-scroll-top,[\s\S]*?transition:\s*none/s);
     expect(css).not.toMatch(/@media \(min-width:[^}]*\{[^}]*\.blog-scroll-top/);
   });
 
@@ -630,9 +628,7 @@ describe("Blog production styles", () => {
     expect(desktopSection).toMatch(
       /html\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.blog-toc-desktop,[\s\S]*?\[data-blog-header-motion="instant"\] \.blog-toc-desktop\s*\{\s*transition:\s*none/s,
     );
-    expect(desktopSection).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-toc-desktop\s*\{\s*transition:\s*none/s,
-    );
+    expect(desktopSection).toMatch(/@variant reduced-motion\s*\{[\s\S]*?\.blog-toc-desktop\s*\{\s*transition:\s*none/s);
   });
 
   test("uses the shared frost tier for the launcher and a calm opaque drawer", async () => {
@@ -667,7 +663,7 @@ describe("Blog production styles", () => {
 
   test("uses opacity-only article header changes when reduced motion is requested", async () => {
     const css = await Bun.file(globalsCssUrl).text();
-    const reducedMotionCss = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
+    const reducedMotionCss = css.slice(css.indexOf("@variant reduced-motion {"));
 
     expect(reducedMotionCss).toMatch(
       /\[data-blog-article="true"\] \.site-header-nav-frame\s*\{[^}]*transform:\s*none[^}]*opacity 140ms var\(--ease-out\)/s,
@@ -676,10 +672,10 @@ describe("Blog production styles", () => {
       /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\][\s\S]*?\.site-header-nav-frame\s*\{[^}]*transform:\s*none[^}]*opacity 160ms var\(--ease-out\)/s,
     );
     expect(reducedMotionCss).toMatch(
-      /html\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.site-header-nav-frame,[\s\S]*?\[data-blog-header-motion="instant"\] \.site-header-fade\s*\{\s*transition:\s*none/s,
+      /&\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.site-header-nav-frame,[\s\S]*?\[data-blog-header-motion="instant"\] \.site-header-fade\s*\{\s*transition:\s*none/s,
     );
     expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.site-header-nav-frame,[\s\S]*?\.site-header-fade,[\s\S]*?\.nav-back-button\s*\{\s*transition:\s*none/s,
+      /@variant reduced-motion[\s\S]*?\.site-header-nav-frame,[\s\S]*?\.site-header-fade,[\s\S]*?\.nav-back-button\s*\{\s*transition:\s*none/s,
     );
   });
 });

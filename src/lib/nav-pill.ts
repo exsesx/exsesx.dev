@@ -11,6 +11,7 @@
  * frame loop.
  */
 
+import { isMotionReduced } from "@/lib/motion-preference";
 import { isAtRest, type Spring, type SpringState, stepSpring } from "@/lib/spring";
 
 type Geometry = { tabLefts: number[]; tabShown: boolean[]; tabWidth: number; pillWidth: number; scale: number };
@@ -96,7 +97,6 @@ type NavPillOptions = {
 export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options: NavPillOptions): NavPillController {
   const body = pill.firstElementChild instanceof HTMLElement ? pill.firstElementChild : pill;
   const tabs = Array.from(switcher.querySelectorAll<HTMLElement>(":scope > a"));
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const cssIndex = () => options.names.indexOf(pill.dataset.activeNav ?? "");
   let target = Math.max(0, cssIndex());
   let samples: SpringState[] | null = null;
@@ -176,7 +176,7 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
     stopGlide();
     body.style.transform = "";
 
-    if (reducedMotion.matches || isAtRest(from, to)) {
+    if (isMotionReduced() || isAtRest(from, to)) {
       settle(index);
 
       return;
@@ -265,9 +265,9 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
     v = state.v;
 
     pill.style.transform = `translate3d(${x}px, 0, 0)`;
-    body.style.transform = reducedMotion.matches ? "" : stretchTransform(v);
+    body.style.transform = isMotionReduced() ? "" : stretchTransform(v);
 
-    if (!reducedMotion.matches) {
+    if (!isMotionReduced()) {
       setMagnify(x + (geometry?.pillWidth ?? 0) / 2);
     }
 

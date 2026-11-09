@@ -8,9 +8,14 @@ export const MOTION_ATTRIBUTES = {
 
 export const MOTION_DATASET_KEYS = {
   condensedHeader: "condensed",
+  // html[data-motion="off"]: the visitor turned Motion off. globals.css reads
+  // it in the reduced-motion / full-motion variants.
+  motion: "motion",
   smoothScroll: "smoothScroll",
   viewTransitionNavigated: "viewTransitionNavigated",
 } as const;
+
+export const MOTION_OFF = "off";
 
 export const ROUTE_TRANSITION_TYPES = {
   morph: "morph",

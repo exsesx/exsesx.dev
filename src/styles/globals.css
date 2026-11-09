@@ -3,6 +3,53 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * One motion gate. Motion is reduced when the OS asks for it or when the
+ * visitor turns Motion off in the theme menu, which the no-flash script marks
+ * as html[data-motion="off"] before the first paint. Wrap whole blocks in
+ * @variant reduced-motion / full-motion: every selector inside is read from
+ * the root, so a rule on html itself or a view-transition pseudo-element
+ * starts with `&`. Tailwind's motion-reduce: / motion-safe: utilities follow
+ * the same gate. Both paths keep each rule's own specificity.
+ */
+@custom-variant reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    :where(:root) {
+      @slot;
+    }
+  }
+
+  :where(:root[data-motion="off"]) {
+    @slot;
+  }
+}
+
+@custom-variant full-motion {
+  @media (prefers-reduced-motion: no-preference) {
+    :where(:root:not([data-motion="off"])) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+
+  &:where([data-motion="off"], [data-motion="off"] *) {
+    @slot;
+  }
+}
+
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:not(:where([data-motion="off"], [data-motion="off"] *)) {
+      @slot;
+    }
+  }
+}
+
 @theme inline {
   --font-sans: MonoLisaText, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: MonoLisaText, ui-sans-serif, system-ui, sans-serif;
@@ -412,8 +459,8 @@ html[data-season="pride"] .logo-mark-pride {
   filter: saturate(1.08) drop-shadow(0 0 0.18rem color-mix(in oklab, var(--accent) 24%, transparent));
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  html[data-season="pride"] .logo-mark-pride-stripes {
+@variant full-motion {
+  &[data-season="pride"] .logo-mark-pride-stripes {
     animation: logo-pride-stripes 6.4s linear infinite;
     transform-box: view-box;
     transform-origin: 0 0;
@@ -999,7 +1046,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   /* kill the slide but never the transform: the translate is what parks the
      pill on the active tab, not a decoration */
   .site-nav-active-pill {
@@ -1009,7 +1056,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 /* Lifted keeps its deeper tint, but the pill no longer swells. */
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .site-nav-active-pill-body,
   .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
     scale: none;
@@ -1076,7 +1123,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .nav-back-button {
     transition-duration: 0ms;
     transition-delay: 0ms;
@@ -1405,15 +1452,15 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   stroke-dashoffset: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@variant full-motion {
   .pulse-trace-path {
     stroke-dashoffset: 100.5;
     animation: pulse-draw 1.25s var(--ease-in-out) 640ms both;
   }
 
-  html:active-view-transition-type(nav-forward) .pulse-trace-path,
-  html:active-view-transition-type(nav-back) .pulse-trace-path,
-  html[data-view-transition-navigated="true"] .pulse-trace-path {
+  &:active-view-transition-type(nav-forward) .pulse-trace-path,
+  &:active-view-transition-type(nav-back) .pulse-trace-path,
+  &[data-view-transition-navigated="true"] .pulse-trace-path {
     animation: none;
     stroke-dashoffset: 0;
   }
@@ -1431,7 +1478,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   opacity: 0.2;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@variant full-motion {
   /* The glow draws in with the trace, then beats once. Finite on purpose:
      the hero's motion settles within its first few seconds. */
   .pulse-trace-glow {
@@ -1441,9 +1488,9 @@ html[data-blog-focus-bootstrap] .site-header-fade {
       pulse-beat 1.7s var(--ease-in-out) 2.1s 1;
   }
 
-  html:active-view-transition-type(nav-forward) .pulse-trace-glow,
-  html:active-view-transition-type(nav-back) .pulse-trace-glow,
-  html[data-view-transition-navigated="true"] .pulse-trace-glow {
+  &:active-view-transition-type(nav-forward) .pulse-trace-glow,
+  &:active-view-transition-type(nav-back) .pulse-trace-glow,
+  &[data-view-transition-navigated="true"] .pulse-trace-glow {
     animation: none;
     stroke-dashoffset: 0;
   }
@@ -1483,7 +1530,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
  * naturally with scroll and reverse when scrolling back up.
  */
 @supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
+  @variant full-motion {
     .scroll-rise {
       animation: scroll-rise linear both;
       animation-timeline: view();
@@ -1521,14 +1568,14 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@variant full-motion {
   .motion-rise {
     animation: motion-rise 560ms var(--ease-snap) both;
   }
 
-  html:active-view-transition-type(nav-forward) .motion-rise,
-  html:active-view-transition-type(nav-back) .motion-rise,
-  html[data-view-transition-navigated="true"] .motion-rise {
+  &:active-view-transition-type(nav-forward) .motion-rise,
+  &:active-view-transition-type(nav-back) .motion-rise,
+  &[data-view-transition-navigated="true"] .motion-rise {
     animation: none;
   }
 
@@ -1563,6 +1610,16 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   opacity: 0;
   transform: translate3d(0, -4px, 0) scale(0.97);
   transition-duration: var(--duration-popover-exit);
+}
+
+/* A menu trigger presses with active:scale. Left to the press, the first
+   scale made Chrome set up the trigger's compositing inside the first open:
+   about 30ms of main thread at full CPU, paid once per page. Promoted up
+   front, the first open costs what every later one does. */
+@variant full-motion {
+  [data-slot="dropdown-menu-trigger"] {
+    will-change: scale;
+  }
 }
 
 /* keep the live page clickable while a transition plays */
@@ -1622,25 +1679,27 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
  * pointer-precise desktop. On touch / small screens the snapshot resolves
  * instantly (see below).
  */
-@media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  ::view-transition-group(.morph) {
-    animation-duration: var(--duration-move);
-    animation-timing-function: var(--ease-in-out);
-    overflow: hidden;
-    /* above the incoming page snapshot, below the chrome (30) */
-    z-index: 20;
-  }
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  @variant full-motion {
+    &::view-transition-group(.morph) {
+      animation-duration: var(--duration-move);
+      animation-timing-function: var(--ease-in-out);
+      overflow: hidden;
+      /* above the incoming page snapshot, below the chrome (30) */
+      z-index: 20;
+    }
 
-  ::view-transition-old(.morph),
-  ::view-transition-new(.morph) {
-    mix-blend-mode: normal;
-    overflow: clip;
-  }
+    &::view-transition-old(.morph),
+    &::view-transition-new(.morph) {
+      mix-blend-mode: normal;
+      overflow: clip;
+    }
 
-  ::view-transition-image-pair(.morph) {
-    animation: none;
-    border-radius: inherit;
-    overflow: clip;
+    &::view-transition-image-pair(.morph) {
+      animation: none;
+      border-radius: inherit;
+      overflow: clip;
+    }
   }
 }
 
@@ -1666,35 +1725,37 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
  * animated it) and the lateral tab bar carry no nav-forward type and stay
  * instant. Engines without type selectors drop these rules and stay instant.
  */
-@media (prefers-reduced-motion: no-preference) and (not ((min-width: 768px) and (hover: hover) and (pointer: fine))) {
-  html:active-view-transition-type(nav-forward)::view-transition-old(root),
-  html:active-view-transition-type(nav-forward)::view-transition-new(root) {
-    animation-duration: 200ms !important;
-    animation-timing-function: var(--ease-out) !important;
-  }
+@media not all and (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  @variant full-motion {
+    &:active-view-transition-type(nav-forward)::view-transition-old(root),
+    &:active-view-transition-type(nav-forward)::view-transition-new(root) {
+      animation-duration: 200ms !important;
+      animation-timing-function: var(--ease-out) !important;
+    }
 
-  html:active-view-transition-type(nav-forward)::view-transition-group(.morph),
-  html:active-view-transition-type(nav-forward)::view-transition-old(.morph),
-  html:active-view-transition-type(nav-forward)::view-transition-new(.morph) {
-    animation-duration: 220ms !important;
-    animation-timing-function: var(--ease-drawer) !important;
-  }
+    &:active-view-transition-type(nav-forward)::view-transition-group(.morph),
+    &:active-view-transition-type(nav-forward)::view-transition-old(.morph),
+    &:active-view-transition-type(nav-forward)::view-transition-new(.morph) {
+      animation-duration: 220ms !important;
+      animation-timing-function: var(--ease-drawer) !important;
+    }
 
-  ::view-transition-group(.morph) {
-    overflow: hidden;
-    z-index: 20;
-  }
+    &::view-transition-group(.morph) {
+      overflow: hidden;
+      z-index: 20;
+    }
 
-  ::view-transition-old(.morph),
-  ::view-transition-new(.morph) {
-    mix-blend-mode: normal;
-    overflow: clip;
-  }
+    &::view-transition-old(.morph),
+    &::view-transition-new(.morph) {
+      mix-blend-mode: normal;
+      overflow: clip;
+    }
 
-  ::view-transition-image-pair(.morph) {
-    animation: none;
-    border-radius: inherit;
-    overflow: clip;
+    &::view-transition-image-pair(.morph) {
+      animation: none;
+      border-radius: inherit;
+      overflow: clip;
+    }
   }
 }
 
@@ -1718,20 +1779,22 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
-@media (prefers-reduced-motion: reduce) and (hover: hover) and (pointer: fine) {
-  .project-adjacent-arrow {
-    opacity: 0.85;
-  }
+@media (hover: hover) and (pointer: fine) {
+  @variant reduced-motion {
+    .project-adjacent-arrow {
+      opacity: 0.85;
+    }
 
-  .project-adjacent-link:hover .project-adjacent-arrow {
-    opacity: 1;
+    .project-adjacent-link:hover .project-adjacent-arrow {
+      opacity: 1;
+    }
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(*),
-  ::view-transition-new(*),
-  ::view-transition-group(*) {
+@variant reduced-motion {
+  &::view-transition-old(*),
+  &::view-transition-new(*),
+  &::view-transition-group(*) {
     animation-delay: 0s !important;
     animation-duration: 0s !important;
   }
@@ -1751,6 +1814,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     opacity: 1;
   }
 
+  &,
   *,
   *::before,
   *::after {
@@ -1803,8 +1867,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
       visibility 0s linear 160ms;
   }
 
-  html[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-nav-frame,
-  html[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-fade,
+  &[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-nav-frame,
+  &[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-fade,
   [data-blog-article="true"][data-blog-header-motion="instant"] .site-header-nav-frame,
   [data-blog-article="true"][data-blog-header-motion="instant"] .site-header-fade {
     transition: none;
@@ -1832,9 +1896,11 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     transition: none;
   }
 
+  /* The press is Tailwind's active:scale, the individual `scale` property. */
   .button-motion:active,
   .dropdown-menu-item:active {
     transform: none !important;
+    scale: none !important;
   }
 
   .cv-share-state-layer,
@@ -2236,7 +2302,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .blog-index-core {
     transition: none;
   }
@@ -2354,7 +2420,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     visibility 0s linear;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .blog-reading-progress span {
     transition:
       opacity var(--duration-exit) linear,
@@ -2440,7 +2506,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   height: 0.375em;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@variant full-motion {
   .not-found-trace .pulse-trace-glow {
     animation: pulse-draw 1.25s var(--ease-in-out) 640ms both;
   }
@@ -2576,7 +2642,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   transition: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   [data-blog-article="true"] .blog-toc-desktop {
     transition: none;
   }
@@ -4219,7 +4285,7 @@ html.dark .blog-figure-image--dark {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .blog-focus-toast {
     transition: none;
   }

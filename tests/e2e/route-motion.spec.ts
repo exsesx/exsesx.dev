@@ -315,6 +315,29 @@ if (!("Bun" in globalThis)) {
       expect(nonZeroAnimations(probe)).toEqual([]);
       expectRuntimeClean(errors);
     });
+
+    test("Motion off reads as reduced motion from the first paint", { tag: "@desktop-only" }, async ({ page }) => {
+      const errors = collectRuntimeErrors(page);
+
+      await page.addInitScript(() => window.localStorage.setItem("exsesx:motion", "false"));
+      await page.goto("/projects");
+
+      await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
+      expect(
+        await page
+          .locator(".motion-rise")
+          .first()
+          .evaluate(element => getComputedStyle(element).animationName),
+      ).toBe("none");
+
+      const card = page.getByRole("link", { name: /^View .+ project details$/ }).first();
+      await resetProbe(page);
+      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+      await waitForProbe(page);
+
+      expect(nonZeroAnimations(await readProbe(page))).toEqual([]);
+      expectRuntimeClean(errors);
+    });
   });
 
   test.describe("adjacent project navigation", { tag: "@desktop-only" }, () => {
