@@ -132,34 +132,39 @@ if (!("Bun" in globalThis)) {
       expectRuntimeClean(errors);
     });
 
-    test("desktop back restores projects intent and preserves header isolation", { tag: "@desktop-only" }, async ({
-      page,
-    }) => {
+    test("desktop Back restores the list without morphing the picture, from the button or the browser", {
+      tag: "@desktop-only",
+    }, async ({ page }) => {
       const errors = collectRuntimeErrors(page);
+      const openFourthProject = async () => {
+        await page.goto("/projects");
+        await page.evaluate(() => window.scrollTo(0, 520));
+        const listScroll = await page.evaluate(() => window.scrollY);
+        const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(3);
+        await expect(card).toBeInViewport();
+        await Promise.all([page.waitForURL(/\/project\//), card.click()]);
+        await waitForProbe(page);
 
-      await page.goto("/projects");
-      await page.evaluate(() => window.scrollTo(0, 520));
-      const expectedScroll = await page.evaluate(() => window.scrollY);
-      const card = page.getByRole("link", { name: /^View .+ project details$/ }).nth(3);
-      await expect(card).toBeInViewport();
-      const href = await card.getAttribute("href");
-      expect(href).toMatch(/^\/project\//);
-      await Promise.all([page.waitForURL(/\/project\//), card.click()]);
-      await waitForProbe(page);
+        return listScroll;
+      };
+
+      const expectedScroll = await openFourthProject();
 
       await resetProbe(page);
       await Promise.all([page.waitForURL("**/projects"), page.getByRole("button", { name: "Back" }).click()]);
       await waitForProbe(page);
 
-      const probe = await readProbe(page);
-      expect(probe.calls[0]?.sourceProjectMediaNames).toHaveLength(1);
-      const expectedName = probe.calls[0]?.sourceProjectMediaNames[0];
-      expect(expectedName).toMatch(/^project-media-project-/);
-      expect(probe.calls[0]?.types).toContain("nav-back");
-      expect(probe.calls[0]?.types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
-      expect(morphAnimationPseudoNames(probe)).toContain(expectedName);
-      expect(probe.calls[0]?.headerNames).toEqual(["persistent-nav", "persistent-nav-fade"]);
+      const buttonBack = await readProbe(page);
+      expect(buttonBack.calls.flatMap(call => call.types).some(type => type.startsWith(projectTypePrefix))).toBe(false);
+      expect(morphAnimations(buttonBack)).toEqual([]);
       expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
+
+      await openFourthProject();
+      await resetProbe(page);
+      await Promise.all([page.waitForURL("**/projects"), page.goBack()]);
+      await waitForProbe(page);
+
+      expect(morphAnimations(await readProbe(page))).toEqual([]);
       // Named only while a transition runs, so the header glass can blur the page at rest.
       expect(await viewTransitionName(page.locator(".site-header-nav-frame"))).toBe("none");
       expect(await viewTransitionName(page.locator(".site-header-fade"))).toBe("none");
@@ -377,7 +382,7 @@ if (!("Bun" in globalThis)) {
       expectRuntimeClean(errors);
     });
 
-    test("Back button applies prepared scroll and transition intent", async ({ page }) => {
+    test("Back button restores the prepared scroll without a project transition type", async ({ page }) => {
       const errors = collectRuntimeErrors(page);
       await page.goto("/projects");
       await page.evaluate(() => window.scrollTo(0, 520));
@@ -393,8 +398,7 @@ if (!("Bun" in globalThis)) {
 
       const probe = await readProbe(page);
       const types = probe.calls.flatMap(call => call.types);
-      expect(types).toContain("nav-back");
-      expect(types.some(type => type.startsWith(projectTypePrefix))).toBe(true);
+      expect(types.some(type => type.startsWith(projectTypePrefix))).toBe(false);
       expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(Math.max(0, expectedScroll - 80));
       expectRuntimeClean(errors);
     });

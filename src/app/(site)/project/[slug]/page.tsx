@@ -10,7 +10,7 @@ import MermaidDiagram from "@/components/blog/MermaidDiagram";
 import ProjectCard from "@/components/ProjectCard";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { createPageMetadata, createProjectSocialImage } from "@/lib/metadata";
-import { getBackTransitionTypeProps, ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
 import {
   getAdjacentProjects,
   getProjectBySlug,
@@ -153,15 +153,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   const { previousProject, nextProject } = getAdjacentProjects(project);
-  const projectTransitionType = getProjectTransitionType(project);
 
   return (
-    <main
-      id="main-content"
-      tabIndex={-1}
-      className="flex w-full flex-col"
-      {...getBackTransitionTypeProps(projectTransitionType)}
-    >
+    <main id="main-content" tabIndex={-1} className="flex w-full flex-col">
       {/* The case opens on its name across the page, set on the site's ASCII field. The field's box
           runs from just below the nav's first 64px to the foot of the name (on phones, through the
           gap under it, so the trace beside the name clears the field's bottom fade), and ends above
