@@ -183,7 +183,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       {/* The result first, then what the product is and the facts of the engagement. */}
       <section className="pt-section">
         <Container>
-          <p className="scroll-rise min-w-0 max-w-[34ch] text-balance break-words text-title font-bold tracking-[-0.025em] text-foreground sm:text-section">
+          {/* A pull quote, a step under the section heads (24px on a phone, 32px at most) so it
+              reads as the case's claim rather than another heading. */}
+          <p className="scroll-rise min-w-0 max-w-[32ch] text-balance break-words text-[clamp(1.5rem,1vw+1.25rem,2rem)] leading-[1.22] font-bold tracking-[-0.02em] text-foreground">
             {project.impact}
           </p>
 
