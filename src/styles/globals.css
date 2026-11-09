@@ -468,18 +468,15 @@ html[data-season="pride"] .logo-mark-pride {
   backdrop-filter: none;
 }
 
-.dropdown-menu-item[data-highlighted]:not([data-checked]) {
+/* One selection language with the nav: the chosen item is marked by its check
+   and weight, never a fill; the pointer or focus gets the same quiet wash on
+   every item, chosen or not. */
+.dropdown-menu-item[data-highlighted] {
   background: color-mix(in oklab, var(--foreground) 6%, transparent);
 }
 
-.dark .dropdown-menu-item[data-highlighted]:not([data-checked]) {
+.dark .dropdown-menu-item[data-highlighted] {
   background: color-mix(in oklab, var(--foreground) 8%, transparent);
-}
-
-.dropdown-menu-radio-item[data-checked],
-.dropdown-menu-radio-item[data-checked][data-highlighted] {
-  color: var(--primary-foreground);
-  background: var(--primary);
 }
 
 .cv-share-state-layer {

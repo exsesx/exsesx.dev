@@ -22,6 +22,7 @@ import {
   THEME_CHROME_COLORS,
   type ThemeMode,
 } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import { useBlogFocus } from "./blog/BlogFocusProvider";
 import { Button } from "./ui/button";
 import {
@@ -175,7 +176,9 @@ export default function ThemeSwitcher() {
               return (
                 <DropdownMenuRadioItem key={option.mode} value={option.mode} className="w-full">
                   <Icon data-icon="inline-start" strokeWidth={2.2} />
-                  <span className="min-w-0 flex-1 font-bold leading-none">{option.label}</span>
+                  <span className={cn("min-w-0 flex-1 leading-none", isActive ? "font-bold" : "font-medium")}>
+                    {option.label}
+                  </span>
                   {isActive ? <Check data-icon="inline-end" strokeWidth={2.4} /> : <span aria-hidden="true" />}
                 </DropdownMenuRadioItem>
               );
