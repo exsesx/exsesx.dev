@@ -5,9 +5,9 @@ import { startTransition, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const dropdownMenuItemClass =
-  "dropdown-menu-item min-h-12 rounded-xl text-foreground transition-[background-color,color,transform] duration-150 ease-[var(--ease-weight)] outline-none select-none active:scale-[0.97] data-highlighted:bg-muted data-highlighted:text-foreground data-disabled:cursor-not-allowed data-disabled:opacity-50";
+  "dropdown-menu-item min-h-12 rounded-xl text-foreground transition-[background-color,color,scale] duration-150 ease-[var(--ease-weight)] outline-none select-none active:scale-[0.97] data-highlighted:text-foreground data-disabled:cursor-not-allowed data-disabled:opacity-50";
 const dropdownMenuRadioItemClass =
-  "dropdown-menu-radio-item grid cursor-pointer grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3 px-3 text-left";
+  "grid cursor-pointer grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3 px-3 text-left";
 
 function DropdownMenu({
   actionsRef: suppliedActionsRef,

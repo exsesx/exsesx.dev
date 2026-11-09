@@ -19,6 +19,7 @@
  * the fade.
  */
 
+import { isMotionReduced } from "@/lib/motion-preference";
 import { isAtRest, type Spring, type SpringState, stepSpring } from "@/lib/spring";
 
 type Ring = SpringState & { circle: HTMLElement };
@@ -56,7 +57,6 @@ const RING_REST = 0.05;
 
 export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HTMLElement): () => void {
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const y: SpringState = { x: 0, v: 0 };
   const presence: SpringState = { x: 0, v: 0 };
   // Rings still moving: the held one and any let go that have not settled yet.
@@ -107,7 +107,7 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
   }
 
   function leanedGoal() {
-    if (!leaning || pointerClientY === null || reducedMotion.matches) {
+    if (!leaning || pointerClientY === null || isMotionReduced()) {
       return nodeY;
     }
 
@@ -152,7 +152,7 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
   }
 
   function render() {
-    const still = reducedMotion.matches;
+    const still = isMotionReduced();
     const stretch = still ? 0 : Math.min(MAX_STRETCH, Math.abs(y.v) * STRETCH_PER_VELOCITY);
     const grow = still ? 1 : ENTER_SCALE + (1 - ENTER_SCALE) * Math.min(1, Math.max(0, presence.x));
 
@@ -214,7 +214,7 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
       goal = leanedGoal();
     }
 
-    if (reducedMotion.matches) {
+    if (isMotionReduced()) {
       y.x = goal;
       y.v = 0;
     } else {
@@ -300,7 +300,7 @@ export function attachBlogIndexDot(root: HTMLElement, list: HTMLElement, dot: HT
 
     const circle = node.querySelector<HTMLElement>(CIRCLE_SELECTOR);
 
-    if (circle && !reducedMotion.matches && !rings.has(node)) {
+    if (circle && !isMotionReduced() && !rings.has(node)) {
       rings.set(node, { x: 0, v: 0, circle });
     }
 

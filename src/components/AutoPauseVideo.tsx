@@ -3,6 +3,7 @@
 import { Pause, Play } from "lucide-react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { playInteractionSound } from "@/lib/interaction-sounds";
+import { isMotionReduced, subscribeToMotion } from "@/lib/motion-preference";
 import { Button } from "./ui/button";
 
 type AutoPauseVideoProps = Omit<ComponentProps<"video">, "aria-label" | "autoPlay"> & {
@@ -22,7 +23,6 @@ export default function AutoPauseVideo({ className, label, ...props }: AutoPause
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let isVisible = false;
 
     function syncPlayback() {
@@ -31,7 +31,7 @@ export default function AutoPauseVideo({ className, label, ...props }: AutoPause
         isVisible &&
         document.visibilityState !== "hidden" &&
         preference !== "pause" &&
-        (preference === "play" || !reducedMotion.matches);
+        (preference === "play" || !isMotionReduced());
 
       if (!shouldPlay) {
         video?.pause();
@@ -56,12 +56,12 @@ export default function AutoPauseVideo({ className, label, ...props }: AutoPause
     );
 
     observer.observe(video);
-    reducedMotion.addEventListener("change", syncPlayback);
+    const unsubscribeFromMotion = subscribeToMotion(syncPlayback);
     document.addEventListener("visibilitychange", syncPlayback);
 
     return () => {
       observer.disconnect();
-      reducedMotion.removeEventListener("change", syncPlayback);
+      unsubscribeFromMotion();
       document.removeEventListener("visibilitychange", syncPlayback);
     };
   }, []);

@@ -470,8 +470,8 @@ describe("Blog production styles", () => {
     expect(source).toContain('progressPathElement.dataset.drawing = "out"');
     expect(source).toContain("startOffset + (1 - startOffset) * eased");
     expect(source).toContain("deviceFrameAnimationGeneration");
-    expect(source).toContain("prefersReducedMotion.matches");
-    expect(source).toContain('prefersReducedMotion.addEventListener("change", handleReducedMotionChange)');
+    expect(source).toContain("isMotionReduced()");
+    expect(source).toContain("subscribeToMotion(handleReducedMotionChange)");
     expect(source).not.toContain("transitioncancel");
     expect(source).not.toContain("getBoundingClientRect()\n");
     expect(source).not.toContain("dataset.drawCount");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMotionValueEvent, useReducedMotion, useSpring } from "motion/react";
+import { useMotionValueEvent, useSpring } from "motion/react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
   BLOG_HEADER_HIDE_AFTER,
@@ -13,6 +13,7 @@ import {
   updatePassiveBlogHeader,
 } from "@/lib/blog-focus";
 import { BLOG_FOCUS_BOOTSTRAP_ATTRIBUTE, BLOG_FOCUS_BOOTSTRAP_EVENT } from "@/lib/blog-focus-bootstrap";
+import { useMotionReduced } from "@/lib/use-motion-reduced";
 
 const SCROLL_INTENT_KEYS = new Set(["ArrowDown", "ArrowUp", "End", "Home", "PageDown", "PageUp", " "]);
 const HEADER_SPRING_ACTIVE_ATTRIBUTE = "data-blog-header-spring";
@@ -67,7 +68,7 @@ export function usePassiveBlogHeader({ isBlogArticle, isFocusMode, pathname }: P
   const passiveStateRef = useRef(createPassiveBlogHeaderState());
   const tocNavigationIdRef = useRef<number | null>(null);
   const nextTocNavigationIdRef = useRef(0);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useMotionReduced();
   const headerY = useSpring(0, HEADER_SPRING_CONFIG);
   const isPassiveHeaderHidden =
     isBlogArticle && !isFocusMode && passiveVisibility.pathname === pathname && passiveVisibility.hidden;

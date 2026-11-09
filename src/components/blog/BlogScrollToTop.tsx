@@ -3,6 +3,7 @@
 import { ArrowUp } from "lucide-react";
 import { type KeyboardEvent, type MouseEvent, useEffect, useLayoutEffect, useRef } from "react";
 import { BLOG_UI, type BlogLocale } from "@/lib/blog";
+import { isMotionReduced } from "@/lib/motion-preference";
 
 const SCROLL_TOP_HIDE_VIEWPORT_RATIO = 0.25;
 const SCROLL_TOP_SETTLED_Y = 1;
@@ -66,7 +67,7 @@ export default function BlogScrollToTop({ locale }: { locale: BlogLocale }) {
     const activationModality = activationModalityRef.current;
     const previousPointerFocus = previousPointerFocusRef.current;
     const shouldFocusMain = activationModality === "keyboard";
-    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    const behavior = isMotionReduced() ? "auto" : "smooth";
     let fallbackTimer = 0;
     let settleFrame = 0;
     let finished = false;

@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { resolveIPhoneDisplayProgress } from "../../lib/iphone-display-progress";
+import { isMotionReduced, subscribeToMotion } from "../../lib/motion-preference";
 
 const DRAW_IN_DURATION_MS = 450;
 const DRAW_IN_REVEAL_MS = 90;
@@ -42,7 +43,6 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     const progressPathElement = progressPath;
     const progressSvgElement = progressPathElement.ownerSVGElement;
     const visualViewport = window.visualViewport;
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
     let measurementFrame = 0;
     let deviceFrameAnimationFrame = 0;
@@ -85,7 +85,7 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     }
 
     function restartDeviceFrameDrawIn() {
-      if (readProgress() <= 0 || prefersReducedMotion.matches) {
+      if (readProgress() <= 0 || isMotionReduced()) {
         endDeviceFrameAnimation();
         return;
       }
@@ -122,7 +122,7 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     }
 
     function restartDeviceFrameDrawOut() {
-      if (readProgress() <= 0 || prefersReducedMotion.matches) {
+      if (readProgress() <= 0 || isMotionReduced()) {
         endDeviceFrameAnimation();
         return;
       }
@@ -231,12 +231,12 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
     const resizeObserver = new ResizeObserver(scheduleMeasure);
     resizeObserver.observe(articleElement);
     const handleReducedMotionChange = () => {
-      if (prefersReducedMotion.matches) {
+      if (isMotionReduced()) {
         endDeviceFrameAnimation();
       }
     };
 
-    prefersReducedMotion.addEventListener("change", handleReducedMotionChange);
+    const unsubscribeFromMotion = subscribeToMotion(handleReducedMotionChange);
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", scheduleMeasure);
     visualViewport?.addEventListener("resize", scheduleMeasure);
@@ -248,7 +248,7 @@ export default function ReadingProgress({ articleId }: ReadingProgressProps) {
       cancelAnimationFrame(measurementFrame);
       cancelAnimationFrame(deviceFrameAnimationFrame);
       resizeObserver.disconnect();
-      prefersReducedMotion.removeEventListener("change", handleReducedMotionChange);
+      unsubscribeFromMotion();
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", scheduleMeasure);
       visualViewport?.removeEventListener("resize", scheduleMeasure);

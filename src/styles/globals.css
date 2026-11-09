@@ -992,6 +992,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 .button-motion {
   transition:
     transform var(--duration-press) var(--ease-out),
+    scale var(--duration-press) var(--ease-out),
     background-color var(--duration-ui) ease,
     border-color var(--duration-ui) ease,
     color var(--duration-ui) ease,
