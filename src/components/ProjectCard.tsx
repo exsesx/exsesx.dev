@@ -42,8 +42,10 @@ export function ProjectMediaLink({
   const transitionType = getProjectTransitionType(project);
   const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
 
+  // The wrapper stays unpainted: the named frame leaves it behind in the page
+  // snapshot during the morph, and a fill here showed as a solid box.
   return (
-    <div className={cn("relative rounded-lg bg-muted", className)} style={{ backgroundColor }}>
+    <div className={cn("relative rounded-lg", className)}>
       <ViewTransition
         name={`project-media-${project.id}`}
         share={{ [transitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}

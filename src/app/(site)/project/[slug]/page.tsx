@@ -69,8 +69,9 @@ function ProjectHeroMedia({ project }: { project: Project }) {
   const transitionType = getProjectTransitionType(project);
   const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
 
+  // Unpainted for the same reason as ProjectMediaLink: only the named frame carries the fill.
   return (
-    <div className="relative aspect-[16/10] rounded-lg bg-muted" style={{ backgroundColor }}>
+    <div className="relative aspect-[16/10] rounded-lg">
       <ViewTransition
         name={`project-media-${project.id}`}
         share={{ [transitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
