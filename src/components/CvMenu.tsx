@@ -284,7 +284,7 @@ function CvMenu() {
         className={cn(
           buttonVariants({ variant: "glass", size: "lg" }),
           "gap-0 overflow-hidden !p-0 active:scale-100 hover:!bg-secondary",
-          isOpen && "border-ring/50 text-accent",
+          isOpen && "border-ring/50 text-accent-text",
         )}
       >
         <a

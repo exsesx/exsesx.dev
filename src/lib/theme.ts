@@ -4,7 +4,7 @@ const THEME_STORAGE_KEY = "exsesx:color-scheme";
 // applies these inline to <html>/<body> so the WebKit live observer retints the
 // browser chrome in real time. Keep in sync with --background in globals.css.
 export const THEME_CHROME_COLORS = {
-  light: "#f5f5f5",
+  light: "#f6f3ef",
   dark: "#131313",
 } as const;
 

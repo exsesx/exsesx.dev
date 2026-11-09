@@ -77,7 +77,7 @@ export function ProjectTitleLink({ project, as: Heading }: { project: Project; a
       <Link
         {...getProjectLinkProps(project)}
         data-cuelume-press=""
-        className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
+        className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent-text"
       >
         {project.name}
       </Link>
@@ -95,7 +95,7 @@ export function ProjectDetailsLink({ project }: { project: Project }) {
     <Link
       {...getProjectLinkProps(project)}
       data-cuelume-press=""
-      className="-my-2 inline-flex min-h-11 items-center rounded-sm text-sm font-bold text-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent hover:decoration-current"
+      className="-my-2 inline-flex min-h-11 items-center rounded-sm text-sm font-bold text-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent-text hover:decoration-current"
     >
       View details<span className="sr-only"> for {project.name}</span>
     </Link>

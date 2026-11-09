@@ -226,7 +226,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   key={item}
                   className="grid grid-cols-[minmax(0,2.5rem)_minmax(0,1fr)] items-baseline gap-4 sm:gap-6"
                 >
-                  <span aria-hidden="true" className="text-title font-bold tabular-nums text-accent">
+                  <span aria-hidden="true" className="text-title font-bold tabular-nums text-accent-text">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <p className="max-w-[60ch] text-base leading-7 text-foreground">{item}</p>

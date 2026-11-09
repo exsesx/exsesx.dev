@@ -17,11 +17,11 @@ const logoPath = "M84 84 168 96 256 334 344 96 428 84 298 430c-4 10-12 16-23 16h
 
 // The site's light theme tokens (globals.css :root).
 const colors = {
-  background: "#f5f5f5",
-  foreground: "#171717",
-  muted: "#5f5f5f",
-  accent: "#007346",
-  card: "#ffffff",
+  background: "#f6f3ef",
+  foreground: "#1a1613",
+  muted: "#605a54",
+  accent: "#059745",
+  card: "#fefdfa",
 };
 
 const accentColors: Record<Project["accent"], string> = {

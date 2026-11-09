@@ -5,10 +5,10 @@ import githubLightDefault from "shiki/themes/github-light-default.mjs";
 import { buildContentSecurityPolicy } from "./src/lib/content-security-policy.mts";
 
 // github-light-default is tuned for white; on the graphite code surface its
-// comment, purple and red tokens drop under 4.5:1. Darken just those, and turn
-// comments neutral so the only hue left in prose code is the syntax itself.
+// comment, purple and red tokens drop under 4.5:1. Darken just those, and set
+// comments in the paper's warm gray.
 const lightCodeRemap: Record<string, string> = {
-  "#6e7781": "#5c5c5c",
+  "#6e7781": "#5f5a55",
   "#8250df": "#6639ba",
   "#cf222e": "#a40e26",
 };
