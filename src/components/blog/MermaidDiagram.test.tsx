@@ -42,14 +42,14 @@ describe("MermaidDiagram", () => {
     expect(css).toMatch(/\.blog-mermaid-svg svg\s*\{[^}]*max-width:\s*none !important/s);
     expect(css).toMatch(/\.blog-mermaid\[data-state="loading"\]\s*\{[^}]*overflow:\s*hidden/s);
     expect(css).toMatch(
-      /\.blog-mermaid\[data-state="loading"\]::after\s*\{[^}]*animation:\s*blog-mermaid-loading-sweep/s,
+      /\.blog-mermaid\[data-state="loading"\]\[data-rendering\]::after\s*\{[^}]*animation:\s*blog-mermaid-loading-sweep/s,
     );
     expect(css).not.toMatch(/\.blog-mermaid-skeleton\s*\{[^}]*(?:border-radius|background|overflow):/s);
     expect(css).not.toMatch(/\.blog-mermaid-skeleton::(?:before|after)/);
     expect(css).toMatch(/@keyframes blog-mermaid-loading-sweep\s*\{[^}]*transform:/s);
     expect(css).not.toMatch(/@keyframes blog-mermaid-loading-sweep\s*\{[^}]*background-position:/s);
     expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.blog-mermaid\[data-state="loading"\]::after\s*\{[^}]*animation:\s*none[^}]*will-change:\s*auto/s,
+      /@variant reduced-motion[\s\S]*?\.blog-mermaid\[data-state="loading"\]\[data-rendering\]::after\s*\{[^}]*animation:\s*none[^}]*will-change:\s*auto/s,
     );
   });
 

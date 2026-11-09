@@ -32,7 +32,6 @@ export interface Project {
     scope: string[];
   };
   evidence?: ProjectEvidence;
-  accent: "amber" | "controlup" | "mint" | "quicklizard" | "rose" | "steel" | "violet";
   media:
     | {
         type: "image";
@@ -94,7 +93,6 @@ export const projects: Project[] = [
         "Mastra's flow at the time blocked the turn on one approval after another. The approval layer shows every pending approval at once, so an IT admin can review several changes in one turn.",
       contributionIndex: 0,
     },
-    accent: "controlup",
     media: {
       type: "image",
       src: "/images/controlup_preview.webp",
@@ -128,7 +126,6 @@ export const projects: Project[] = [
         "Pricing features that shipped behind feature flags and improved on production feedback, on a simpler stack and CI.",
       scope: ["Pricing dashboards", "Go backend endpoints", "Stack modernization"],
     },
-    accent: "quicklizard",
     media: {
       type: "image",
       src: "/images/quicklizard_preview.webp",
@@ -175,7 +172,6 @@ export const projects: Project[] = [
         "Preview environments: a label on a pull request deploys the branch to its own namespace, so the CTO, QA, and PM could try it before merge.",
       contributionIndex: 3,
     },
-    accent: "rose",
     media: {
       type: "image",
       src: "/images/tso_preview.jpg",
@@ -203,7 +199,6 @@ export const projects: Project[] = [
       outcome: "I assembled the pieces against agreed contracts and schemas rather than live counterparts.",
       scope: ["Nest.js microservices", "Plaid integration", "Contract-first services"],
     },
-    accent: "steel",
     media: {
       type: "image",
       src: "/images/clear_street_preview.jpg",
@@ -234,7 +229,6 @@ export const projects: Project[] = [
         "Verification status reached users as it happened, and the certification functionality shipped by the deadline.",
       scope: ["Async frontend architecture", "Real-time verification", "Regulated crypto"],
     },
-    accent: "mint",
     media: {
       type: "image",
       src: "/images/coinmena_preview.jpeg",
@@ -264,7 +258,6 @@ export const projects: Project[] = [
       outcome: "The work led to a UK team invitation with potential visa sponsorship.",
       scope: ["Node.js backend", "AWS video transcoding", "Multiplayer game rooms"],
     },
-    accent: "amber",
     media: {
       type: "video",
       src: "/videos/thisislanguage_preview.mp4",
@@ -308,7 +301,6 @@ export const projects: Project[] = [
         "PostGraphQL exposed the PostgreSQL stored procedures as GraphQL APIs, so the React frontend from the AngularJS migration could query them directly.",
       contributionIndex: 1,
     },
-    accent: "violet",
     media: {
       type: "image",
       src: "/images/huddle_preview_balanced.png",

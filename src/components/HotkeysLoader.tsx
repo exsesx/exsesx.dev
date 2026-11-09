@@ -139,7 +139,14 @@ export default function HotkeysLoader() {
   }
 
   function openOnLoad() {
-    queuedKeysRef.current.push(OPEN_MENU_KEY);
+    const lastQueuedKey = queuedKeysRef.current.at(-1);
+    const isMenuToggleQueued = lastQueuedKey?.key === "/" && Boolean(lastQueuedKey.ctrlKey || lastQueuedKey.metaKey);
+
+    // The click asks for the menu open. A toggle already queued opens it; a second one would close it again on replay.
+    if (!isMenuToggleQueued) {
+      queuedKeysRef.current.push(OPEN_MENU_KEY);
+    }
+
     loadHotkeys();
   }
 

@@ -157,6 +157,7 @@ function MermaidDiagramViewForSource({
       ref={containerRef}
       className="blog-mermaid"
       aria-busy={isBusy || undefined}
+      data-rendering={isRendering || undefined}
       data-frame={frame ? "reserved" : undefined}
       data-state={visualState}
       data-theme={resolvedTheme}
@@ -222,7 +223,11 @@ function MermaidDiagramViewForSource({
               </p>
             </noscript>
           ) : null}
-          <div className="blog-mermaid-visual blog-mermaid-skeleton" aria-hidden="true" />
+          <div
+            className="blog-mermaid-visual blog-mermaid-skeleton"
+            aria-hidden="true"
+            data-description={accessibleDescription || undefined}
+          />
         </>
       )}
 
@@ -291,7 +296,7 @@ export default function MermaidDiagram({ frame, source }: MermaidDiagramProps) {
   const accessibleLabel = getMermaidAccessibleLabel(source);
   const accessibleDescription = getMermaidAccessibleDescription(source);
   const [state, setState] = useState<MermaidState>({ status: "loading" });
-  const [isRendering, setIsRendering] = useState(true);
+  const [isRendering, setIsRendering] = useState(false);
 
   const [isNearViewport, setIsNearViewport] = useState(false);
 

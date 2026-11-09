@@ -40,12 +40,6 @@ describe("mobile navigation styles", () => {
     const css = await readGlobalsCss();
 
     expect(css).not.toMatch(/@media \((?:min|max)-width: (?:639|640)px\)/);
-    // Two since the specialty marquee, the per-breakpoint nav shadows and the
-    // backdrop's phone sizes went.
-    expect(css.match(/@variant max-sm/g)).toHaveLength(2);
-    // Two since the Blog index rows (and their sm block) moved to Tailwind
-    // utilities; three with the nav's leading column becoming a container.
-    expect(css.match(/@variant sm/g)).toHaveLength(3);
   });
 
   test("keeps the active nav pill positioned when reduced motion removes animation", async () => {

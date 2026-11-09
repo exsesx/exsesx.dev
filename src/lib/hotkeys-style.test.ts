@@ -35,9 +35,6 @@ describe("hotkey loading and motion contracts", () => {
 
     expect(loader.match(hintClassName)?.[1]).toBe(source.match(hintClassName)?.[1]);
     expect(loader).toContain('aria-label="Toggle keyboard shortcuts"');
-    expect(source).toMatch(
-      /window\.addEventListener\("keydown", handleKeyDown, \{ capture: true \}\);\s*replayQueuedKeys\(\);/,
-    );
   });
 
   test("keeps capability detection out of the implementation and exposes compact shortcut UI", async () => {

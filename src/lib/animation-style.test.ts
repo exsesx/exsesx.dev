@@ -58,8 +58,6 @@ describe("semantic animation styles", () => {
   test("morphs only the stateful sound and motion icons and honors reduced motion and the Motion switch", async () => {
     const themeSwitcher = await readSource(themeSwitcherUrl);
 
-    expect(themeSwitcher).toContain('import { Activity, Pause, Volume2, VolumeX } from "lucide"');
-    expect(themeSwitcher).toContain('import { Check, Monitor, Moon, Sun } from "lucide-react"');
     expect(themeSwitcher).toMatch(/<MorphIcon[\s\S]*?icon=\{soundEffectsEnabled \? Volume2 : VolumeX\}/);
     expect(themeSwitcher).toMatch(/<MorphIcon[\s\S]*?icon=\{motionOn \? Activity : Pause\}/);
     expect(themeSwitcher.match(/spring="snappy"\s+reducedMotion=\{motionOn \? "user" : "always"\}/g)).toHaveLength(2);

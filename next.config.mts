@@ -34,7 +34,6 @@ const nextConfig: NextConfig = {
     // stylesheet (nav pill broke in production, 2026-07-02).
     turbopackFileSystemCacheForBuild: false,
     useTypeScriptCli: true,
-    globalNotFound: true,
   },
   turbopack: {
     root: import.meta.dirname,

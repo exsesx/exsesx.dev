@@ -97,7 +97,6 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-inverse-hover: var(--inverse-hover);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -168,7 +167,6 @@
   --muted-foreground: #605a54;
   --accent: #1552fe;
   --accent-foreground: #ffffff;
-  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--foreground) 12%);
   --destructive: #be123c;
   --border: color-mix(in oklab, var(--foreground) 12%, transparent);
   --input: color-mix(in oklab, var(--foreground) 14%, transparent);
@@ -194,7 +192,6 @@
   --muted-foreground: #a3a3a3;
   --accent: #6ad895;
   --accent-foreground: #131313;
-  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--foreground) 12%);
   --destructive: #fb7185;
   --border: color-mix(in oklab, var(--foreground) 12%, transparent);
   --input: color-mix(in oklab, var(--foreground) 16%, transparent);
@@ -288,6 +285,12 @@ select {
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/* Popup panels take focus only to pass it on (Base UI refocuses the menu when the pointer leaves an item), so the
+   rule above, which outranks every layered outline-none, would ring the whole panel. Their items carry the cue. */
+:where([data-slot="dropdown-menu"], [data-slot="dialog-content"], [data-slot="drawer-popup"]):focus-visible {
+  outline: none;
 }
 
 ::selection {
@@ -3828,6 +3831,10 @@ code[data-theme] span {
     transparent
   );
   transform: translateX(-100%);
+}
+
+/* Only while a render is in flight: a diagram far below the reader stays loading, and must not animate until then. */
+.blog-mermaid[data-state="loading"][data-rendering]::after {
   animation: blog-mermaid-loading-sweep 1.8s linear infinite;
   will-change: transform;
 }
@@ -3849,9 +3856,6 @@ code[data-theme] span {
   --pele-accent: var(--accent);
   --pele-font: var(--font-mono);
   --pele-font-mono: var(--font-mono);
-  --pele-title-weight: 800;
-  --pele-heading-weight: 800;
-  --pele-bold-weight: 800;
   --pele-radius: 10px;
   position: relative;
   overflow: hidden;
@@ -3998,14 +4002,9 @@ code[data-theme] span {
 }
 
 .blog-mermaid-control:hover,
-.blog-mermaid-control:focus-visible,
-.blog-mermaid-control[aria-expanded="true"] {
+.blog-mermaid-control:focus-visible {
   color: var(--foreground);
   background: color-mix(in oklab, var(--muted) 72%, transparent);
-}
-
-.blog-mermaid-control[aria-expanded="true"] {
-  box-shadow: inset 0 0 0 1px currentColor;
 }
 
 .blog-mermaid-control:disabled {
@@ -4195,6 +4194,24 @@ code[data-theme] span {
   animation: none;
 }
 
+/* A diagram the reader never scrolled near has not drawn yet, and printing cannot wait for it: print its
+   description in place of the empty canvas, set like the no-script fallback. */
+@media print {
+  :is(.blog-mermaid, .blog-mermaid[data-frame]) > .blog-mermaid-skeleton[data-description] {
+    block-size: auto;
+    min-block-size: 0;
+    max-block-size: none;
+    aspect-ratio: auto;
+    color: color-mix(in oklab, var(--foreground) 86%, var(--muted-foreground));
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .blog-mermaid-skeleton[data-description]::before {
+    content: attr(data-description);
+  }
+}
+
 .blog-figure img,
 .blog-figure video {
   corner-shape: squircle;
@@ -4301,7 +4318,7 @@ html.dark .blog-figure-image--dark {
     will-change: auto;
   }
 
-  .blog-mermaid[data-state="loading"]::after {
+  .blog-mermaid[data-state="loading"][data-rendering]::after {
     animation: none;
     will-change: auto;
   }
@@ -4352,13 +4369,12 @@ html.dark .blog-figure-image--dark {
 }
 
 /* Forced colours drop backgrounds and shadows, which carry the nav pill, the
-   pressed and expanded controls and the lit index post. A system-colour edge or
+   current and pressed controls and the lit index post. A system-colour edge or
    fill keeps each state visible. */
 @media (forced-colors: active) {
   .site-nav-active-pill,
   .blog-locale-link[aria-current="page"],
-  .blog-code-action[aria-pressed="true"],
-  .blog-mermaid-control[aria-expanded="true"] {
+  .blog-code-action[aria-pressed="true"] {
     outline: 2px solid Highlight;
     outline-offset: -2px;
   }

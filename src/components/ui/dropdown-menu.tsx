@@ -117,7 +117,7 @@ function DropdownMenuContent({
         <MenuPrimitive.Popup
           data-slot="dropdown-menu"
           className={cn(
-            "dropdown-menu liquid-glass max-h-(--available-height) overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl p-1.5 text-sm font-bold text-foreground shadow-menu outline-none",
+            "dropdown-menu liquid-glass max-h-(--available-height) overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl p-1.5 text-sm font-bold text-foreground shadow-menu",
             className,
           )}
           {...props}

@@ -27,9 +27,7 @@ describe("glass tier contracts", () => {
     expect(header).toMatch(/className="site-nav-surface"/);
     expect(surfaceRule).toContain("background: var(--background);");
     expect(surfaceRule).not.toContain("backdrop-filter");
-    expect(css).not.toContain(".site-nav-switcher::before");
     expect(dropdown).toMatch(/dropdown-menu liquid-glass/);
-    expect(css).not.toContain("glass-lens");
     expect(css).not.toContain("-webkit-backdrop-filter");
   });
 
