@@ -67,12 +67,18 @@ describe("mobile navigation styles", () => {
     const blogPillRule = getRuleBody(css, '.site-nav-active-pill[data-active-nav="blog"]');
 
     expect(header).toContain('{ href: "/blog/en", label: "Blog", icon: BookOpenText }');
-    expect(header).toContain("grid-cols-[2.5rem_2.5rem_2.5rem]");
+    expect(css).toMatch(
+      /@variant max-sm \{[\s\S]*?\.site-nav-switcher\s*\{\s*grid-template-columns:\s*repeat\(3, var\(--nav-control\)\)/,
+    );
     expect(header).toContain("sm:grid-cols-3");
     expect(activePillRule).toMatch(/width:\s*calc\(\(100% - 1rem\) \/ 3\)/);
     expect(projectsPillRule).toMatch(/translate3d\(calc\(100% \+ 0\.25rem\), 0, 0\)/);
     expect(blogPillRule).toMatch(/translate3d\(calc\(200% \+ 0\.5rem\), 0, 0\)/);
-    expect(css).toMatch(/@variant max-sm \{[\s\S]*?\.site-nav-active-pill\s*\{[\s\S]*?width:\s*2\.5rem/);
+    expect(css).toMatch(/@variant max-sm \{[\s\S]*?\.site-nav-active-pill\s*\{[\s\S]*?width:\s*var\(--nav-control\)/);
+    expect(css).toMatch(/\.site-nav-glass\s*\{\s*--nav-control:\s*2\.5rem;/);
+    expect(css).toMatch(
+      /@media \(pointer: coarse\) and \(min-width: 360px\)\s*\{\s*\.site-nav-glass\s*\{\s*--nav-control:\s*2\.75rem;/,
+    );
   });
 
   test("folds the back-chip slot on the live element so the brand glides with it", async () => {
@@ -82,7 +88,8 @@ describe("mobile navigation styles", () => {
     const reducedMotionRule = getReducedMotionBackButtonRule(css);
     const transition = baseRule.match(/transition:\s*(?<value>[\s\S]*?);/)?.groups?.value ?? "";
 
-    expect(baseRule).toMatch(/(?:inline-size:\s*2\.5rem|width:\s*2\.5rem|flex:\s*0\s+0\s+2\.5rem)/);
+    expect(baseRule).toMatch(/inline-size:\s*var\(--nav-control\)/);
+    expect(baseRule).toMatch(/flex:\s*0\s+0\s+var\(--nav-control\)/);
     // The fold IS a layout transition, by design: the slot width animates on
     // the live element so the brand link moves with the layout instead of
     // jumping into the chip's place at the start of a route transition.

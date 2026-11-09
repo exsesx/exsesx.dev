@@ -13,7 +13,7 @@
 
 import { isAtRest, type Spring, type SpringState, stepSpring } from "@/lib/spring";
 
-type Geometry = { tabLefts: number[]; tabWidth: number; pillWidth: number; scale: number };
+type Geometry = { tabLefts: number[]; tabShown: boolean[]; tabWidth: number; pillWidth: number; scale: number };
 
 type Drag = {
   pointerId: number;
@@ -114,18 +114,27 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
 
   pill.dataset.driven = "";
 
+  // A narrow row can hide a tab (display: none). Positions count from the
+  // first shown tab, and a hidden one sits on the track's start.
   function measure(): Geometry {
     const switcherRect = switcher.getBoundingClientRect();
     const scale = switcherRect.width / (switcher.offsetWidth || 1) || 1;
     const rects = tabs.map(tab => tab.getBoundingClientRect());
-    const first = rects[0]?.left ?? 0;
+    const tabShown = rects.map(rect => rect.width > 0);
+    const firstShown = rects[tabShown.indexOf(true)];
+    const first = firstShown?.left ?? 0;
 
     return {
-      tabLefts: rects.map(rect => (rect.left - first) / scale),
-      tabWidth: (rects[0]?.width ?? 0) / scale,
+      tabLefts: rects.map((rect, index) => (tabShown[index] ? (rect.left - first) / scale : 0)),
+      tabShown,
+      tabWidth: (firstShown?.width ?? 0) / scale,
       pillWidth: pill.offsetWidth,
       scale,
     };
+  }
+
+  function firstShownTab() {
+    return tabs.find(tab => tab.offsetWidth > 0) ?? tabs[0];
   }
 
   function presented(): SpringState {
@@ -228,7 +237,7 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
   function localX(clientX: number) {
     const left = switcher.getBoundingClientRect().left + switcher.clientLeft;
 
-    return (clientX - left) / (geometry?.scale ?? 1) - (tabs[0]?.offsetLeft ?? 0);
+    return (clientX - left) / (geometry?.scale ?? 1) - (firstShownTab()?.offsetLeft ?? 0);
   }
 
   function clampWithBand(position: number) {
@@ -315,10 +324,11 @@ export function attachNavPill(switcher: HTMLElement, pill: HTMLElement, options:
     // pill happens to be, plus how far a flick would carry it.
     const projected = dragTarget + ((pointerVelocity / 1000) * PROJECTION_DECELERATION) / (1 - PROJECTION_DECELERATION);
     const lefts = geometry?.tabLefts ?? [0];
-    let nearest = 0;
+    const shown = geometry?.tabShown ?? lefts.map(() => true);
+    let nearest = Math.max(0, shown.indexOf(true));
 
     for (const [index, left] of lefts.entries()) {
-      if (Math.abs(left - projected) < Math.abs((lefts[nearest] ?? 0) - projected)) {
+      if (shown[index] && Math.abs(left - projected) < Math.abs((lefts[nearest] ?? 0) - projected)) {
         nearest = index;
       }
     }

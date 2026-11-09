@@ -959,7 +959,11 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 
 @variant max-sm {
   .site-nav-active-pill {
-    width: 2.5rem;
+    width: var(--nav-control);
+  }
+
+  .site-nav-switcher {
+    grid-template-columns: repeat(3, var(--nav-control));
   }
 }
 
@@ -993,8 +997,9 @@ html[data-blog-focus-bootstrap] .site-header-fade {
    snapshot is display: none (the header never slides or cross-fades). */
 .nav-back-button {
   /* no margin: the brand link's own px-2 padding is the visual gap */
-  inline-size: 2.5rem;
-  flex: 0 0 2.5rem;
+  inline-size: var(--nav-control);
+  block-size: var(--nav-control);
+  flex: 0 0 var(--nav-control);
   overflow: hidden;
   transition:
     inline-size 200ms var(--ease-snap),
@@ -1121,6 +1126,60 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   touch-action: pan-y;
 }
 
+/*
+ * Nav control size: 40px for a pointer, 44px for a fingertip (the minimum
+ * comfortable touch target) wherever the row has room for seven of them.
+ * Below 360px it does not, so the controls keep 40px there.
+ */
+.site-nav-glass {
+  --nav-control: 2.5rem;
+}
+
+@media (pointer: coarse) and (min-width: 360px) {
+  .site-nav-glass {
+    --nav-control: 2.75rem;
+  }
+}
+
+.site-nav-logo,
+.site-nav-switcher > a {
+  block-size: var(--nav-control);
+}
+
+.site-nav-logo {
+  inline-size: var(--nav-control);
+}
+
+.site-nav-actions > a,
+.site-nav-theme button {
+  min-inline-size: var(--nav-control);
+  block-size: var(--nav-control);
+}
+
+/*
+ * A detail page adds the Back chip beside the brand. Under 390px the row has
+ * no room for both and three tabs, so the Home tab steps aside: the brand
+ * beside it already leads home. The pill's rest positions shift one slot.
+ */
+@media (max-width: 389.98px) {
+  .site-nav-switcher[data-back-active] {
+    grid-template-columns: repeat(2, var(--nav-control));
+  }
+
+  .site-nav-switcher[data-back-active] > .site-nav-home-tab {
+    display: none;
+  }
+
+  .site-nav-switcher[data-back-active]
+    > .site-nav-active-pill:is([data-active-nav="home"], [data-active-nav="projects"]) {
+    transform: translate3d(0, 0, 0);
+  }
+
+  .site-nav-switcher[data-back-active] > .site-nav-active-pill[data-active-nav="blog"] {
+    transform: translate3d(calc(100% + 0.25rem), 0, 0);
+  }
+}
+
 .site-nav-switcher::before {
   position: absolute;
   inset: 0;
@@ -1188,6 +1247,17 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 
   .site-header-nav-frame[data-condensed="true"] .site-nav-glass {
     transform: translate3d(0, -2px, 0) scale(0.955);
+  }
+}
+
+/* On touch the capsule keeps its size as it condenses: shrinking it would
+   take the 44px targets back under a fingertip's reach. The glass still
+   materializes. */
+@media (pointer: coarse) {
+  .site-nav-glass,
+  .site-header-nav-frame[data-condensed="true"] .site-nav-glass {
+    animation: none;
+    transform: none;
   }
 }
 

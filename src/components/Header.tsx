@@ -132,10 +132,10 @@ export default function Header() {
           inert={isReadingHeaderHidden ? true : undefined}
           onFocusCapture={revealHeader}
         >
-          <nav className="site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full px-2 py-2 sm:flex sm:justify-between sm:gap-3 sm:px-3">
+          <nav className="site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1 rounded-full px-2 py-2 sm:flex sm:justify-between sm:gap-3 sm:px-3">
             <span aria-hidden="true" className="liquid-glass site-nav-surface" />
             <div
-              className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1.5 sm:gap-x-0" : "gap-x-0"}`}
+              className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1 sm:gap-x-0" : "gap-x-0"}`}
             >
               <NavBackButton active={isBackButtonActive} />
               <Link
@@ -151,7 +151,7 @@ export default function Header() {
                   }
                 }}
               >
-                <span className="logo-tile grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground">
+                <span className="logo-tile site-nav-logo grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground">
                   <LogoMark className="size-8" />
                 </span>
                 <span className="site-nav-brand-copy hidden min-w-0 flex-col leading-none sm:flex">
@@ -163,7 +163,8 @@ export default function Header() {
 
             <div
               ref={switcherRef}
-              className="site-nav-switcher relative grid grid-cols-[2.5rem_2.5rem_2.5rem] items-center gap-1 rounded-full p-1 sm:grid-cols-3"
+              className="site-nav-switcher relative grid items-center gap-1 rounded-full p-1 sm:grid-cols-3"
+              data-back-active={isBackButtonActive ? "" : undefined}
               {...{ [MOTION_ATTRIBUTES.activeNav]: visualActiveNav }}
             >
               <span
@@ -186,7 +187,7 @@ export default function Header() {
                     aria-label={item.label}
                     aria-current={activeNavHref === item.href ? "page" : undefined}
                     draggable={false}
-                    className={navActionBaseClassName}
+                    className={cn(navActionBaseClassName, item.href === "/" && "site-nav-home-tab")}
                     onClick={event => handleNavLinkClick(event, item.href)}
                     onPointerDown={event => {
                       if (shouldPreviewNavChange(event)) {
