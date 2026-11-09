@@ -87,7 +87,8 @@ function ProjectMedia({ project, sizes, className }: { project: Project; sizes: 
   const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
 
   return (
-    <div className={cn("relative overflow-hidden rounded-lg bg-muted", className)} style={{ backgroundColor }}>
+    // The wrapper stays unpainted, like ProjectCard's: the inner frame carries the fill.
+    <div className={cn("relative overflow-hidden rounded-lg", className)}>
       <Link
         href={getProjectPath(project)}
         transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, transitionType)}
