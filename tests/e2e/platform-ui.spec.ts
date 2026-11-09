@@ -143,8 +143,9 @@ if (!("Bun" in globalThis)) {
       expect(githubBorderColor).not.toBe("rgba(0, 0, 0, 0)");
 
       if (isMobile) {
-        expect(githubBounds?.width).toBeCloseTo(40, 1);
-        expect(githubBounds?.height).toBeCloseTo(40, 1);
+        // Touch controls are 44px from 360px up (Apple's minimum touch target).
+        expect(githubBounds?.width).toBeCloseTo(44, 1);
+        expect(githubBounds?.height).toBeCloseTo(44, 1);
         await expect(githubLabel).toHaveCSS("position", "absolute");
       } else {
         expect(githubBounds?.width).toBeGreaterThan(40);
@@ -176,10 +177,10 @@ if (!("Bun" in globalThis)) {
       expect(logoBounds).not.toBeNull();
       expect(navBounds).not.toBeNull();
       expect(viewport).not.toBeNull();
-      expect(backBounds?.width).toBeCloseTo(40, 1);
-      expect(backBounds?.height).toBeCloseTo(40, 1);
-      expect(logoBounds?.width).toBeCloseTo(40, 1);
-      expect(logoBounds?.height).toBeCloseTo(40, 1);
+      expect(backBounds?.width).toBeCloseTo(44, 1);
+      expect(backBounds?.height).toBeCloseTo(44, 1);
+      expect(logoBounds?.width).toBeCloseTo(44, 1);
+      expect(logoBounds?.height).toBeCloseTo(44, 1);
       expect((logoBounds?.x ?? 0) - ((backBounds?.x ?? 0) + (backBounds?.width ?? 0))).toBeGreaterThanOrEqual(6);
       expect(navBounds?.x).toBeGreaterThanOrEqual(0);
       expect((navBounds?.x ?? 0) + (navBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);

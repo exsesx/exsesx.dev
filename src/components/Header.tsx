@@ -135,7 +135,7 @@ export default function Header() {
           <nav className="site-nav-glass mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-1 rounded-full px-2 py-2 sm:flex sm:justify-between sm:gap-3 sm:px-3">
             <span aria-hidden="true" className="liquid-glass site-nav-surface" />
             <div
-              className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1 sm:gap-x-0" : "gap-x-0"}`}
+              className={`site-nav-leading flex min-w-0 items-center transition-[column-gap] duration-200 ease-[var(--ease-snap)] motion-reduce:transition-none ${isBackButtonActive ? "gap-x-1 min-[390px]:gap-x-1.5 sm:gap-x-0" : "gap-x-0"}`}
             >
               <NavBackButton active={isBackButtonActive} />
               <Link
