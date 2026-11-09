@@ -411,69 +411,41 @@ function blogIndexSvg() {
 }
 
 /*
- * The card's deck: the description's first sentence, whole. A sentence that cannot
- * fit falls back to its first clause (up to a semicolon); if that cannot fit either,
- * the run fails so the description gets rewritten instead of cut mid-word.
+ * An article card holds the title alone under its date and edition. Descriptions run a
+ * full sentence or more, which no single line at a thumbnail-legible size can hold, and
+ * a cut sentence would misquote the post, so the card carries no deck. The title takes
+ * the room instead and sits centered in the space below the lockup.
  */
-function socialDeck(
-  post: BlogPostSummary,
-  options: { maxWidth: number; maxLines: number; idealSize: number; minSize: number },
-) {
-  const firstSentence = post.description.trim().split(/(?<=[.!?])\s+/)[0];
-  const firstClause = firstSentence.includes(";") ? `${firstSentence.split(";")[0].trimEnd()}.` : null;
-
-  for (const candidate of [firstSentence, firstClause]) {
-    if (!candidate) {
-      continue;
-    }
-
-    for (let fontSize = options.idealSize; fontSize >= options.minSize; fontSize -= 1) {
-      const lines = wrapLinesByWidth(candidate, options.maxWidth, fontSize);
-
-      if (
-        lines.length <= options.maxLines &&
-        lines.every(line => approxTextWidth(line, fontSize) <= options.maxWidth)
-      ) {
-        return { lines, fontSize };
-      }
-    }
-  }
-
-  throw new Error(`No complete social deck fits for ${post.locale}/${post.slug}: shorten its first sentence.`);
-}
-
 function blogArticleSvg(post: BlogPostSummary) {
   const title = fittedLines(post.title, {
     maxWidth: 680,
     maxLines: 3,
-    idealSize: 72,
-    minSize: 46,
+    idealSize: 84,
+    minSize: 52,
     measureScale: 1.04,
   });
   const titleLineHeight = Math.round(title.fontSize * 1.04);
-  const titleY = 236 + title.fontSize * 0.55;
-  const deckY = titleY + titleLineHeight * (title.lines.length - 1) + 68;
-  const deckLineHeight = 38;
-  // As many deck lines as fit above a 58px bottom margin, never more than three.
-  const deck = socialDeck(post, {
-    maxWidth: 680,
-    maxLines: Math.min(3, Math.floor((height - 58 - deckY) / deckLineHeight) + 1),
-    idealSize: 28,
-    minSize: 24,
-  });
+  const eyebrowSize = 26;
+  const eyebrowGap = 30;
+  // The block runs from the eyebrow's cap line to the last title line's baseline.
+  const titleCapHeight = title.fontSize * 0.72;
+  const blockHeight = eyebrowSize * 0.72 + eyebrowGap + titleCapHeight + titleLineHeight * (title.lines.length - 1);
+  const contentTop = 150;
+  const contentBottom = height - 64;
+  const eyebrowY = Math.round(contentTop + (contentBottom - contentTop - blockHeight) / 2 + eyebrowSize * 0.72);
+  const titleY = Math.round(eyebrowY + eyebrowGap + titleCapHeight);
 
   return baseSvg(`
     ${asciiField({ seed: seedFrom(`${post.locale}/${post.slug}`), startX: 800, baselineY: 370, accent: colors.accent, beatOffset: seedFrom(post.slug) % 20 })}
     ${brand(`${SITE_PROFILE.domain}/blog`)}
     ${textBlock([`${post.publishedAt.slice(0, 10)} · ${BLOG_LOCALE_LABELS[post.locale]}`], {
       x: marginX,
-      y: 206,
-      fontSize: 22,
+      y: eyebrowY,
+      fontSize: eyebrowSize,
       lineHeight: 0,
       className: "eyebrow",
     })}
     ${textBlock(title.lines, { x: marginX - 3, y: titleY, fontSize: title.fontSize, lineHeight: titleLineHeight, className: "display" })}
-    ${textBlock(deck.lines, { x: marginX, y: deckY, fontSize: deck.fontSize, lineHeight: deckLineHeight, className: "lede" })}
   `);
 }
 
