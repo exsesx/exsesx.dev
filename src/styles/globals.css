@@ -420,6 +420,16 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
+/* Forced colours drop the tile's fill but not the mark's, which left the V
+   near-black on a black system canvas. The mark takes the link colour and the
+   tile keeps its round edge as a system-colour ring. */
+@media (forced-colors: active) {
+  .logo-tile {
+    --logo-foreground: LinkText;
+    border: 1px solid LinkText;
+  }
+}
+
 /* Floating chrome material: a near-opaque sheet of the card surface with a
    light blur behind it. Depth is a hairline and a short shadow, not a lens. */
 .liquid-glass {
