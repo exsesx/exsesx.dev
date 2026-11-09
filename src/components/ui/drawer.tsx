@@ -31,12 +31,14 @@ function DrawerClose(props: DrawerPrimitive.Close.Props) {
 function DrawerContent({
   className,
   children,
+  keepMounted,
   ...props
 }: Omit<DrawerPrimitive.Popup.Props, "className"> & {
   className?: string;
+  keepMounted?: DrawerPrimitive.Portal.Props["keepMounted"];
 }) {
   return (
-    <DrawerPrimitive.Portal data-slot="drawer-portal">
+    <DrawerPrimitive.Portal data-slot="drawer-portal" keepMounted={keepMounted}>
       <DrawerPrimitive.Backdrop
         data-slot="drawer-overlay"
         className="cn-drawer-overlay dialog-backdrop fixed inset-0 z-[90] min-h-dvh opacity-[max(0,calc(1-var(--drawer-swipe-progress)))] transition-opacity duration-450 ease-[var(--ease-drawer)] select-none data-ending-style:pointer-events-none data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] data-starting-style:opacity-0 data-swiping:duration-0 supports-[-webkit-touch-callout:none]:absolute"

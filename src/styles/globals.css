@@ -20,6 +20,12 @@
   --text-title--line-height: 1.25;
   --text-lead: clamp(1.125rem, 0.35vw + 1rem, 1.3125rem);
   --text-lead--line-height: 1.5;
+  /* Small text has two steps: meta (bylines, dates, code, table text) and
+     caption (labels beside a figure, the contents list, chips). */
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.5;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.45;
   /* Rhythm. One scale for every page: section gaps grow with the screen and
      stop at 120, 144 and 176px; a head block sits a stack (64px) from its
      content. Named steps only, never Tailwind's sm/md/lg sizes. */
@@ -2200,7 +2206,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   align-items: center;
   gap: 0.45rem;
   color: var(--muted-foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   text-decoration: none;
   touch-action: manipulation;
   transition: color var(--duration-press) ease;
@@ -2330,7 +2336,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   align-items: baseline;
   gap: 0.25rem 2rem;
   color: var(--muted-foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   font-variant-numeric: tabular-nums;
   line-height: 1.5rem;
 }
@@ -2447,6 +2453,12 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
    contents on 1 to 3. */
 .blog-article {
   --blog-measure: 46rem;
+  /* The reading column, which code, tables and diagrams still fill. Running text stops short of it: MonoLisa sets
+     wide, so 40rem holds a line near 60-65 characters at the article's size. */
+  --blog-text-measure: 40rem;
+  /* At the end of the page the back link must clear the floating contents and scroll-to-top buttons (2.75rem tall,
+     1rem or the safe area off the bottom) instead of sitting 4px above them. Wider screens already have more room. */
+  padding-bottom: max(var(--spacing-section-s), calc(max(1rem, env(safe-area-inset-bottom)) + 3.75rem));
 }
 
 .blog-article-header,
@@ -2474,9 +2486,9 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-toc-desktop {
-  --blog-toc-heading-size: 0.8rem;
+  --blog-toc-heading-size: var(--text-caption);
   --blog-toc-heading-weight: 400;
-  --blog-toc-subheading-size: 0.8rem;
+  --blog-toc-subheading-size: var(--text-caption);
   --blog-toc-subheading-weight: 400;
   position: sticky;
   /* Header frame: 0.75rem top gap + 4.125rem frame + 1rem clearance. */
@@ -2514,7 +2526,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-toc-desktop > p {
   color: var(--foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   font-weight: 700;
 }
 
@@ -2535,16 +2547,19 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --toc-tick-width: 0.5rem;
 }
 
+/* Entries align to their first line, so a title that wraps keeps its tick beside the line it starts on. Single-line
+   entries are padded to the row height; the padding, not the grid, centres them. */
 .blog-toc-list a {
+  --toc-row-height: 1.9rem;
   display: grid;
-  min-height: 1.9rem;
+  min-height: var(--toc-row-height);
   grid-template-columns: 1.75rem minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 0.45rem;
-  padding: 0.2rem 0.3rem;
+  padding: max(0.2rem, calc((var(--toc-row-height) - 1lh) / 2)) 0.3rem;
   border-radius: 0.5rem;
   color: var(--muted-foreground);
-  font-size: var(--blog-toc-heading-size, 0.8rem);
+  font-size: var(--blog-toc-heading-size, var(--text-caption));
   font-weight: var(--blog-toc-heading-weight, 400);
   line-height: 1.4;
   text-decoration: none;
@@ -2557,6 +2572,8 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-tick {
   width: var(--toc-tick-width);
   height: 2px;
+  /* Centred on the first line box: half a line, less half the tick. */
+  margin-top: calc(0.5lh - 1px);
   border-radius: 999px;
   background: currentColor;
   opacity: 0.42;
@@ -2572,11 +2589,14 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   overflow-wrap: anywhere;
 }
 
-/* Subsections step in by indent, not by a smaller size. */
+/* Subsections step in by indent. Their size sits on the link, so the tick reads the same line height as the label. */
+.blog-toc-list li[data-depth="3"] a {
+  font-size: var(--blog-toc-subheading-size, var(--text-caption));
+  font-weight: var(--blog-toc-subheading-weight, 400);
+}
+
 .blog-toc-list li[data-depth="3"] .blog-toc-label {
   padding-left: 1rem;
-  font-size: var(--blog-toc-subheading-size, 0.8rem);
-  font-weight: var(--blog-toc-subheading-weight, 400);
 }
 
 .blog-toc-list a:is(:hover, :focus-visible) {
@@ -2668,7 +2688,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-mobile-label {
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   font-weight: 700;
   line-height: 1.3;
   white-space: nowrap;
@@ -2681,6 +2701,47 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-toc-mobile-trigger:is(:hover, :focus-visible) .blog-toc-mobile-icon {
   color: currentColor;
+}
+
+/* Without scripts the drawer can never open, so its trigger gives way to a plain disclosure of the same links. The
+   parsed <noscript> only holds elements when scripting is off, which is what the selector keys on. */
+.blog-toc-mobile-shell:has(.blog-toc-noscript) .blog-toc-mobile-trigger {
+  display: none;
+}
+
+.blog-toc-noscript > summary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.8rem;
+  border-radius: 999px;
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  list-style: none;
+}
+
+.blog-toc-noscript > summary::-webkit-details-marker {
+  display: none;
+}
+
+.blog-toc-noscript > summary:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.blog-toc-noscript[open] > summary {
+  color: var(--accent);
+}
+
+.blog-toc-noscript .blog-toc-list {
+  margin-top: 0.25rem;
+}
+
+.blog-toc-noscript .blog-toc-list a {
+  --toc-row-height: 2.75rem;
 }
 
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
@@ -2785,9 +2846,9 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --blog-toc-drawer-surface: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
   --drawer-bleed-background: var(--blog-toc-drawer-surface);
   --blog-toc-drawer-inline: 1.25rem;
-  --blog-toc-heading-size: 0.84rem;
+  --blog-toc-heading-size: var(--text-meta);
   --blog-toc-heading-weight: 400;
-  --blog-toc-subheading-size: 0.76rem;
+  --blog-toc-subheading-size: var(--text-caption);
   --blog-toc-subheading-weight: 400;
   display: flex;
   width: min(100%, 42rem);
@@ -2864,10 +2925,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-drawer .blog-toc-list a {
-  min-height: 2.75rem;
+  --toc-row-height: 2.75rem;
   grid-template-columns: 1.125rem minmax(0, 1fr);
   gap: 0.625rem;
-  padding: 0.5rem 0.25rem;
+  padding-inline: 0.25rem;
 }
 
 .blog-toc-drawer .blog-toc-list li[data-depth="3"] a {
@@ -2888,10 +2949,24 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --blog-rich-block-border: color-mix(in oklab, var(--foreground) 16%, var(--blog-rich-block-surface));
 }
 
+/* 16px on phones; one step up once the column has room, and 18px on wide screens, where the reader sits further
+   back. The steps keep MonoLisa's wide set at 60-65 characters a line inside the text measure. */
 .blog-prose {
   color: color-mix(in oklab, var(--foreground) 86%, var(--muted-foreground));
-  font-size: clamp(1rem, 1.3vw, 1.08rem);
+  font-size: 1rem;
   line-height: 1.7;
+}
+
+@media (width >= 48rem) {
+  .blog-prose {
+    font-size: 1.0625rem;
+  }
+}
+
+@media (width >= 80rem) {
+  .blog-prose {
+    font-size: 1.125rem;
+  }
 }
 
 .blog-prose > :first-child {
@@ -2943,7 +3018,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose p,
 .blog-prose :where(ul, ol),
 .blog-prose blockquote {
-  max-width: 70ch;
+  max-width: var(--blog-text-measure, 40rem);
   margin-top: 1.25rem;
 }
 
@@ -3016,15 +3091,23 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   outline-offset: 0.18em;
 }
 
+/* A token moves to the next line whole rather than breaking at a hyphen or bracket (w- / [30001px]); only a token
+   wider than the line still wraps inside its chip. break-word rather than anywhere: it leaves the chip's min-content
+   width whole, so a phone table column cannot shrink below a token and split it. The chip's own leading stays under
+   the paragraph's, so a line holding code is no taller than its neighbours. Sized in em so it follows prose,
+   headings and tables. */
 .blog-prose :not(pre) > code {
+  display: inline-block;
+  max-width: 100%;
   padding: 0.1em 0.32em;
   border-radius: 0.3rem;
   color: var(--foreground);
   background: color-mix(in oklab, var(--foreground) 6%, transparent);
   font-family: var(--font-mono);
   font-size: 0.9em;
+  line-height: 1.45;
   vertical-align: 0.04em;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
@@ -3094,7 +3177,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border-spacing: 0;
   border-collapse: separate;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: var(--text-meta);
   line-height: 1.55;
 }
 
@@ -3110,6 +3193,23 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose th {
   color: var(--foreground);
   font-weight: 700;
+}
+
+/* On a phone a 9rem floor per cell stacked prose three lines deep and pushed the figures off screen. Cells size to
+   their content instead, set a step smaller, and figures (BlogTable marks all-numeric columns) never wrap. */
+@media (width < 40rem) {
+  .blog-prose table {
+    font-size: var(--text-caption);
+  }
+
+  .blog-prose :where(th, td) {
+    min-width: auto;
+    padding: 0.5rem 0.625rem;
+  }
+
+  .blog-prose :where(th, td)[data-numeric] {
+    white-space: nowrap;
+  }
 }
 
 .blog-prose tbody tr:nth-child(odd) > td {
@@ -3190,7 +3290,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border-radius: 999px;
   color: var(--muted-foreground);
   background: color-mix(in oklab, var(--background) 72%, transparent);
-  font-size: 0.72rem;
+  font-size: var(--text-caption);
   font-weight: 400;
   line-height: 1.35;
   text-decoration: none;
@@ -3311,7 +3411,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   padding: var(--blog-code-header-inset) 0.75rem 0 1rem;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   overflow-wrap: anywhere;
 }
 
@@ -3342,7 +3442,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   padding: var(--blog-code-header-inset) 0.75rem 0 1rem;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   white-space: nowrap;
 }
 
@@ -3360,7 +3460,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   color: var(--foreground);
   background: transparent;
   font-family: MonoLisaCode, ui-monospace, monospace;
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   line-height: 1.65;
   tab-size: 2;
 }
@@ -3540,10 +3640,17 @@ code[data-theme] span {
   border-top: 1px solid color-mix(in oklab, var(--border) 64%, transparent);
 }
 
-/* An evidence diagram is one narrow vertical flow, so its canvas runs taller than an article's to keep the
-   labels near body size on a phone. */
-.case-evidence .blog-mermaid-visual {
-  block-size: 34rem;
+/* Once drawn, the canvas takes the drawing's proportions (MermaidDiagram sets the viewBox ratio and height): a
+   short tree gets a short frame and a vertical flow keeps the height it needs, up to 34rem, so its labels stay near
+   body size on a phone. The drawing never rests above its authored size, so the canvas never outgrows it either,
+   and the 12rem floor keeps a one-line diagram from collapsing into a strip. The reserved height above holds until
+   then. Stretch is explicit: a grid item with an aspect ratio would otherwise shrink to its content's width. */
+.blog-mermaid-svg {
+  justify-self: stretch;
+  block-size: auto;
+  min-block-size: 12rem;
+  max-block-size: min(var(--blog-mermaid-height, 34rem), 34rem);
+  aspect-ratio: var(--blog-mermaid-ratio, auto);
 }
 
 /* The caption holds the header row's height while the diagram loads, so the controls do not shift the article. */
@@ -3559,7 +3666,7 @@ code[data-theme] span {
   padding: var(--blog-mermaid-header-inset) 0.75rem var(--blog-mermaid-header-inset) 1rem;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   overflow-wrap: anywhere;
 }
 
@@ -3647,14 +3754,17 @@ code[data-theme] span {
   pointer-events: none;
 }
 
+/* Labels at medium weight, the step above body text: a whole diagram at 700 read as one shout. Emphasis, cluster
+   titles and the focus node keep 700 (pele-renderer measures with the same two weights). */
 .blog-mermaid-svg .pele text {
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
 .blog-mermaid-svg .pele text[font-weight],
-.blog-mermaid-svg .pele-cluster-label {
-  font-weight: 800;
+.blog-mermaid-svg .pele-cluster-label,
+.blog-mermaid-svg .pele-node.focus .pele-label {
+  font-weight: 700;
 }
 
 .blog-mermaid-svg .pele-node > :is(rect, polygon, circle, ellipse, path) {
@@ -3910,7 +4020,7 @@ code[data-theme] span {
   color: var(--muted-foreground);
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   line-height: 1.7;
 }
 
@@ -3979,7 +4089,7 @@ html.dark .blog-figure-image--dark {
 .blog-figure figcaption {
   margin-top: 0.75rem;
   color: var(--muted-foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   line-height: 1.5;
 }
 

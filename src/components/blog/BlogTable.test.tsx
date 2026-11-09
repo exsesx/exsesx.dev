@@ -70,4 +70,41 @@ describe("BlogTable", () => {
     expect(markup).toContain("<td>Value</td>");
     expect(markup.match(/<table(?:\s|>)/g)).toHaveLength(1);
   });
+
+  test("flags only all-figure columns as numeric, header included", () => {
+    const markup = renderToStaticMarkup(
+      <BlogTable>
+        <thead>
+          <tr>
+            <th>Runtime</th>
+            <th>Old wrapper</th>
+            <th>
+              <code>cn</code>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Node 24.20.0</td>
+            <td>3,754 ns</td>
+            <td>
+              <code>11</code>
+            </td>
+          </tr>
+          <tr>
+            <td>Bun 1.4.1</td>
+            <td>145 ns</td>
+            <td>fast</td>
+          </tr>
+        </tbody>
+      </BlogTable>,
+    );
+
+    expect(markup).toContain('<th data-numeric="">Old wrapper</th>');
+    expect(markup).toContain('<td data-numeric="">3,754 ns</td>');
+    expect(markup).toContain('<td data-numeric="">145 ns</td>');
+    expect(markup).toContain("<td>Node 24.20.0</td>");
+    expect(markup).toContain("<td>fast</td>");
+    expect(markup.match(/data-numeric/g)).toHaveLength(3);
+  });
 });

@@ -560,6 +560,8 @@ if (!("Bun" in globalThis)) {
       const toolbar = diagram.getByRole("toolbar", { name: "Diagram controls" });
       const svg = viewport.locator("svg");
 
+      // Diagrams draw as they near the viewport.
+      await diagram.scrollIntoViewIfNeeded();
       await expect(diagram).toHaveAttribute("data-state", "ready", { timeout: 15_000 });
       await expect(viewport).toHaveRole("img");
       await expect(viewport).toHaveAccessibleName("Codex local memory pipeline");

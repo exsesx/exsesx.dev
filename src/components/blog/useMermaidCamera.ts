@@ -78,6 +78,12 @@ function getClientScale(viewBox: ViewBox, viewport: Viewport) {
 
 function rebaseViewBox(previousBase: ViewBox, previousCamera: ViewBox, nextBase: ViewBox): ViewBox {
   const zoom = getViewBoxZoom(previousBase, previousCamera);
+
+  // At rest the camera is the base; carrying it through the ratios below only adds float noise to the resting view.
+  if (zoom <= MIN_MERMAID_ZOOM) {
+    return nextBase;
+  }
+
   const centerX = previousCamera.x + previousCamera.width / 2;
   const centerY = previousCamera.y + previousCamera.height / 2;
   const centerRatioX = (centerX - previousBase.x) / previousBase.width;

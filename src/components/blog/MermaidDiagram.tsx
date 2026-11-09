@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import {
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type Ref,
   useCallback,
@@ -13,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { BLOG_UI } from "@/lib/blog";
 import { playInteractionSound } from "@/lib/interaction-sounds";
-import { MAX_MERMAID_ZOOM, MIN_MERMAID_ZOOM } from "@/lib/mermaid-camera";
+import { MAX_MERMAID_ZOOM, MIN_MERMAID_ZOOM, parseViewBox } from "@/lib/mermaid-camera";
 import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "@/lib/mermaid-theme";
 import { getServerThemeSnapshot, getThemeSnapshot, parseThemeSnapshot, subscribeToTheme } from "@/lib/theme";
 import { useBlogLocale } from "./BlogLocaleContext";
@@ -48,6 +49,30 @@ type MermaidToolbarProps = {
 };
 
 const ZOOM_BUTTON_STEP = 0.25;
+// Diagrams start drawing about a screen before they scroll in, so the renderer and the code face's bold and italic
+// cuts stay off the network for readers who never reach them.
+const RENDER_AHEAD_MARGIN = "100% 0px";
+const SVG_VIEW_BOX = /<svg\b[^>]*\bviewBox="([^"]+)"/;
+const SVG_ITALIC = /font-style(?:="|:\s*)italic/;
+
+// The canvas takes the drawing's own proportions (globals.css caps the height), so a short tree gets a short frame
+// and a tall flow keeps its labels near body size instead of shrinking into a fixed box.
+function getDrawingStyle(svg: string): CSSProperties | undefined {
+  const viewBox = parseViewBox(SVG_VIEW_BOX.exec(svg)?.[1] ?? "");
+
+  if (!viewBox) {
+    return undefined;
+  }
+
+  return {
+    "--blog-mermaid-ratio": `${viewBox.width} / ${viewBox.height}`,
+    "--blog-mermaid-height": `${viewBox.height}px`,
+  } as CSSProperties;
+}
+
+function loadDiagramFonts(source: string, styles: readonly string[]) {
+  return Promise.all(styles.map(style => document.fonts.load(`${style} 16px MonoLisaCode`, source)));
+}
 
 function subscribeToNothing() {
   return () => {};
@@ -153,6 +178,7 @@ function MermaidDiagramViewForSource({
             data-panning={camera.isPanning ? "true" : "false"}
             data-testid="mermaid-viewport"
             data-zoomed={camera.isZoomed ? "true" : "false"}
+            style={getDrawingStyle(state.svg)}
             onKeyDown={handleCameraKeyDown}
             onLostPointerCapture={camera.handlePointerEnd}
             onPointerCancel={camera.handlePointerEnd}
@@ -249,26 +275,41 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
   const [state, setState] = useState<MermaidState>({ status: "loading" });
   const [isRendering, setIsRendering] = useState(true);
 
+  const [isNearViewport, setIsNearViewport] = useState(false);
+
   const containerRef = useCallback((container: HTMLElement | null) => {
     if (!container) {
       return;
     }
 
-    const observer = new ResizeObserver(entries => {
+    const resizeObserver = new ResizeObserver(entries => {
       const width = entries[0]?.contentRect.width;
 
       if (width && width > 0) {
         setMaxWidth(Math.floor(width));
       }
     });
+    const proximityObserver = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setIsNearViewport(true);
+          proximityObserver.disconnect();
+        }
+      },
+      { rootMargin: RENDER_AHEAD_MARGIN },
+    );
 
-    observer.observe(container);
+    resizeObserver.observe(container);
+    proximityObserver.observe(container);
 
-    return () => observer.disconnect();
+    return () => {
+      resizeObserver.disconnect();
+      proximityObserver.disconnect();
+    };
   }, []);
 
   useEffect(() => {
-    if (maxWidth === null) {
+    if (maxWidth === null || !isNearViewport) {
       return;
     }
 
@@ -280,23 +321,36 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     async function renderDiagram() {
       try {
         const id = `mermaid-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-        const { createPeleTextMeasurer, renderPeleDiagram } = await import("@/lib/pele-renderer");
+        const { createPeleTextMeasurer, PELE_FONT_WEIGHTS, renderPeleDiagram } = await import("@/lib/pele-renderer");
+        const uprightStyles = Object.values(PELE_FONT_WEIGHTS).map(String);
+        const render = () =>
+          renderPeleDiagram(source, {
+            idPrefix: id,
+            maxWidth: layoutWidth,
+            measurer: createPeleTextMeasurer(),
+          });
 
-        await Promise.all(
-          ["700", "800", "italic 700", "italic 800"].map(weight =>
-            document.fonts.load(`${weight} 16px MonoLisaCode`, source),
-          ),
-        );
+        await loadDiagramFonts(source, uprightStyles);
 
         if (cancelled) {
           return;
         }
 
-        const svg = renderPeleDiagram(source, {
-          idPrefix: id,
-          maxWidth: layoutWidth,
-          measurer: createPeleTextMeasurer(),
-        });
+        let svg = render();
+
+        // Only a label that asks for italics pays for the italic face; it is measured again once that face is in.
+        if (SVG_ITALIC.test(svg)) {
+          await loadDiagramFonts(
+            source,
+            uprightStyles.map(weight => `italic ${weight}`),
+          );
+
+          if (cancelled) {
+            return;
+          }
+
+          svg = render();
+        }
 
         if (!cancelled) {
           setState({ status: "ready", renderedSource: source, svg });
@@ -319,7 +373,7 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     return () => {
       cancelled = true;
     };
-  }, [maxWidth, reactId, source]);
+  }, [isNearViewport, maxWidth, reactId, source]);
 
   return (
     <MermaidDiagramView

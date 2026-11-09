@@ -1,11 +1,12 @@
 import type { MDXComponents } from "mdx/types";
-import { type ComponentPropsWithoutRef, isValidElement, type ReactNode } from "react";
+import type { ComponentPropsWithoutRef } from "react";
 import BlogTable from "@/components/blog/BlogTable";
 import Callout from "@/components/blog/Callout";
 import CodeBlock from "@/components/blog/CodeBlock";
 import Figure from "@/components/blog/Figure";
 import MermaidDiagram from "@/components/blog/MermaidDiagram";
 import SourceLink from "@/components/blog/SourceLink";
+import { getTextContent } from "@/lib/blog-text";
 
 type MdxFigcaptionProps = ComponentPropsWithoutRef<"figcaption"> & {
   "data-language"?: string;
@@ -36,22 +37,6 @@ function MdxFigcaption({ children, ...props }: MdxFigcaptionProps) {
       <span className="blog-code-language">{language}</span>
     </figcaption>
   );
-}
-
-function getTextContent(node: ReactNode): string {
-  if (typeof node === "string" || typeof node === "number") {
-    return String(node);
-  }
-
-  if (Array.isArray(node)) {
-    return node.map(getTextContent).join("");
-  }
-
-  if (isValidElement<{ children?: ReactNode }>(node)) {
-    return getTextContent(node.props.children);
-  }
-
-  return "";
 }
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {

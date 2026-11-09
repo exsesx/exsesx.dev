@@ -32,6 +32,11 @@ export const MAX_MERMAID_ZOOM = 4;
 export const MERMAID_NUDGE_FRACTION = 0.12;
 /** A diagram never rests above its authored size, so its labels stay at the article's type scale on wide frames. */
 export const MAX_MERMAID_FIT_SCALE = 1;
+/**
+ * A canvas sized to the drawing fits it at its cap almost exactly, so rounding alone must not flip the cap on and
+ * off: that moved the resting camera by float noise between resizes.
+ */
+const FIT_SCALE_TOLERANCE = 1e-6;
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
@@ -112,7 +117,7 @@ export function capViewBoxScale(
 ): ViewBox {
   const fitScale = Math.min(size.width / viewBox.width, size.height / viewBox.height);
 
-  if (!(fitScale > maxScale)) {
+  if (!(fitScale > maxScale * (1 + FIT_SCALE_TOLERANCE))) {
     return viewBox;
   }
 

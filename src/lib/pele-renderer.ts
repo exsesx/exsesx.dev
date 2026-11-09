@@ -2,6 +2,8 @@ import { register, render, type TextMeasurer } from "pele/core";
 import flowchart from "pele/diagrams/flowchart";
 
 export const PELE_FONT_FAMILY = "MonoLisaCode, ui-monospace, monospace";
+/** Labels read at the body's medium weight; bold markup, cluster titles and the focus node step up to 700. */
+export const PELE_FONT_WEIGHTS = { regular: 500, bold: 700 } as const;
 
 type PeleDiagramOptions = {
   idPrefix: string;
@@ -20,7 +22,7 @@ export function createPeleTextMeasurer(): TextMeasurer {
 
   return {
     width(text, size, style) {
-      const weight = style & 1 ? 800 : 700;
+      const weight = style & 1 ? PELE_FONT_WEIGHTS.bold : PELE_FONT_WEIGHTS.regular;
       const italic = style & 2 ? "italic " : "";
       const letterSpacing = -0.01 * size;
 

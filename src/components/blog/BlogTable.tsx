@@ -1,7 +1,17 @@
 "use client";
 
-import { type ComponentPropsWithoutRef, useLayoutEffect, useRef } from "react";
+import {
+  Children,
+  type ComponentPropsWithoutRef,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import { BLOG_UI } from "@/lib/blog";
+import { getTextContent } from "@/lib/blog-text";
 import { useBlogLocale } from "./BlogLocaleContext";
 
 type TableScrollMetrics = {
@@ -10,7 +20,12 @@ type TableScrollMetrics = {
   scrollWidth: number;
 };
 
+type ChildrenProps = { children?: ReactNode };
+
 const TABLE_SCROLL_EPSILON = 1;
+// A figure with an optional sign and a short unit: 234 ns, 3,754 ns, 25, +12%, 1.4×.
+const NUMERIC_CELL = /^[~≈<>±+\-−]?\d[\d.,]*(?:\s?(?:%|×|[a-zµ]{1,3}))?$/i;
+const BLANK_CELL = /^(?:|-|–|—)$/;
 
 export function getTableOverflowState({ clientWidth, scrollLeft, scrollWidth }: TableScrollMetrics) {
   const maxScrollLeft = Math.max(0, scrollWidth - clientWidth);
@@ -22,6 +37,72 @@ export function getTableOverflowState({ clientWidth, scrollLeft, scrollWidth }: 
     canScrollRight: hasOverflow && maxScrollLeft - clampedScrollLeft > TABLE_SCROLL_EPSILON,
     hasOverflow,
   };
+}
+
+function elementsOf(node: ReactNode) {
+  return Children.toArray(node).filter((child): child is ReactElement<ChildrenProps> =>
+    isValidElement<ChildrenProps>(child),
+  );
+}
+
+function mapCells(
+  row: ReactElement<ChildrenProps>,
+  map: (cell: ReactElement<ChildrenProps>, column: number) => ReactNode,
+) {
+  let column = 0;
+
+  return Children.map(row.props.children, cell => (isValidElement<ChildrenProps>(cell) ? map(cell, column++) : cell));
+}
+
+/**
+ * Marks the cells of every column whose body holds only figures with `data-numeric`, so a narrow screen can keep a
+ * figure on one line. Done while rendering, so the server markup already carries it and nothing reflows on hydration.
+ */
+export function markNumericColumns(children: ReactNode): ReactNode {
+  const sections = elementsOf(children);
+  const bodyRows = sections
+    .filter(section => section.type === "tbody")
+    .flatMap(section => elementsOf(section.props.children));
+  const verdicts: boolean[] = [];
+  const hasFigure: boolean[] = [];
+
+  for (const row of bodyRows) {
+    mapCells(row, (cell, column) => {
+      const text = getTextContent(cell.props.children).trim();
+      const isFigure = NUMERIC_CELL.test(text);
+
+      verdicts[column] = (verdicts[column] ?? true) && (isFigure || BLANK_CELL.test(text));
+      hasFigure[column] = hasFigure[column] || isFigure;
+
+      return cell;
+    });
+  }
+
+  const isNumeric = (column: number) => verdicts[column] === true && hasFigure[column] === true;
+
+  if (!verdicts.some((_, column) => isNumeric(column))) {
+    return children;
+  }
+
+  return Children.map(children, section => {
+    if (!isValidElement<ChildrenProps>(section)) {
+      return section;
+    }
+
+    const rows = Children.map(section.props.children, row => {
+      if (!isValidElement<ChildrenProps>(row)) {
+        return row;
+      }
+
+      const cells = mapCells(row, (cell, column) =>
+        isNumeric(column) ? cloneElement(cell, { "data-numeric": "" } as ChildrenProps) : cell,
+      );
+
+      return cloneElement(row, undefined, cells);
+    });
+
+    return cloneElement(section, undefined, rows);
+  });
 }
 
 export default function BlogTable({ children, ...props }: ComponentPropsWithoutRef<"table">) {
@@ -90,7 +171,7 @@ export default function BlogTable({ children, ...props }: ComponentPropsWithoutR
         tabIndex={0}
       >
         <table {...props} ref={tableRef}>
-          {children}
+          {markNumericColumns(children)}
         </table>
       </section>
     </div>

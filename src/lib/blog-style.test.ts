@@ -428,17 +428,21 @@ describe("Blog production styles", () => {
     const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
     const tickRule = css.match(/\.blog-toc-tick\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const linkRule = css.match(/\.blog-toc-list a\s*\{([^}]*)\}/s)?.[1] ?? "";
     const subheadingRule = css.match(/\.blog-toc-list li\[data-depth="3"\] \.blog-toc-label\s*\{([^}]*)\}/s)?.[1] ?? "";
     const activeRule = css.match(/\.blog-toc-list a\[aria-current="location"\]\s*\{([^}]*)\}/s)?.[1] ?? "";
     const activeTickRule =
       css.match(/\.blog-toc-list a\[aria-current="location"\] \.blog-toc-tick\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerHeaderRule = css.match(/\.blog-toc-drawer-header\s*\{([^}]*)\}/s)?.[1] ?? "";
 
-    expect(desktopRule).toContain("--blog-toc-heading-size: 0.8rem");
-    expect(desktopRule).toContain("--blog-toc-subheading-size: 0.8rem");
-    expect(drawerRule).toContain("--blog-toc-heading-size: 0.84rem");
-    expect(drawerRule).toContain("--blog-toc-subheading-size: 0.76rem");
+    expect(desktopRule).toContain("--blog-toc-heading-size: var(--text-caption)");
+    expect(desktopRule).toContain("--blog-toc-subheading-size: var(--text-caption)");
+    expect(drawerRule).toContain("--blog-toc-heading-size: var(--text-meta)");
+    expect(drawerRule).toContain("--blog-toc-subheading-size: var(--text-caption)");
     expect(tickRule).toContain("width: var(--toc-tick-width)");
+    // A wrapped entry keeps its tick on its first line, not centred on the whole entry.
+    expect(linkRule).toContain("align-items: start");
+    expect(tickRule).toContain("margin-top: calc(0.5lh - 1px)");
     expect(subheadingRule).toContain("padding-left: 1rem");
     expect(activeRule).toContain("background: transparent");
     expect(activeTickRule).toContain("background: var(--accent)");

@@ -158,4 +158,10 @@ describe("Mermaid viewBox camera", () => {
 
     expect(capViewBoxScale(base, { width: 800, height: 400 })).toBe(base);
   });
+
+  test("leaves a canvas sized to the drawing alone despite rounding", () => {
+    const base = { x: -26.02941176470588, y: -26.02941176470588, width: 488.05882352941177, height: 642.0588235294117 };
+
+    expect(capViewBoxScale(base, { width: 700, height: 642.0588235294118 })).toBe(base);
+  });
 });

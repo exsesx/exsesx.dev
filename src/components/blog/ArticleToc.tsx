@@ -135,41 +135,64 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
 
   if (mode === "mobile") {
     return (
-      <Drawer
-        actionsRef={drawerActionsRef}
-        onOpenChange={(open, eventDetails) =>
-          playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target)
-        }
-        onOpenChangeComplete={handleOpenChangeComplete}
-      >
-        <DrawerTrigger
-          ref={triggerRef}
-          aria-label={copy.openTableOfContents}
-          className="blog-toc-mobile-trigger"
-          data-testid="mobile-toc-trigger"
+      <>
+        {/* Without scripts the drawer never opens, so the same links ship as a disclosure that hides the trigger. */}
+        <noscript>
+          <details className="blog-toc-noscript">
+            <summary>
+              <ListTree aria-hidden="true" className="blog-toc-mobile-icon" size={18} strokeWidth={2.2} />
+              {copy.onThisPage}
+            </summary>
+            <nav aria-label={copy.onThisPage}>
+              <ol className="blog-toc-list">
+                {headings.map(heading => (
+                  <li key={heading.id} data-depth={heading.depth}>
+                    <a href={`#${heading.id}`}>
+                      <span aria-hidden="true" className="blog-toc-tick" />
+                      <span className="blog-toc-label">{heading.text}</span>
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </details>
+        </noscript>
+        <Drawer
+          actionsRef={drawerActionsRef}
+          onOpenChange={(open, eventDetails) =>
+            playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target)
+          }
+          onOpenChangeComplete={handleOpenChangeComplete}
         >
-          <span aria-hidden="true" className="blog-toc-mobile-face glass-frost">
-            <ListTree className="blog-toc-mobile-icon" size={18} strokeWidth={2.2} />
-            <span className="blog-toc-mobile-label">{copy.onThisPage}</span>
-          </span>
-        </DrawerTrigger>
+          <DrawerTrigger
+            ref={triggerRef}
+            aria-label={copy.openTableOfContents}
+            className="blog-toc-mobile-trigger"
+            data-testid="mobile-toc-trigger"
+          >
+            <span aria-hidden="true" className="blog-toc-mobile-face glass-frost">
+              <ListTree className="blog-toc-mobile-icon" size={18} strokeWidth={2.2} />
+              <span className="blog-toc-mobile-label">{copy.onThisPage}</span>
+            </span>
+          </DrawerTrigger>
 
-        <DrawerContent className="blog-toc-drawer" data-testid="mobile-toc-drawer">
-          <DrawerHeader className="blog-toc-drawer-header">
-            <div className="blog-toc-drawer-heading">
-              <DrawerTitle>{copy.onThisPage}</DrawerTitle>
-              <DrawerDescription className="sr-only">{copy.onThisPageDescription}</DrawerDescription>
-            </div>
-            <DrawerClose aria-label={copy.closeTableOfContents} className="blog-toc-drawer-close">
-              <X aria-hidden="true" size={20} strokeWidth={2.2} />
-            </DrawerClose>
-          </DrawerHeader>
+          <DrawerContent className="blog-toc-drawer" data-testid="mobile-toc-drawer" keepMounted>
+            <DrawerHeader className="blog-toc-drawer-header">
+              <div className="blog-toc-drawer-heading">
+                <DrawerTitle>{copy.onThisPage}</DrawerTitle>
+                <DrawerDescription className="sr-only">{copy.onThisPageDescription}</DrawerDescription>
+              </div>
+              <DrawerClose aria-label={copy.closeTableOfContents} className="blog-toc-drawer-close">
+                <X aria-hidden="true" size={20} strokeWidth={2.2} />
+              </DrawerClose>
+            </DrawerHeader>
 
-          <nav className="blog-toc-drawer-scroll" aria-label={copy.onThisPage} data-testid="mobile-toc-scroll">
-            {list}
-          </nav>
-        </DrawerContent>
-      </Drawer>
+            <nav className="blog-toc-drawer-scroll" aria-label={copy.onThisPage} data-testid="mobile-toc-scroll">
+              {list}
+            </nav>
+          </DrawerContent>
+        </Drawer>
+      </>
     );
   }
 

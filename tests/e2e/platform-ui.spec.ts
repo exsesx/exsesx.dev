@@ -301,6 +301,8 @@ if (!("Bun" in globalThis)) {
       const zoomIn = toolbar.getByRole("button", { name: "Zoom in" });
       const svg = viewport.locator("svg");
 
+      // Diagrams draw as they near the viewport.
+      await diagram.scrollIntoViewIfNeeded();
       await expect(diagram).toHaveAttribute("data-state", "ready", { timeout: 15_000 });
       await expect(svg).toHaveClass(/\bpele-flowchart\b/);
       await expect(viewport).toBeVisible();
