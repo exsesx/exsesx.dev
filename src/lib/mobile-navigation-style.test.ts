@@ -5,6 +5,7 @@ const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 const navBackButtonUrl = new URL("../components/NavBackButton.tsx", import.meta.url);
 const appDocumentUrl = new URL("../components/AppDocument.tsx", import.meta.url);
+const routeDocumentUrl = new URL("../components/RouteDocument.tsx", import.meta.url);
 const documentBootstrapScriptsUrl = new URL("../components/DocumentBootstrapScripts.tsx", import.meta.url);
 const blogFocusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
 const nextConfigUrl = new URL("../../next.config.mts", import.meta.url);
@@ -147,14 +148,14 @@ describe("mobile navigation styles", () => {
   });
 
   test("server-inserts document bootstraps outside client route rendering", async () => {
-    const [appDocument, bootstrapScripts] = await Promise.all([
-      Bun.file(appDocumentUrl).text(),
+    const [routeDocument, bootstrapScripts] = await Promise.all([
+      Bun.file(routeDocumentUrl).text(),
       Bun.file(documentBootstrapScriptsUrl).text(),
     ]);
 
-    expect(appDocument).toContain("<DocumentBootstrapScripts />");
-    expect(appDocument).not.toContain('id="noflash"');
-    expect(appDocument).not.toContain('id="blog-focus-bootstrap"');
+    expect(routeDocument).toContain("<DocumentBootstrapScripts />");
+    expect(routeDocument).not.toContain('id="noflash"');
+    expect(routeDocument).not.toContain('id="blog-focus-bootstrap"');
     expect(bootstrapScripts).toContain("useServerInsertedHTML");
     expect(bootstrapScripts).toContain('id="noflash"');
     expect(bootstrapScripts).toContain('id="blog-focus-bootstrap"');
@@ -162,11 +163,15 @@ describe("mobile navigation styles", () => {
   });
 
   test("offers a localized keyboard escape route to the main content", async () => {
-    const appDocument = await Bun.file(appDocumentUrl).text();
+    const [appDocument, routeDocument] = await Promise.all([
+      Bun.file(appDocumentUrl).text(),
+      Bun.file(routeDocumentUrl).text(),
+    ]);
 
-    expect(appDocument).toContain('className="skip-to-content"');
-    expect(appDocument).toContain('href="#main-content"');
-    expect(appDocument).toContain('lang === "uk" ? "Перейти до основного вмісту" : "Skip to main content"');
+    expect(appDocument).toContain("<SkipToContentLink />");
+    expect(routeDocument).toContain('className="skip-to-content"');
+    expect(routeDocument).toContain('href="#main-content"');
+    expect(routeDocument).toContain('lang === "uk" ? "Перейти до основного вмісту" : "Skip to main content"');
   });
 
   test("keeps the Turbopack persistent build cache disabled", async () => {
