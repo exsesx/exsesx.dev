@@ -7,6 +7,7 @@ import Figure from "@/components/blog/Figure";
 import MermaidDiagram from "@/components/blog/MermaidDiagram";
 import SourceLink from "@/components/blog/SourceLink";
 import { getTextContent } from "@/lib/blog-text";
+import { measureDiagramFrame } from "@/lib/pele-renderer";
 
 type MdxFigcaptionProps = ComponentPropsWithoutRef<"figcaption"> & {
   "data-language"?: string;
@@ -14,7 +15,9 @@ type MdxFigcaptionProps = ComponentPropsWithoutRef<"figcaption"> & {
 
 function MdxPre({ children, className, ...props }: ComponentPropsWithoutRef<"pre">) {
   if (className?.split(" ").includes("mermaid")) {
-    return <MermaidDiagram source={getTextContent(children)} />;
+    const source = getTextContent(children);
+
+    return <MermaidDiagram frame={measureDiagramFrame(source)} source={source} />;
   }
 
   return (

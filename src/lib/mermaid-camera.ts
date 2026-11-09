@@ -27,6 +27,27 @@ type ZoomViewBoxOptions = Readonly<{
   viewport: Viewport;
 }>;
 
+export type DiagramSize = Readonly<{
+  width: number;
+  height: number;
+}>;
+
+/**
+ * Pele picks a diagram's layout from the width it may use. Laying a diagram out at the frame's measured width made its
+ * shape unknowable until the lazy renderer ran, so the page uses two fixed layout widths instead: a frame narrower
+ * than the wide width gets the compact layout, drawn for the 288px frame of a 320px phone, and a wider frame gets the
+ * wide one. The server measures both, the figure reserves the matching canvas (globals.css switches at the same width
+ * with a container query on the figure), and the client draws the same layout into it.
+ */
+export const DIAGRAM_LAYOUT_WIDTHS = { compact: 288, wide: 640 } as const;
+
+export type DiagramLayout = keyof typeof DIAGRAM_LAYOUT_WIDTHS;
+export type DiagramFrame = Readonly<Record<DiagramLayout, DiagramSize>>;
+
+export function getDiagramLayout(frameWidth: number): DiagramLayout {
+  return frameWidth >= DIAGRAM_LAYOUT_WIDTHS.wide ? "wide" : "compact";
+}
+
 export const MIN_MERMAID_ZOOM = 1;
 export const MAX_MERMAID_ZOOM = 4;
 export const MERMAID_NUDGE_FRACTION = 0.12;

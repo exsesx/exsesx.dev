@@ -10,6 +10,7 @@ import MermaidDiagram from "@/components/blog/MermaidDiagram";
 import ProjectCard from "@/components/ProjectCard";
 import { createPageMetadata, createProjectSocialImage } from "@/lib/metadata";
 import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { measureDiagramFrame } from "@/lib/pele-renderer";
 import {
   getAdjacentProjects,
   getProjectBySlug,
@@ -122,7 +123,7 @@ function EvidenceFigure({ evidence }: { evidence: ProjectEvidence }) {
   return (
     <figure className="case-evidence grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-x-8">
       <div className="min-w-0 lg:col-span-7">
-        <MermaidDiagram source={evidence.diagram} />
+        <MermaidDiagram frame={measureDiagramFrame(evidence.diagram)} source={evidence.diagram} />
       </div>
       <figcaption className="max-w-[48ch] text-pretty text-base leading-7 text-muted-foreground lg:col-span-4 lg:col-start-9 lg:pt-3">
         <span className="font-bold text-foreground">

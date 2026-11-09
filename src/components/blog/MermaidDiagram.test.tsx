@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import { DIAGRAM_LAYOUT_WIDTHS } from "@/lib/mermaid-camera";
 import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "@/lib/mermaid-theme";
 import MermaidDiagram, { MermaidDiagramView } from "./MermaidDiagram";
 
@@ -7,7 +8,7 @@ const globalsCssUrl = new URL("../../styles/globals.css", import.meta.url);
 
 describe("MermaidDiagram", () => {
   test("reserves a universal diagram viewport with an inert loading skeleton", async () => {
-    const markup = renderToStaticMarkup(<MermaidDiagram source={"flowchart TD\n  Browser --> Server"} />);
+    const markup = renderToStaticMarkup(<MermaidDiagram frame={null} source={"flowchart TD\n  Browser --> Server"} />);
     const css = await Bun.file(globalsCssUrl).text();
 
     expect(markup).toContain('data-state="loading"');
@@ -22,8 +23,13 @@ describe("MermaidDiagram", () => {
     expect(markup).not.toContain("Browser-&gt;&gt;Server");
     expect(markup).not.toContain("blog-mermaid-skeleton-node");
     expect(markup).not.toContain("<noscript>");
+    // An invisible, inert toolbar holds the header column so the caption does not rewrap when the drawing lands.
+    expect(markup).toMatch(
+      /<div class="blog-mermaid-toolbar" aria-hidden="true"[^>]*data-placeholder="true"[^>]*inert=""/,
+    );
+    expect(css).toMatch(/\.blog-mermaid-toolbar\[data-placeholder\]\s*\{[^}]*visibility:\s*hidden/s);
     expect(css).toMatch(
-      /\.blog-mermaid:has\(\.blog-mermaid-fallback\) \.blog-mermaid-skeleton\s*\{[^}]*display:\s*none/s,
+      /\.blog-mermaid:has\(\.blog-mermaid-fallback\) :is\(\.blog-mermaid-skeleton, \.blog-mermaid-toolbar\)\s*\{[^}]*display:\s*none/s,
     );
     expect(css).toMatch(/\.blog-mermaid-visual\s*\{[^}]*block-size:\s*clamp\(/s);
     expect(css).toMatch(/\.blog-mermaid-visual\s*\{[^}]*clamp\(20rem,\s*65vw,\s*32rem\)/s);
@@ -49,7 +55,7 @@ describe("MermaidDiagram", () => {
 
   test("shows the authored description in place of the canvas when scripts never run", () => {
     const markup = renderToStaticMarkup(
-      <MermaidDiagram source={"flowchart TD\n  accDescr: The root delegates work.\n  root --> child"} />,
+      <MermaidDiagram frame={null} source={"flowchart TD\n  accDescr: The root delegates work.\n  root --> child"} />,
     );
 
     expect(markup).toMatch(
@@ -63,6 +69,7 @@ describe("MermaidDiagram", () => {
       <MermaidDiagramView
         accessibleDescription="A root agent delegates work."
         accessibleLabel="Agents V2 task hierarchy"
+        frame={null}
         isRendering={false}
         reactId="diagram"
         resolvedTheme="dark"
@@ -101,6 +108,46 @@ describe("MermaidDiagram", () => {
     expect(markup).not.toContain("blog-mermaid-source");
   });
 
+  test("reserves the server-measured frame from the skeleton through the drawing", async () => {
+    const source = "flowchart TD\n  root --> child";
+    const frame = { compact: { width: 290, height: 232 }, wide: { width: 1055, height: 150 } };
+    const frameStyle =
+      'style="--blog-mermaid-compact-ratio:290 / 232;--blog-mermaid-compact-height:232px;' +
+      '--blog-mermaid-wide-ratio:1055 / 150;--blog-mermaid-wide-height:150px"';
+    const skeleton = renderToStaticMarkup(<MermaidDiagram frame={frame} source={source} />);
+    const ready = renderToStaticMarkup(
+      <MermaidDiagramView
+        accessibleDescription={null}
+        accessibleLabel="Task hierarchy"
+        frame={frame}
+        isRendering={false}
+        reactId="diagram"
+        resolvedTheme="light"
+        source={source}
+        state={{ status: "ready", renderedSource: source, svg: '<svg viewBox="0 0 400 100" />' }}
+      />,
+    );
+    const css = await Bun.file(globalsCssUrl).text();
+
+    for (const markup of [skeleton, ready]) {
+      expect(markup).toContain('data-frame="reserved"');
+      expect(markup).toContain(frameStyle);
+    }
+
+    expect(ready).not.toMatch(/blog-mermaid-svg"[^>]*style=/);
+    expect(css).toMatch(/\.blog-mermaid\s*\{[^}]*container-type:\s*inline-size/s);
+    expect(css).toMatch(
+      /\.blog-mermaid\[data-frame\] > :is\(\.blog-mermaid-skeleton, \.blog-mermaid-svg\)\s*\{[^}]*aspect-ratio:\s*var\(--blog-mermaid-compact-ratio\)/s,
+    );
+    // The stylesheet switches layouts at the frame width the component draws the wide layout from.
+    expect(css).toMatch(
+      new RegExp(
+        `@container \\(width >= ${DIAGRAM_LAYOUT_WIDTHS.wide}px\\)\\s*\\{\\s*\\.blog-mermaid\\[data-frame\\][^{]*\\{[^}]*aspect-ratio:\\s*var\\(--blog-mermaid-wide-ratio\\)`,
+        "s",
+      ),
+    );
+  });
+
   test("uses an authored Mermaid accessibility title with a safe fallback", () => {
     expect(getMermaidAccessibleLabel("flowchart TD\n  accTitle: Agents V2 task hierarchy")).toBe(
       "Agents V2 task hierarchy",
@@ -118,6 +165,7 @@ describe("MermaidDiagram", () => {
       <MermaidDiagramView
         accessibleDescription={null}
         accessibleLabel="Task hierarchy"
+        frame={null}
         isRendering={true}
         reactId="diagram"
         resolvedTheme="dark"
@@ -139,6 +187,7 @@ describe("MermaidDiagram", () => {
       <MermaidDiagramView
         accessibleDescription={null}
         accessibleLabel="Diagram"
+        frame={null}
         isRendering={false}
         reactId="broken"
         resolvedTheme="light"

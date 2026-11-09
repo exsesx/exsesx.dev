@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { DIAGRAM_LAYOUT_WIDTHS } from "./mermaid-camera";
 import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "./mermaid-theme";
-import { renderPeleDiagram } from "./pele-renderer";
+import { createMonospaceTextMeasurer, measureDiagramFrame, renderPeleDiagram } from "./pele-renderer";
 import { projects } from "./projects";
 
 const contentRoot = new URL("../content/blog/", import.meta.url).pathname;
@@ -102,9 +103,26 @@ describe("Pele flowchart renderer", () => {
     expect(rootElement).not.toContain("max-width:100%");
   });
 
+  test("measures the frame of every authored diagram as the drawing the client lays out", () => {
+    const sources = [...diagrams.map(diagram => diagram.source), ...projects.flatMap(p => p.evidence?.diagram ?? [])];
+    const measurer = createMonospaceTextMeasurer();
+
+    for (const source of sources) {
+      const frame = measureDiagramFrame(source);
+
+      for (const layout of ["compact", "wide"] as const) {
+        const svg = renderPeleDiagram(source, { idPrefix: "test", maxWidth: DIAGRAM_LAYOUT_WIDTHS[layout], measurer });
+        const [, , width, height] = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(" ").map(Number) ?? [];
+
+        expect(frame?.[layout]).toEqual({ width, height });
+      }
+    }
+  });
+
   test("rejects malformed input so the component can show its source fallback", () => {
     expect(() => renderDiagram('flowchart TD\n A["unfinished')).toThrow();
     expect(() => renderDiagram("sequenceDiagram\n A->>B: unsupported")).toThrow();
+    expect(measureDiagramFrame('flowchart TD\n A["unfinished')).toBeNull();
   });
 
   test("escapes authored markup and disables interactive links", () => {

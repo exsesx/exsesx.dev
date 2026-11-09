@@ -28,6 +28,19 @@ async function selectTheme(page: Page, theme: "Light" | "Dark") {
   await expect(page.locator("html")).toHaveAttribute("data-theme-mode", theme.toLowerCase());
 }
 
+type SkeletonWindow = Window & { diagramSkeletonHeight?: number };
+
+// The server-rendered canvas, read as soon as the document is parsed: the drawing must land in exactly this frame.
+async function recordSkeletonHeight(page: Page) {
+  await page.addInitScript(() => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const skeleton = document.querySelector(".blog-mermaid-skeleton");
+
+      (window as SkeletonWindow).diagramSkeletonHeight = skeleton?.getBoundingClientRect().height;
+    });
+  });
+}
+
 async function readDiagramColors(svg: Locator) {
   return svg.evaluate(element => {
     const shape = element.querySelector(".pele-node > rect, .pele-node > polygon");
@@ -115,6 +128,7 @@ if (!("Bun" in globalThis)) {
     for (const { slug, nodes } of ARTICLES) {
       for (const locale of ["en", "uk"]) {
         test(`${locale}/${slug} fits its labels and page in both themes`, async ({ page }) => {
+          await recordSkeletonHeight(page);
           await page.goto(`/blog/${locale}/${slug}`);
 
           const diagram = page.locator(".blog-mermaid");
@@ -138,6 +152,12 @@ if (!("Bun" in globalThis)) {
 
           await expectLabelsInsideShapes(svg);
           await expectSvgFillsViewport(svg, viewport);
+
+          const skeletonHeight = await page.evaluate(() => (window as SkeletonWindow).diagramSkeletonHeight);
+          const drawnHeight = await viewport.evaluate(element => element.getBoundingClientRect().height);
+
+          expect(skeletonHeight).toBeGreaterThan(0);
+          expect(Math.abs(drawnHeight - (skeletonHeight ?? 0))).toBeLessThanOrEqual(0.5);
           expect(
             await svg.evaluate(element => {
               if (!(element instanceof SVGSVGElement)) {

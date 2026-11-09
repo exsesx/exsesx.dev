@@ -3672,6 +3672,7 @@ code[data-theme] span {
   --blog-mermaid-toolbar-size: calc(var(--blog-mermaid-control-size) + 2px);
   position: relative;
   isolation: isolate;
+  container-type: inline-size;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   overflow: hidden;
@@ -3698,17 +3699,26 @@ code[data-theme] span {
   border-top: 1px solid color-mix(in oklab, var(--border) 64%, transparent);
 }
 
-/* Once drawn, the canvas takes the drawing's proportions (MermaidDiagram sets the viewBox ratio and height): a
-   short tree gets a short frame and a vertical flow keeps the height it needs, up to 34rem, so its labels stay near
-   body size on a phone. The drawing never rests above its authored size, so the canvas never outgrows it either,
-   and the 12rem floor keeps a one-line diagram from collapsing into a strip. The reserved height above holds until
-   then. Stretch is explicit: a grid item with an aspect ratio would otherwise shrink to its content's width. */
-.blog-mermaid-svg {
+/* The canvas takes the drawing's proportions, measured on the server for both layouts (MermaidDiagram sets them on
+   the figure), from the skeleton on, so the lazily drawn diagram lands in a frame that is already its size. A short
+   tree gets a short frame and a vertical flow keeps the height it needs, up to 34rem, so its labels stay near body
+   size on a phone. The drawing never rests above its authored size, so the canvas never outgrows it either, and the
+   12rem floor keeps a one-line diagram from collapsing into a strip. The figure is the query container, so the
+   layout switches at the frame width MermaidDiagram draws from (DIAGRAM_LAYOUT_WIDTHS.wide). Stretch is explicit: a
+   grid item with an aspect ratio would otherwise shrink to its content's width. */
+.blog-mermaid[data-frame] > :is(.blog-mermaid-skeleton, .blog-mermaid-svg) {
   justify-self: stretch;
   block-size: auto;
   min-block-size: 12rem;
-  max-block-size: min(var(--blog-mermaid-height, 34rem), 34rem);
-  aspect-ratio: var(--blog-mermaid-ratio, auto);
+  max-block-size: min(var(--blog-mermaid-compact-height), 34rem);
+  aspect-ratio: var(--blog-mermaid-compact-ratio);
+}
+
+@container (width >= 640px) {
+  .blog-mermaid[data-frame] > :is(.blog-mermaid-skeleton, .blog-mermaid-svg) {
+    max-block-size: min(var(--blog-mermaid-wide-height), 34rem);
+    aspect-ratio: var(--blog-mermaid-wide-ratio);
+  }
 }
 
 /* The caption holds the header row's height while the diagram loads, so the controls do not shift the article. */
@@ -3879,6 +3889,10 @@ code[data-theme] span {
   border: 1px solid var(--blog-rich-block-border);
   border-radius: 0.8rem;
   background: var(--blog-rich-block-surface);
+}
+
+.blog-mermaid-toolbar[data-placeholder] {
+  visibility: hidden;
 }
 
 .blog-mermaid-control {
@@ -4105,7 +4119,7 @@ code[data-theme] span {
   min-width: 0;
 }
 
-.blog-mermaid:has(.blog-mermaid-fallback) .blog-mermaid-skeleton {
+.blog-mermaid:has(.blog-mermaid-fallback) :is(.blog-mermaid-skeleton, .blog-mermaid-toolbar) {
   display: none;
 }
 

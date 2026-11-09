@@ -14,13 +14,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { BLOG_UI } from "@/lib/blog";
 import { playInteractionSound } from "@/lib/interaction-sounds";
-import { MAX_MERMAID_ZOOM, MIN_MERMAID_ZOOM, parseViewBox } from "@/lib/mermaid-camera";
+import {
+  DIAGRAM_LAYOUT_WIDTHS,
+  type DiagramFrame,
+  type DiagramLayout,
+  getDiagramLayout,
+  MAX_MERMAID_ZOOM,
+  MIN_MERMAID_ZOOM,
+} from "@/lib/mermaid-camera";
 import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "@/lib/mermaid-theme";
 import { getServerThemeSnapshot, getThemeSnapshot, parseThemeSnapshot, subscribeToTheme } from "@/lib/theme";
 import { useBlogLocale } from "./BlogLocaleContext";
 import { useMermaidCamera } from "./useMermaidCamera";
 
 type MermaidDiagramProps = {
+  /** The drawing's size in both layouts, measured on the server (measureDiagramFrame); null leaves a fixed canvas. */
+  frame: DiagramFrame | null;
   source: string;
 };
 
@@ -34,6 +43,7 @@ type MermaidDiagramViewProps = {
   accessibleLabel: string;
   isRendering: boolean;
   containerRef?: Ref<HTMLElement>;
+  frame: DiagramFrame | null;
   reactId: string;
   resolvedTheme: "light" | "dark";
   source: string;
@@ -45,6 +55,8 @@ type MermaidCamera = ReturnType<typeof useMermaidCamera>;
 
 type MermaidToolbarProps = {
   camera: MermaidCamera;
+  /** An invisible stand-in that holds the header's toolbar column, so the caption wraps the same before the drawing. */
+  isPlaceholder?: boolean;
   ui: MermaidUi;
 };
 
@@ -52,21 +64,21 @@ const ZOOM_BUTTON_STEP = 0.25;
 // Diagrams start drawing about a screen before they scroll in, so the renderer and the code face's bold and italic
 // cuts stay off the network for readers who never reach them.
 const RENDER_AHEAD_MARGIN = "100% 0px";
-const SVG_VIEW_BOX = /<svg\b[^>]*\bviewBox="([^"]+)"/;
 const SVG_ITALIC = /font-style(?:="|:\s*)italic/;
 
 // The canvas takes the drawing's own proportions (globals.css caps the height), so a short tree gets a short frame
-// and a tall flow keeps its labels near body size instead of shrinking into a fixed box.
-function getDrawingStyle(svg: string): CSSProperties | undefined {
-  const viewBox = parseViewBox(SVG_VIEW_BOX.exec(svg)?.[1] ?? "");
-
-  if (!viewBox) {
+// and a tall flow keeps its labels near body size instead of shrinking into a fixed box. The size comes from the
+// server's measurement of both layouts, so the skeleton already has it and the drawing lands without moving the page.
+function getFrameStyle(frame: DiagramFrame | null): CSSProperties | undefined {
+  if (!frame) {
     return undefined;
   }
 
   return {
-    "--blog-mermaid-ratio": `${viewBox.width} / ${viewBox.height}`,
-    "--blog-mermaid-height": `${viewBox.height}px`,
+    "--blog-mermaid-compact-ratio": `${frame.compact.width} / ${frame.compact.height}`,
+    "--blog-mermaid-compact-height": `${frame.compact.height}px`,
+    "--blog-mermaid-wide-ratio": `${frame.wide.width} / ${frame.wide.height}`,
+    "--blog-mermaid-wide-height": `${frame.wide.height}px`,
   } as CSSProperties;
 }
 
@@ -100,6 +112,7 @@ function MermaidDiagramViewForSource({
   accessibleDescription,
   accessibleLabel,
   containerRef,
+  frame,
   isRendering,
   reactId,
   resolvedTheme,
@@ -144,9 +157,11 @@ function MermaidDiagramViewForSource({
       ref={containerRef}
       className="blog-mermaid"
       aria-busy={isBusy || undefined}
+      data-frame={frame ? "reserved" : undefined}
       data-state={visualState}
       data-theme={resolvedTheme}
       data-zoom={camera.zoomPercent}
+      style={getFrameStyle(frame)}
     >
       <figcaption
         id={labelId}
@@ -178,7 +193,6 @@ function MermaidDiagramViewForSource({
             data-panning={camera.isPanning ? "true" : "false"}
             data-testid="mermaid-viewport"
             data-zoomed={camera.isZoomed ? "true" : "false"}
-            style={getDrawingStyle(state.svg)}
             onKeyDown={handleCameraKeyDown}
             onLostPointerCapture={camera.handlePointerEnd}
             onPointerCancel={camera.handlePointerEnd}
@@ -198,6 +212,7 @@ function MermaidDiagramViewForSource({
         </pre>
       ) : (
         <>
+          <MermaidToolbar camera={camera} isPlaceholder ui={ui} />
           {/* Without scripts the drawing never arrives, so the reserved canvas gives way to its description. The
               parsed fallback only exists when scripting is off, which is what the stylesheet keys on. */}
           {accessibleDescription ? (
@@ -218,12 +233,15 @@ function MermaidDiagramViewForSource({
   );
 }
 
-function MermaidToolbar({ camera, ui }: MermaidToolbarProps) {
+function MermaidToolbar({ camera, isPlaceholder = false, ui }: MermaidToolbarProps) {
   return (
     <div
       className="blog-mermaid-toolbar"
+      aria-hidden={isPlaceholder || undefined}
       aria-label={ui.toolbar}
+      data-placeholder={isPlaceholder || undefined}
       data-zoomed={camera.isZoomed ? "true" : "false"}
+      inert={isPlaceholder || undefined}
       role="toolbar"
     >
       <Button
@@ -265,9 +283,9 @@ function MermaidToolbar({ camera, ui }: MermaidToolbarProps) {
   );
 }
 
-export default function MermaidDiagram({ source }: MermaidDiagramProps) {
+export default function MermaidDiagram({ frame, source }: MermaidDiagramProps) {
   const reactId = useId();
-  const [maxWidth, setMaxWidth] = useState<number | null>(null);
+  const [layout, setLayout] = useState<DiagramLayout | null>(null);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const accessibleLabel = getMermaidAccessibleLabel(source);
@@ -285,8 +303,9 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     const resizeObserver = new ResizeObserver(entries => {
       const width = entries[0]?.contentRect.width;
 
+      // Only crossing the layout width redraws: within a layout the camera refits the same drawing to the frame.
       if (width && width > 0) {
-        setMaxWidth(Math.floor(width));
+        setLayout(getDiagramLayout(width));
       }
     });
     const proximityObserver = new IntersectionObserver(
@@ -309,11 +328,11 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
   }, []);
 
   useEffect(() => {
-    if (maxWidth === null || !isNearViewport) {
+    if (layout === null || !isNearViewport) {
       return;
     }
 
-    const layoutWidth = maxWidth;
+    const layoutWidth = DIAGRAM_LAYOUT_WIDTHS[layout];
     let cancelled = false;
 
     setIsRendering(true);
@@ -373,13 +392,14 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     return () => {
       cancelled = true;
     };
-  }, [isNearViewport, maxWidth, reactId, source]);
+  }, [isNearViewport, layout, reactId, source]);
 
   return (
     <MermaidDiagramView
       accessibleDescription={accessibleDescription}
       containerRef={containerRef}
       accessibleLabel={accessibleLabel}
+      frame={frame}
       isRendering={isRendering}
       reactId={reactId}
       resolvedTheme={resolvedTheme}
