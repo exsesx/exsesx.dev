@@ -20,8 +20,12 @@ import {
   BLOG_FOCUS_HOTKEY_ACTION,
   getHotkeyDecision,
   getHotkeySequenceKey,
+  getPlatformModifierKey,
   type HotkeyRouteAction,
   type HotkeyState,
+  isEditableTarget,
+  type PlatformModifierKey,
+  type QueuedHotkey,
 } from "@/lib/hotkeys";
 import { playInteractionSound, playPopupToggleSound } from "@/lib/interaction-sounds";
 import { prepareHotkeyRouteNavigation } from "@/lib/route-intent";
@@ -96,9 +100,11 @@ function createInitialHotkeyState(): HotkeyState<HotkeyAction> {
 function Hotkeys({
   allowBlogFocusShortcut = false,
   showHint = true,
+  takeQueuedKeys,
 }: {
   allowBlogFocusShortcut?: boolean;
   showHint?: boolean;
+  takeQueuedKeys?: () => QueuedHotkey[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -217,12 +223,20 @@ function Hotkeys({
     }
   });
 
+  // Keys pressed while this module loaded run through the same path, in order.
+  const replayQueuedKeys = useEffectEvent(() => {
+    for (const init of takeQueuedKeys?.() ?? []) {
+      handleHotkeyKeyDown(new KeyboardEvent("keydown", init));
+    }
+  });
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       handleHotkeyKeyDown(event);
     }
 
     window.addEventListener("keydown", handleKeyDown, { capture: true });
+    replayQueuedKeys();
 
     return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
   }, []);
@@ -426,31 +440,6 @@ function HotkeyModal({
         </span>
       </div>
     </DialogContent>
-  );
-}
-
-type PlatformModifierKey = {
-  key: "⌘" | "⌃";
-};
-
-function getPlatformModifierKey(): PlatformModifierKey {
-  const isApplePlatform =
-    typeof navigator !== "undefined" &&
-    (/Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
-      (/Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
-
-  return { key: isApplePlatform ? "⌘" : "⌃" };
-}
-
-function isEditableTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-
-  return (
-    target.isContentEditable ||
-    target.closest("input:not([type='checkbox']), textarea, select, [contenteditable='true'], [role='textbox']") !==
-      null
   );
 }
 

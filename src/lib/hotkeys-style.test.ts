@@ -10,7 +10,7 @@ function getRuleBody(css: string, selector: string) {
 }
 
 describe("hotkey loading and motion contracts", () => {
-  test("always mounts the keyboard handler while capability-gating its pointer hint", async () => {
+  test("always listens for keys while capability-gating its pointer hint", async () => {
     const loader = await Bun.file(loaderUrl).text();
 
     expect(loader).toMatch(/dynamic\(\(\) => import\("\.\/Hotkeys"\),\s*\{\s*ssr:\s*false/);
@@ -22,7 +22,22 @@ describe("hotkey loading and motion contracts", () => {
     expect(loader).toContain('window.matchMedia("(min-width: 768px)")');
     expect(loader.match(/addEventListener\("change", handleChange\)/g)).toHaveLength(3);
     expect(loader.match(/removeEventListener\("change", handleChange\)/g)).toHaveLength(3);
-    expect(loader).toMatch(/return <Hotkeys allowBlogFocusShortcut=\{isDesktopViewport\} showHint=\{isEnabled\} \/>/);
+    expect(loader).toMatch(/window\.addEventListener\("keydown", handleKeyDown, \{ capture: true \}\)/);
+    expect(loader).toMatch(
+      /<Hotkeys allowBlogFocusShortcut=\{isDesktopViewport\} showHint=\{isEnabled\} takeQueuedKeys=\{takeQueuedKeys\} \/>/,
+    );
+  });
+
+  test("stands in for the corner hint with the dialog trigger's exact surface until it loads", async () => {
+    const loader = await Bun.file(loaderUrl).text();
+    const source = await Bun.file(hotkeysUrl).text();
+    const hintClassName = /className="(hotkeys-corner-hint[^"]*)"/;
+
+    expect(loader.match(hintClassName)?.[1]).toBe(source.match(hintClassName)?.[1]);
+    expect(loader).toContain('aria-label="Toggle keyboard shortcuts"');
+    expect(source).toMatch(
+      /window\.addEventListener\("keydown", handleKeyDown, \{ capture: true \}\);\s*replayQueuedKeys\(\);/,
+    );
   });
 
   test("keeps capability detection out of the implementation and exposes compact shortcut UI", async () => {
