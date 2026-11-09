@@ -7,6 +7,7 @@ import {
   initializeInteractionSounds,
   playInteractionSound,
   resolveInteractionSound,
+  scheduleAudioOutputWarmup,
   subscribeToSoundEffects,
   syncInteractionSoundsEnabled,
 } from "@/lib/interaction-sounds";
@@ -24,6 +25,14 @@ export default function InteractionSounds() {
 
   useEffect(() => {
     syncInteractionSoundsEnabled(enabled);
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    return scheduleAudioOutputWarmup();
   }, [enabled]);
 
   useEffect(() => {

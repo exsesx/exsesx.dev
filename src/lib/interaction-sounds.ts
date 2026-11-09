@@ -55,6 +55,83 @@ export function initializeInteractionSounds() {
   bind();
 }
 
+/*
+ * The first AudioContext a browser process creates opens its audio output
+ * synchronously, about 200-400ms of main thread in Chrome; every later one
+ * takes about 1ms. Cuelume creates its context inside the first press, so that
+ * cost froze the first tap. A throwaway context made while the page is idle
+ * pays it off the gesture. With no sink it never sounds or claims audio, and it
+ * is closed at once: the warmth belongs to the process, not the context.
+ */
+// Right after load, while the hero's entrance still runs on the compositor:
+// the headline's mark starts drawing 640ms in and the field's first sweep
+// follows it, both on the main thread, so a later warm-up would hitch them.
+const AUDIO_WARMUP_IDLE_TIMEOUT_MS = 500;
+
+let audioOutputWarmed = false;
+
+type AudioContextConstructor = new (options?: AudioContextOptions & { sinkId?: { type: "none" } }) => AudioContext;
+
+function warmAudioOutput() {
+  if (audioOutputWarmed) {
+    return;
+  }
+
+  audioOutputWarmed = true;
+
+  const AudioContextClass = (window.AudioContext ??
+    (window as Window & { webkitAudioContext?: AudioContextConstructor }).webkitAudioContext) as
+    | AudioContextConstructor
+    | undefined;
+
+  if (!AudioContextClass) {
+    return;
+  }
+
+  try {
+    void new AudioContextClass({ sinkId: { type: "none" } }).close().catch(() => {});
+  } catch {
+    // No audio here; Cuelume stays silent on its own.
+  }
+}
+
+export function scheduleAudioOutputWarmup(): () => void {
+  if (audioOutputWarmed) {
+    return () => {};
+  }
+
+  let idleHandle: number | null = null;
+  let timeoutHandle: number | null = null;
+
+  function schedule() {
+    if (typeof window.requestIdleCallback === "function") {
+      idleHandle = window.requestIdleCallback(warmAudioOutput, { timeout: AUDIO_WARMUP_IDLE_TIMEOUT_MS });
+
+      return;
+    }
+
+    timeoutHandle = window.setTimeout(warmAudioOutput, 0);
+  }
+
+  if (document.readyState === "complete") {
+    schedule();
+  } else {
+    window.addEventListener("load", schedule, { once: true });
+  }
+
+  return () => {
+    window.removeEventListener("load", schedule);
+
+    if (idleHandle !== null) {
+      window.cancelIdleCallback(idleHandle);
+    }
+
+    if (timeoutHandle !== null) {
+      window.clearTimeout(timeoutHandle);
+    }
+  };
+}
+
 export function syncInteractionSoundsEnabled(enabled: boolean) {
   setEnabled(enabled);
 }
