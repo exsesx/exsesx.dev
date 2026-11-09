@@ -30,6 +30,8 @@ type ZoomViewBoxOptions = Readonly<{
 export const MIN_MERMAID_ZOOM = 1;
 export const MAX_MERMAID_ZOOM = 4;
 export const MERMAID_NUDGE_FRACTION = 0.12;
+/** A diagram never rests above its authored size, so its labels stay at the article's type scale on wide frames. */
+export const MAX_MERMAID_FIT_SCALE = 1;
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
@@ -96,6 +98,32 @@ export function padViewBox(base: ViewBox, size: Readonly<{ width: number; height
     y: base.y - padding,
     width: base.width + padding * 2,
     height: base.height + padding * 2,
+  };
+}
+
+/**
+ * Grows a viewBox around its centre when fitting it into a viewport of the given size would enlarge it past
+ * `maxScale`. The drawing then rests at that scale, centred, instead of stretching to fill a wide frame.
+ */
+export function capViewBoxScale(
+  viewBox: ViewBox,
+  size: Readonly<{ width: number; height: number }>,
+  maxScale = MAX_MERMAID_FIT_SCALE,
+): ViewBox {
+  const fitScale = Math.min(size.width / viewBox.width, size.height / viewBox.height);
+
+  if (!(fitScale > maxScale)) {
+    return viewBox;
+  }
+
+  const width = size.width / maxScale;
+  const height = size.height / maxScale;
+
+  return {
+    x: viewBox.x - (width - viewBox.width) / 2,
+    y: viewBox.y - (height - viewBox.height) / 2,
+    width,
+    height,
   };
 }
 

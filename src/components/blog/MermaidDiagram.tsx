@@ -49,6 +49,19 @@ type MermaidToolbarProps = {
 
 const ZOOM_BUTTON_STEP = 0.25;
 
+function subscribeToNothing() {
+  return () => {};
+}
+
+// False in the server markup and true once React owns the page, so a page without scripts never claims it is loading.
+function useIsHydrated() {
+  return useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
+}
+
 function runCameraCommand(command: () => void) {
   playInteractionSound("tap");
   command();
@@ -74,7 +87,10 @@ function MermaidDiagramViewForSource({
   const isCurrentError = state.status === "error" && state.renderedSource === source;
   const renderedSvg = isReady ? state.svg : null;
   const camera = useMermaidCamera({ isReady, renderedSvg, zoomStatus: ui.zoomStatus });
-  const isBusy = isRendering || (!isReady && !isCurrentError);
+  const isHydrated = useIsHydrated();
+  const isLoading = isRendering || (!isReady && !isCurrentError);
+  // The server-rendered skeleton waits on scripts that may never run, so only a hydrated or drawn diagram is busy.
+  const isBusy = isLoading && (isHydrated || isReady);
   const labelId = `${reactId}-label`;
   const descriptionId = `${reactId}-description`;
   const keyboardId = `${reactId}-keyboard`;
@@ -102,7 +118,7 @@ function MermaidDiagramViewForSource({
     <figure
       ref={containerRef}
       className="blog-mermaid"
-      aria-busy={isBusy}
+      aria-busy={isBusy || undefined}
       data-state={visualState}
       data-theme={resolvedTheme}
       data-zoom={camera.zoomPercent}
@@ -128,6 +144,9 @@ function MermaidDiagramViewForSource({
       {isReady ? (
         <>
           <MermaidToolbar camera={camera} ui={ui} />
+          <span className="blog-mermaid-touch-hint" aria-hidden="true" lang={locale}>
+            {ui.touchHint}
+          </span>
 
           <div
             ref={camera.visualRef}
@@ -155,7 +174,18 @@ function MermaidDiagramViewForSource({
           <code>{source}</code>
         </pre>
       ) : (
-        <div className="blog-mermaid-visual blog-mermaid-skeleton" aria-hidden="true" />
+        <>
+          {/* Without scripts the drawing never arrives, so the reserved canvas gives way to its description. The
+              parsed fallback only exists when scripting is off, which is what the stylesheet keys on. */}
+          {accessibleDescription ? (
+            <noscript>
+              <p className="blog-mermaid-visual blog-mermaid-fallback" aria-hidden="true" lang={locale}>
+                {accessibleDescription}
+              </p>
+            </noscript>
+          ) : null}
+          <div className="blog-mermaid-visual blog-mermaid-skeleton" aria-hidden="true" />
+        </>
       )}
 
       <div className="sr-only" aria-atomic="true" role="status">

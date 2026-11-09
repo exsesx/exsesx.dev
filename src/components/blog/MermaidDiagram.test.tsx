@@ -12,7 +12,8 @@ describe("MermaidDiagram", () => {
 
     expect(markup).toContain('data-state="loading"');
     expect(markup).toContain('data-theme="light"');
-    expect(markup).toContain('aria-busy="true"');
+    // The server markup is what a reader without scripts keeps, and nothing will load there.
+    expect(markup).not.toContain("aria-busy");
     expect(markup).not.toContain('role="img"');
     expect(markup).toContain('class="blog-mermaid-visual blog-mermaid-skeleton"');
     expect(markup).toContain('aria-hidden="true"');
@@ -20,6 +21,10 @@ describe("MermaidDiagram", () => {
     expect(markup).not.toContain("blog-mermaid-source");
     expect(markup).not.toContain("Browser-&gt;&gt;Server");
     expect(markup).not.toContain("blog-mermaid-skeleton-node");
+    expect(markup).not.toContain("<noscript>");
+    expect(css).toMatch(
+      /\.blog-mermaid:has\(\.blog-mermaid-fallback\) \.blog-mermaid-skeleton\s*\{[^}]*display:\s*none/s,
+    );
     expect(css).toMatch(/\.blog-mermaid-visual\s*\{[^}]*block-size:\s*clamp\(/s);
     expect(css).toMatch(/\.blog-mermaid-visual\s*\{[^}]*clamp\(20rem,\s*65vw,\s*32rem\)/s);
     expect(css).toMatch(/\.blog-mermaid-svg\s*\{[^}]*position:\s*relative/s);
@@ -42,6 +47,17 @@ describe("MermaidDiagram", () => {
     );
   });
 
+  test("shows the authored description in place of the canvas when scripts never run", () => {
+    const markup = renderToStaticMarkup(
+      <MermaidDiagram source={"flowchart TD\n  accDescr: The root delegates work.\n  root --> child"} />,
+    );
+
+    expect(markup).toMatch(
+      /<noscript><p class="blog-mermaid-visual blog-mermaid-fallback" aria-hidden="true"[^>]*>The root delegates work\.<\/p><\/noscript>/,
+    );
+    expect(markup).toContain('class="blog-mermaid-visual blog-mermaid-skeleton"');
+  });
+
   test("hands the reserved visual over to one labelled ready-state image", () => {
     const markup = renderToStaticMarkup(
       <MermaidDiagramView
@@ -61,7 +77,7 @@ describe("MermaidDiagram", () => {
 
     expect(markup).toContain('data-state="ready"');
     expect(markup).toContain('data-theme="dark"');
-    expect(markup).toContain('aria-busy="false"');
+    expect(markup).not.toContain("aria-busy");
     expect(markup).toContain('aria-labelledby="diagram-label"');
     expect(markup).toContain('class="blog-mermaid-visual blog-mermaid-svg"');
     expect(markup).toMatch(/class="blog-mermaid-visual blog-mermaid-svg"[^>]*role="img"[^>]*tabindex="0"/);
@@ -78,6 +94,8 @@ describe("MermaidDiagram", () => {
     expect(markup).toContain('class="blog-mermaid-reset-chip">100%</span>');
     expect(markup).not.toContain('aria-label="Move"');
     expect(markup).not.toContain("blog-mermaid-gesture-hint");
+    expect(markup).toMatch(/class="blog-mermaid-touch-hint" aria-hidden="true"[^>]*>Pinch to zoom</);
+    expect(markup).not.toContain("<noscript>");
     expect(markup).toContain('aria-hidden="true" focusable="false"');
     expect(markup).toContain("A root agent delegates work.");
     expect(markup).not.toContain("blog-mermaid-skeleton");
@@ -131,7 +149,7 @@ describe("MermaidDiagram", () => {
     );
 
     expect(markup).toContain('data-state="error"');
-    expect(markup).toContain('aria-busy="false"');
+    expect(markup).not.toContain("aria-busy");
     expect(markup).toContain("Unclosed node label");
     expect(markup).toContain("broken[");
     expect(markup).toContain("blog-mermaid-source");

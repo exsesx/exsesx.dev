@@ -2830,7 +2830,8 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose li > a:not(.source-link) {
   border-radius: 0.22em;
   color: var(--accent);
-  font-weight: 700;
+  /* Colour and the resting underline carry the link; a heavy weight on top shouted inside running text. */
+  font-weight: 500;
   /* Underlined at rest, so a link never relies on its colour alone. */
   text-decoration-line: underline;
   text-decoration-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
@@ -2870,6 +2871,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   overflow-wrap: anywhere;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
+}
+
+/* Code inside a link keeps its chip but reads in the link's colour, so the link does not break mid-phrase. */
+.blog-prose a code {
+  color: inherit;
 }
 
 .blog-prose blockquote {
@@ -2940,6 +2946,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   min-width: 9rem;
   padding: 0.75rem 1rem;
   border: 0;
+  font-variant-numeric: tabular-nums;
   text-align: left;
   vertical-align: top;
 }
@@ -2982,7 +2989,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   display: inline;
   border-radius: 0.22em;
   color: var(--accent);
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -3047,6 +3054,12 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .source-link-icon {
   width: 0.8rem;
   height: 0.8rem;
+}
+
+/* Inside a sentence the host pill wrapped away from its label and crowded the line; the link reads as a link on its
+   own there. The Sources list keeps the pill, where the host is what a reader scans for. */
+.blog-prose p .source-link-host {
+  display: none;
 }
 
 .source-link-new-tab-uk {
@@ -3191,8 +3204,8 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   color: var(--foreground);
   background: transparent;
   font-family: MonoLisaCode, ui-monospace, monospace;
-  font-size: 0.82rem;
-  line-height: 1.75;
+  font-size: 0.875rem;
+  line-height: 1.65;
   tab-size: 2;
 }
 
@@ -3741,6 +3754,60 @@ code[data-theme] span {
 
 .blog-mermaid-caption[data-error="true"] {
   grid-column: 1 / -1;
+}
+
+/* Without scripts the drawing never arrives: the canvas gives way to the authored description, set as prose. */
+.blog-mermaid .blog-mermaid-fallback {
+  block-size: auto;
+  max-width: none;
+  margin: 0;
+  color: color-mix(in oklab, var(--foreground) 86%, var(--muted-foreground));
+  font-size: 0.95rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* The parsed <noscript> is the grid item, so it takes the canvas row; with scripts on it holds text and never matches. */
+.blog-mermaid > noscript:has(.blog-mermaid-fallback) {
+  display: block;
+  grid-row: 2;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.blog-mermaid:has(.blog-mermaid-fallback) .blog-mermaid-skeleton {
+  display: none;
+}
+
+.blog-mermaid:has(.blog-mermaid-fallback)::after {
+  content: none;
+  animation: none;
+}
+
+/* Touch screens hide the zoom steps, so the header names the gesture until the reader zooms. It shares the toolbar's
+   cell, which stays an empty 44px target at rest. */
+.blog-mermaid-touch-hint {
+  display: none;
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
+  align-self: center;
+  margin-right: var(--blog-mermaid-header-inset);
+  padding-inline: 0.75rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .blog-mermaid[data-zoom="100"] .blog-mermaid-touch-hint {
+    display: block;
+  }
+
+  .blog-mermaid:has(.blog-mermaid-zoom-step:focus-visible) .blog-mermaid-touch-hint {
+    display: none;
+  }
 }
 
 .blog-figure img,

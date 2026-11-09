@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import {
+  capViewBoxScale,
   formatViewBox,
   getViewBoxZoom,
   MIN_MERMAID_ZOOM,
@@ -476,7 +477,8 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
     // even when the frame width (and therefore the rendered drawing) stays the same.
     const syncBaseViewBox = () => {
       const gutter = Number.parseFloat(getComputedStyle(visual).paddingTop) || 0;
-      const nextBase = padViewBox(drawingViewBox, { height: visual.clientHeight, width: visual.clientWidth }, gutter);
+      const size = { height: visual.clientHeight, width: visual.clientWidth };
+      const nextBase = capViewBoxScale(padViewBox(drawingViewBox, size, gutter), size);
       const previousBase = baseViewBoxRef.current;
       const previousCamera = cameraRef.current;
       const nextCamera =

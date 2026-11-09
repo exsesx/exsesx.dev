@@ -1,21 +1,8 @@
 import { join } from "node:path";
 import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
-import githubLightDefault from "shiki/themes/github-light-default.mjs";
+import { graphiteCodeThemes } from "./src/lib/blog-code-theme.mts";
 import { buildContentSecurityPolicy } from "./src/lib/content-security-policy.mts";
-
-// github-light-default is tuned for white; on the graphite code surface its
-// comment, purple and red tokens drop under 4.5:1. Darken just those, and set
-// comments in the paper's warm gray.
-const lightCodeRemap: Record<string, string> = {
-  "#6e7781": "#5f5a55",
-  "#8250df": "#6639ba",
-  "#cf222e": "#a40e26",
-};
-
-const graphiteLightCodeTheme = JSON.parse(
-  JSON.stringify(githubLightDefault).replace(/#[0-9a-f]{6}\b/gi, color => lightCodeRemap[color.toLowerCase()] ?? color),
-);
 
 const withMDX = createMDX({
   options: {
@@ -28,10 +15,7 @@ const withMDX = createMDX({
         "rehype-pretty-code",
         {
           keepBackground: false,
-          theme: {
-            dark: "github-dark-default",
-            light: graphiteLightCodeTheme,
-          },
+          theme: graphiteCodeThemes,
         },
       ],
     ],
