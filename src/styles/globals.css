@@ -44,7 +44,6 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-accent-text: var(--accent-text);
   --color-inverse-hover: var(--inverse-hover);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
@@ -92,11 +91,12 @@
   --glass-blur: 8px;
   /* Graphite palette. Light is warm graphite: paper and ink with a hair of
      warmth (Tailwind's stone family, pulled lighter), so the page reads as
-     paper rather than a gray screen. Dark is pure graphite (chroma 0). One
-     signal in both: the phosphor green of a monitor trace, for the pulse,
-     links, focus and selection; it never fills a surface, a button or a
-     heading. Depth comes from small lightness steps, hairlines and short
-     real shadows. */
+     paper rather than a gray screen. Dark is pure graphite (chroma 0). The
+     signal is ink on paper by day and a phosphor trace at night: cobalt in
+     light (blue keeps full chroma at text-safe contrast, where a 4.5:1 green
+     goes dull), monitor green in dark. It marks the pulse, links, focus and
+     selection; it never fills a surface, a button or a heading. Depth comes
+     from small lightness steps, hairlines and short real shadows. */
   --background: #f6f3ef;
   /* Solid color Safari 26 samples for chrome tint; mirrors --background, painted
      inline by the no-flash script so the live observer retints the bars. */
@@ -111,12 +111,7 @@
   --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
   --muted: #eae7e1;
   --muted-foreground: #605a54;
-  /* The signal is drawn (pulse, field glyphs, focus ring, marks) and only has
-     to clear 3:1, so it can stay vivid. Text in the signal's hue (links,
-     numerals, labels on a signal fill) takes the deeper --accent-text, which
-     clears 4.5:1 on every light surface. Dark mode needs no split. */
-  --accent: #059745;
-  --accent-text: #057836;
+  --accent: #1552fe;
   --accent-foreground: #ffffff;
   --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--foreground) 12%);
   --destructive: #be123c;
@@ -143,7 +138,6 @@
   --muted: #262626;
   --muted-foreground: #a3a3a3;
   --accent: #6ad895;
-  --accent-text: #6ad895;
   --accent-foreground: #131313;
   --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--foreground) 12%);
   --destructive: #fb7185;
@@ -334,7 +328,7 @@ select {
 .workflow-steps > li::before {
   display: block;
   margin-bottom: 1.25rem;
-  color: var(--accent-text);
+  color: var(--accent);
   content: counter(workflow-step, decimal-leading-zero);
   font-size: var(--text-title);
   font-variant-numeric: tabular-nums;
@@ -1746,7 +1740,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 .blog-rss-link:is(:hover, :focus-visible) {
   border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
-  color: var(--accent-text);
+  color: var(--accent);
 }
 
 /* The post title is the index row's one link; the title itself is the hover signal. */
@@ -1768,12 +1762,12 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-index-link:focus-visible {
-  color: var(--accent-text);
+  color: var(--accent);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .blog-index-link:hover {
-    color: var(--accent-text);
+    color: var(--accent);
   }
 }
 
@@ -2193,13 +2187,13 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-article-meta > a:focus-visible {
-  color: var(--accent-text);
+  color: var(--accent);
   text-decoration-line: underline;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .blog-article-meta > a:hover {
-    color: var(--accent-text);
+    color: var(--accent);
     text-decoration-line: underline;
   }
 }
@@ -2501,7 +2495,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-toc-mobile-trigger:is(:hover, :focus-visible) .blog-toc-mobile-face {
   border-color: color-mix(in oklab, var(--ring) 38%, var(--border));
-  color: var(--accent-text);
+  color: var(--accent);
 }
 
 .blog-toc-mobile-trigger:focus-visible {
@@ -2772,7 +2766,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-prose .heading-anchor:is(:hover, :focus-visible) {
-  color: color-mix(in oklab, var(--foreground) 78%, var(--accent-text));
+  color: color-mix(in oklab, var(--foreground) 78%, var(--accent));
 }
 
 .blog-prose .heading-anchor:focus-visible {
@@ -2826,7 +2820,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose p > a:not(.source-link),
 .blog-prose li > a:not(.source-link) {
   border-radius: 0.22em;
-  color: var(--accent-text);
+  color: var(--accent);
   font-weight: 700;
   /* Underlined at rest, so a link never relies on its colour alone. */
   text-decoration-line: underline;
@@ -2978,7 +2972,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --source-link-hover-ease: var(--ease-out);
   display: inline;
   border-radius: 0.22em;
-  color: var(--accent-text);
+  color: var(--accent);
   font-weight: 700;
   text-decoration: none;
   -webkit-box-decoration-break: clone;
@@ -3264,7 +3258,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-code-action[aria-pressed="true"] {
-  color: var(--accent-text);
+  color: var(--accent);
   background: color-mix(in oklab, var(--accent) 14%, var(--background));
   box-shadow: inset 0 0 0 1px currentColor;
 }
@@ -3503,8 +3497,8 @@ code[data-theme] span {
 }
 
 .blog-mermaid-svg .pele-node.focus > :is(rect, polygon, circle, ellipse, path) {
-  fill: var(--accent-text);
-  stroke: var(--accent-text);
+  fill: var(--accent);
+  stroke: var(--accent);
 }
 
 .blog-mermaid-svg .pele-node.focus .pele-label {

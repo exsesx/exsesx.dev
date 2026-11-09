@@ -129,7 +129,7 @@ function ProjectTitle({ project }: { project: Project }) {
         scroll
         {...suppressEntryMotionProps}
         data-cuelume-press=""
-        className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent-text"
+        className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
       >
         {project.name}
       </Link>

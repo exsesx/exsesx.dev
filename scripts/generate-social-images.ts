@@ -20,7 +20,7 @@ const colors = {
   background: "#f6f3ef",
   foreground: "#1a1613",
   muted: "#605a54",
-  accent: "#059745",
+  accent: "#1552fe",
   card: "#fefdfa",
 };
 

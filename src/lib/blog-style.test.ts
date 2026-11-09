@@ -292,7 +292,7 @@ describe("Blog production styles", () => {
     );
     expect(css).toMatch(/\.blog-code-block pre\s*\{[^}]*overflow-x:\s*auto;[^}]*overscroll-behavior-x:\s*none/s);
     expect(css).toMatch(
-      /\.blog-code-action\[aria-pressed="true"\]\s*\{[^}]*color:\s*var\(--accent-text\);[^}]*background:[^}]*var\(--accent\)/s,
+      /\.blog-code-action\[aria-pressed="true"\]\s*\{[^}]*color:\s*var\(--accent\);[^}]*background:[^}]*var\(--accent\)/s,
     );
     expect(css).not.toContain('.blog-code-action[data-code-action="wrap"]::after');
     expect(css).toMatch(
