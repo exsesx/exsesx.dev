@@ -136,11 +136,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       {...getBackTransitionTypeProps(projectTransitionType)}
     >
       {/* The case opens on its name across the page, set on the site's ASCII field. The field's box
-          runs from just below the nav's first 64px to the foot of the name, so it ends above the
-          picture and never sits under it; the headline and action start level with the picture. */}
+          runs from just below the nav's first 64px to the foot of the name (on phones, through the
+          gap under it, so the trace beside the name clears the field's bottom fade), and ends above
+          the picture, never under it; the headline and action start level with the picture. */}
       <section aria-labelledby="project-title" className="relative isolate" data-ascii-host="">
-        <div className="relative pt-52 lg:pt-32">
-          <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" placement="around" />
+        <div className="relative pt-36 lg:pt-32">
+          <AsciiField className="absolute inset-x-0 top-16 -bottom-10 -z-10 lg:bottom-0" placement="around" />
           <Container>
             <h1
               id="project-title"

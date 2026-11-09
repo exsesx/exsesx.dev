@@ -148,6 +148,23 @@ const FIELD_LAYOUTS: Record<AsciiFieldPlacement, Record<"wide" | "narrow", Field
   },
 };
 const ANCHORED_MIN_SPAN = 0.25;
+// A phone's width is short; a quarter of it is less than the run that still
+// reads as the mark going on.
+const NARROW_ANCHORED_MIN_SPAN = 0.15;
+// Where a headline line's own trace sits, as a fraction of its line box: just
+// above the baseline, so the beat reads as the line going on.
+const TEXT_TRACE_BASELINE = 0.7;
+
+/* On a phone the field gathers around the headline's trace row instead of a
+   band above the copy: the trace leaves the mark across the free width beside
+   it, and the clear zones keep the copy around it readable. */
+function narrowLayoutAt(start: number, baseline: number): FieldLayout {
+  return {
+    spot: { x: (start + 1) / 2, y: baseline, radiusX: 0.95, radiusY: 0.55 },
+    region: () => 1,
+    band: { y: baseline, from: start, to: 0.97, amplitude: 0.09 },
+  };
+}
 
 /* A side field anchored to the headline's mark starts at the mark, not at a
    fixed fraction of the canvas: on a wide window the copy column ends well
@@ -303,6 +320,7 @@ function startAsciiField(
   let traceFrom = 0;
   let traceTo = 0;
   let traceY: (x: number) => number = () => 0;
+  let traceAmplitude = 0;
 
   // The beam: the running sweep's start (or -1), the last one's, and whether
   // the trace already shows ahead of a sweep (after the first one, or when the
@@ -420,6 +438,23 @@ function startAsciiField(
     return boxes;
   }
 
+  /* The end of the host's headline, as a zero-width box on its last line, for
+     a page whose headline carries no pulse mark. */
+  function headingLineEnd() {
+    const heading = host.querySelector("h1");
+
+    if (!heading) {
+      return undefined;
+    }
+
+    const range = document.createRange();
+    range.selectNodeContents(heading);
+    const lines = Array.from(range.getClientRects()).filter(rect => rect.width > 0 && rect.height > 0);
+    const last = lines.at(-1);
+
+    return last ? new DOMRect(last.right, last.top, 0, last.height) : undefined;
+  }
+
   /* Per cell: 0 on the copy, 1 past AVOID_PADDING. A hard floor that keeps
      glyphs off the text; the mask draws the soft edge on top of it. */
   function measureClearance(boxes: CopyBox[]) {
@@ -523,23 +558,31 @@ function startAsciiField(
     const wide = width / dpr >= WIDE_MIN_WIDTH;
     const origin = canvas.getBoundingClientRect();
     const markElement = host.querySelector<HTMLElement>("[data-ascii-trace]");
-    const mark = markElement?.getBoundingClientRect();
-    const markBaseline = Number.parseFloat(markElement?.dataset.asciiBaseline ?? "") || 0.5;
+    // On a phone a headline without a pulse mark lends the end of its last
+    // line, so the trace still leaves the words rather than floating apart.
+    const mark = markElement?.getBoundingClientRect() ?? (wide ? undefined : headingLineEnd());
+    const markBaseline = markElement
+      ? Number.parseFloat(markElement.dataset.asciiBaseline ?? "") || 0.5
+      : TEXT_TRACE_BASELINE;
     const markRight = mark ? (mark.right - origin.left) * dpr : 0;
-    // "side" anchors on wide screens only (narrow ones get a band above the
-    // copy); "around" anchors wherever enough width remains past the mark.
-    const anchorable = options.placement === "around" || wide;
-    const anchored = mark && anchorable && (width - markRight) / width >= ANCHORED_MIN_SPAN;
-    const anchor = anchored ? { right: markRight, amplitude: mark.height * 2 * dpr } : null;
-    const layout =
-      anchored && options.placement === "side"
-        ? sideLayoutFrom(markRight / width)
-        : FIELD_LAYOUTS[options.placement][wide ? "wide" : "narrow"];
-    const baseline = anchored ? (mark.top - origin.top + mark.height * markBaseline) * dpr : height * layout.band.y;
+    // Anchors wherever enough width remains past the mark.
+    const anchored = mark && (width - markRight) / width >= (wide ? ANCHORED_MIN_SPAN : NARROW_ANCHORED_MIN_SPAN);
+    // A text line is taller than the mark; its beat stays near the mark's height.
+    const markHeight = mark ? (markElement ? mark.height : mark.height / 2) : 0;
+    const anchor = anchored ? { right: markRight, amplitude: markHeight * 2 * dpr, fit: !wide } : null;
+    const baseline = anchored ? (mark.top - origin.top + mark.height * markBaseline) * dpr : 0;
+    const layout = !anchored
+      ? FIELD_LAYOUTS[options.placement][wide ? "wide" : "narrow"]
+      : options.placement === "around"
+        ? FIELD_LAYOUTS.around[wide ? "wide" : "narrow"]
+        : wide
+          ? sideLayoutFrom(markRight / width)
+          : narrowLayoutAt(markRight / width, baseline / height);
+    const traceBaseline = anchored ? baseline : height * layout.band.y;
 
     // Slide the grid so a row's center sits exactly on the trace's baseline,
     // and the field's line continues the headline's mark without a step.
-    offsetY = Math.round((((baseline - cellHeight / 2) % cellHeight) + cellHeight) % cellHeight) - cellHeight;
+    offsetY = Math.round((((traceBaseline - cellHeight / 2) % cellHeight) + cellHeight) % cellHeight) - cellHeight;
 
     const boxes = copyBoxes();
     const traceBoxes = mark ? copyBoxes(mark) : boxes;
@@ -570,16 +613,62 @@ function startAsciiField(
 
     shown = Int32Array.from(shownCells);
     shimmerCursor = 0;
-    measureTrace(layout, mark ? measureClearance(traceBoxes) : clearance, anchor, baseline);
+    measureTrace(layout, mark ? measureClearance(traceBoxes) : clearance, anchor, traceBaseline);
 
     const keep = anchor && {
       from: anchor.right / dpr,
-      baseline: baseline / dpr,
-      above: anchor.amplitude / dpr + ROW_HEIGHT,
-      below: (anchor.amplitude / dpr) * 0.19 + ROW_HEIGHT,
+      baseline: traceBaseline / dpr,
+      above: traceAmplitude / dpr + ROW_HEIGHT,
+      below: (traceAmplitude / dpr) * 0.19 + ROW_HEIGHT,
     };
 
     paintMask(traceBoxes, layout.region, keep);
+  }
+
+  /* On a phone the trace runs right under the headline's line above it. Its
+     one beat goes where that line leaves the most room (centered unless
+     another spot is clearly better), and its peak stays inside that room. */
+  function fitBeat(
+    clearance: Float32Array,
+    baseline: number,
+    beat: { centered: number; spacing: number; width: number; amplitude: number },
+  ) {
+    const baselineRow = Math.floor((baseline - offsetY) / cellHeight);
+
+    function amplitudeAt(lead: number) {
+      let allowed = beat.amplitude;
+
+      for (let col = 0; col < cols; col++) {
+        const x = offsetX + (col + 0.5) * cellWidth;
+        const shape = ecgHeight((x - traceFrom - lead) / beat.width);
+
+        if (shape <= 0.05) {
+          continue;
+        }
+
+        let row = baselineRow - 1;
+
+        while (row >= 0 && clearance[row * cols + col] >= 0.5) {
+          row--;
+        }
+
+        allowed = Math.min(allowed, ((baselineRow - row - 0.5) * cellHeight) / shape);
+      }
+
+      return Math.max(0, allowed);
+    }
+
+    let best = { lead: beat.centered, amplitude: amplitudeAt(beat.centered) };
+
+    for (let lead = 0; lead + beat.width <= beat.spacing; lead += cellWidth) {
+      const amplitude = amplitudeAt(lead);
+
+      if (amplitude > best.amplitude + cellHeight / 2) {
+        best = { lead, amplitude };
+      }
+    }
+
+    return best;
   }
 
   /* Places the trace: leaving the headline's pulse mark when there is room
@@ -587,11 +676,11 @@ function startAsciiField(
   function measureTrace(
     layout: FieldLayout,
     clearance: Float32Array,
-    anchor: { right: number; amplitude: number } | null,
+    anchor: { right: number; amplitude: number; fit: boolean } | null,
     baseline: number,
   ) {
     const anchored = anchor !== null;
-    const amplitude = anchor ? anchor.amplitude : height * layout.band.amplitude;
+    let amplitude = anchor ? anchor.amplitude : height * layout.band.amplitude;
 
     traceFrom = anchor ? anchor.right : width * layout.band.from;
     traceTo = width * (anchor ? 0.98 : layout.band.to);
@@ -603,7 +692,14 @@ function startAsciiField(
     beamSpeed = span / SWEEP_MS;
     const spacing = span / beats;
     const beatWidth = Math.min(spacing * BEAT_WIDTH_SHARE, 240 * dpr);
-    const lead = (spacing - beatWidth) / 2;
+    let lead = (spacing - beatWidth) / 2;
+
+    if (anchor?.fit && beats === 1 && !flat) {
+      ({ lead, amplitude } = fitBeat(clearance, baseline, { centered: lead, spacing, width: beatWidth, amplitude }));
+    }
+
+    traceAmplitude = amplitude;
+
     const fadeEnd = span * 0.1;
     const fadeStart = anchored ? 0 : span * 0.1;
 
