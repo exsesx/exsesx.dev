@@ -1349,6 +1349,17 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   }
 }
 
+/*
+ * A case's opening claim, the first thing read on the page. It leads the wider opening column, so
+ * it sets a step above the title role on desktop and settles at the title size on phones.
+ */
+.case-impact {
+  max-width: 30ch;
+  font-size: clamp(1.25rem, 1.5vw + 0.875rem, 2rem);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
 /* Case-study running text: the article body's size on a shorter measure than the article column. */
 .case-body {
   max-width: 38rem;

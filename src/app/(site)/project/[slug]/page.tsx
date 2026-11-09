@@ -60,10 +60,11 @@ function Container({ children, className }: { children: React.ReactNode; classNa
 }
 
 /*
- * The case's hero picture. It shares its view-transition name with the
- * project's picture on the index and in the adjacent entries, so arriving from
- * either morphs the picture into place. The frame keeps the same 16:10 shape as
- * those entries, so the morph only scales and moves.
+ * The case's cover: the client's own art, set secondary to the copy beside it.
+ * It shares its view-transition name with the project's picture on the index
+ * and in the adjacent entries, so arriving from either morphs the picture into
+ * place. The frame keeps the same 16:10 shape as those entries, so the morph
+ * only scales and moves.
  */
 function ProjectHeroMedia({ project }: { project: Project }) {
   const media = project.media;
@@ -84,7 +85,7 @@ function ProjectHeroMedia({ project }: { project: Project }) {
               src={media.src}
               alt={media.alt}
               fill
-              sizes="(min-width: 1024px) 58vw, 100vw"
+              sizes="(min-width: 1280px) 500px, (min-width: 1024px) 40vw, 100vw"
               preload
               className="shared-project-media object-cover"
             />
@@ -174,14 +175,15 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </div>
 
         <Container>
-          {/* The opening column leads with what the work changed, then the role and scope behind
-              it; the product's own site is a quiet way out at its foot. */}
+          {/* The copy leads: the wider column opens with what the work changed, then the role and
+              scope behind it, with the product's own site a quiet way out at its foot. The client's
+              cover sits beside it as the narrower, secondary picture, and after it on phones. */}
           <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-x-8">
             <div
-              className="motion-rise motion-delay-1 flex min-w-0 flex-col items-start gap-8 lg:col-span-5"
+              className="motion-rise motion-delay-1 flex min-w-0 flex-col items-start gap-8 lg:col-span-7"
               data-ascii-avoid=""
             >
-              <p className="max-w-[34ch] text-pretty text-title font-bold text-foreground">{project.impact}</p>
+              <p className="case-impact text-pretty font-bold text-foreground">{project.impact}</p>
               <dl className="w-full border-t border-border">
                 <ReadoutRow label="Role">{project.role}</ReadoutRow>
                 <ReadoutRow label="Scope">
@@ -205,7 +207,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 </a>
               ) : null}
             </div>
-            <div className="motion-rise motion-delay-2 min-w-0 lg:col-span-7">
+            <div className="motion-rise motion-delay-2 min-w-0 lg:col-span-5 lg:col-start-8">
               <ProjectHeroMedia project={project} />
             </div>
           </div>
