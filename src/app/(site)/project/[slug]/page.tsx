@@ -120,11 +120,11 @@ function formatContributionNumber(index: number) {
  */
 function EvidenceFigure({ evidence }: { evidence: ProjectEvidence }) {
   return (
-    <figure className="case-evidence mt-stack grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-x-8">
+    <figure className="case-evidence mt-stack grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-x-8">
       <div className="min-w-0 lg:col-span-7">
         <MermaidDiagram source={evidence.diagram} />
       </div>
-      <figcaption className="max-w-[48ch] text-pretty text-base leading-7 text-muted-foreground lg:col-span-4 lg:col-start-9">
+      <figcaption className="max-w-[48ch] text-pretty text-base leading-7 text-muted-foreground lg:col-span-4 lg:col-start-9 lg:pt-3">
         <span className="font-bold text-foreground">
           Contribution {formatContributionNumber(evidence.contributionIndex)}.
         </span>{" "}
