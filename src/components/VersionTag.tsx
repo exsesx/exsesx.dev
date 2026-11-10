@@ -1,7 +1,7 @@
 import { cn } from "../lib/utils";
 
 const tagClassName =
-  "flex items-center gap-2 text-xs font-semibold text-muted-foreground/55 transition-colors duration-200 hover:text-muted-foreground/80";
+  "flex items-center gap-2 text-xs font-semibold text-muted-foreground transition-colors duration-200 hover:text-foreground";
 
 export default function VersionTag() {
   const commitHash = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
@@ -30,7 +30,7 @@ export default function VersionTag() {
           target="_blank"
           rel="noreferrer"
           title={commitHash}
-          className={cn(tagClassName, "rounded-full")}
+          className={cn(tagClassName, "rounded-full underline-offset-4 hover:underline focus-visible:underline")}
         >
           {content}
         </a>

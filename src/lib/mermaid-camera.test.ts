@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  capViewBoxScale,
   formatViewBox,
   getViewBoxZoom,
   nudgeViewBox,
@@ -144,5 +145,23 @@ describe("Mermaid viewBox camera", () => {
 
     expect(padViewBox(base, { width: 40, height: 400 }, 24)).toBe(base);
     expect(padViewBox(base, { width: 400, height: 400 }, 0)).toBe(base);
+  });
+
+  test("centres a small drawing at its authored size instead of enlarging it", () => {
+    const capped = capViewBoxScale({ x: 0, y: 0, width: 200, height: 100 }, { width: 800, height: 400 });
+
+    expect(capped).toEqual({ x: -300, y: -150, width: 800, height: 400 });
+  });
+
+  test("leaves a drawing that already fits at or below its authored size alone", () => {
+    const base = { x: 0, y: 0, width: 1000, height: 300 };
+
+    expect(capViewBoxScale(base, { width: 800, height: 400 })).toBe(base);
+  });
+
+  test("leaves a canvas sized to the drawing alone despite rounding", () => {
+    const base = { x: -26.02941176470588, y: -26.02941176470588, width: 488.05882352941177, height: 642.0588235294117 };
+
+    expect(capViewBoxScale(base, { width: 700, height: 642.0588235294118 })).toBe(base);
   });
 });

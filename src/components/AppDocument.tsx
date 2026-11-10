@@ -1,12 +1,13 @@
 import Script from "next/script";
+import type { BlogLocale } from "@/lib/blog";
+import { preloadDocumentFonts } from "@/lib/document-fonts";
 import { BlogFocusProvider } from "./blog/BlogFocusProvider";
 import ConsoleSignature from "./ConsoleSignature";
-import DocumentBootstrapScripts from "./DocumentBootstrapScripts";
 import Header from "./Header";
 import HotkeysLoader from "./HotkeysLoader";
 import InteractionSounds from "./InteractionSounds";
 import KineticBackdrop from "./KineticBackdrop";
-import LiquidGlassLens from "./LiquidGlassLens";
+import RouteDocument, { SkipToContentLink } from "./RouteDocument";
 import RouteMotionGuard from "./RouteMotionGuard";
 import { TooltipProvider } from "./ui/tooltip";
 import VersionTag from "./VersionTag";
@@ -16,50 +17,41 @@ const umamiWebsiteId = "75a63c31-71fb-4712-9345-9b2e5a93445c";
 
 type AppDocumentProps = Readonly<{
   children: React.ReactNode;
-  lang: "en" | "uk";
+  // Pins the document language; without it the language follows the route.
+  lang?: BlogLocale;
 }>;
 
 export default function AppDocument({ children, lang }: AppDocumentProps) {
-  const skipLinkLabel = lang === "uk" ? "Перейти до основного вмісту" : "Skip to main content";
+  // Ukrainian blog layouts add the Cyrillic subset on top of this.
+  preloadDocumentFonts(lang ?? "en");
 
   return (
-    <html lang={lang} data-scroll-behavior="smooth" suppressHydrationWarning>
-      <head>
-        <link
-          rel="preload"
-          href="/fonts/monolisa-text/woff2/0-MonoLisaText-normal.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-        <DocumentBootstrapScripts />
-      </head>
-      <body>
-        <TooltipProvider delay={450}>
-          <a className="skip-to-content" href="#main-content">
-            {skipLinkLabel}
-          </a>
-          <LiquidGlassLens />
-          <RouteMotionGuard />
-          <InteractionSounds />
-          <ConsoleSignature />
-          <BlogFocusProvider>
-            <KineticBackdrop />
-            <Header />
-            <HotkeysLoader />
-            {children}
-            <VersionTag />
-          </BlogFocusProvider>
-        </TooltipProvider>
-      </body>
-      {shouldLoadAnalytics ? (
-        <Script
-          data-website-id={umamiWebsiteId}
-          id="umami-analytics"
-          src="https://cloud.umami.is/script.js"
-          strategy="lazyOnload"
-        />
-      ) : null}
-    </html>
+    <RouteDocument
+      lang={lang}
+      afterBody={
+        shouldLoadAnalytics ? (
+          <Script
+            data-website-id={umamiWebsiteId}
+            id="umami-analytics"
+            src="https://cloud.umami.is/script.js"
+            strategy="lazyOnload"
+          />
+        ) : null
+      }
+    >
+      <TooltipProvider delay={450}>
+        <SkipToContentLink />
+        <RouteMotionGuard />
+        <InteractionSounds />
+        <ConsoleSignature />
+        <BlogFocusProvider>
+          <KineticBackdrop />
+          <Header />
+          <HotkeysLoader />
+          {children}
+          <VersionTag />
+        </BlogFocusProvider>
+      </TooltipProvider>
+    </RouteDocument>
   );
 }

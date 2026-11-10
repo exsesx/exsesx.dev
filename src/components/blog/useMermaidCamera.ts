@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import {
+  capViewBoxScale,
   formatViewBox,
   getViewBoxZoom,
   MIN_MERMAID_ZOOM,
@@ -77,6 +78,12 @@ function getClientScale(viewBox: ViewBox, viewport: Viewport) {
 
 function rebaseViewBox(previousBase: ViewBox, previousCamera: ViewBox, nextBase: ViewBox): ViewBox {
   const zoom = getViewBoxZoom(previousBase, previousCamera);
+
+  // At rest the camera is the base; carrying it through the ratios below only adds float noise to the resting view.
+  if (zoom <= MIN_MERMAID_ZOOM) {
+    return nextBase;
+  }
+
   const centerX = previousCamera.x + previousCamera.width / 2;
   const centerY = previousCamera.y + previousCamera.height / 2;
   const centerRatioX = (centerX - previousBase.x) / previousBase.width;
@@ -476,7 +483,8 @@ export function useMermaidCamera({ isReady, renderedSvg, zoomStatus }: UseMermai
     // even when the frame width (and therefore the rendered drawing) stays the same.
     const syncBaseViewBox = () => {
       const gutter = Number.parseFloat(getComputedStyle(visual).paddingTop) || 0;
-      const nextBase = padViewBox(drawingViewBox, { height: visual.clientHeight, width: visual.clientWidth }, gutter);
+      const size = { height: visual.clientHeight, width: visual.clientWidth };
+      const nextBase = capViewBoxScale(padViewBox(drawingViewBox, size, gutter), size);
       const previousBase = baseViewBoxRef.current;
       const previousCamera = cameraRef.current;
       const nextCamera =

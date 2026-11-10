@@ -1,7 +1,6 @@
 import { resolveBlogBackHref } from "./blog";
 import { MOTION_ATTRIBUTES, MOTION_DATASET_KEYS, ROUTE_TRANSITION_TYPES } from "./motion-contract";
 import { getRoutePathname } from "./route-path";
-import { isProjectsIndexRoutePath } from "./routes";
 
 const PREVIOUS_ROUTE_STORAGE_KEY = "exsesx.previousRoute";
 const PENDING_SCROLL_RESTORE_STORAGE_KEY = "exsesx.pendingScrollRestore";
@@ -31,10 +30,15 @@ export function captureAnchorRouteIntent(anchor: RouteIntentAnchor) {
   setRouteNavigationSuppressed(anchor.hasAttribute(MOTION_ATTRIBUTES.suppressEntryMotion));
 }
 
+/*
+ * Back never morphs the case picture home. A browser Back or swipe reaches the router without
+ * transition types, and React adds types only to a transition already pending, so those cannot
+ * morph; the Back button carries no project type either, so every way back looks the same.
+ */
 export function getBackNavigationIntent(): RouteNavigationIntent {
   const blogFallbackHref = resolveBlogBackHref(window.location.pathname);
   const fallbackHref = blogFallbackHref ?? FALLBACK_BACK_HREF;
-  const fallbackTransitionTypes = blogFallbackHref ? [ROUTE_TRANSITION_TYPES.navBack] : getBackTransitionTypes();
+  const transitionTypes = [ROUTE_TRANSITION_TYPES.navBack];
   const storedPreviousRoute = readPreviousRoute({ allowCurrent: false });
   const previousRoute =
     blogFallbackHref && storedPreviousRoute && getRoutePathname(storedPreviousRoute.path) !== blogFallbackHref
@@ -46,7 +50,7 @@ export function getBackNavigationIntent(): RouteNavigationIntent {
   if (!previousRoute) {
     return {
       href: fallbackHref,
-      transitionTypes: fallbackTransitionTypes,
+      transitionTypes,
     };
   }
 
@@ -55,11 +59,7 @@ export function getBackNavigationIntent(): RouteNavigationIntent {
   return {
     href: previousRoute.path,
     scroll: false,
-    transitionTypes: blogFallbackHref
-      ? [ROUTE_TRANSITION_TYPES.navBack]
-      : isProjectsIndexRoutePath(previousRoute.path)
-        ? fallbackTransitionTypes
-        : [ROUTE_TRANSITION_TYPES.navBack],
+    transitionTypes,
   };
 }
 
@@ -164,16 +164,6 @@ function removeSessionStorageItem(key: string) {
   } catch {
     // Treat a blocked store as already empty.
   }
-}
-
-function getBackTransitionTypes(): string[] {
-  const projectTransitionType = document
-    .querySelector(`main[${MOTION_ATTRIBUTES.backTransitionType}]`)
-    ?.getAttribute(MOTION_ATTRIBUTES.backTransitionType);
-
-  return projectTransitionType
-    ? [ROUTE_TRANSITION_TYPES.navBack, projectTransitionType]
-    : [ROUTE_TRANSITION_TYPES.navBack];
 }
 
 function setRouteNavigationSuppressed(isSuppressed: boolean) {

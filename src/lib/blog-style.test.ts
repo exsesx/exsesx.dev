@@ -23,8 +23,8 @@ describe("Blog production styles", () => {
       Bun.file(blogArticlePageUrl).text(),
     ]);
 
-    expect(indexPage.match(/data-cuelume-press="select"/g)).toHaveLength(1);
-    expect(articlePage.match(/data-cuelume-press=""/g)).toHaveLength(2);
+    expect(indexPage.match(/data-cuelume-navigate=""/g)).toHaveLength(1);
+    expect(articlePage.match(/data-cuelume-navigate=""/g)).toHaveLength(2);
   });
 
   test("uses a Shiki theme selector that survives the Next CSS minifier", async () => {
@@ -190,7 +190,8 @@ describe("Blog production styles", () => {
 
   test("uses one strong outer-edge contract across rounded article rich blocks", async () => {
     const css = await Bun.file(globalsCssUrl).text();
-    const proseRule = css.match(/\.blog-prose\s*\{([^}]*)\}/s)?.[1] ?? "";
+    // Case-study evidence figures share the article's rich-block tokens, so both read from one rule.
+    const proseRule = css.match(/\.blog-prose,\s*\.case-evidence\s*\{([^}]*)\}/s)?.[1] ?? "";
 
     expect(proseRule).toContain("--blog-rich-block-radius: var(--radius)");
     expect(proseRule).toContain("--blog-rich-block-gap: 1.5rem");
@@ -237,11 +238,12 @@ describe("Blog production styles", () => {
     expect(articlePage).toMatch(/<h1\s+className="[^"]*leading-\[1\.08\]/);
   });
 
-  test("uses contrast and surface feedback instead of underlining Blog links", async () => {
+  test("underlines Blog prose links at rest so they never rely on color alone", async () => {
     const css = await Bun.file(globalsCssUrl).text();
     const blogCss = css.slice(css.indexOf("/* Blog"));
 
-    expect(blogCss).not.toContain("text-decoration: underline;");
+    expect(css).toMatch(/\.blog-prose li > a:not\(\.source-link\) \{[^}]*text-decoration-line:\s*underline/s);
+    expect(css).toMatch(/\.source-link-label \{[^}]*text-decoration-line:\s*underline/s);
     expect(blogCss).toContain("a:not(.source-link):is(:hover, :focus-visible)");
     expect(blogCss).toContain(".source-link:is(:hover, :focus-visible) .source-link-label");
     expect(blogCss).toContain(".blog-back-link:is(:hover, :focus-visible)");
@@ -357,7 +359,7 @@ describe("Blog production styles", () => {
     expect(toc).toContain("navigateToHeading");
     expect(toc).toContain("actionsRef={drawerActionsRef}");
     expect(toc).toContain("drawerActionsRef.current?.close()");
-    expect(toc).toContain("playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target)");
+    expect(toc).toContain('playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target, "panel")');
     expect(toc).not.toContain("open={");
     expect(toc).not.toContain("handleOpenChange(open");
     expect(toc).not.toContain("initialFocus");
@@ -415,9 +417,7 @@ describe("Blog production styles", () => {
     expect(css).toMatch(
       /\[data-blog-focus-toast="true"\] \.blog-scroll-top\s*\{[^}]*visibility:\s*hidden;[^}]*pointer-events:\s*none/s,
     );
-    expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-scroll-top,[\s\S]*?transition:\s*none/s,
-    );
+    expect(css).toMatch(/@variant reduced-motion\s*\{[\s\S]*?\.blog-scroll-top,[\s\S]*?transition:\s*none/s);
     expect(css).not.toMatch(/@media \(min-width:[^}]*\{[^}]*\.blog-scroll-top/);
   });
 
@@ -426,17 +426,21 @@ describe("Blog production styles", () => {
     const desktopRule = css.match(/\.blog-toc-desktop\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerRule = css.match(/\.blog-toc-drawer\s*\{([^}]*)\}/s)?.[1] ?? "";
     const tickRule = css.match(/\.blog-toc-tick\s*\{([^}]*)\}/s)?.[1] ?? "";
+    const linkRule = css.match(/\.blog-toc-list a\s*\{([^}]*)\}/s)?.[1] ?? "";
     const subheadingRule = css.match(/\.blog-toc-list li\[data-depth="3"\] \.blog-toc-label\s*\{([^}]*)\}/s)?.[1] ?? "";
     const activeRule = css.match(/\.blog-toc-list a\[aria-current="location"\]\s*\{([^}]*)\}/s)?.[1] ?? "";
     const activeTickRule =
       css.match(/\.blog-toc-list a\[aria-current="location"\] \.blog-toc-tick\s*\{([^}]*)\}/s)?.[1] ?? "";
     const drawerHeaderRule = css.match(/\.blog-toc-drawer-header\s*\{([^}]*)\}/s)?.[1] ?? "";
 
-    expect(desktopRule).toContain("--blog-toc-heading-size: 0.8rem");
-    expect(desktopRule).toContain("--blog-toc-subheading-size: 0.8rem");
-    expect(drawerRule).toContain("--blog-toc-heading-size: 0.84rem");
-    expect(drawerRule).toContain("--blog-toc-subheading-size: 0.76rem");
+    expect(desktopRule).toContain("--blog-toc-heading-size: var(--text-caption)");
+    expect(desktopRule).toContain("--blog-toc-subheading-size: var(--text-caption)");
+    expect(drawerRule).toContain("--blog-toc-heading-size: var(--text-meta)");
+    expect(drawerRule).toContain("--blog-toc-subheading-size: var(--text-caption)");
     expect(tickRule).toContain("width: var(--toc-tick-width)");
+    // A wrapped entry keeps its tick on its first line, not centred on the whole entry.
+    expect(linkRule).toContain("align-items: start");
+    expect(tickRule).toContain("margin-top: calc(0.5lh - 1px)");
     expect(subheadingRule).toContain("padding-left: 1rem");
     expect(activeRule).toContain("background: transparent");
     expect(activeTickRule).toContain("background: var(--accent)");
@@ -466,8 +470,8 @@ describe("Blog production styles", () => {
     expect(source).toContain('progressPathElement.dataset.drawing = "out"');
     expect(source).toContain("startOffset + (1 - startOffset) * eased");
     expect(source).toContain("deviceFrameAnimationGeneration");
-    expect(source).toContain("prefersReducedMotion.matches");
-    expect(source).toContain('prefersReducedMotion.addEventListener("change", handleReducedMotionChange)');
+    expect(source).toContain("isMotionReduced()");
+    expect(source).toContain("subscribeToMotion(handleReducedMotionChange)");
     expect(source).not.toContain("transitioncancel");
     expect(source).not.toContain("getBoundingClientRect()\n");
     expect(source).not.toContain("dataset.drawCount");
@@ -624,9 +628,7 @@ describe("Blog production styles", () => {
     expect(desktopSection).toMatch(
       /html\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.blog-toc-desktop,[\s\S]*?\[data-blog-header-motion="instant"\] \.blog-toc-desktop\s*\{\s*transition:\s*none/s,
     );
-    expect(desktopSection).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\.blog-toc-desktop\s*\{\s*transition:\s*none/s,
-    );
+    expect(desktopSection).toMatch(/@variant reduced-motion\s*\{[\s\S]*?\.blog-toc-desktop\s*\{\s*transition:\s*none/s);
   });
 
   test("uses the shared frost tier for the launcher and a calm opaque drawer", async () => {
@@ -661,7 +663,7 @@ describe("Blog production styles", () => {
 
   test("uses opacity-only article header changes when reduced motion is requested", async () => {
     const css = await Bun.file(globalsCssUrl).text();
-    const reducedMotionCss = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
+    const reducedMotionCss = css.slice(css.indexOf("@variant reduced-motion {"));
 
     expect(reducedMotionCss).toMatch(
       /\[data-blog-article="true"\] \.site-header-nav-frame\s*\{[^}]*transform:\s*none[^}]*opacity 140ms var\(--ease-out\)/s,
@@ -670,10 +672,10 @@ describe("Blog production styles", () => {
       /\[data-blog-article="true"\]\[data-blog-passive-hidden="true"\][\s\S]*?\.site-header-nav-frame\s*\{[^}]*transform:\s*none[^}]*opacity 160ms var\(--ease-out\)/s,
     );
     expect(reducedMotionCss).toMatch(
-      /html\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.site-header-nav-frame,[\s\S]*?\[data-blog-header-motion="instant"\] \.site-header-fade\s*\{\s*transition:\s*none/s,
+      /&\[data-blog-focus-bootstrap\] \[data-blog-article="true"\] \.site-header-nav-frame,[\s\S]*?\[data-blog-header-motion="instant"\] \.site-header-fade\s*\{\s*transition:\s*none/s,
     );
     expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.site-header-nav-frame,[\s\S]*?\.site-header-fade,[\s\S]*?\.nav-back-button\s*\{\s*transition:\s*none/s,
+      /@variant reduced-motion[\s\S]*?\.site-header-nav-frame,[\s\S]*?\.site-header-fade,[\s\S]*?\.nav-back-button\s*\{\s*transition:\s*none/s,
     );
   });
 });

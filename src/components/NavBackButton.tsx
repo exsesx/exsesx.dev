@@ -22,7 +22,10 @@ function isEditableTarget(target: EventTarget | null) {
 export default function NavBackButton({ active }: NavBackButtonProps) {
   const router = useRouter();
 
+  // The back cue: Cuelume's navigate whoosh, falling for the way back.
   function navigateBack() {
+    playInteractionSound("navigate", { direction: "back" });
+
     const intent = getBackNavigationIntent();
 
     router.push(intent.href as Route, {
@@ -37,7 +40,6 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
     }
 
     event.preventDefault();
-    playInteractionSound("tap");
     navigateBack();
   });
 
@@ -58,11 +60,10 @@ export default function NavBackButton({ active }: NavBackButtonProps) {
   return (
     <Button
       type="button"
-      variant="glass"
+      variant="nav"
       size="icon"
       aria-label="Back"
       aria-hidden={active ? undefined : "true"}
-      data-cuelume-press={active ? "" : undefined}
       disabled={!active}
       {...{ [MOTION_ATTRIBUTES.activeBackButton]: active ? "true" : "false" }}
       className="nav-back-button cursor-pointer"

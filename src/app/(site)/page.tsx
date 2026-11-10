@@ -45,7 +45,7 @@ const experienceHighlights = [
     role: "Solution architecture and full-stack delivery",
     period: "2021 – 2026",
     detail:
-      "Led Tso 3.0's technical direction and cross-functional team while staying hands-on. Built isolated branch previews so the CTO, QA, and PM could validate changes before merge.",
+      "Led Tso 3.0's technical direction and cross-functional team. Built isolated branch previews so the CTO, QA, and PM could validate changes before merge.",
   },
   {
     company: "S-PRO",
@@ -87,7 +87,8 @@ function ProjectMedia({ project, sizes, className }: { project: Project; sizes: 
   const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
 
   return (
-    <div className={cn("relative overflow-hidden rounded-lg bg-muted", className)} style={{ backgroundColor }}>
+    // The wrapper stays unpainted, like ProjectCard's: the inner frame carries the fill.
+    <div className={cn("project-media relative overflow-hidden rounded-lg", className)}>
       <Link
         href={getProjectPath(project)}
         transitionTypes={getProjectRouteTransitionTypes(ROUTE_TRANSITION_TYPES.navForward, transitionType)}
@@ -119,7 +120,7 @@ function ProjectMedia({ project, sizes, className }: { project: Project; sizes: 
 // Plain classes: cn() reads the custom text-title size as a color and drops it.
 function ProjectTitle({ project }: { project: Project }) {
   return (
-    <h3 className="cap-top text-title font-black text-foreground">
+    <h3 className="cap-top text-title font-bold text-foreground">
       <Link
         href={getProjectPath(project)}
         transitionTypes={getProjectRouteTransitionTypes(
@@ -128,7 +129,7 @@ function ProjectTitle({ project }: { project: Project }) {
         )}
         scroll
         {...suppressEntryMotionProps}
-        data-cuelume-press=""
+        data-cuelume-navigate=""
         className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
       >
         {project.name}
@@ -151,7 +152,7 @@ function ProjectTags({ project }: { project: Project }) {
   );
 }
 
-function ProjectWebsiteLink({ project }: { project: Project }) {
+function ProjectWebsiteLink({ project, className }: { project: Project; className?: string }) {
   if (!project.href) {
     return null;
   }
@@ -159,8 +160,8 @@ function ProjectWebsiteLink({ project }: { project: Project }) {
   return (
     <a
       href={project.href}
-      data-cuelume-press=""
-      className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start")}
+      data-cuelume-tap=""
+      className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start", className)}
       rel="noopener noreferrer"
       target="_blank"
     >
@@ -192,7 +193,7 @@ export default function HomePage() {
             header's first 64px, and the trace leaves the headline's pulse mark. */}
         <section aria-labelledby="hero-title" className="relative isolate" data-ascii-host="">
           <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" />
-          <Container className="pb-section-s pt-52 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
+          <Container className="pb-section-s pt-36 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
             <div className="min-w-0 lg:col-span-7">
               <h1
                 id="hero-title"
@@ -218,7 +219,7 @@ export default function HomePage() {
                   href="/projects"
                   transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                   {...suppressEntryMotionProps}
-                  data-cuelume-press=""
+                  data-cuelume-navigate=""
                   className={buttonVariants({ variant: "default", size: "lg" })}
                 >
                   See the work
@@ -240,7 +241,7 @@ export default function HomePage() {
                 href="/projects"
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                 {...suppressEntryMotionProps}
-                data-cuelume-press=""
+                data-cuelume-navigate=""
                 className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start sm:self-auto")}
               >
                 All projects
@@ -248,14 +249,18 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* One project opened as a case, then the next two beneath it. */}
-            <article className="mt-stack grid gap-8 lg:grid-cols-12 lg:items-start lg:gap-x-8">
+            {/* One project opened as a case, then the next two beneath it. Side by side, the
+                picture and the copy share both edges: the picture keeps at least its 40:21
+                frame and stretches to the copy's height, and the website link sits on the
+                picture's bottom edge. Below xl they stack, so the brand art is never cropped
+                to a portrait. */}
+            <article className="mt-stack grid gap-8 xl:grid-cols-12 xl:gap-x-8">
               <ProjectMedia
                 project={leadProject}
-                sizes="(min-width: 1024px) 56vw, 100vw"
-                className="aspect-[40/21] lg:col-span-7"
+                sizes="(min-width: 1280px) 56vw, 100vw"
+                className="aspect-[40/21] xl:col-span-7 xl:w-full xl:min-w-0 xl:self-stretch"
               />
-              <div className="flex min-w-0 flex-col gap-5 lg:col-span-5">
+              <div className="flex min-w-0 max-w-3xl flex-col gap-5 xl:col-span-5 xl:max-w-none">
                 <div>
                   <ProjectTitle project={leadProject} />
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -266,7 +271,7 @@ export default function HomePage() {
                 <p className="text-base leading-7 text-muted-foreground">{leadProject.description}</p>
                 <p className="text-base font-bold leading-7 text-foreground">{leadProject.impact}</p>
                 <ProjectTags project={leadProject} />
-                <ProjectWebsiteLink project={leadProject} />
+                <ProjectWebsiteLink project={leadProject} className="xl:mt-auto" />
               </div>
             </article>
 
@@ -289,7 +294,8 @@ export default function HomePage() {
                     </p>
                   </div>
                   <p className="max-w-[60ch] text-base leading-7 text-muted-foreground">{project.description}</p>
-                  <ProjectWebsiteLink project={project} />
+                  {/* Both cards stretch to the row, so their website links share one line. */}
+                  <ProjectWebsiteLink project={project} className="mt-auto" />
                 </article>
               ))}
             </div>
@@ -334,19 +340,31 @@ export default function HomePage() {
               </div>
 
               {/* A readout: the value first, what it measures beside it. The
-                  term leads in the markup, so grid placement swaps them. */}
+                  term leads in the markup, so grid placement swaps them. Counts
+                  set as figures; a value that is a word, not a count, stays at
+                  title size so it does not pose as one. */}
               <dl className="border-t border-border lg:col-span-6 lg:col-start-7">
-                {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => (
-                  <div
-                    key={label}
-                    className="grid grid-cols-[minmax(0,6rem)_minmax(0,1fr)] items-baseline gap-6 border-b border-border py-5"
-                  >
-                    <dt className="col-start-2 row-start-1 text-base leading-7 text-muted-foreground">{label}</dt>
-                    <dd className="col-start-1 row-start-1 text-title font-black tabular-nums text-foreground">
-                      {value}
-                    </dd>
-                  </div>
-                ))}
+                {PROFILE_SNAPSHOT_STATS.map(({ value, label }) => {
+                  const isCount = /\d/.test(value);
+
+                  return (
+                    <div
+                      key={label}
+                      className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] items-baseline gap-6 border-b border-border py-5"
+                    >
+                      <dt className="col-start-2 row-start-1 text-base leading-7 text-muted-foreground">{label}</dt>
+                      <dd
+                        className={
+                          isCount
+                            ? "col-start-1 row-start-1 text-section leading-none font-bold tabular-nums text-foreground"
+                            : "col-start-1 row-start-1 text-title font-bold text-foreground"
+                        }
+                      >
+                        {value}
+                      </dd>
+                    </div>
+                  );
+                })}
               </dl>
             </div>
           </Container>
@@ -356,7 +374,7 @@ export default function HomePage() {
           <Container className="grid gap-12 lg:grid-cols-12 lg:gap-x-8">
             <div className="lg:col-span-5">
               <h2 id="experience-title" className="section-title max-w-[22ch] lg:sticky lg:top-32">
-                Recent roles and what I did in each
+                Recent roles
               </h2>
             </div>
             <ol className="border-t border-border lg:col-span-7">
@@ -366,7 +384,7 @@ export default function HomePage() {
                   className="grid gap-3 border-b border-border py-8 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:items-baseline sm:gap-8"
                 >
                   <div>
-                    <h3 className="text-title font-black text-foreground">{item.company}</h3>
+                    <h3 className="text-title font-bold text-foreground">{item.company}</h3>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.role}</p>
                     <p className="mt-2 text-sm tabular-nums text-muted-foreground">{item.period}</p>
                   </div>
@@ -391,7 +409,7 @@ export default function HomePage() {
             <ol className="workflow-steps mt-stack grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
               {agentWorkflow.map(item => (
                 <li key={item.title} className="border-t border-border pt-6">
-                  <h3 className="text-title font-black text-foreground">{item.title}</h3>
+                  <h3 className="text-title font-bold text-foreground">{item.title}</h3>
                   <p className="mt-3 text-base leading-7 text-muted-foreground">{item.detail}</p>
                 </li>
               ))}

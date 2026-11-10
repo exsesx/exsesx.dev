@@ -2,6 +2,13 @@ import { getAdjacentPrimaryNavHref, isBlogPostPath, type NavbarHotkeyDirection }
 
 export const BLOG_FOCUS_HOTKEY_ACTION = "blog-focus" as const;
 
+// A keydown captured before the shortcut dialog loaded, replayed once it mounts.
+export type QueuedHotkey = Pick<KeyboardEventInit, "altKey" | "ctrlKey" | "key" | "metaKey" | "shiftKey">;
+
+export type PlatformModifierKey = {
+  key: "⌘" | "⌃";
+};
+
 export interface HotkeyShortcut<TAction extends string = string> {
   sequence: readonly string[];
   action: TAction;
@@ -253,4 +260,25 @@ function isSequencePrefix(sequence: readonly string[], buffer: readonly string[]
   }
 
   return buffer.every((key, index) => sequence[index] === key);
+}
+
+export function getPlatformModifierKey(): PlatformModifierKey {
+  const isApplePlatform =
+    typeof navigator !== "undefined" &&
+    (/Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
+      (/Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
+
+  return { key: isApplePlatform ? "⌘" : "⌃" };
+}
+
+export function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target.isContentEditable ||
+    target.closest("input:not([type='checkbox']), textarea, select, [contenteditable='true'], [role='textbox']") !==
+      null
+  );
 }

@@ -42,8 +42,10 @@ export function ProjectMediaLink({
   const transitionType = getProjectTransitionType(project);
   const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
 
+  // The wrapper stays unpainted: the named frame leaves it behind in the page
+  // snapshot during the morph, and a fill here showed as a solid box.
   return (
-    <div className={cn("relative rounded-lg bg-muted", className)} style={{ backgroundColor }}>
+    <div className={cn("project-media relative rounded-lg", className)}>
       <ViewTransition
         name={`project-media-${project.id}`}
         share={{ [transitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
@@ -62,7 +64,7 @@ export function ProjectMediaLink({
       </ViewTransition>
       <Link
         {...getProjectLinkProps(project)}
-        data-cuelume-press=""
+        data-cuelume-navigate=""
         aria-label={`View ${project.name} project details`}
         className="absolute inset-0 z-10 rounded-lg"
       />
@@ -73,10 +75,10 @@ export function ProjectMediaLink({
 /* Classes stay out of cn(): its merge reads the custom text-title size as a text color and drops it. */
 export function ProjectTitleLink({ project, as: Heading }: { project: Project; as: "h2" | "h3" }) {
   return (
-    <Heading className="text-title font-black text-foreground">
+    <Heading className="text-title font-bold text-foreground">
       <Link
         {...getProjectLinkProps(project)}
-        data-cuelume-press=""
+        data-cuelume-navigate=""
         className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
       >
         {project.name}
@@ -94,7 +96,7 @@ export function ProjectDetailsLink({ project }: { project: Project }) {
   return (
     <Link
       {...getProjectLinkProps(project)}
-      data-cuelume-press=""
+      data-cuelume-navigate=""
       className="-my-2 inline-flex min-h-11 items-center rounded-sm text-sm font-bold text-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent hover:decoration-current"
     >
       View details<span className="sr-only"> for {project.name}</span>

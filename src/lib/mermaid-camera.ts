@@ -27,9 +27,37 @@ type ZoomViewBoxOptions = Readonly<{
   viewport: Viewport;
 }>;
 
+export type DiagramSize = Readonly<{
+  width: number;
+  height: number;
+}>;
+
+/**
+ * Pele picks a diagram's layout from the width it may use. Laying a diagram out at the frame's measured width made its
+ * shape unknowable until the lazy renderer ran, so the page uses two fixed layout widths instead: a frame narrower
+ * than the wide width gets the compact layout, drawn for the 288px frame of a 320px phone, and a wider frame gets the
+ * wide one. The server measures both, the figure reserves the matching canvas (globals.css switches at the same width
+ * with a container query on the figure), and the client draws the same layout into it.
+ */
+export const DIAGRAM_LAYOUT_WIDTHS = { compact: 288, wide: 640 } as const;
+
+export type DiagramLayout = keyof typeof DIAGRAM_LAYOUT_WIDTHS;
+export type DiagramFrame = Readonly<Record<DiagramLayout, DiagramSize>>;
+
+export function getDiagramLayout(frameWidth: number): DiagramLayout {
+  return frameWidth >= DIAGRAM_LAYOUT_WIDTHS.wide ? "wide" : "compact";
+}
+
 export const MIN_MERMAID_ZOOM = 1;
 export const MAX_MERMAID_ZOOM = 4;
 export const MERMAID_NUDGE_FRACTION = 0.12;
+/** A diagram never rests above its authored size, so its labels stay at the article's type scale on wide frames. */
+export const MAX_MERMAID_FIT_SCALE = 1;
+/**
+ * A canvas sized to the drawing fits it at its cap almost exactly, so rounding alone must not flip the cap on and
+ * off: that moved the resting camera by float noise between resizes.
+ */
+const FIT_SCALE_TOLERANCE = 1e-6;
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
@@ -96,6 +124,32 @@ export function padViewBox(base: ViewBox, size: Readonly<{ width: number; height
     y: base.y - padding,
     width: base.width + padding * 2,
     height: base.height + padding * 2,
+  };
+}
+
+/**
+ * Grows a viewBox around its centre when fitting it into a viewport of the given size would enlarge it past
+ * `maxScale`. The drawing then rests at that scale, centred, instead of stretching to fill a wide frame.
+ */
+export function capViewBoxScale(
+  viewBox: ViewBox,
+  size: Readonly<{ width: number; height: number }>,
+  maxScale = MAX_MERMAID_FIT_SCALE,
+): ViewBox {
+  const fitScale = Math.min(size.width / viewBox.width, size.height / viewBox.height);
+
+  if (!(fitScale > maxScale * (1 + FIT_SCALE_TOLERANCE))) {
+    return viewBox;
+  }
+
+  const width = size.width / maxScale;
+  const height = size.height / maxScale;
+
+  return {
+    x: viewBox.x - (width - viewBox.width) / 2,
+    y: viewBox.y - (height - viewBox.height) / 2,
+    width,
+    height,
   };
 }
 

@@ -362,8 +362,9 @@ if (!("Bun" in globalThis)) {
       expect(backBounds?.width).toBeGreaterThanOrEqual(40);
       expect(backBounds?.height).toBeGreaterThanOrEqual(40);
       expect(logoLinkBounds?.height).toBeGreaterThanOrEqual(40);
-      expect(logoBounds?.width).toBeCloseTo(40, 1);
-      expect(logoBounds?.height).toBeCloseTo(40, 1);
+      // Nav controls are 44px on coarse pointers.
+      expect(logoBounds?.width).toBeCloseTo(44, 1);
+      expect(logoBounds?.height).toBeCloseTo(44, 1);
       expect(githubBounds?.width).toBeGreaterThanOrEqual(40);
       expect(githubBounds?.height).toBeGreaterThanOrEqual(40);
       expect(themeBounds?.width).toBeGreaterThanOrEqual(40);
@@ -560,6 +561,8 @@ if (!("Bun" in globalThis)) {
       const toolbar = diagram.getByRole("toolbar", { name: "Diagram controls" });
       const svg = viewport.locator("svg");
 
+      // Diagrams draw as they near the viewport.
+      await diagram.scrollIntoViewIfNeeded();
       await expect(diagram).toHaveAttribute("data-state", "ready", { timeout: 15_000 });
       await expect(viewport).toHaveRole("img");
       await expect(viewport).toHaveAccessibleName("Codex local memory pipeline");
@@ -588,20 +591,21 @@ if (!("Bun" in globalThis)) {
       expect(toolbarBounds).not.toBeNull();
       expect(pageViewport).not.toBeNull();
       // The camera viewport spans the frame below the header row, inside the figure's 1px border, and the drawing
-      // keeps its 20rem resting area inside the viewport's gutter padding.
+      // rests in the frame the server measured for it, between the 12rem floor and the 34rem cap.
       expect(bounds?.x).toBeCloseTo((diagramBounds?.x ?? 0) + 1, 0);
       expect(bounds?.width).toBeCloseTo((diagramBounds?.width ?? 0) - 2, 0);
       expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeCloseTo(
         (diagramBounds?.y ?? 0) + (diagramBounds?.height ?? 0) - 1,
         0,
       );
-      expect(
-        await viewport.evaluate(element => {
-          const style = getComputedStyle(element);
+      const restingHeight = await viewport.evaluate(element => {
+        const style = getComputedStyle(element);
 
-          return element.clientHeight - Number.parseFloat(style.paddingTop) - Number.parseFloat(style.paddingBottom);
-        }),
-      ).toBeCloseTo(320, 0);
+        return element.clientHeight - Number.parseFloat(style.paddingTop) - Number.parseFloat(style.paddingBottom);
+      });
+
+      expect(restingHeight).toBeGreaterThanOrEqual(192);
+      expect(restingHeight).toBeLessThanOrEqual(544);
       expect(bounds?.x ?? -1).toBeGreaterThanOrEqual(0);
       expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(pageViewport?.width ?? 0);
       const toolbarRightInset =
@@ -680,15 +684,15 @@ if (!("Bun" in globalThis)) {
       const sample = page.locator("[data-safari-chrome-sample]");
       const trigger = page.getByTestId("mobile-toc-trigger");
       const drawer = page.getByTestId("mobile-toc-drawer");
-      const drawerPortal = page.locator('[data-slot="drawer-portal"]');
 
       await expectSafariChromeSampleToQualify(sample);
       await trigger.click();
       await expect(drawer).toBeVisible();
       await expectSafariChromeSampleToQualify(sample);
 
+      // The drawer stays mounted once prewarmed, so closing hides it rather than removing its portal.
       await drawer.getByRole("button", { name: "Close table of contents" }).click();
-      await expect(drawerPortal).toHaveCount(0);
+      await expect(drawer).toBeHidden();
       await expectSafariChromeSampleToQualify(sample);
 
       const lightSampleColor = await sample.evaluate(element => getComputedStyle(element).backgroundColor);

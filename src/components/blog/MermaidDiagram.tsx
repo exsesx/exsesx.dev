@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import {
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type Ref,
   useCallback,
@@ -13,13 +14,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { BLOG_UI } from "@/lib/blog";
 import { playInteractionSound } from "@/lib/interaction-sounds";
-import { MAX_MERMAID_ZOOM, MIN_MERMAID_ZOOM } from "@/lib/mermaid-camera";
+import {
+  DIAGRAM_LAYOUT_WIDTHS,
+  type DiagramFrame,
+  type DiagramLayout,
+  getDiagramLayout,
+  MAX_MERMAID_ZOOM,
+  MIN_MERMAID_ZOOM,
+} from "@/lib/mermaid-camera";
 import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "@/lib/mermaid-theme";
 import { getServerThemeSnapshot, getThemeSnapshot, parseThemeSnapshot, subscribeToTheme } from "@/lib/theme";
 import { useBlogLocale } from "./BlogLocaleContext";
 import { useMermaidCamera } from "./useMermaidCamera";
 
 type MermaidDiagramProps = {
+  /** The drawing's size in both layouts, measured on the server (measureDiagramFrame); null leaves a fixed canvas. */
+  frame: DiagramFrame | null;
   source: string;
 };
 
@@ -33,6 +43,7 @@ type MermaidDiagramViewProps = {
   accessibleLabel: string;
   isRendering: boolean;
   containerRef?: Ref<HTMLElement>;
+  frame: DiagramFrame | null;
   reactId: string;
   resolvedTheme: "light" | "dark";
   source: string;
@@ -44,10 +55,49 @@ type MermaidCamera = ReturnType<typeof useMermaidCamera>;
 
 type MermaidToolbarProps = {
   camera: MermaidCamera;
+  /** An invisible stand-in that holds the header's toolbar column, so the caption wraps the same before the drawing. */
+  isPlaceholder?: boolean;
   ui: MermaidUi;
 };
 
 const ZOOM_BUTTON_STEP = 0.25;
+// Diagrams start drawing about a screen before they scroll in, so the renderer and the code face's bold and italic
+// cuts stay off the network for readers who never reach them.
+const RENDER_AHEAD_MARGIN = "100% 0px";
+const SVG_ITALIC = /font-style(?:="|:\s*)italic/;
+
+// The canvas takes the drawing's own proportions (globals.css caps the height), so a short tree gets a short frame
+// and a tall flow keeps its labels near body size instead of shrinking into a fixed box. The size comes from the
+// server's measurement of both layouts, so the skeleton already has it and the drawing lands without moving the page.
+function getFrameStyle(frame: DiagramFrame | null): CSSProperties | undefined {
+  if (!frame) {
+    return undefined;
+  }
+
+  return {
+    "--blog-mermaid-compact-ratio": `${frame.compact.width} / ${frame.compact.height}`,
+    "--blog-mermaid-compact-height": `${frame.compact.height}px`,
+    "--blog-mermaid-wide-ratio": `${frame.wide.width} / ${frame.wide.height}`,
+    "--blog-mermaid-wide-height": `${frame.wide.height}px`,
+  } as CSSProperties;
+}
+
+function loadDiagramFonts(source: string, styles: readonly string[]) {
+  return Promise.all(styles.map(style => document.fonts.load(`${style} 16px MonoLisaCode`, source)));
+}
+
+function subscribeToNothing() {
+  return () => {};
+}
+
+// False in the server markup and true once React owns the page, so a page without scripts never claims it is loading.
+function useIsHydrated() {
+  return useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
+}
 
 function runCameraCommand(command: () => void) {
   playInteractionSound("tap");
@@ -62,6 +112,7 @@ function MermaidDiagramViewForSource({
   accessibleDescription,
   accessibleLabel,
   containerRef,
+  frame,
   isRendering,
   reactId,
   resolvedTheme,
@@ -74,7 +125,10 @@ function MermaidDiagramViewForSource({
   const isCurrentError = state.status === "error" && state.renderedSource === source;
   const renderedSvg = isReady ? state.svg : null;
   const camera = useMermaidCamera({ isReady, renderedSvg, zoomStatus: ui.zoomStatus });
-  const isBusy = isRendering || (!isReady && !isCurrentError);
+  const isHydrated = useIsHydrated();
+  const isLoading = isRendering || (!isReady && !isCurrentError);
+  // The server-rendered skeleton waits on scripts that may never run, so only a hydrated or drawn diagram is busy.
+  const isBusy = isLoading && (isHydrated || isReady);
   const labelId = `${reactId}-label`;
   const descriptionId = `${reactId}-description`;
   const keyboardId = `${reactId}-keyboard`;
@@ -102,10 +156,13 @@ function MermaidDiagramViewForSource({
     <figure
       ref={containerRef}
       className="blog-mermaid"
-      aria-busy={isBusy}
+      aria-busy={isBusy || undefined}
+      data-rendering={isRendering || undefined}
+      data-frame={frame ? "reserved" : undefined}
       data-state={visualState}
       data-theme={resolvedTheme}
       data-zoom={camera.zoomPercent}
+      style={getFrameStyle(frame)}
     >
       <figcaption
         id={labelId}
@@ -155,7 +212,23 @@ function MermaidDiagramViewForSource({
           <code>{source}</code>
         </pre>
       ) : (
-        <div className="blog-mermaid-visual blog-mermaid-skeleton" aria-hidden="true" />
+        <>
+          <MermaidToolbar camera={camera} isPlaceholder ui={ui} />
+          {/* Without scripts the drawing never arrives, so the reserved canvas gives way to its description. The
+              parsed fallback only exists when scripting is off, which is what the stylesheet keys on. */}
+          {accessibleDescription ? (
+            <noscript>
+              <p className="blog-mermaid-visual blog-mermaid-fallback" aria-hidden="true" lang={locale}>
+                {accessibleDescription}
+              </p>
+            </noscript>
+          ) : null}
+          <div
+            className="blog-mermaid-visual blog-mermaid-skeleton"
+            aria-hidden="true"
+            data-description={accessibleDescription || undefined}
+          />
+        </>
       )}
 
       <div className="sr-only" aria-atomic="true" role="status">
@@ -165,12 +238,15 @@ function MermaidDiagramViewForSource({
   );
 }
 
-function MermaidToolbar({ camera, ui }: MermaidToolbarProps) {
+function MermaidToolbar({ camera, isPlaceholder = false, ui }: MermaidToolbarProps) {
   return (
     <div
       className="blog-mermaid-toolbar"
+      aria-hidden={isPlaceholder || undefined}
       aria-label={ui.toolbar}
+      data-placeholder={isPlaceholder || undefined}
       data-zoomed={camera.isZoomed ? "true" : "false"}
+      inert={isPlaceholder || undefined}
       role="toolbar"
     >
       <Button
@@ -212,40 +288,56 @@ function MermaidToolbar({ camera, ui }: MermaidToolbarProps) {
   );
 }
 
-export default function MermaidDiagram({ source }: MermaidDiagramProps) {
+export default function MermaidDiagram({ frame, source }: MermaidDiagramProps) {
   const reactId = useId();
-  const [maxWidth, setMaxWidth] = useState<number | null>(null);
+  const [layout, setLayout] = useState<DiagramLayout | null>(null);
   const themeSnapshot = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
   const { resolvedTheme } = parseThemeSnapshot(themeSnapshot);
   const accessibleLabel = getMermaidAccessibleLabel(source);
   const accessibleDescription = getMermaidAccessibleDescription(source);
   const [state, setState] = useState<MermaidState>({ status: "loading" });
-  const [isRendering, setIsRendering] = useState(true);
+  const [isRendering, setIsRendering] = useState(false);
+
+  const [isNearViewport, setIsNearViewport] = useState(false);
 
   const containerRef = useCallback((container: HTMLElement | null) => {
     if (!container) {
       return;
     }
 
-    const observer = new ResizeObserver(entries => {
+    const resizeObserver = new ResizeObserver(entries => {
       const width = entries[0]?.contentRect.width;
 
+      // Only crossing the layout width redraws: within a layout the camera refits the same drawing to the frame.
       if (width && width > 0) {
-        setMaxWidth(Math.floor(width));
+        setLayout(getDiagramLayout(width));
       }
     });
+    const proximityObserver = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setIsNearViewport(true);
+          proximityObserver.disconnect();
+        }
+      },
+      { rootMargin: RENDER_AHEAD_MARGIN },
+    );
 
-    observer.observe(container);
+    resizeObserver.observe(container);
+    proximityObserver.observe(container);
 
-    return () => observer.disconnect();
+    return () => {
+      resizeObserver.disconnect();
+      proximityObserver.disconnect();
+    };
   }, []);
 
   useEffect(() => {
-    if (maxWidth === null) {
+    if (layout === null || !isNearViewport) {
       return;
     }
 
-    const layoutWidth = maxWidth;
+    const layoutWidth = DIAGRAM_LAYOUT_WIDTHS[layout];
     let cancelled = false;
 
     setIsRendering(true);
@@ -253,23 +345,36 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     async function renderDiagram() {
       try {
         const id = `mermaid-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-        const { createPeleTextMeasurer, renderPeleDiagram } = await import("@/lib/pele-renderer");
+        const { createPeleTextMeasurer, PELE_FONT_WEIGHTS, renderPeleDiagram } = await import("@/lib/pele-renderer");
+        const uprightStyles = Object.values(PELE_FONT_WEIGHTS).map(String);
+        const render = () =>
+          renderPeleDiagram(source, {
+            idPrefix: id,
+            maxWidth: layoutWidth,
+            measurer: createPeleTextMeasurer(),
+          });
 
-        await Promise.all(
-          ["700", "800", "italic 700", "italic 800"].map(weight =>
-            document.fonts.load(`${weight} 16px MonoLisaCode`, source),
-          ),
-        );
+        await loadDiagramFonts(source, uprightStyles);
 
         if (cancelled) {
           return;
         }
 
-        const svg = renderPeleDiagram(source, {
-          idPrefix: id,
-          maxWidth: layoutWidth,
-          measurer: createPeleTextMeasurer(),
-        });
+        let svg = render();
+
+        // Only a label that asks for italics pays for the italic face; it is measured again once that face is in.
+        if (SVG_ITALIC.test(svg)) {
+          await loadDiagramFonts(
+            source,
+            uprightStyles.map(weight => `italic ${weight}`),
+          );
+
+          if (cancelled) {
+            return;
+          }
+
+          svg = render();
+        }
 
         if (!cancelled) {
           setState({ status: "ready", renderedSource: source, svg });
@@ -292,13 +397,14 @@ export default function MermaidDiagram({ source }: MermaidDiagramProps) {
     return () => {
       cancelled = true;
     };
-  }, [maxWidth, reactId, source]);
+  }, [isNearViewport, layout, reactId, source]);
 
   return (
     <MermaidDiagramView
       accessibleDescription={accessibleDescription}
       containerRef={containerRef}
       accessibleLabel={accessibleLabel}
+      frame={frame}
       isRendering={isRendering}
       reactId={reactId}
       resolvedTheme={resolvedTheme}

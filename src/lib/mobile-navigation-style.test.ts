@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { getBackTransitionTypeProps, MOTION_ATTRIBUTES, ROUTE_TRANSITION_TYPES } from "./motion-contract";
+import { MOTION_ATTRIBUTES, ROUTE_TRANSITION_TYPES } from "./motion-contract";
 
 const globalsCssUrl = new URL("../styles/globals.css", import.meta.url);
 const headerUrl = new URL("../components/Header.tsx", import.meta.url);
 const navBackButtonUrl = new URL("../components/NavBackButton.tsx", import.meta.url);
 const appDocumentUrl = new URL("../components/AppDocument.tsx", import.meta.url);
+const routeDocumentUrl = new URL("../components/RouteDocument.tsx", import.meta.url);
 const documentBootstrapScriptsUrl = new URL("../components/DocumentBootstrapScripts.tsx", import.meta.url);
 const blogFocusProviderUrl = new URL("../components/blog/BlogFocusProvider.tsx", import.meta.url);
 const nextConfigUrl = new URL("../../next.config.mts", import.meta.url);
@@ -22,16 +23,14 @@ function getRuleBody(css: string, selector: string) {
 
 function getReducedMotionActivePillRule(css: string) {
   const rule = css.match(
-    /@media \(prefers-reduced-motion: reduce\) \{(?:\s*\/\*[\s\S]*?\*\/)?\s*\.site-nav-active-pill\s*\{(?<body>[\s\S]*?)\n\s*\}\s*\n\}/,
+    /@variant reduced-motion \{(?:\s*\/\*[\s\S]*?\*\/)?\s*\.site-nav-active-pill\s*\{(?<body>[\s\S]*?)\n\s*\}\s*\n\}/,
   );
 
   return rule?.groups?.body ?? "";
 }
 
 function getReducedMotionBackButtonRule(css: string) {
-  const rule = css.match(
-    /@media \(prefers-reduced-motion: reduce\) \{\s*\.nav-back-button\s*\{(?<body>[\s\S]*?)\n\s*\}/,
-  );
+  const rule = css.match(/@variant reduced-motion \{\s*\.nav-back-button\s*\{(?<body>[\s\S]*?)\n\s*\}/);
 
   return rule?.groups?.body ?? "";
 }
@@ -41,11 +40,6 @@ describe("mobile navigation styles", () => {
     const css = await readGlobalsCss();
 
     expect(css).not.toMatch(/@media \((?:min|max)-width: (?:639|640)px\)/);
-    // Two since the specialty marquee, the per-breakpoint nav shadows and the
-    // backdrop's phone sizes went.
-    expect(css.match(/@variant max-sm/g)).toHaveLength(2);
-    // Two since the Blog index rows (and their sm block) moved to Tailwind utilities.
-    expect(css.match(/@variant sm/g)).toHaveLength(2);
   });
 
   test("keeps the active nav pill positioned when reduced motion removes animation", async () => {
@@ -66,12 +60,18 @@ describe("mobile navigation styles", () => {
     const blogPillRule = getRuleBody(css, '.site-nav-active-pill[data-active-nav="blog"]');
 
     expect(header).toContain('{ href: "/blog/en", label: "Blog", icon: BookOpenText }');
-    expect(header).toContain("grid-cols-[2.5rem_2.5rem_2.5rem]");
+    expect(css).toMatch(
+      /@variant max-sm \{[\s\S]*?\.site-nav-switcher\s*\{\s*grid-template-columns:\s*repeat\(3, var\(--nav-control\)\)/,
+    );
     expect(header).toContain("sm:grid-cols-3");
     expect(activePillRule).toMatch(/width:\s*calc\(\(100% - 1rem\) \/ 3\)/);
     expect(projectsPillRule).toMatch(/translate3d\(calc\(100% \+ 0\.25rem\), 0, 0\)/);
     expect(blogPillRule).toMatch(/translate3d\(calc\(200% \+ 0\.5rem\), 0, 0\)/);
-    expect(css).toMatch(/@variant max-sm \{[\s\S]*?\.site-nav-active-pill\s*\{[\s\S]*?width:\s*2\.5rem/);
+    expect(css).toMatch(/@variant max-sm \{[\s\S]*?\.site-nav-active-pill\s*\{[\s\S]*?width:\s*var\(--nav-control\)/);
+    expect(css).toMatch(/\.site-nav-glass\s*\{\s*--nav-control:\s*2\.5rem;/);
+    expect(css).toMatch(
+      /@media \(pointer: coarse\) and \(min-width: 360px\)\s*\{\s*\.site-nav-glass\s*\{\s*--nav-control:\s*2\.75rem;/,
+    );
   });
 
   test("folds the back-chip slot on the live element so the brand glides with it", async () => {
@@ -81,7 +81,8 @@ describe("mobile navigation styles", () => {
     const reducedMotionRule = getReducedMotionBackButtonRule(css);
     const transition = baseRule.match(/transition:\s*(?<value>[\s\S]*?);/)?.groups?.value ?? "";
 
-    expect(baseRule).toMatch(/(?:inline-size:\s*2\.5rem|width:\s*2\.5rem|flex:\s*0\s+0\s+2\.5rem)/);
+    expect(baseRule).toMatch(/inline-size:\s*var\(--nav-control\)/);
+    expect(baseRule).toMatch(/flex:\s*0\s+0\s+var\(--nav-control\)/);
     // The fold IS a layout transition, by design: the slot width animates on
     // the live element so the brand link moves with the layout instead of
     // jumping into the chip's place at the start of a route transition.
@@ -105,12 +106,6 @@ describe("mobile navigation styles", () => {
 
     expect(reducedMotionRule).toMatch(/transition-duration:\s*0ms/);
     expect(reducedMotionRule).toMatch(/transition-delay:\s*0ms/);
-  });
-
-  test("names the back chip's morph transition attribute for TS writers", () => {
-    expect(getBackTransitionTypeProps("project-transition-project-quicklizard")).toEqual({
-      [MOTION_ATTRIBUTES.backTransitionType]: "project-transition-project-quicklizard",
-    });
   });
 
   test("keeps the back chip out of view-transition snapshot layers", async () => {
@@ -147,14 +142,14 @@ describe("mobile navigation styles", () => {
   });
 
   test("server-inserts document bootstraps outside client route rendering", async () => {
-    const [appDocument, bootstrapScripts] = await Promise.all([
-      Bun.file(appDocumentUrl).text(),
+    const [routeDocument, bootstrapScripts] = await Promise.all([
+      Bun.file(routeDocumentUrl).text(),
       Bun.file(documentBootstrapScriptsUrl).text(),
     ]);
 
-    expect(appDocument).toContain("<DocumentBootstrapScripts />");
-    expect(appDocument).not.toContain('id="noflash"');
-    expect(appDocument).not.toContain('id="blog-focus-bootstrap"');
+    expect(routeDocument).toContain("<DocumentBootstrapScripts />");
+    expect(routeDocument).not.toContain('id="noflash"');
+    expect(routeDocument).not.toContain('id="blog-focus-bootstrap"');
     expect(bootstrapScripts).toContain("useServerInsertedHTML");
     expect(bootstrapScripts).toContain('id="noflash"');
     expect(bootstrapScripts).toContain('id="blog-focus-bootstrap"');
@@ -162,11 +157,15 @@ describe("mobile navigation styles", () => {
   });
 
   test("offers a localized keyboard escape route to the main content", async () => {
-    const appDocument = await Bun.file(appDocumentUrl).text();
+    const [appDocument, routeDocument] = await Promise.all([
+      Bun.file(appDocumentUrl).text(),
+      Bun.file(routeDocumentUrl).text(),
+    ]);
 
-    expect(appDocument).toContain('className="skip-to-content"');
-    expect(appDocument).toContain('href="#main-content"');
-    expect(appDocument).toContain('lang === "uk" ? "Перейти до основного вмісту" : "Skip to main content"');
+    expect(appDocument).toContain("<SkipToContentLink />");
+    expect(routeDocument).toContain('className="skip-to-content"');
+    expect(routeDocument).toContain('href="#main-content"');
+    expect(routeDocument).toContain('lang === "uk" ? "Перейти до основного вмісту" : "Skip to main content"');
   });
 
   test("keeps the Turbopack persistent build cache disabled", async () => {

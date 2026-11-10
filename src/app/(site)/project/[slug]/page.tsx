@@ -6,16 +6,18 @@ import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
 import AsciiField from "@/components/AsciiField";
 import AutoPauseVideo from "@/components/AutoPauseVideo";
+import MermaidDiagram from "@/components/blog/MermaidDiagram";
 import ProjectCard from "@/components/ProjectCard";
-import { buttonVariants } from "@/components/ui/button-variants";
 import { createPageMetadata, createProjectSocialImage } from "@/lib/metadata";
-import { getBackTransitionTypeProps, ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { ROUTE_TRANSITION_TYPES, suppressEntryMotionProps } from "@/lib/motion-contract";
+import { measureDiagramFrame } from "@/lib/pele-renderer";
 import {
   getAdjacentProjects,
   getProjectBySlug,
   getProjectPath,
   getProjectTransitionType,
   type Project,
+  type ProjectEvidence,
   projects,
 } from "@/lib/projects";
 import { cn } from "@/lib/utils";
@@ -59,18 +61,20 @@ function Container({ children, className }: { children: React.ReactNode; classNa
 }
 
 /*
- * The case's hero picture. It shares its view-transition name with the
- * project's picture on the index and in the adjacent entries, so arriving from
- * either morphs the picture into place. The frame keeps the same 16:10 shape as
- * those entries, so the morph only scales and moves.
+ * The case's cover: the client's own art, set secondary to the copy beside it.
+ * It shares its view-transition name with the project's picture on the index
+ * and in the adjacent entries, so arriving from either morphs the picture into
+ * place. The frame keeps the same 16:10 shape as those entries, so the morph
+ * only scales and moves.
  */
 function ProjectHeroMedia({ project }: { project: Project }) {
   const media = project.media;
   const transitionType = getProjectTransitionType(project);
   const backgroundColor = media.type === "image" ? media.backgroundColor : undefined;
 
+  // Unpainted for the same reason as ProjectMediaLink: only the named frame carries the fill.
   return (
-    <div className="relative aspect-[16/10] rounded-lg bg-muted" style={{ backgroundColor }}>
+    <div className="relative aspect-[16/10] rounded-lg">
       <ViewTransition
         name={`project-media-${project.id}`}
         share={{ [transitionType]: ROUTE_TRANSITION_TYPES.morph, default: "none" }}
@@ -82,7 +86,7 @@ function ProjectHeroMedia({ project }: { project: Project }) {
               src={media.src}
               alt={media.alt}
               fill
-              sizes="(min-width: 1024px) 66vw, 100vw"
+              sizes="(min-width: 1280px) 500px, (min-width: 1024px) 40vw, 100vw"
               preload
               className="shared-project-media object-cover"
             />
@@ -106,6 +110,31 @@ function ProjectHeroMedia({ project }: { project: Project }) {
   );
 }
 
+/* Contributions are numbered 01, 02, … in the list and wherever the evidence figure points back to one. */
+function formatContributionNumber(index: number) {
+  return String(index + 1).padStart(2, "0");
+}
+
+/*
+ * The case's evidence: one diagram of the engineering behind a contribution, in the article diagram's
+ * frame, with a caption that names the contribution it illustrates. The brand art stays the cover.
+ */
+function EvidenceFigure({ evidence }: { evidence: ProjectEvidence }) {
+  return (
+    <figure className="case-evidence grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-x-8">
+      <div className="min-w-0 lg:col-span-7">
+        <MermaidDiagram frame={measureDiagramFrame(evidence.diagram)} source={evidence.diagram} />
+      </div>
+      <figcaption className="max-w-[48ch] text-pretty text-base leading-7 text-muted-foreground lg:col-span-4 lg:col-start-9 lg:pt-3">
+        <span className="font-bold text-foreground">
+          Contribution {formatContributionNumber(evidence.contributionIndex)}.
+        </span>{" "}
+        {evidence.caption}
+      </figcaption>
+    </figure>
+  );
+}
+
 /* A readout row: what is measured on the left, the value beside it. */
 function ReadoutRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -125,21 +154,16 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   const { previousProject, nextProject } = getAdjacentProjects(project);
-  const projectTransitionType = getProjectTransitionType(project);
 
   return (
-    <main
-      id="main-content"
-      tabIndex={-1}
-      className="flex w-full flex-col"
-      {...getBackTransitionTypeProps(projectTransitionType)}
-    >
+    <main id="main-content" tabIndex={-1} className="flex w-full flex-col">
       {/* The case opens on its name across the page, set on the site's ASCII field. The field's box
-          runs from just below the nav's first 64px to the foot of the name, so it ends above the
-          picture and never sits under it; the headline and action start level with the picture. */}
+          runs from just below the nav's first 64px to the foot of the name (on phones, through the
+          gap under it, so the trace beside the name clears the field's bottom fade), and ends above
+          the picture, never under it; the headline and action start level with the picture. */}
       <section aria-labelledby="project-title" className="relative isolate" data-ascii-host="">
-        <div className="relative pt-52 lg:pt-32">
-          <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" placement="around" />
+        <div className="relative pt-36 lg:pt-32">
+          <AsciiField className="absolute inset-x-0 top-16 -bottom-10 -z-10 lg:bottom-0" placement="around" />
           <Container>
             <h1
               id="project-title"
@@ -152,57 +176,60 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </div>
 
         <Container>
+          {/* The copy leads: the wider column opens with what the work changed, then the role and
+              scope behind it, with the product's own site a quiet way out at its foot. The client's
+              cover sits beside it as the narrower, secondary picture, and after it on phones. */}
           <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-x-8">
             <div
-              className="motion-rise motion-delay-1 flex min-w-0 flex-col items-start gap-8 lg:col-span-4"
+              className="motion-rise motion-delay-1 flex min-w-0 flex-col items-start gap-8 lg:col-span-7"
               data-ascii-avoid=""
             >
-              <p className="max-w-[36ch] text-pretty text-lead text-muted-foreground">{project.detail.headline}</p>
+              <p className="case-impact text-pretty font-bold text-foreground">{project.impact}</p>
+              <dl className="w-full border-t border-border">
+                <ReadoutRow label="Role">{project.role}</ReadoutRow>
+                <ReadoutRow label="Scope">
+                  <ul>
+                    {project.detail.scope.map(item => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </ReadoutRow>
+              </dl>
               {project.href ? (
                 <a
                   href={project.href}
-                  data-cuelume-press=""
-                  className={buttonVariants({ variant: "default", size: "lg" })}
+                  data-cuelume-tap=""
+                  className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-bold text-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent hover:decoration-current"
                   rel="noopener noreferrer"
                   target="_blank"
                 >
                   {project.name} website
-                  <ArrowUpRight data-icon="inline-end" strokeWidth={2.4} />
+                  <ArrowUpRight aria-hidden="true" className="size-4" strokeWidth={2.4} />
                 </a>
               ) : null}
             </div>
-            <div className="motion-rise motion-delay-2 min-w-0 lg:col-span-8">
+            <div className="motion-rise motion-delay-2 min-w-0 lg:col-span-5 lg:col-start-8">
               <ProjectHeroMedia project={project} />
             </div>
           </div>
         </Container>
       </section>
 
-      {/* The result first, then what the product is and the facts of the engagement. */}
+      {/* The engineering behind the claim, where a case has a diagram for it, then what the
+          product is and the rest of the engagement's facts. */}
       <section className="pt-section">
         <Container>
-          <p className="scroll-rise min-w-0 max-w-[34ch] text-balance break-words text-title font-black tracking-[-0.025em] text-foreground sm:text-section">
-            {project.impact}
-          </p>
+          {project.evidence ? <EvidenceFigure evidence={project.evidence} /> : null}
 
-          <div className="mt-stack grid gap-12 lg:grid-cols-12 lg:gap-x-8">
+          <div className={cn("grid gap-12 lg:grid-cols-12 lg:gap-x-8", project.evidence && "mt-stack")}>
             <div className="flex flex-col gap-6 lg:col-span-6">
-              <p className="text-pretty text-lead text-foreground">{project.description}</p>
-              <p className="max-w-[60ch] text-pretty text-base leading-7 text-muted-foreground">
-                {project.detail.context}
-              </p>
+              <p className="max-w-[38rem] text-pretty text-lead text-foreground">{project.detail.headline}</p>
+              <p className="case-body text-pretty text-foreground">{project.description}</p>
+              <p className="case-body text-pretty text-muted-foreground">{project.detail.context}</p>
             </div>
 
             <dl className="border-t border-border lg:col-span-5 lg:col-start-8">
-              <ReadoutRow label="Role">{project.role}</ReadoutRow>
               <ReadoutRow label="Product">{project.period}</ReadoutRow>
-              <ReadoutRow label="Scope">
-                <ul>
-                  {project.detail.scope.map(item => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </ReadoutRow>
               <ReadoutRow label="Focus">{project.tags.join(", ")}</ReadoutRow>
             </dl>
           </div>
@@ -226,10 +253,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   key={item}
                   className="grid grid-cols-[minmax(0,2.5rem)_minmax(0,1fr)] items-baseline gap-4 sm:gap-6"
                 >
-                  <span aria-hidden="true" className="text-title font-black tabular-nums text-accent">
-                    {String(index + 1).padStart(2, "0")}
+                  <span aria-hidden="true" className="text-title font-bold tabular-nums text-accent">
+                    {formatContributionNumber(index)}
                   </span>
-                  <p className="max-w-[60ch] text-base leading-7 text-foreground">{item}</p>
+                  <p className="case-body text-foreground">{item}</p>
                 </li>
               ))}
             </ol>
@@ -256,7 +283,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   href={getProjectPath(previousProject)}
                   transitionTypes={[ROUTE_TRANSITION_TYPES.navBack]}
                   {...suppressEntryMotionProps}
-                  data-cuelume-press=""
+                  data-cuelume-navigate=""
                   className="project-adjacent-link project-adjacent-link-previous -my-2 inline-flex min-h-11 items-center gap-2 self-start rounded-sm text-sm font-bold text-muted-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-foreground"
                 >
                   <ArrowLeft className="project-adjacent-arrow size-4" strokeWidth={2.4} />
@@ -272,7 +299,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   href={getProjectPath(nextProject)}
                   transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                   {...suppressEntryMotionProps}
-                  data-cuelume-press=""
+                  data-cuelume-navigate=""
                   className="project-adjacent-link project-adjacent-link-next -my-2 inline-flex min-h-11 items-center gap-2 self-start rounded-sm text-sm font-bold text-muted-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-foreground"
                 >
                   Next

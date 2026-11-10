@@ -1,6 +1,18 @@
 import type { Route } from "next";
 import type { StaticImageData } from "next/image";
 
+/*
+ * One diagram that shows the engineering behind a contribution. Every node, edge, and label restates
+ * a fact already written in the project's own copy; nothing is added that the copy does not say.
+ */
+export interface ProjectEvidence {
+  /** Mermaid flowchart source. Its accTitle heads the frame and its accDescr is the no-script fallback. */
+  diagram: string;
+  caption: string;
+  /** Zero-based index into `detail.contribution` of the item the diagram illustrates. */
+  contributionIndex: number;
+}
+
 export interface Project {
   id: string;
   slug: string;
@@ -19,7 +31,7 @@ export interface Project {
     outcome: string;
     scope: string[];
   };
-  accent: "amber" | "controlup" | "mint" | "quicklizard" | "rose" | "steel" | "violet";
+  evidence?: ProjectEvidence;
   media:
     | {
         type: "image";
@@ -63,7 +75,24 @@ export const projects: Project[] = [
         "Assistant actions IT admins can trust: approved together, scoped to their organization's license, and checked in production with Langfuse traces.",
       scope: ["Human-in-the-loop approvals", "MCP architecture", "Assistant frontend", "Agent-assisted delivery"],
     },
-    accent: "controlup",
+    evidence: {
+      diagram: `flowchart TD
+  accTitle: Approving several changes in one turn
+  accDescr: Before, Mastra's flow at the time blocked the turn on one approval after another. After, the approval layer shows every pending approval in the turn at once, an IT admin approves or rejects them together, and the stream carries on.
+  subgraph before["Before: turn blocked"]
+    direction LR
+    beforeFirst["Approval"] --> beforeNext["Next approval"]
+  end
+  subgraph after["After: approval layer"]
+    pending["Every pending approval in the turn, at once"] --> admin["IT admin approves or rejects them together"]
+    admin --> stream["Stream carries on"]
+  end
+  before ~~~ after
+  class pending focus`,
+      caption:
+        "Mastra's flow at the time blocked the turn on one approval after another. The approval layer shows every pending approval at once, so an IT admin can review several changes in one turn.",
+      contributionIndex: 0,
+    },
     media: {
       type: "image",
       src: "/images/controlup_preview.webp",
@@ -97,7 +126,6 @@ export const projects: Project[] = [
         "Pricing features that shipped behind feature flags and improved on production feedback, on a simpler stack and CI.",
       scope: ["Pricing dashboards", "Go backend endpoints", "Stack modernization"],
     },
-    accent: "quicklizard",
     media: {
       type: "image",
       src: "/images/quicklizard_preview.webp",
@@ -129,10 +157,21 @@ export const projects: Project[] = [
         "Led a cross-functional team of about 7 to 9 while staying hands-on, setting priorities with the CTO and coordinating delivery with the PM. Later, as a consultant, documented the migration in phases across off-hours windows, with cutover failure scenarios and mitigations, and presented it to the team.",
       ],
       outcome:
-        "A live commerce system where a bad architecture call would have hit real kitchens, drivers, and payments.",
+        "A live commerce system where a bad architecture call would have hit the kitchens, drivers, and payments.",
       scope: ["Solution architecture", "Team leadership", "Preview environments", "Delivery operations"],
     },
-    accent: "rose",
+    evidence: {
+      diagram: `flowchart TD
+  accTitle: A preview environment per pull request
+  accDescr: Labeling a pull request deploys it to its own namespace with a database, test data, RabbitMQ, and Jaeger tracing. GitHub Actions and Go handle the deploy and the cleanup, and the CTO, QA, and PM try the branch there before merge.
+  label["Label a pull request"] --> deploy["GitHub Actions and Go deploy and clean up"]
+  deploy --> namespace["Its own namespace: database, test data, RabbitMQ, Jaeger tracing"]
+  namespace --> review["CTO, QA, and PM try the branch before merge"]
+  class deploy focus`,
+      caption:
+        "Preview environments: a label on a pull request deploys the branch to its own namespace, so the CTO, QA, and PM could try it before merge.",
+      contributionIndex: 3,
+    },
     media: {
       type: "image",
       src: "/images/tso_preview.jpg",
@@ -143,27 +182,23 @@ export const projects: Project[] = [
     id: "project-clear-street-bank",
     slug: "clear-street-bank",
     name: "Clear Street Bank",
-    role: "Fintech engineering",
+    role: "Backend engineering",
     // No stable public URL for the product I worked on.
     href: null,
     period: "Banking",
-    description:
-      "Banking product work where reliability and restraint mattered more than flash. The specifics stay private.",
-    impact: "Fintech-facing product engineering; the details are confidential.",
-    tags: ["Fintech", "Banking", "Systems"],
+    description: "Backend work on a banking product, built against other teams' contracts. The specifics stay private.",
+    impact: "Nest.js microservices and the business logic around a Plaid integration.",
+    tags: ["Fintech", "Nest.js", "Plaid"],
     detail: {
-      headline: "A banking surface where reliability came first.",
-      context:
-        "I can't say much about the specifics, but it was the same careful product engineering any banking surface needs.",
+      headline: "Banking backend services, built ahead of integration.",
+      context: "I was on a team of backend engineers. Most of my work was in Nest.js microservices.",
       contribution: [
-        "Built fintech-facing product surfaces with reliability and restraint as the defaults.",
-        "Kept the implementation practical: clear surfaces, real service detail, low-noise UX.",
-        "Stayed inside what I can share publicly without touching confidential specifics.",
+        "Implemented contracts from other teams before the integration, which happened later.",
+        "Integrated Plaid and wrote the business logic around Plaid and the other services.",
       ],
-      outcome: "Solid banking product work that I keep deliberately light on public detail.",
-      scope: ["Fintech product UI", "Confidential delivery", "Service reliability"],
+      outcome: "I assembled the pieces against agreed contracts and schemas rather than live counterparts.",
+      scope: ["Nest.js microservices", "Plaid integration", "Contract-first services"],
     },
-    accent: "steel",
     media: {
       type: "image",
       src: "/images/clear_street_preview.jpg",
@@ -189,14 +224,11 @@ export const projects: Project[] = [
       contribution: [
         "Built the asynchronous frontend architecture for real-time verification, so verification status and updates reached users as they happened.",
         "Delivered the functionality required for regulatory certification by the deadline.",
-        "Worked in a regulated setting where correctness and timing were both business-critical.",
-        "Adapted fast as requirements shifted on the way to a key certification milestone.",
       ],
       outcome:
-        "Met a critical regulatory certification deadline, clearing the way for operations across the MENA region.",
+        "Verification status reached users as it happened, and the certification functionality shipped by the deadline.",
       scope: ["Async frontend architecture", "Real-time verification", "Regulated crypto"],
     },
-    accent: "mint",
     media: {
       type: "image",
       src: "/images/coinmena_preview.jpeg",
@@ -226,7 +258,6 @@ export const projects: Project[] = [
       outcome: "The work led to a UK team invitation with potential visa sponsorship.",
       scope: ["Node.js backend", "AWS video transcoding", "Multiplayer game rooms"],
     },
-    accent: "amber",
     media: {
       type: "video",
       src: "/videos/thisislanguage_preview.mp4",
@@ -255,10 +286,21 @@ export const projects: Project[] = [
         "Exposed PostgreSQL stored procedures as GraphQL APIs with PostGraphQL, so the React frontend could query them directly.",
         "Turned utility-management requirements into maintainable frontend screens.",
       ],
-      outcome: "A frontend and data-layer move that kept the live product working for everyday users.",
+      outcome: "A frontend and data-layer move that kept the live product working.",
       scope: ["AngularJS to React", "PostGraphQL APIs", "Utility operations"],
     },
-    accent: "violet",
+    evidence: {
+      diagram: `flowchart TD
+  accTitle: Stored procedures as GraphQL APIs
+  accDescr: The frontend moved from AngularJS to React. The React frontend queries GraphQL APIs directly, and PostGraphQL exposes the PostgreSQL stored procedures as those APIs.
+  angular["AngularJS frontend"] -- "migrated to" --> react["React frontend"]
+  react -- "queries directly" --> api["GraphQL APIs"]
+  api -- "exposed with PostGraphQL" --> procs["PostgreSQL stored procedures"]
+  class api focus`,
+      caption:
+        "PostGraphQL exposed the PostgreSQL stored procedures as GraphQL APIs, so the React frontend from the AngularJS migration could query them directly.",
+      contributionIndex: 1,
+    },
     media: {
       type: "image",
       src: "/images/huddle_preview_balanced.png",

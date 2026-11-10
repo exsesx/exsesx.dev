@@ -1,11 +1,13 @@
 import type { MDXComponents } from "mdx/types";
-import { type ComponentPropsWithoutRef, isValidElement, type ReactNode } from "react";
+import { type ComponentPropsWithoutRef, Fragment } from "react";
 import BlogTable from "@/components/blog/BlogTable";
 import Callout from "@/components/blog/Callout";
 import CodeBlock from "@/components/blog/CodeBlock";
 import Figure from "@/components/blog/Figure";
 import MermaidDiagram from "@/components/blog/MermaidDiagram";
 import SourceLink from "@/components/blog/SourceLink";
+import { getTextContent } from "@/lib/blog-text";
+import { measureDiagramFrame } from "@/lib/pele-renderer";
 
 type MdxFigcaptionProps = ComponentPropsWithoutRef<"figcaption"> & {
   "data-language"?: string;
@@ -13,7 +15,9 @@ type MdxFigcaptionProps = ComponentPropsWithoutRef<"figcaption"> & {
 
 function MdxPre({ children, className, ...props }: ComponentPropsWithoutRef<"pre">) {
   if (className?.split(" ").includes("mermaid")) {
-    return <MermaidDiagram source={getTextContent(children)} />;
+    const source = getTextContent(children);
+
+    return <MermaidDiagram frame={measureDiagramFrame(source)} source={source} />;
   }
 
   return (
@@ -38,20 +42,40 @@ function MdxFigcaption({ children, ...props }: MdxFigcaptionProps) {
   );
 }
 
-function getTextContent(node: ReactNode): string {
-  if (typeof node === "string" || typeof node === "number") {
-    return String(node);
+// Inline code wraps whole, but a token wider than the line has to break somewhere: offer the
+// break after its separators (max_concurrent_threads_per_ | session) instead of mid-word. <wbr>
+// adds no characters, so copying the token still yields it exactly. Highlighted block code
+// carries data-language and stays untouched.
+const LONG_INLINE_CODE_LENGTH = 24;
+const INLINE_CODE_BREAK_AFTER = /(?<=[_./-])/;
+
+function MdxCode({ children, ...props }: ComponentPropsWithoutRef<"code">) {
+  const isLongInlineToken =
+    typeof children === "string" && children.length > LONG_INLINE_CODE_LENGTH && !("data-language" in props);
+
+  if (!isLongInlineToken) {
+    return <code {...props}>{children}</code>;
   }
 
-  if (Array.isArray(node)) {
-    return node.map(getTextContent).join("");
-  }
+  let offset = 0;
+  const segments = children.split(INLINE_CODE_BREAK_AFTER).map(text => {
+    const segment = { start: offset, text };
 
-  if (isValidElement<{ children?: ReactNode }>(node)) {
-    return getTextContent(node.props.children);
-  }
+    offset += text.length;
 
-  return "";
+    return segment;
+  });
+
+  return (
+    <code {...props}>
+      {segments.map(segment => (
+        <Fragment key={segment.start}>
+          {segment.start > 0 ? <wbr /> : null}
+          {segment.text}
+        </Fragment>
+      ))}
+    </code>
+  );
 }
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
@@ -59,6 +83,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Callout,
     Figure,
     SourceLink,
+    code: MdxCode,
     figcaption: MdxFigcaption,
     pre: MdxPre,
     table: BlogTable,

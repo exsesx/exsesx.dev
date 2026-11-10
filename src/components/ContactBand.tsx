@@ -22,17 +22,17 @@ export default function ContactBand({ id, title, children }: { id: string; title
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <a
             href={SITE_PROFILE.links.booking}
-            data-cuelume-press=""
+            data-cuelume-tap=""
             className={buttonVariants({ variant: "default", size: "lg" })}
           >
             <CalendarDays data-icon="inline-start" strokeWidth={2.4} />
-            Schedule a conversation
+            Book a call
           </a>
           <ul className="flex flex-wrap gap-3" aria-label="Elsewhere">
             <li>
               <a
                 href={SITE_PROFILE.links.linkedin}
-                data-cuelume-press=""
+                data-cuelume-tap=""
                 className={buttonVariants({ variant: "glass", size: "lg" })}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -44,7 +44,7 @@ export default function ContactBand({ id, title, children }: { id: string; title
             <li>
               <a
                 href={SITE_PROFILE.links.github}
-                data-cuelume-press=""
+                data-cuelume-tap=""
                 className={buttonVariants({ variant: "glass", size: "lg" })}
                 rel="noopener noreferrer"
                 target="_blank"

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { getMermaidAccessibleDescription, getMermaidAccessibleLabel } from "./mermaid-theme";
-import { renderPeleDiagram } from "./pele-renderer";
+import { measureDiagramFrame, renderPeleDiagram } from "./pele-renderer";
+import { projects } from "./projects";
 
 const contentRoot = new URL("../content/blog/", import.meta.url).pathname;
 const diagrams: { path: string; source: string }[] = [];
@@ -62,6 +63,24 @@ describe("Pele flowchart renderer", () => {
     expect(second).not.toContain('id="first-title"');
   });
 
+  for (const { detail, evidence, slug } of projects) {
+    if (!evidence) {
+      continue;
+    }
+
+    test(`renders the ${slug} case-study evidence diagram at desktop and mobile widths`, () => {
+      expect(detail.contribution[evidence.contributionIndex]).toBeDefined();
+
+      for (const width of [320, 900]) {
+        const svg = renderDiagram(evidence.diagram, width);
+
+        expect(svg).toContain(getMermaidAccessibleLabel(evidence.diagram));
+        expect(svg).toContain(getMermaidAccessibleDescription(evidence.diagram) ?? "");
+        expect(svg).not.toMatch(/NaN|Infinity/);
+      }
+    });
+  }
+
   test("adapts a wide left-to-right diagram to a narrow container", () => {
     const source = diagrams.find(diagram => diagram.path === "safari-26-invisible-tint-sampler/en.mdx")?.source;
 
@@ -83,9 +102,18 @@ describe("Pele flowchart renderer", () => {
     expect(rootElement).not.toContain("max-width:100%");
   });
 
+  test("measures a frame for every authored diagram, so none renders unsized", () => {
+    const sources = [...diagrams.map(diagram => diagram.source), ...projects.flatMap(p => p.evidence?.diagram ?? [])];
+
+    for (const source of sources) {
+      expect(measureDiagramFrame(source)).not.toBeNull();
+    }
+  });
+
   test("rejects malformed input so the component can show its source fallback", () => {
     expect(() => renderDiagram('flowchart TD\n A["unfinished')).toThrow();
     expect(() => renderDiagram("sequenceDiagram\n A->>B: unsupported")).toThrow();
+    expect(measureDiagramFrame('flowchart TD\n A["unfinished')).toBeNull();
   });
 
   test("escapes authored markup and disables interactive links", () => {

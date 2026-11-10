@@ -31,12 +31,14 @@ function DrawerClose(props: DrawerPrimitive.Close.Props) {
 function DrawerContent({
   className,
   children,
+  keepMounted,
   ...props
 }: Omit<DrawerPrimitive.Popup.Props, "className"> & {
   className?: string;
+  keepMounted?: DrawerPrimitive.Portal.Props["keepMounted"];
 }) {
   return (
-    <DrawerPrimitive.Portal data-slot="drawer-portal">
+    <DrawerPrimitive.Portal data-slot="drawer-portal" keepMounted={keepMounted}>
       <DrawerPrimitive.Backdrop
         data-slot="drawer-overlay"
         className="cn-drawer-overlay dialog-backdrop fixed inset-0 z-[90] min-h-dvh opacity-[max(0,calc(1-var(--drawer-swipe-progress)))] transition-opacity duration-450 ease-[var(--ease-drawer)] select-none data-ending-style:pointer-events-none data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] data-starting-style:opacity-0 data-swiping:duration-0 supports-[-webkit-touch-callout:none]:absolute"
@@ -50,7 +52,7 @@ function DrawerContent({
           data-slot="drawer-popup"
           data-swipe-axis="y"
           className={cn(
-            "cn-drawer-popup group/drawer-popup pointer-events-auto fixed inset-x-0 bottom-0 z-[90] m-0 flex h-(--drawer-height,auto) max-h-[calc(100dvh-6rem)] min-h-0 w-auto origin-bottom transform-[translate3d(0,var(--drawer-swipe-movement-y),0)] flex-col rounded-t-[1.75rem] bg-background text-foreground shadow-panel ring-1 ring-foreground/10 transition-[transform,height,opacity] duration-450 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform outline-none select-none [interpolate-size:allow-keywords]",
+            "cn-drawer-popup group/drawer-popup pointer-events-auto fixed inset-x-0 bottom-0 z-[90] m-0 flex h-(--drawer-height,auto) max-h-[calc(100dvh-6rem)] min-h-0 w-auto origin-bottom transform-[translate3d(0,var(--drawer-swipe-movement-y),0)] flex-col rounded-t-[1.75rem] bg-background text-foreground shadow-panel ring-1 ring-foreground/10 transition-[transform,height,opacity] duration-450 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform select-none [interpolate-size:allow-keywords]",
             "after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-12 after:bg-(--drawer-bleed-background,var(--color-background))",
             "[--closed-transform:translate3d(0,calc(100%+2px),0)] data-ending-style:transform-(--closed-transform) data-ending-style:opacity-[0.9999] data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] data-starting-style:transform-(--closed-transform) data-swiping:duration-0 data-ending-style:data-swiping:duration-[calc(var(--drawer-swipe-strength)*400ms)]",
             className,

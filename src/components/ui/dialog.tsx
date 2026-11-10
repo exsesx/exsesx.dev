@@ -31,7 +31,7 @@ function DialogContent({
         data-slot="dialog-viewport"
         className={cn("fixed inset-0 z-[90] grid place-items-center overflow-y-auto p-4 sm:p-6", viewportClassName)}
       >
-        <DialogPrimitive.Popup data-slot="dialog-content" className={cn("w-full outline-none", className)} {...props} />
+        <DialogPrimitive.Popup data-slot="dialog-content" className={cn("w-full", className)} {...props} />
       </DialogPrimitive.Viewport>
     </DialogPrimitive.Portal>
   );

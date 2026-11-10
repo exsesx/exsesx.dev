@@ -94,14 +94,7 @@ export const BLOG_UI = {
   },
 } as const;
 
-// The index sets dates as a fixed-width column, so it uses one ISO-style stamp for every locale.
-const BLOG_DATE_STAMP_FORMATTER = new Intl.DateTimeFormat("en-CA", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  timeZone: "Europe/Warsaw",
-});
-
+// One date format per locale, shared by the index and the article header.
 const BLOG_DATE_FORMATTERS: Record<BlogLocale, Intl.DateTimeFormat> = {
   en: new Intl.DateTimeFormat("en-US", {
     day: "numeric",
@@ -148,8 +141,4 @@ export function resolveBlogBackHref(pathname: string): BlogIndexPath | null {
 
 export function formatBlogDate(value: string, locale: BlogLocale) {
   return BLOG_DATE_FORMATTERS[locale].format(new Date(value));
-}
-
-export function formatBlogDateStamp(value: string) {
-  return BLOG_DATE_STAMP_FORMATTER.format(new Date(value));
 }

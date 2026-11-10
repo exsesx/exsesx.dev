@@ -15,20 +15,19 @@ function getRuleBody(css: string, selector: string) {
 }
 
 describe("glass tier contracts", () => {
-  test("reserves refractive liquid glass for nav and dropdown chrome", async () => {
+  test("keeps the nav bar opaque and floating chrome to the dropdown, without refraction", async () => {
     const [css, header, dropdown] = await Promise.all([
       Bun.file(globalsUrl).text(),
       Bun.file(headerUrl).text(),
       Bun.file(dropdownUrl).text(),
     ]);
+    const surfaceRule = getRuleBody(css, ".site-nav-glass > .site-nav-surface");
 
-    expect(header).toMatch(/liquid-glass site-nav-surface/);
+    // Copy scrolling under the nav must never show through it.
+    expect(header).toMatch(/className="site-nav-surface"/);
+    expect(surfaceRule).toContain("background: var(--background);");
+    expect(surfaceRule).not.toContain("backdrop-filter");
     expect(dropdown).toMatch(/dropdown-menu liquid-glass/);
-    // The lens refracts menus only; the scrolling header keeps a plain frost.
-    expect(css).toMatch(
-      /@media \(min-width: 768px\) and \(hover: hover\) and \(pointer: fine\)[\s\S]*?html\.glass-lens \.dropdown-menu\.liquid-glass/,
-    );
-    expect(css).not.toMatch(/html\.glass-lens \.site-nav-glass\s*\{/);
     expect(css).not.toContain("-webkit-backdrop-filter");
   });
 
@@ -65,7 +64,7 @@ describe("glass tier contracts", () => {
     expect(`${home}\n${detail}`).not.toMatch(/hero-surface-panel[^"\n]*(?:liquid-glass|backdrop-blur)/);
   });
 
-  test("limits TSX liquid-glass usage to Header and the dropdown primitive", async () => {
+  test("limits TSX liquid-glass usage to the dropdown primitive", async () => {
     const glob = new Bun.Glob("src/**/*.tsx");
     const matches: string[] = [];
 
@@ -75,6 +74,6 @@ describe("glass tier contracts", () => {
       }
     }
 
-    expect(matches.sort()).toEqual(["src/components/Header.tsx", "src/components/ui/dropdown-menu.tsx"]);
+    expect(matches.sort()).toEqual(["src/components/ui/dropdown-menu.tsx"]);
   });
 });

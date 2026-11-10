@@ -3,10 +3,234 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * One motion gate. Motion is reduced when the OS asks for it or when the
+ * visitor turns Motion off in the theme menu, which the no-flash script marks
+ * as html[data-motion="off"] before the first paint. Wrap whole blocks in
+ * @variant reduced-motion / full-motion: every selector inside is read from
+ * the root, so a rule on html itself or a view-transition pseudo-element
+ * starts with `&`. Tailwind's motion-reduce: / motion-safe: utilities follow
+ * the same gate. Both paths keep each rule's own specificity.
+ */
+@custom-variant reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    :where(:root) {
+      @slot;
+    }
+  }
+
+  :where(:root[data-motion="off"]) {
+    @slot;
+  }
+}
+
+@custom-variant full-motion {
+  @media (prefers-reduced-motion: no-preference) {
+    :where(:root:not([data-motion="off"])) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+
+  &:where([data-motion="off"], [data-motion="off"] *) {
+    @slot;
+  }
+}
+
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:not(:where([data-motion="off"], [data-motion="off"] *)) {
+      @slot;
+    }
+  }
+}
+
+/*
+ * Metric-matched stand-ins for the first paint, before MonoLisa arrives
+ * (font-display: swap). The system faces set far narrower, so a cold load
+ * wrapped the article title onto fewer lines and swapping MonoLisa in pushed
+ * the page down. These faces scale a local font to MonoLisa's widths and give
+ * it MonoLisa's vertical metrics (ascent 1040, descent 340, no line gap, at
+ * 1000 units per em), so text keeps its lines through the swap. The overrides
+ * are divided by each face's scale because size-adjust scales them too.
+ *
+ * MonoLisaText is proportional, not monospaced: Verdana follows its widths
+ * closest of the common system faces (about 1.2 to 1.5% spread per string
+ * across the site's own Latin and Cyrillic copy, against 3.6% for Menlo).
+ * Verdana's bold cut widens more than MonoLisa does, so each weight band has
+ * its own scale, fitted at 400, 700 and 800. Where Verdana is missing, the
+ * stack falls through to the system faces as before.
+ */
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana");
+  font-weight: 1 549;
+  size-adjust: 100.64%;
+  ascent-override: 103.34%;
+  descent-override: 33.78%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 550 749;
+  size-adjust: 91.34%;
+  ascent-override: 113.86%;
+  descent-override: 37.22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 750 1000;
+  size-adjust: 92.02%;
+  ascent-override: 113.02%;
+  descent-override: 36.95%;
+  line-gap-override: 0%;
+}
+
+/*
+ * Glyphs whose widths differ from the letters' ratio get their own faces,
+ * declared after the text faces so they win for their code points:
+ *
+ * - The space is 18% narrower in MonoLisa than in Verdana at 400. Leaving it
+ *   on the letters' scale skewed strings by how many spaces they hold, and on
+ *   Ukrainian pages, where the preloaded Basic Latin face (spaces included)
+ *   usually lands before the Cyrillic one, it left Cyrillic text 1 to 2%
+ *   narrow until the Cyrillic face arrived.
+ * - "0" is set at MonoLisa's exact advance (0.667em at 400). The ch unit is
+ *   the width of "0" in the font that sets it, and the measures here are
+ *   capped in ch (max-w-[60ch] and the like), so this keeps those boxes as
+ *   wide before the swap as after.
+ * - Verdana's 1-9 are tabular and wider than MonoLisa's proportional digits;
+ *   they are scaled to MonoLisa's mean advance, weighted by how often each
+ *   digit appears in the site's copy.
+ */
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana");
+  font-weight: 1 549;
+  size-adjust: 82.20%;
+  ascent-override: 126.52%;
+  descent-override: 41.36%;
+  line-gap-override: 0%;
+  unicode-range: U+0020, U+00A0;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 550 749;
+  size-adjust: 89.53%;
+  ascent-override: 116.16%;
+  descent-override: 37.98%;
+  line-gap-override: 0%;
+  unicode-range: U+0020, U+00A0;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 750 1000;
+  size-adjust: 90.99%;
+  ascent-override: 114.30%;
+  descent-override: 37.37%;
+  line-gap-override: 0%;
+  unicode-range: U+0020, U+00A0;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana");
+  font-weight: 1 549;
+  size-adjust: 104.92%;
+  ascent-override: 99.12%;
+  descent-override: 32.41%;
+  line-gap-override: 0%;
+  unicode-range: U+0030;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 550 749;
+  size-adjust: 95.37%;
+  ascent-override: 109.05%;
+  descent-override: 35.65%;
+  line-gap-override: 0%;
+  unicode-range: U+0030;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 750 1000;
+  size-adjust: 95.79%;
+  ascent-override: 108.57%;
+  descent-override: 35.49%;
+  line-gap-override: 0%;
+  unicode-range: U+0030;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana");
+  font-weight: 1 549;
+  size-adjust: 91.57%;
+  ascent-override: 113.57%;
+  descent-override: 37.13%;
+  line-gap-override: 0%;
+  unicode-range: U+0031-0039;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 550 749;
+  size-adjust: 83.98%;
+  ascent-override: 123.84%;
+  descent-override: 40.49%;
+  line-gap-override: 0%;
+  unicode-range: U+0031-0039;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 750 1000;
+  size-adjust: 84.53%;
+  ascent-override: 123.03%;
+  descent-override: 40.22%;
+  line-gap-override: 0%;
+  unicode-range: U+0031-0039;
+}
+
+/* MonoLisaCode is monospaced at 0.64em; Menlo's 0.602em is scaled up to it. */
+@font-face {
+  font-family: "MonoLisaCode Fallback";
+  src: local("Menlo"), local("Menlo-Regular");
+  size-adjust: 106.3%;
+  ascent-override: 97.83%;
+  descent-override: 31.98%;
+  line-gap-override: 0%;
+}
+
 @theme inline {
-  --font-sans: MonoLisaText, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: MonoLisaText, ui-sans-serif, system-ui, sans-serif;
-  --font-mono: MonoLisaCode, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans:
+    MonoLisaText, "MonoLisaText Fallback", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-display: MonoLisaText, "MonoLisaText Fallback", ui-sans-serif, system-ui, sans-serif;
+  /* One heavy weight. 900 in a wide mono reads loud; 800 keeps the
+     headline's presence and gives prose room. */
+  --font-weight-black: 800;
+  --font-mono: MonoLisaCode, "MonoLisaCode Fallback", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   /* Type roles. MonoLisa sets wide, so the sizes run a step smaller than a
      narrower face would need; the hero head shares its screen with the field. */
   --text-display: clamp(2.75rem, 6.4vw + 0.5rem, 6.75rem);
@@ -17,6 +241,12 @@
   --text-title--line-height: 1.25;
   --text-lead: clamp(1.125rem, 0.35vw + 1rem, 1.3125rem);
   --text-lead--line-height: 1.5;
+  /* Small text has two steps: meta (bylines, dates, code, table text) and
+     caption (labels beside a figure, the contents list, chips). */
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.5;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.45;
   /* Rhythm. One scale for every page: section gaps grow with the screen and
      stop at 120, 144 and 176px; a head block sits a stack (64px) from its
      content. Named steps only, never Tailwind's sm/md/lg sizes. */
@@ -41,7 +271,6 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-inverse-hover: var(--inverse-hover);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -82,78 +311,68 @@
   --duration-floating-control-enter: 220ms;
   --duration-progress-retract: 280ms;
   --duration-move: 280ms;
-  /* Liquid glass: the rim is drawn with layered inset shadows (a crisp top
-     specular, soft curved corner light, and a bottom counter-shade) so every
-     glass surface reads as a curved lens instead of flat frosted plastic. */
-  --glass-blur: 12px;
-  --glass-saturate: 1.6;
-  --glass-brightness: 1.03;
-  --glass-rim-spec: rgba(255, 255, 255, 0.9);
-  --glass-rim-soft: rgba(255, 255, 255, 0.7);
-  --glass-rim-faint: rgba(255, 255, 255, 0.38);
-  --glass-rim-shade: rgba(11, 20, 35, 0.1);
-  /* Polar palette: arctic porcelain field, polar ink, electric ultramarine
-     signal that turns ice cyan at night. Winner of the 2026-06 palette lab
-     (vs indigo/periwinkle and the cross-pairs) — picked for boldness.
-     Cold axis throughout; the dark theme is the same world after sundown. */
-  --background: #eef2f8;
+  /* The light blur of a .liquid-glass sheet. The nav bar and menus are
+     opaque. No tinted rims, no refraction: depth comes from a hairline and a
+     short shadow. */
+  --glass-blur: 8px;
+  /* Graphite palette. Light is warm graphite: paper and ink with a hair of
+     warmth (Tailwind's stone family, pulled lighter), so the page reads as
+     paper rather than a gray screen. Dark is pure graphite (chroma 0). The
+     signal is ink on paper by day and a phosphor trace at night: cobalt in
+     light (blue keeps full chroma at text-safe contrast, where a 4.5:1 green
+     goes dull), monitor green in dark. It marks the pulse, links, focus and
+     selection. Faint washes of it (a few percent) may tint callouts and
+     pressed controls, and a focused diagram node may take it solid; it never
+     fills a page surface, a resting button or a heading. Depth comes from
+     small lightness steps, hairlines and short real shadows. */
+  --background: #f6f3ef;
   /* Solid color Safari 26 samples for chrome tint; mirrors --background, painted
      inline by the no-flash script so the live observer retints the bars. */
-  --safari-chrome-color: #eef2f8;
-  --foreground: #0b1423;
-  --card: color-mix(in oklab, #fbfdff 82%, transparent);
-  --card-foreground: #0b1423;
-  --primary: #0b1423;
-  --primary-foreground: #f3f7fd;
-  --secondary: color-mix(in oklab, #fbfdff 74%, white);
-  --secondary-foreground: #1c2638;
+  --safari-chrome-color: #f6f3ef;
+  --foreground: #1a1613;
+  --card: #fefdfa;
+  --card-foreground: #1a1613;
+  --primary: #1a1613;
+  --primary-foreground: #fefdfa;
+  --secondary: #fefdfa;
+  --secondary-foreground: #1a1613;
   --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
-  --muted: color-mix(in oklab, #fbfdff 66%, #dbe3ee);
-  --muted-foreground: #51607a;
-  --accent: #2440ff;
-  --accent-foreground: #f3f7fd;
-  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--ring) 18%);
+  --muted: #eae7e1;
+  --muted-foreground: #605a54;
+  --accent: #1552fe;
+  --accent-foreground: #ffffff;
   --destructive: #be123c;
-  --border: color-mix(in oklab, #0b1423 12%, transparent);
-  --input: color-mix(in oklab, #0b1423 10%, transparent);
-  --ring: #3d5afe;
-  --menu-shadow: 0 22px 70px rgba(11, 20, 35, 0.16);
-  --panel-shadow: 0 24px 70px rgba(11, 20, 35, 0.1);
+  --border: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --input: color-mix(in oklab, var(--foreground) 14%, transparent);
+  --ring: var(--accent);
+  --menu-shadow: 0 1px 2px rgb(26 22 19 / 0.05), 0 16px 40px -8px rgb(26 22 19 / 0.14);
+  --panel-shadow: 0 1px 2px rgb(26 22 19 / 0.04), 0 24px 60px -16px rgb(26 22 19 / 0.1);
   /* The close band's paper: one step off the page, opaque so the edge scale stops. */
-  --paper-band: #e4eaf3;
+  --paper-band: #eeebe7;
 }
 
 .dark {
-  --glass-saturate: 1.55;
-  --glass-brightness: 1.12;
-  /* Specular rims pick up a faint ice tint at night so the glass reads as
-     frozen, not neutral plastic. */
-  --glass-rim-spec: rgba(205, 233, 255, 0.26);
-  --glass-rim-soft: rgba(205, 233, 255, 0.15);
-  --glass-rim-faint: rgba(205, 233, 255, 0.07);
-  --glass-rim-shade: rgba(0, 0, 0, 0.5);
-  --background: #0a101c;
-  --safari-chrome-color: #0a101c;
-  --foreground: #eaf2fc;
-  --card: color-mix(in oklab, #111a2c 76%, transparent);
-  --card-foreground: #eaf2fc;
-  --primary: #eaf2fc;
-  --primary-foreground: #0b1423;
-  --secondary: color-mix(in oklab, #ffffff 8%, transparent);
-  --secondary-foreground: #e8eef8;
+  --background: #131313;
+  --safari-chrome-color: #131313;
+  --foreground: #ececec;
+  --card: #1c1c1c;
+  --card-foreground: #ececec;
+  --primary: #ececec;
+  --primary-foreground: #131313;
+  --secondary: #232323;
+  --secondary-foreground: #ececec;
   --secondary-hover: color-mix(in oklab, var(--secondary), var(--foreground) 5%);
-  --muted: color-mix(in oklab, #ffffff 7%, transparent);
-  --muted-foreground: #94a3b8;
-  --accent: #5ce1ff;
-  --accent-foreground: #0a101c;
-  --inverse-hover: color-mix(in oklab, var(--primary-foreground), var(--ring) 18%);
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #6ad895;
+  --accent-foreground: #131313;
   --destructive: #fb7185;
-  --border: color-mix(in oklab, #ffffff 12%, transparent);
-  --input: color-mix(in oklab, #ffffff 14%, transparent);
-  --ring: #5ce1ff;
-  --menu-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
-  --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
-  --paper-band: #101828;
+  --border: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --input: color-mix(in oklab, var(--foreground) 16%, transparent);
+  --ring: var(--accent);
+  --menu-shadow: 0 0 0 1px rgb(255 255 255 / 0.04), 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  --panel-shadow: 0 24px 60px -16px rgb(0 0 0 / 0.5);
+  --paper-band: #191919;
 }
 
 html,
@@ -228,7 +447,24 @@ select {
 
 * {
   box-sizing: border-box;
-  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+}
+
+/* One focus cue for the whole site: a solid outline survives forced colors,
+   where a box-shadow ring disappears. Controls clipped by their own frame draw
+   an inset outline in the same color below. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Popup panels take focus only to pass it on (Base UI refocuses the menu when the pointer leaves an item), so the
+   rule above, which outranks every layered outline-none, would ring the whole panel. Their items carry the cue. */
+:where([data-slot="dropdown-menu"], [data-slot="dialog-content"], [data-slot="drawer-popup"]):focus-visible {
+  outline: none;
 }
 
 ::selection {
@@ -246,14 +482,16 @@ select {
   border-radius: 0.75rem;
   color: var(--foreground);
   background: var(--background);
-  box-shadow: var(--menu-shadow);
   font-size: 0.875rem;
-  font-weight: 850;
+  font-weight: 800;
   text-decoration: none;
   transform: translateY(calc(-100% - max(env(safe-area-inset-top), 1rem)));
 }
 
+/* The shadow waits for focus: parked above the viewport, it would still
+   spill a smudge onto the top edge. */
 .skip-to-content:focus-visible {
+  box-shadow: var(--menu-shadow);
   transform: translateY(0);
 }
 
@@ -303,7 +541,7 @@ select {
   min-width: 0;
   color: var(--foreground);
   font-size: var(--text-section);
-  font-weight: 900;
+  font-weight: 800;
   line-height: var(--text-section--line-height);
   letter-spacing: -0.025em;
   overflow-wrap: break-word;
@@ -326,7 +564,7 @@ select {
   content: counter(workflow-step, decimal-leading-zero);
   font-size: var(--text-title);
   font-variant-numeric: tabular-nums;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -370,14 +608,14 @@ select {
   --ascii-base: var(--foreground);
   --ascii-glow: var(--accent);
   --ascii-base-alpha: 0.12;
-  --ascii-glow-alpha: 0.75;
+  --ascii-glow-alpha: 0.68;
   --ascii-trace-alpha: 0.42;
   font-family: var(--font-mono);
 }
 
 .dark .ascii-field {
   --ascii-base-alpha: 0.14;
-  --ascii-glow-alpha: 0.85;
+  --ascii-glow-alpha: 0.72;
   --ascii-trace-alpha: 0.5;
 }
 
@@ -398,8 +636,8 @@ html[data-season="pride"] .logo-mark-pride {
   filter: saturate(1.08) drop-shadow(0 0 0.18rem color-mix(in oklab, var(--accent) 24%, transparent));
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  html[data-season="pride"] .logo-mark-pride-stripes {
+@variant full-motion {
+  &[data-season="pride"] .logo-mark-pride-stripes {
     animation: logo-pride-stripes 6.4s linear infinite;
     transform-box: view-box;
     transform-origin: 0 0;
@@ -412,18 +650,23 @@ html[data-season="pride"] .logo-mark-pride {
   }
 }
 
+/* Forced colours drop the tile's fill but not the mark's, which left the V
+   near-black on a black system canvas. The mark takes the link colour and the
+   tile keeps its round edge as a system-colour ring. */
+@media (forced-colors: active) {
+  .logo-tile {
+    --logo-foreground: LinkText;
+    border: 1px solid LinkText;
+  }
+}
+
+/* Floating chrome material: a near-opaque sheet of the card surface with a
+   light blur behind it. Depth is a hairline and a short shadow, not a lens. */
 .liquid-glass {
-  border: 1px solid color-mix(in oklab, currentColor 10%, transparent);
-  background:
-    linear-gradient(135deg, rgba(251, 253, 255, 0.4), rgba(251, 253, 255, 0.12) 58%, rgba(251, 253, 255, 0.22)),
-    color-mix(in oklab, #fbfdff 24%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px var(--glass-rim-spec),
-    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
-    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
-    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 18px 50px rgba(11, 20, 35, 0.09);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  box-shadow: var(--menu-shadow);
+  backdrop-filter: blur(var(--glass-blur));
   transition:
     border-color 180ms var(--ease-weight),
     background-color 180ms var(--ease-weight),
@@ -431,86 +674,39 @@ html[data-season="pride"] .logo-mark-pride {
     transform 240ms var(--ease-weight);
 }
 
-.dark .liquid-glass {
-  background:
-    linear-gradient(135deg, rgba(20, 29, 48, 0.42), rgba(10, 16, 28, 0.14) 58%, rgba(20, 29, 48, 0.28)),
-    color-mix(in oklab, #0a101c 26%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px var(--glass-rim-spec),
-    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
-    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
-    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 18px 50px rgba(0, 0, 0, 0.26);
-}
-
 .glass-frost {
-  border: 1px solid color-mix(in oklab, currentColor 9%, transparent);
-  background:
-    linear-gradient(135deg, rgba(251, 253, 255, 0.46), rgba(251, 253, 255, 0.2)),
-    color-mix(in oklab, var(--background) 46%, transparent);
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 88%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white 58%, transparent),
-    0 10px 30px color-mix(in oklab, var(--foreground) 9%, transparent);
-  backdrop-filter: blur(7px) saturate(1.25);
+    0 1px 2px rgb(26 22 19 / 0.05),
+    0 8px 24px -8px rgb(26 22 19 / 0.12);
+  backdrop-filter: blur(7px);
 }
 
 .dark .glass-frost {
-  background:
-    linear-gradient(135deg, rgba(20, 29, 48, 0.48), rgba(10, 16, 28, 0.24)),
-    color-mix(in oklab, var(--background) 52%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white 14%, transparent),
-    0 10px 30px rgba(0, 0, 0, 0.24);
+    0 0 0 1px rgb(255 255 255 / 0.03),
+    0 8px 24px -8px rgb(0 0 0 / 0.5);
 }
 
+/* Menus are opaque: a popover is a surface step above the page, lifted by a
+   hairline and the menu shadow. */
 .dropdown-menu.liquid-glass {
-  border-color: color-mix(in oklab, var(--foreground) 10%, transparent);
-  background:
-    radial-gradient(circle at 78% 76%, color-mix(in oklab, var(--foreground) 5%, transparent), transparent 34%),
-    linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--background) 64%, transparent),
-      color-mix(in oklab, var(--background) 34%, transparent)
-    ),
-    color-mix(in oklab, var(--background) 44%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px var(--glass-rim-spec),
-    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
-    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
-    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 22px 70px rgba(11, 20, 35, 0.16);
+  border-color: var(--border);
+  background: var(--card);
+  box-shadow: var(--menu-shadow);
+  backdrop-filter: none;
 }
 
-.dark .dropdown-menu.liquid-glass {
-  border-color: color-mix(in oklab, var(--foreground) 13%, transparent);
-  background:
-    radial-gradient(circle at 78% 76%, color-mix(in oklab, white 6%, transparent), transparent 34%),
-    linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--background) 70%, transparent),
-      color-mix(in oklab, var(--background) 42%, transparent)
-    ),
-    color-mix(in oklab, var(--background) 50%, transparent);
-  box-shadow:
-    inset 0 1px 1px -0.5px var(--glass-rim-spec),
-    inset 1.5px 3px 6px -3px var(--glass-rim-soft),
-    inset -1.5px -2px 6px -3px var(--glass-rim-faint),
-    inset 0 -1px 1px -0.5px var(--glass-rim-shade),
-    0 22px 70px rgba(0, 0, 0, 0.34);
-}
-
-.dropdown-menu-item[data-highlighted]:not([data-checked]) {
+/* One selection language with the nav: the chosen item is marked by its check
+   and weight, never a fill; the pointer or focus gets the same quiet wash on
+   every item, chosen or not. */
+.dropdown-menu-item[data-highlighted] {
   background: color-mix(in oklab, var(--foreground) 6%, transparent);
 }
 
-.dark .dropdown-menu-item[data-highlighted]:not([data-checked]) {
+.dark .dropdown-menu-item[data-highlighted] {
   background: color-mix(in oklab, var(--foreground) 8%, transparent);
-}
-
-.dropdown-menu-radio-item[data-checked],
-.dropdown-menu-radio-item[data-checked][data-highlighted] {
-  color: var(--primary-foreground);
-  background: var(--primary);
 }
 
 .cv-share-state-layer {
@@ -865,11 +1061,9 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   );
 }
 
-/* The capsule paints nothing itself: its material is the surface layer
-   below, so the glass can fade in as one piece (blur, fill and rim together)
-   on opacity alone, which the compositor runs without repainting. */
-/* No isolation or other group effect here: an ancestor that groups its
-   content can cut the surface's blur off from the page behind it. */
+/* The capsule paints nothing itself: its surface is the layer below, so the
+   bar can fade in as one piece (fill, hairline and shadow together) on
+   opacity alone, which the compositor runs without repainting. */
 .site-nav-glass {
   position: relative;
   width: 100%;
@@ -885,94 +1079,87 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   z-index: 1;
 }
 
-/* A thick frost, opaque enough that copy under it never reads crisply. The
-   edge is light on the material, not a drawn box: a faint outer hairline
-   and a diffuse shadow lift it off light paper, the ring below catches the
-   light along the top. */
+/* An opaque strip of the page: nothing under it shows through, so copy never
+   smears behind the tabs. The edge is a hairline and a short shadow. */
 .site-nav-glass > .site-nav-surface {
   position: absolute;
   inset: -1px;
   z-index: 0;
-  border-color: transparent;
   border-radius: inherit;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 60%), color-mix(in oklab, #fbfdff 66%, transparent);
+  background: var(--background);
   box-shadow:
-    0 0 0 0.5px rgba(11, 20, 35, 0.09),
-    0 1px 2px rgba(11, 20, 35, 0.04),
-    0 14px 30px -14px rgba(11, 20, 35, 0.22);
-  backdrop-filter: blur(20px) saturate(1.5);
+    0 0 0 1px var(--border),
+    0 1px 2px rgb(26 22 19 / 0.05),
+    0 10px 24px -14px rgb(26 22 19 / 0.16);
   pointer-events: none;
   transition: none;
 }
 
 .dark .site-nav-glass > .site-nav-surface {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 60%), color-mix(in oklab, #0a101c 64%, transparent);
   box-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.5),
-    0 16px 34px -12px rgba(0, 0, 0, 0.6);
-}
-
-/* Specular ring: one pixel of light, strongest along the top edge and
-   fading down the sides, with a faint return along the bottom. */
-.site-nav-surface::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  padding: 1px;
-  border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.95),
-    rgba(255, 255, 255, 0.35) 38%,
-    rgba(255, 255, 255, 0.12) 70%,
-    rgba(255, 255, 255, 0.45)
-  );
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  pointer-events: none;
-}
-
-.dark .site-nav-surface::after {
-  background: linear-gradient(
-    180deg,
-    rgba(214, 232, 255, 0.24),
-    rgba(214, 232, 255, 0.08) 38%,
-    rgba(214, 232, 255, 0.03) 70%,
-    rgba(214, 232, 255, 0.1)
-  );
-}
-
-/*
- * Liquid lens refraction — Chromium only (html.glass-lens, set by the layout
- * bootstrap script). The SVG displacement filter in <LiquidGlassLens /> bends
- * the frosted backdrop at the rim like a convex lens. Other engines drop the
- * entire backdrop-filter when the list contains url(), so this MUST stay
- * behind the .glass-lens gate or Safari/Firefox lose the blur completely.
- * Menus only: on the scrolling header the lens samples past its rim and
- * Chromium leaves stale pixels behind as content moves under it.
- */
-@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  html.glass-lens .dropdown-menu.liquid-glass {
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness))
-      url("#liquid-lens");
-  }
+    0 0 0 1px var(--border),
+    0 12px 28px -12px rgb(0 0 0 / 0.6);
 }
 
 /* Transparency is a preference, not a requirement: collapse every glass
-   surface to a near-solid panel and drop the expensive blur entirely. */
+   surface to an opaque panel and drop the blur entirely. */
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass,
   .glass-frost,
-  .site-nav-glass > .site-nav-surface,
-  .site-nav-active-pill-body,
-  .dropdown-menu.liquid-glass,
-  html.glass-lens .dropdown-menu.liquid-glass {
-    background: color-mix(in oklab, var(--background) 94%, var(--foreground) 4%);
+  .dropdown-menu.liquid-glass {
+    background: var(--card);
     backdrop-filter: none;
   }
+}
+
+/*
+ * Inside the bar there is one fill at rest: the active tab's pill, a tint of
+ * the ink with no edge or shadow, so it reads as "you are here" rather than as
+ * one more button. Inactive tabs are quieter ink; utility controls (Back,
+ * GitHub, theme) are flat until the pointer or a press gives them a wash.
+ */
+.site-nav-glass {
+  --nav-pill: color-mix(in oklab, var(--foreground) 10%, var(--background));
+  --nav-pill-lifted: color-mix(in oklab, var(--foreground) 14%, var(--background));
+  --nav-wash: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --nav-wash-press: color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.dark .site-nav-glass {
+  --nav-pill: color-mix(in oklab, var(--foreground) 15%, var(--background));
+  --nav-pill-lifted: color-mix(in oklab, var(--foreground) 20%, var(--background));
+  --nav-wash: color-mix(in oklab, var(--foreground) 7%, transparent);
+  --nav-wash-press: color-mix(in oklab, var(--foreground) 11%, transparent);
+}
+
+.site-nav-tab {
+  color: var(--muted-foreground);
+}
+
+.site-nav-switcher[data-active-nav="home"] > [data-nav-name="home"],
+.site-nav-switcher[data-active-nav="projects"] > [data-nav-name="projects"],
+.site-nav-switcher[data-active-nav="blog"] > [data-nav-name="blog"] {
+  color: var(--foreground);
+}
+
+.nav-control {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-nav-tab:hover {
+    color: var(--foreground);
+  }
+
+  .nav-control:hover {
+    background-color: var(--nav-wash);
+  }
+}
+
+.nav-control:active,
+.nav-control[data-popup-open] {
+  background-color: var(--nav-wash-press);
 }
 
 .site-nav-brand-link {
@@ -982,6 +1169,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 .button-motion {
   transition:
     transform var(--duration-press) var(--ease-out),
+    scale var(--duration-press) var(--ease-out),
     background-color var(--duration-ui) ease,
     border-color var(--duration-ui) ease,
     color var(--duration-ui) ease,
@@ -1001,30 +1189,21 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   transition: none;
 }
 
-/* A tinted platter, never glass on glass: the nav's frost already blurs
-   what is behind it. Pressed or dragged, it lifts into a clearer lens. */
+/* The ink tint marking the active tab. Pressed or dragged, it swells and
+   deepens a step. */
 .site-nav-active-pill-body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-color: color-mix(in oklab, white 64%, transparent);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--foreground) 8%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 0 0 rgba(11, 20, 35, 0);
+  background-color: var(--nav-pill);
   transition:
     scale 260ms var(--ease-out),
-    background-color 200ms var(--ease-out),
-    box-shadow 200ms var(--ease-out);
+    background-color 200ms var(--ease-out);
 }
 
 .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
-  scale: 1.14 1.12;
-  background-color: color-mix(in oklab, white 30%, transparent);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.75),
-    inset 0 1px 0 rgba(255, 255, 255, 1),
-    0 8px 20px -6px rgba(11, 20, 35, 0.2);
+  scale: 1.06 1.05;
+  background-color: var(--nav-pill-lifted);
 }
 
 .site-nav-active-pill[data-active-nav="projects"] {
@@ -1035,29 +1214,17 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   transform: translate3d(calc(200% + 0.5rem), 0, 0);
 }
 
-.dark .site-nav-active-pill-body {
-  background-color: color-mix(in oklab, white 11%, transparent);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, white 8%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 0 rgba(0, 0, 0, 0);
-}
-
-.dark .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
-  background-color: color-mix(in oklab, white 6%, transparent);
-  box-shadow:
-    inset 0 0 0 1px rgba(214, 232, 255, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 10px 24px -8px rgba(0, 0, 0, 0.6);
-}
-
 @variant max-sm {
   .site-nav-active-pill {
-    width: 2.5rem;
+    width: var(--nav-control);
+  }
+
+  .site-nav-switcher {
+    grid-template-columns: repeat(3, var(--nav-control));
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   /* kill the slide but never the transform: the translate is what parks the
      pill on the active tab, not a decoration */
   .site-nav-active-pill {
@@ -1066,8 +1233,8 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   }
 }
 
-/* Lifted keeps its clearer fill, but the pill no longer swells. */
-@media (prefers-reduced-motion: reduce) {
+/* Lifted keeps its deeper tint, but the pill no longer swells. */
+@variant reduced-motion {
   .site-nav-active-pill-body,
   .site-nav-active-pill[data-lifted] .site-nav-active-pill-body {
     scale: none;
@@ -1075,7 +1242,30 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 .site-nav-brand-copy {
+  display: none;
   flex-shrink: 0;
+}
+
+/* From sm the leading column is a container sized by the grid alone, so what
+   it holds never moves the tabs. The name shows where it fits beside the logo
+   and, on a detail page, the Back chip. */
+@variant sm {
+  .site-nav-leading {
+    container: nav-leading / inline-size;
+  }
+}
+
+/* The brand link with its name is 8.5rem; the Back chip adds 2.5rem. */
+@container nav-leading (width >= 8.5rem) {
+  .site-nav-brand-copy {
+    display: flex;
+  }
+}
+
+@container nav-leading (width < 11rem) {
+  .nav-back-button[data-active="true"] + .site-nav-brand-link .site-nav-brand-copy {
+    display: none;
+  }
 }
 
 /* Contextual back chip at the nav's left edge. The slot folds on the live
@@ -1087,8 +1277,9 @@ html[data-blog-focus-bootstrap] .site-header-fade {
    snapshot is display: none (the header never slides or cross-fades). */
 .nav-back-button {
   /* no margin: the brand link's own px-2 padding is the visual gap */
-  inline-size: 2.5rem;
-  flex: 0 0 2.5rem;
+  inline-size: var(--nav-control);
+  block-size: var(--nav-control);
+  flex: 0 0 var(--nav-control);
   overflow: hidden;
   transition:
     inline-size 200ms var(--ease-snap),
@@ -1110,7 +1301,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .nav-back-button {
     transition-duration: 0ms;
     transition-delay: 0ms;
@@ -1154,11 +1345,6 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 .glass-frost.hotkeys-corner-hint {
   width: auto;
   min-width: 0;
-  border-color: color-mix(in oklab, var(--foreground) 7%, transparent);
-  background: color-mix(in oklab, var(--background) 72%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, white 12%),
-    0 4px 14px color-mix(in oklab, var(--foreground) 7%, transparent);
 }
 
 .hotkeys-wait-sequence {
@@ -1209,25 +1395,69 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 /*
- * At the top of a page the nav is type on the paper: no capsule and no
- * switcher track, so the hero owns the first screen. As content scrolls under
- * it the glass materializes and the capsule draws in slightly. Where scroll
- * timelines exist that follows the scroll position directly (compositor
- * driven); elsewhere nav-condense.ts flips data-condensed past a threshold.
+ * At the top of a page the nav is type on the paper: no capsule, so the hero
+ * owns the first screen. As content scrolls under it the bar materializes and
+ * the capsule draws in slightly. Where scroll timelines exist that follows the
+ * scroll position directly (compositor driven); elsewhere nav-condense.ts
+ * flips data-condensed past a threshold.
  */
 .site-nav-switcher {
   isolation: isolate;
   touch-action: pan-y;
 }
 
-.site-nav-switcher::before {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  content: "";
-  border-radius: inherit;
-  background-color: var(--muted);
-  pointer-events: none;
+/*
+ * Nav control size: 40px for a pointer, 44px for a fingertip (the minimum
+ * comfortable touch target) wherever the row has room for seven of them.
+ * Below 360px it does not, so the controls keep 40px there.
+ */
+.site-nav-glass {
+  --nav-control: 2.5rem;
+}
+
+@media (pointer: coarse) and (min-width: 360px) {
+  .site-nav-glass {
+    --nav-control: 2.75rem;
+  }
+}
+
+.site-nav-logo,
+.site-nav-switcher > a {
+  block-size: var(--nav-control);
+}
+
+.site-nav-logo {
+  inline-size: var(--nav-control);
+}
+
+.site-nav-actions > a,
+.site-nav-theme button {
+  min-inline-size: var(--nav-control);
+  block-size: var(--nav-control);
+}
+
+/*
+ * A detail page adds the Back chip beside the brand. Under 390px the row has
+ * no room for both and three tabs, so the Home tab steps aside: the brand
+ * beside it already leads home. The pill's rest positions shift one slot.
+ */
+@media (max-width: 389.98px) {
+  .site-nav-switcher[data-back-active] {
+    grid-template-columns: repeat(2, var(--nav-control));
+  }
+
+  .site-nav-switcher[data-back-active] > .site-nav-home-tab {
+    display: none;
+  }
+
+  .site-nav-switcher[data-back-active]
+    > .site-nav-active-pill:is([data-active-nav="home"], [data-active-nav="projects"]) {
+    transform: translate3d(0, 0, 0);
+  }
+
+  .site-nav-switcher[data-back-active] > .site-nav-active-pill[data-active-nav="blog"] {
+    transform: translate3d(calc(100% + 0.25rem), 0, 0);
+  }
 }
 
 .site-nav-switcher > a {
@@ -1254,8 +1484,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 /* Transparent unless the timeline says otherwise: a page too short to scroll
    has an inactive timeline, and nothing ever passes under the nav there. */
 @supports (animation-timeline: scroll()) {
-  .site-nav-glass > .site-nav-surface,
-  .site-nav-switcher::before {
+  .site-nav-glass > .site-nav-surface {
     opacity: 0;
     animation: nav-materialize 1ms linear both;
     animation-timeline: scroll(root block);
@@ -1270,8 +1499,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 }
 
 @supports not (animation-timeline: scroll()) {
-  .site-nav-glass > .site-nav-surface,
-  .site-nav-switcher::before {
+  .site-nav-glass > .site-nav-surface {
     opacity: 0;
     transition: opacity 220ms var(--ease-out);
   }
@@ -1280,13 +1508,23 @@ html[data-blog-focus-bootstrap] .site-header-fade {
     transition: transform var(--duration-ui) var(--ease-out);
   }
 
-  .site-header-nav-frame[data-condensed="true"] .site-nav-surface,
-  .site-header-nav-frame[data-condensed="true"] .site-nav-switcher::before {
+  .site-header-nav-frame[data-condensed="true"] .site-nav-surface {
     opacity: 1;
   }
 
   .site-header-nav-frame[data-condensed="true"] .site-nav-glass {
     transform: translate3d(0, -2px, 0) scale(0.955);
+  }
+}
+
+/* On touch the capsule keeps its size as it condenses: shrinking it would
+   take the 44px targets back under a fingertip's reach. The bar still
+   materializes. */
+@media (pointer: coarse) {
+  .site-nav-glass,
+  .site-header-nav-frame[data-condensed="true"] .site-nav-glass {
+    animation: none;
+    transform: none;
   }
 }
 
@@ -1298,7 +1536,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 
 .project-media-frame {
   overflow: hidden;
-  background: #060a14;
+  background: #0a0a0a;
   contain: paint;
   isolation: isolate;
   transform: translateZ(0);
@@ -1308,6 +1546,62 @@ html[data-blog-focus-bootstrap] .site-header-fade {
 .shared-project-media {
   transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+/*
+ * A project picture link answers hover and press on the picture inside its frame, never on the
+ * named frame, so the morph still measures the frame's own box. Reduced motion pins the picture
+ * (see the reduced-motion block); the title's tint still marks the hover.
+ */
+.project-media .shared-project-media {
+  transition: transform var(--duration-move) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .project-media:hover .shared-project-media {
+    transform: translateZ(0) scale(1.02);
+  }
+
+  :is(article, li):has(> .project-media:hover) :is(h2, h3) > a {
+    color: var(--accent);
+  }
+}
+
+@media (hover: none) {
+  .project-media:active .shared-project-media {
+    transform: translateZ(0) scale(0.985);
+    transition-duration: var(--duration-press);
+  }
+}
+
+/*
+ * A case's opening claim, the first thing read on the page. It leads the wider opening column, so
+ * it sets a step above the title role on desktop and settles at the title size on phones.
+ */
+.case-impact {
+  max-width: 30ch;
+  font-size: clamp(1.25rem, 1.5vw + 0.875rem, 2rem);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+/* Case-study running text: the article body's size on a shorter measure than the article column. */
+.case-body {
+  max-width: 38rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+@media (min-width: 48rem) {
+  .case-body {
+    font-size: 1.0625rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  .case-body {
+    font-size: 1.125rem;
+  }
 }
 
 /*
@@ -1336,15 +1630,15 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   stroke-dashoffset: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@variant full-motion {
   .pulse-trace-path {
     stroke-dashoffset: 100.5;
     animation: pulse-draw 1.25s var(--ease-in-out) 640ms both;
   }
 
-  html:active-view-transition-type(nav-forward) .pulse-trace-path,
-  html:active-view-transition-type(nav-back) .pulse-trace-path,
-  html[data-view-transition-navigated="true"] .pulse-trace-path {
+  &:active-view-transition-type(nav-forward) .pulse-trace-path,
+  &:active-view-transition-type(nav-back) .pulse-trace-path,
+  &[data-view-transition-navigated="true"] .pulse-trace-path {
     animation: none;
     stroke-dashoffset: 0;
   }
@@ -1362,7 +1656,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   opacity: 0.2;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@variant full-motion {
   /* The glow draws in with the trace, then beats once. Finite on purpose:
      the hero's motion settles within its first few seconds. */
   .pulse-trace-glow {
@@ -1372,9 +1666,9 @@ html[data-blog-focus-bootstrap] .site-header-fade {
       pulse-beat 1.7s var(--ease-in-out) 2.1s 1;
   }
 
-  html:active-view-transition-type(nav-forward) .pulse-trace-glow,
-  html:active-view-transition-type(nav-back) .pulse-trace-glow,
-  html[data-view-transition-navigated="true"] .pulse-trace-glow {
+  &:active-view-transition-type(nav-forward) .pulse-trace-glow,
+  &:active-view-transition-type(nav-back) .pulse-trace-glow,
+  &[data-view-transition-navigated="true"] .pulse-trace-glow {
     animation: none;
     stroke-dashoffset: 0;
   }
@@ -1414,7 +1708,7 @@ html[data-blog-focus-bootstrap] .site-header-fade {
  * naturally with scroll and reverse when scrolling back up.
  */
 @supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
+  @variant full-motion {
     .scroll-rise {
       animation: scroll-rise linear both;
       animation-timeline: view();
@@ -1452,14 +1746,14 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@variant full-motion {
   .motion-rise {
     animation: motion-rise 560ms var(--ease-snap) both;
   }
 
-  html:active-view-transition-type(nav-forward) .motion-rise,
-  html:active-view-transition-type(nav-back) .motion-rise,
-  html[data-view-transition-navigated="true"] .motion-rise {
+  &:active-view-transition-type(nav-forward) .motion-rise,
+  &:active-view-transition-type(nav-back) .motion-rise,
+  &[data-view-transition-navigated="true"] .motion-rise {
     animation: none;
   }
 
@@ -1494,6 +1788,16 @@ html[data-blog-focus-bootstrap] .site-header-fade {
   opacity: 0;
   transform: translate3d(0, -4px, 0) scale(0.97);
   transition-duration: var(--duration-popover-exit);
+}
+
+/* A menu trigger presses with active:scale. Left to the press, the first
+   scale made Chrome set up the trigger's compositing inside the first open:
+   about 30ms of main thread at full CPU, paid once per page. Promoted up
+   front, the first open costs what every later one does. */
+@variant full-motion {
+  [data-slot="dropdown-menu-trigger"] {
+    will-change: scale;
+  }
 }
 
 /* keep the live page clickable while a transition plays */
@@ -1553,25 +1857,27 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
  * pointer-precise desktop. On touch / small screens the snapshot resolves
  * instantly (see below).
  */
-@media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (hover: hover) and (pointer: fine) {
-  ::view-transition-group(.morph) {
-    animation-duration: var(--duration-move);
-    animation-timing-function: var(--ease-in-out);
-    overflow: hidden;
-    /* above the incoming page snapshot, below the chrome (30) */
-    z-index: 20;
-  }
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  @variant full-motion {
+    &::view-transition-group(.morph) {
+      animation-duration: var(--duration-move);
+      animation-timing-function: var(--ease-in-out);
+      overflow: hidden;
+      /* above the incoming page snapshot, below the chrome (30) */
+      z-index: 20;
+    }
 
-  ::view-transition-old(.morph),
-  ::view-transition-new(.morph) {
-    mix-blend-mode: normal;
-    overflow: clip;
-  }
+    &::view-transition-old(.morph),
+    &::view-transition-new(.morph) {
+      mix-blend-mode: normal;
+      overflow: clip;
+    }
 
-  ::view-transition-image-pair(.morph) {
-    animation: none;
-    border-radius: inherit;
-    overflow: clip;
+    &::view-transition-image-pair(.morph) {
+      animation: none;
+      border-radius: inherit;
+      overflow: clip;
+    }
   }
 }
 
@@ -1587,6 +1893,47 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   ::view-transition-group(*) {
     animation-delay: 0s !important;
     animation-duration: 0s !important;
+  }
+}
+
+/*
+ * Touch exception: a forward tap (going deeper: a project, the next case) gets
+ * a short crossfade, and the project picture its morph, so the new page reads
+ * as the place the tap led. Back, the swipe-back gesture (the browser already
+ * animated it) and the lateral tab bar carry no nav-forward type and stay
+ * instant. Engines without type selectors drop these rules and stay instant.
+ */
+@media not all and (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  @variant full-motion {
+    &:active-view-transition-type(nav-forward)::view-transition-old(root),
+    &:active-view-transition-type(nav-forward)::view-transition-new(root) {
+      animation-duration: 200ms !important;
+      animation-timing-function: var(--ease-out) !important;
+    }
+
+    &:active-view-transition-type(nav-forward)::view-transition-group(.morph),
+    &:active-view-transition-type(nav-forward)::view-transition-old(.morph),
+    &:active-view-transition-type(nav-forward)::view-transition-new(.morph) {
+      animation-duration: 220ms !important;
+      animation-timing-function: var(--ease-drawer) !important;
+    }
+
+    &::view-transition-group(.morph) {
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    &::view-transition-old(.morph),
+    &::view-transition-new(.morph) {
+      mix-blend-mode: normal;
+      overflow: clip;
+    }
+
+    &::view-transition-image-pair(.morph) {
+      animation: none;
+      border-radius: inherit;
+      overflow: clip;
+    }
   }
 }
 
@@ -1610,20 +1957,22 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
-@media (prefers-reduced-motion: reduce) and (hover: hover) and (pointer: fine) {
-  .project-adjacent-arrow {
-    opacity: 0.85;
-  }
+@media (hover: hover) and (pointer: fine) {
+  @variant reduced-motion {
+    .project-adjacent-arrow {
+      opacity: 0.85;
+    }
 
-  .project-adjacent-link:hover .project-adjacent-arrow {
-    opacity: 1;
+    .project-adjacent-link:hover .project-adjacent-arrow {
+      opacity: 1;
+    }
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(*),
-  ::view-transition-new(*),
-  ::view-transition-group(*) {
+@variant reduced-motion {
+  &::view-transition-old(*),
+  &::view-transition-new(*),
+  &::view-transition-group(*) {
     animation-delay: 0s !important;
     animation-duration: 0s !important;
   }
@@ -1634,7 +1983,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     will-change: auto;
   }
 
-  /* The glass still materializes with scroll; the capsule stops resizing. */
+  /* The bar still materializes with scroll; the capsule stops resizing. */
   .site-nav-glass {
     animation: none;
   }
@@ -1643,6 +1992,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     opacity: 1;
   }
 
+  &,
   *,
   *::before,
   *::after {
@@ -1695,8 +2045,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
       visibility 0s linear 160ms;
   }
 
-  html[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-nav-frame,
-  html[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-fade,
+  &[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-nav-frame,
+  &[data-blog-focus-bootstrap] [data-blog-article="true"] .site-header-fade,
   [data-blog-article="true"][data-blog-header-motion="instant"] .site-header-nav-frame,
   [data-blog-article="true"][data-blog-header-motion="instant"] .site-header-fade {
     transition: none;
@@ -1724,9 +2074,11 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     transition: none;
   }
 
+  /* The press is Tailwind's active:scale, the individual `scale` property. */
   .button-motion:active,
   .dropdown-menu-item:active {
     transform: none !important;
+    scale: none !important;
   }
 
   .cv-share-state-layer,
@@ -1759,13 +2111,13 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 @media (prefers-contrast: more) {
   :root {
-    --muted-foreground: #344156;
-    --border: color-mix(in oklab, #0b1423 24%, transparent);
+    --muted-foreground: #404040;
+    --border: color-mix(in oklab, var(--foreground) 24%, transparent);
   }
 
   .dark {
-    --muted-foreground: #c2cfdf;
-    --border: color-mix(in oklab, #ffffff 26%, transparent);
+    --muted-foreground: #cfcfcf;
+    --border: color-mix(in oklab, var(--foreground) 26%, transparent);
   }
 
   .liquid-glass,
@@ -1773,12 +2125,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   .site-nav-glass > .site-nav-surface,
   .dropdown-menu.liquid-glass {
     border-color: color-mix(in oklab, var(--foreground) 30%, transparent);
-    background: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
+    background: var(--card);
     backdrop-filter: none;
-  }
-
-  .site-nav-surface::after {
-    display: none;
   }
 }
 
@@ -1823,7 +2171,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 .blog-locale-link:focus-visible,
 .blog-rss-link:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 52%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -1863,8 +2211,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 /* The title's link covers its whole row, rail and trailing gap included, so the
    list has no dead space: anywhere along it lights exactly one post. It sits
-   above the row's text, which dimming lifts into its own stacking layer while
-   its opacity is below 1; under it, the cursor would flick to a text cursor. */
+   above the row's text; under it, the cursor would flick to a text cursor. */
 .blog-index-link::after {
   position: absolute;
   z-index: 1;
@@ -1927,7 +2274,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   --blog-index-pad-top: calc(var(--blog-index-row-space) / 2);
   --blog-index-pad-bottom: calc(var(--blog-index-row-space) / 2);
   --blog-index-surface: 0;
-  --blog-index-dim: 1;
   position: relative;
   padding-block: var(--blog-index-pad-top) var(--blog-index-pad-bottom);
   padding-inline-start: var(--blog-index-inset);
@@ -1964,14 +2310,6 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   content: "";
   opacity: var(--blog-index-surface);
   pointer-events: none;
-  transition: opacity var(--duration-ui) var(--ease-out);
-}
-
-/* Dimming reaches the post's text, never its node, so the rail keeps one
-   strength from end to end. */
-.blog-index-meta > :not(.blog-index-node),
-.blog-index-list > li > article > div {
-  opacity: var(--blog-index-dim);
   transition: opacity var(--duration-ui) var(--ease-out);
 }
 
@@ -2089,7 +2427,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 
 /* Lit: the post under the pointer, keyboard focus or a press reads as the
    checked-out commit. Its surface fades in, its node lights and the date
-   brightens, while the other posts dim and HEAD steps back to an outline so
+   brightens, while the other titles step down to the muted text colour (never
+   below it, so they keep their contrast) and HEAD steps back to an outline so
    only one commit is ever lit. Press lights it too, the touch feedback before
    the article opens. */
 .blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) {
@@ -2098,8 +2437,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   --blog-index-surface: 1;
 }
 
-.blog-index-list:has(.blog-index-link:focus-visible) > li:not(:has(.blog-index-link:focus-visible)) {
-  --blog-index-dim: 0.6;
+.blog-index-list:has(.blog-index-link:focus-visible) > li:not(:has(.blog-index-link:focus-visible)) .blog-index-link {
+  color: var(--muted-foreground);
 }
 
 .blog-index-list > li:has(.blog-index-link:is(:focus-visible, :active)) time {
@@ -2124,8 +2463,8 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 
   /* The other posts step back, so the lit one reads at a glance. */
-  .blog-index-list:has(.blog-index-link:hover) > li:not(:has(.blog-index-link:hover)) {
-    --blog-index-dim: 0.6;
+  .blog-index-list:has(.blog-index-link:hover) > li:not(:has(.blog-index-link:hover)) .blog-index-link {
+    color: var(--muted-foreground);
   }
 
   .blog-index-list > li:has(.blog-index-link:hover) time {
@@ -2141,7 +2480,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .blog-index-core {
     transition: none;
   }
@@ -2161,7 +2500,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   align-items: center;
   gap: 0.45rem;
   color: var(--muted-foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   text-decoration: none;
   touch-action: manipulation;
   transition: color var(--duration-press) ease;
@@ -2176,7 +2515,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-back-link:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.25rem;
   border-radius: 0.2rem;
 }
@@ -2259,7 +2598,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
     visibility 0s linear;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .blog-reading-progress span {
     transition:
       opacity var(--duration-exit) linear,
@@ -2291,7 +2630,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   align-items: baseline;
   gap: 0.25rem 2rem;
   color: var(--muted-foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   font-variant-numeric: tabular-nums;
   line-height: 1.5rem;
 }
@@ -2300,21 +2639,25 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   color: var(--foreground);
   font-weight: 700;
   text-decoration: none;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
   transition: color var(--duration-ui) var(--ease-out);
 }
 
 .blog-article-meta > a:focus-visible {
   color: var(--accent);
+  text-decoration-line: underline;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .blog-article-meta > a:hover {
     color: var(--accent);
+    text-decoration-line: underline;
   }
 }
 
 .blog-article-meta > a:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.2rem;
   border-radius: 0.15rem;
 }
@@ -2341,7 +2684,7 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
   height: 0.375em;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@variant full-motion {
   .not-found-trace .pulse-trace-glow {
     animation: pulse-draw 1.25s var(--ease-in-out) 640ms both;
   }
@@ -2404,6 +2747,20 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
    contents on 1 to 3. */
 .blog-article {
   --blog-measure: 46rem;
+  /* The reading column, which code, tables and diagrams still fill. Running text stops short of it: MonoLisa sets
+     wide, so 40rem holds a line near 60-65 characters at the article's size. */
+  --blog-text-measure: 40rem;
+  /* At the end of the page the back link must clear the floating contents and scroll-to-top buttons (2.75rem tall,
+     1rem or the safe area off the bottom) instead of sitting 4px above them. Wider screens already have more room. */
+  padding-bottom: max(var(--spacing-section-s), calc(max(1rem, env(safe-area-inset-bottom)) + 3.75rem));
+}
+
+/* Between tablet and wide desktop the prose sits at 17px in the same column, which runs lines past 70 characters;
+   a shorter text measure holds them near 65. */
+@media (48rem <= width < 80rem) {
+  .blog-article {
+    --blog-text-measure: 37rem;
+  }
 }
 
 .blog-article-header,
@@ -2431,9 +2788,9 @@ html[data-view-transition-navigated="true"]::view-transition-group(root) {
 }
 
 .blog-toc-desktop {
-  --blog-toc-heading-size: 0.8rem;
+  --blog-toc-heading-size: var(--text-caption);
   --blog-toc-heading-weight: 400;
-  --blog-toc-subheading-size: 0.8rem;
+  --blog-toc-subheading-size: var(--text-caption);
   --blog-toc-subheading-weight: 400;
   position: sticky;
   /* Header frame: 0.75rem top gap + 4.125rem frame + 1rem clearance. */
@@ -2463,7 +2820,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   transition: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   [data-blog-article="true"] .blog-toc-desktop {
     transition: none;
   }
@@ -2471,7 +2828,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-toc-desktop > p {
   color: var(--foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   font-weight: 700;
 }
 
@@ -2492,16 +2849,19 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --toc-tick-width: 0.5rem;
 }
 
+/* Entries align to their first line, so a title that wraps keeps its tick beside the line it starts on. Single-line
+   entries are padded to the row height; the padding, not the grid, centres them. */
 .blog-toc-list a {
+  --toc-row-height: 1.9rem;
   display: grid;
-  min-height: 1.9rem;
+  min-height: var(--toc-row-height);
   grid-template-columns: 1.75rem minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 0.45rem;
-  padding: 0.2rem 0.3rem;
+  padding: max(0.2rem, calc((var(--toc-row-height) - 1lh) / 2)) 0.3rem;
   border-radius: 0.5rem;
-  color: color-mix(in oklab, var(--muted-foreground) 90%, transparent);
-  font-size: var(--blog-toc-heading-size, 0.8rem);
+  color: var(--muted-foreground);
+  font-size: var(--blog-toc-heading-size, var(--text-caption));
   font-weight: var(--blog-toc-heading-weight, 400);
   line-height: 1.4;
   text-decoration: none;
@@ -2514,6 +2874,8 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-tick {
   width: var(--toc-tick-width);
   height: 2px;
+  /* Centred on the first line box: half a line, less half the tick. */
+  margin-top: calc(0.5lh - 1px);
   border-radius: 999px;
   background: currentColor;
   opacity: 0.42;
@@ -2529,15 +2891,14 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   overflow-wrap: anywhere;
 }
 
-/* Subsections step in by indent, not by a smaller size. */
-.blog-toc-list li[data-depth="3"] .blog-toc-label {
-  padding-left: 1rem;
-  font-size: var(--blog-toc-subheading-size, 0.8rem);
+/* Subsections step in by indent. Their size sits on the link, so the tick reads the same line height as the label. */
+.blog-toc-list li[data-depth="3"] a {
+  font-size: var(--blog-toc-subheading-size, var(--text-caption));
   font-weight: var(--blog-toc-subheading-weight, 400);
 }
 
-.blog-toc-list li[data-depth="3"] a {
-  color: color-mix(in oklab, var(--muted-foreground) 74%, transparent);
+.blog-toc-list li[data-depth="3"] .blog-toc-label {
+  padding-left: 1rem;
 }
 
 .blog-toc-list a:is(:hover, :focus-visible) {
@@ -2550,9 +2911,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   opacity: 0.72;
 }
 
+/* Inset: the desktop TOC scrolls, so an outside ring loses its left edge to
+   the scroller's clip. */
 .blog-toc-list a:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--foreground) 34%, transparent);
-  outline-offset: 1px;
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 .blog-toc-list a[aria-current="location"] {
@@ -2618,7 +2981,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-mobile-trigger:focus-visible {
-  outline: 3px solid color-mix(in oklab, var(--ring) 38%, transparent);
+  outline: 3px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -2627,7 +2990,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-mobile-label {
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   font-weight: 700;
   line-height: 1.3;
   white-space: nowrap;
@@ -2640,6 +3003,47 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .blog-toc-mobile-trigger:is(:hover, :focus-visible) .blog-toc-mobile-icon {
   color: currentColor;
+}
+
+/* Without scripts the drawer can never open, so its trigger gives way to a plain disclosure of the same links. The
+   parsed <noscript> only holds elements when scripting is off, which is what the selector keys on. */
+.blog-toc-mobile-shell:has(.blog-toc-noscript) .blog-toc-mobile-trigger {
+  display: none;
+}
+
+.blog-toc-noscript > summary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.8rem;
+  border-radius: 999px;
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  list-style: none;
+}
+
+.blog-toc-noscript > summary::-webkit-details-marker {
+  display: none;
+}
+
+.blog-toc-noscript > summary:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.blog-toc-noscript[open] > summary {
+  color: var(--accent);
+}
+
+.blog-toc-noscript .blog-toc-list {
+  margin-top: 0.25rem;
+}
+
+.blog-toc-noscript .blog-toc-list a {
+  --toc-row-height: 2.75rem;
 }
 
 .blog-toc-mobile-shell[data-toc-launcher-state="docked"] .blog-toc-mobile-trigger,
@@ -2744,9 +3148,9 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   --blog-toc-drawer-surface: color-mix(in oklab, var(--background) 97%, var(--foreground) 3%);
   --drawer-bleed-background: var(--blog-toc-drawer-surface);
   --blog-toc-drawer-inline: 1.25rem;
-  --blog-toc-heading-size: 0.84rem;
+  --blog-toc-heading-size: var(--text-meta);
   --blog-toc-heading-weight: 400;
-  --blog-toc-subheading-size: 0.76rem;
+  --blog-toc-subheading-size: var(--text-caption);
   --blog-toc-subheading-weight: 400;
   display: flex;
   width: min(100%, 42rem);
@@ -2775,7 +3179,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-toc-drawer-heading {
   min-width: 0;
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.015em;
 }
 
@@ -2801,7 +3205,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-drawer-close:focus-visible {
-  outline: 3px solid color-mix(in oklab, var(--ring) 38%, transparent);
+  outline: 3px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -2823,10 +3227,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-toc-drawer .blog-toc-list a {
-  min-height: 2.75rem;
+  --toc-row-height: 2.75rem;
   grid-template-columns: 1.125rem minmax(0, 1fr);
   gap: 0.625rem;
-  padding: 0.5rem 0.25rem;
+  padding-inline: 0.25rem;
 }
 
 .blog-toc-drawer .blog-toc-list li[data-depth="3"] a {
@@ -2838,14 +3242,33 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   background: transparent;
 }
 
-.blog-prose {
+/* A case study's evidence figure reuses the article diagram frame, so it shares the article's block surfaces. */
+.blog-prose,
+.case-evidence {
   --blog-rich-block-gap: 1.5rem;
   --blog-rich-block-radius: var(--radius);
   --blog-rich-block-surface: color-mix(in oklab, var(--foreground) 3%, var(--background));
   --blog-rich-block-border: color-mix(in oklab, var(--foreground) 16%, var(--blog-rich-block-surface));
+}
+
+/* 16px on phones; one step up once the column has room, and 18px on wide screens, where the reader sits further
+   back. The steps keep MonoLisa's wide set at 60-65 characters a line inside the text measure. */
+.blog-prose {
   color: color-mix(in oklab, var(--foreground) 86%, var(--muted-foreground));
-  font-size: clamp(1rem, 1.3vw, 1.08rem);
+  font-size: 1rem;
   line-height: 1.7;
+}
+
+@media (width >= 48rem) {
+  .blog-prose {
+    font-size: 1.0625rem;
+  }
+}
+
+@media (width >= 80rem) {
+  .blog-prose {
+    font-size: 1.125rem;
+  }
 }
 
 .blog-prose > :first-child {
@@ -2855,7 +3278,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose :where(h2, h3) {
   scroll-margin-top: 7.5rem;
   color: var(--foreground);
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1.15;
   text-wrap: balance;
 }
@@ -2889,7 +3312,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .blog-prose .heading-anchor:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 48%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.16em;
   border-radius: 0.12em;
 }
@@ -2897,7 +3320,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose p,
 .blog-prose :where(ul, ol),
 .blog-prose blockquote {
-  max-width: 70ch;
+  max-width: var(--blog-text-measure, 40rem);
   margin-top: 1.25rem;
 }
 
@@ -2940,17 +3363,25 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose li > a:not(.source-link) {
   border-radius: 0.22em;
   color: var(--accent);
-  font-weight: 700;
-  text-decoration: none;
+  /* Colour and the resting underline carry the link; a heavy weight on top shouted inside running text. */
+  font-weight: 500;
+  /* Underlined at rest, so a link never relies on its colour alone. */
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  transition: color var(--duration-press) ease;
+  transition:
+    color var(--duration-press) ease,
+    text-decoration-color var(--duration-press) ease;
 }
 
 .blog-prose > a:is(:hover, :focus-visible),
 .blog-prose p > a:not(.source-link):is(:hover, :focus-visible),
 .blog-prose li > a:not(.source-link):is(:hover, :focus-visible) {
   color: var(--foreground);
+  text-decoration-color: var(--accent);
   background: color-mix(in oklab, var(--accent) 10%, transparent);
   box-shadow: 0 0 0 0.14em color-mix(in oklab, var(--accent) 10%, transparent);
 }
@@ -2958,21 +3389,34 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose > a:focus-visible,
 .blog-prose p > a:not(.source-link):focus-visible,
 .blog-prose li > a:not(.source-link):focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 52%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.18em;
 }
 
+/* A token moves to the next line whole rather than breaking at a hyphen or bracket (w- / [30001px]); only a token
+   wider than the line still wraps inside its chip. break-word rather than anywhere: it leaves the chip's min-content
+   width whole, so a phone table column cannot shrink below a token and split it. The chip's own leading stays under
+   the paragraph's, so a line holding code is no taller than its neighbours. Sized in em so it follows prose,
+   headings and tables. */
 .blog-prose :not(pre) > code {
+  display: inline-block;
+  max-width: 100%;
   padding: 0.1em 0.32em;
   border-radius: 0.3rem;
   color: var(--foreground);
   background: color-mix(in oklab, var(--foreground) 6%, transparent);
   font-family: var(--font-mono);
   font-size: 0.9em;
+  line-height: 1.45;
   vertical-align: 0.04em;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
+}
+
+/* Code inside a link keeps its chip but reads in the link's colour, so the link does not break mid-phrase. */
+.blog-prose a code {
+  color: inherit;
 }
 
 .blog-prose blockquote {
@@ -3035,7 +3479,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border-spacing: 0;
   border-collapse: separate;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: var(--text-meta);
   line-height: 1.55;
 }
 
@@ -3043,6 +3487,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   min-width: 9rem;
   padding: 0.75rem 1rem;
   border: 0;
+  font-variant-numeric: tabular-nums;
   text-align: left;
   vertical-align: top;
 }
@@ -3050,6 +3495,23 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-prose th {
   color: var(--foreground);
   font-weight: 700;
+}
+
+/* On a phone a 9rem floor per cell stacked prose three lines deep and pushed the figures off screen. Cells size to
+   their content instead, set a step smaller, and figures (BlogTable marks all-numeric columns) never wrap. */
+@media (width < 40rem) {
+  .blog-prose table {
+    font-size: var(--text-caption);
+  }
+
+  .blog-prose :where(th, td) {
+    min-width: auto;
+    padding: 0.5rem 0.625rem;
+  }
+
+  .blog-prose :where(th, td)[data-numeric] {
+    white-space: nowrap;
+  }
 }
 
 .blog-prose tbody tr:nth-child(odd) > td {
@@ -3085,7 +3547,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   display: inline;
   border-radius: 0.22em;
   color: var(--accent);
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -3094,6 +3556,10 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 
 .source-link-label {
   border-radius: 0.22em;
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   transition:
@@ -3106,12 +3572,13 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 }
 
 .source-link:is(:hover, :focus-visible) .source-link-label {
+  text-decoration-color: var(--accent);
   background: color-mix(in oklab, var(--accent) 10%, transparent);
   box-shadow: 0 0 0 0.14em color-mix(in oklab, var(--accent) 10%, transparent);
 }
 
 .source-link:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 52%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0.18em;
 }
 
@@ -3125,7 +3592,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   border-radius: 999px;
   color: var(--muted-foreground);
   background: color-mix(in oklab, var(--background) 72%, transparent);
-  font-size: 0.72rem;
+  font-size: var(--text-caption);
   font-weight: 400;
   line-height: 1.35;
   text-decoration: none;
@@ -3145,6 +3612,12 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .source-link-icon {
   width: 0.8rem;
   height: 0.8rem;
+}
+
+/* Inside a sentence the host pill wrapped away from its label and crowded the line; the link reads as a link on its
+   own there. The Sources list keeps the pill, where the host is what a reader scans for. */
+.blog-prose p .source-link-host {
+  display: none;
 }
 
 .source-link-new-tab-uk {
@@ -3218,6 +3691,17 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   display: contents;
 }
 
+/* The frame clips its corners, so a focused (scrollable) pre would lose its
+   ring on three sides; draw it on the frame instead, as diagrams do. */
+.blog-prose figure[data-rehype-pretty-code-figure]:has(pre:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.blog-prose figure[data-rehype-pretty-code-figure] pre:focus-visible {
+  outline: none;
+}
+
 .blog-prose figcaption[data-rehype-pretty-code-title] {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -3229,7 +3713,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   padding: var(--blog-code-header-inset) 0.75rem 0 1rem;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   overflow-wrap: anywhere;
 }
 
@@ -3260,7 +3744,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   padding: var(--blog-code-header-inset) 0.75rem 0 1rem;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   white-space: nowrap;
 }
 
@@ -3277,9 +3761,9 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   padding: 0.85rem 1rem 1.15rem;
   color: var(--foreground);
   background: transparent;
-  font-family: MonoLisaCode, ui-monospace, monospace;
-  font-size: 0.82rem;
-  line-height: 1.75;
+  font-family: MonoLisaCode, "MonoLisaCode Fallback", ui-monospace, monospace;
+  font-size: var(--text-meta);
+  line-height: 1.65;
   tab-size: 2;
 }
 
@@ -3367,10 +3851,11 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
 .blog-code-action[aria-pressed="true"] {
   color: var(--accent);
   background: color-mix(in oklab, var(--accent) 14%, var(--background));
+  box-shadow: inset 0 0 0 1px currentColor;
 }
 
 .blog-code-action:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline: 2px solid var(--ring);
   outline-offset: -3px;
 }
 
@@ -3431,6 +3916,7 @@ code[data-theme] span {
   --blog-mermaid-toolbar-size: calc(var(--blog-mermaid-control-size) + 2px);
   position: relative;
   isolation: isolate;
+  container-type: inline-size;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   overflow: hidden;
@@ -3457,6 +3943,28 @@ code[data-theme] span {
   border-top: 1px solid color-mix(in oklab, var(--border) 64%, transparent);
 }
 
+/* The canvas takes the drawing's proportions, measured on the server for both layouts (MermaidDiagram sets them on
+   the figure), from the skeleton on, so the lazily drawn diagram lands in a frame that is already its size. A short
+   tree gets a short frame and a vertical flow keeps the height it needs, up to 34rem, so its labels stay near body
+   size on a phone. The drawing never rests above its authored size, so the canvas never outgrows it either, and the
+   12rem floor keeps a one-line diagram from collapsing into a strip. The figure is the query container, so the
+   layout switches at the frame width MermaidDiagram draws from (DIAGRAM_LAYOUT_WIDTHS.wide). Stretch is explicit: a
+   grid item with an aspect ratio would otherwise shrink to its content's width. */
+.blog-mermaid[data-frame] > :is(.blog-mermaid-skeleton, .blog-mermaid-svg) {
+  justify-self: stretch;
+  block-size: auto;
+  min-block-size: 12rem;
+  max-block-size: min(var(--blog-mermaid-compact-height), 34rem);
+  aspect-ratio: var(--blog-mermaid-compact-ratio);
+}
+
+@container (width >= 640px) {
+  .blog-mermaid[data-frame] > :is(.blog-mermaid-skeleton, .blog-mermaid-svg) {
+    max-block-size: min(var(--blog-mermaid-wide-height), 34rem);
+    aspect-ratio: var(--blog-mermaid-wide-ratio);
+  }
+}
+
 /* The caption holds the header row's height while the diagram loads, so the controls do not shift the article. */
 .blog-mermaid-caption {
   display: flex;
@@ -3470,12 +3978,12 @@ code[data-theme] span {
   padding: var(--blog-mermaid-header-inset) 0.75rem var(--blog-mermaid-header-inset) 1rem;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   overflow-wrap: anywhere;
 }
 
 .blog-mermaid:has(> .blog-mermaid-svg:focus-visible) {
-  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -3497,6 +4005,10 @@ code[data-theme] span {
     transparent
   );
   transform: translateX(-100%);
+}
+
+/* Only while a render is in flight: a diagram far below the reader stays loading, and must not animate until then. */
+.blog-mermaid[data-state="loading"][data-rendering]::after {
   animation: blog-mermaid-loading-sweep 1.8s linear infinite;
   will-change: transform;
 }
@@ -3518,9 +4030,6 @@ code[data-theme] span {
   --pele-accent: var(--accent);
   --pele-font: var(--font-mono);
   --pele-font-mono: var(--font-mono);
-  --pele-title-weight: 800;
-  --pele-heading-weight: 800;
-  --pele-bold-weight: 800;
   --pele-radius: 10px;
   position: relative;
   overflow: hidden;
@@ -3558,14 +4067,17 @@ code[data-theme] span {
   pointer-events: none;
 }
 
+/* Labels at medium weight, the step above body text: a whole diagram at 700 read as one shout. Emphasis, cluster
+   titles and the focus node keep 700 (pele-renderer measures with the same two weights). */
 .blog-mermaid-svg .pele text {
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
 .blog-mermaid-svg .pele text[font-weight],
-.blog-mermaid-svg .pele-cluster-label {
-  font-weight: 800;
+.blog-mermaid-svg .pele-cluster-label,
+.blog-mermaid-svg .pele-node.focus .pele-label {
+  font-weight: 700;
 }
 
 .blog-mermaid-svg .pele-node > :is(rect, polygon, circle, ellipse, path) {
@@ -3624,6 +4136,10 @@ code[data-theme] span {
   background: var(--blog-rich-block-surface);
 }
 
+.blog-mermaid-toolbar[data-placeholder] {
+  visibility: hidden;
+}
+
 .blog-mermaid-control {
   appearance: none;
   width: var(--blog-mermaid-control-size);
@@ -3650,7 +4166,7 @@ code[data-theme] span {
 }
 
 .blog-mermaid-control:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 72%, var(--foreground));
+  outline: 2px solid var(--ring);
   outline-offset: -3px;
   box-shadow: none;
 }
@@ -3660,14 +4176,14 @@ code[data-theme] span {
 }
 
 .blog-mermaid-control:hover,
-.blog-mermaid-control:focus-visible,
-.blog-mermaid-control[aria-expanded="true"] {
+.blog-mermaid-control:focus-visible {
   color: var(--foreground);
   background: color-mix(in oklab, var(--muted) 72%, transparent);
 }
 
 .blog-mermaid-control:disabled {
-  cursor: default;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .blog-mermaid-reset {
@@ -3816,12 +4332,58 @@ code[data-theme] span {
   color: var(--muted-foreground);
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   line-height: 1.7;
 }
 
 .blog-mermaid-caption[data-error="true"] {
   grid-column: 1 / -1;
+}
+
+/* Without scripts the drawing never arrives: the canvas gives way to the authored description, set as prose. */
+.blog-mermaid .blog-mermaid-fallback {
+  block-size: auto;
+  max-width: none;
+  margin: 0;
+  color: color-mix(in oklab, var(--foreground) 86%, var(--muted-foreground));
+  font-size: 0.95rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* The parsed <noscript> is the grid item, so it takes the canvas row; with scripts on it holds text and never matches. */
+.blog-mermaid > noscript:has(.blog-mermaid-fallback) {
+  display: block;
+  grid-row: 2;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.blog-mermaid:has(.blog-mermaid-fallback) :is(.blog-mermaid-skeleton, .blog-mermaid-toolbar) {
+  display: none;
+}
+
+.blog-mermaid:has(.blog-mermaid-fallback)::after {
+  content: none;
+  animation: none;
+}
+
+/* A diagram the reader never scrolled near has not drawn yet, and printing cannot wait for it: print its
+   description in place of the empty canvas, set like the no-script fallback. */
+@media print {
+  :is(.blog-mermaid, .blog-mermaid[data-frame]) > .blog-mermaid-skeleton[data-description] {
+    block-size: auto;
+    min-block-size: 0;
+    max-block-size: none;
+    aspect-ratio: auto;
+    color: color-mix(in oklab, var(--foreground) 86%, var(--muted-foreground));
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .blog-mermaid-skeleton[data-description]::before {
+    content: attr(data-description);
+  }
 }
 
 .blog-figure img,
@@ -3857,7 +4419,7 @@ html.dark .blog-figure-image--dark {
 .blog-figure figcaption {
   margin-top: 0.75rem;
   color: var(--muted-foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-meta);
   line-height: 1.5;
 }
 
@@ -3915,7 +4477,7 @@ html.dark .blog-figure-image--dark {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@variant reduced-motion {
   .blog-focus-toast {
     transition: none;
   }
@@ -3930,7 +4492,7 @@ html.dark .blog-figure-image--dark {
     will-change: auto;
   }
 
-  .blog-mermaid[data-state="loading"]::after {
+  .blog-mermaid[data-state="loading"][data-rendering]::after {
     animation: none;
     will-change: auto;
   }
@@ -3977,5 +4539,24 @@ html.dark .blog-figure-image--dark {
   [data-slot="tooltip-content"] {
     animation: none;
     transition: none;
+  }
+}
+
+/* Forced colours drop backgrounds and shadows, which carry the nav pill, the
+   current and pressed controls and the lit index post. A system-colour edge or
+   fill keeps each state visible. */
+@media (forced-colors: active) {
+  .site-nav-active-pill,
+  .blog-locale-link[aria-current="page"],
+  .blog-code-action[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .blog-toc-list a[aria-current="location"] .blog-toc-tick,
+  .blog-index-core,
+  .blog-index-dot {
+    forced-color-adjust: none;
+    background: Highlight;
   }
 }

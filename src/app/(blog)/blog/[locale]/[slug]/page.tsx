@@ -10,6 +10,7 @@ import BlogTitle from "@/components/blog/BlogTitle";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import { analyzeBlogPost, getAllBlogPosts, getBlogPost, getPublishedBlogLocales } from "@/content/blog/manifest";
 import { BLOG_UI, formatBlogDate, getBlogIndexPath, isBlogLocale } from "@/lib/blog";
+import { preloadArticleFonts } from "@/lib/document-fonts";
 import { createBlogArticleMetadata } from "@/lib/metadata";
 import { buildBlogPostingStructuredData, serializeStructuredData } from "@/lib/structured-data";
 
@@ -57,6 +58,8 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
   const copy = BLOG_UI[locale];
   const structuredData = buildBlogPostingStructuredData(article);
 
+  preloadArticleFonts();
+
   return (
     <>
       <script
@@ -65,7 +68,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
         dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
       />
       <ReadingProgress articleId="article-content" />
-      <main id="main-content" tabIndex={-1} className="blog-article w-full pb-section-s pt-28 lg:pt-32">
+      <main id="main-content" tabIndex={-1} className="blog-article w-full pt-28 lg:pt-32">
         {/* The header sits on the site's ASCII field, which runs up to just below the nav's first
             64px and around the copy; the copy keeps it clear, and it stops once the reader scrolls
             into the text. On narrow screens the copy fills the width, so the field stays a band
@@ -78,7 +81,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
           <div className="page-safe-inline mx-auto w-full max-w-7xl">
             <header className="blog-article-header">
               <div className="flex flex-wrap items-center justify-between gap-4" data-ascii-avoid="">
-                <Link className="blog-back-link" data-cuelume-press="" href={getBlogIndexPath(locale)}>
+                <Link className="blog-back-link" data-cuelume-navigate="" href={getBlogIndexPath(locale)}>
                   <ArrowLeft aria-hidden="true" size={16} strokeWidth={2.4} />
                   {copy.backToBlog}
                 </Link>
@@ -93,8 +96,10 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
               <p className="mt-6 max-w-[56ch] text-pretty text-lead text-muted-foreground" data-ascii-avoid="">
                 {article.description}
               </p>
-              {/* Byline and facts on one line: columns, not separators. */}
-              <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4" data-ascii-avoid="">
+              {/* Byline and facts on one line: columns, not separators. justify-between pushes the two apart, so
+                  the column gap only decides when the row wraps; at gap-x-8 a row that fit by 2px in MonoLisa
+                  wrapped in the fallback face before the swap. */}
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-4" data-ascii-avoid="">
                 <p className="blog-article-meta">
                   {/* The byline takes its own line on phones; the date and reading time share the next. */}
                   <Link className="basis-full sm:basis-auto" href="/">
@@ -127,7 +132,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
 
           <footer className="blog-article-footer mt-section-s">
             <div>
-              <Link className="blog-back-link" data-cuelume-press="" href={getBlogIndexPath(locale)}>
+              <Link className="blog-back-link" data-cuelume-navigate="" href={getBlogIndexPath(locale)}>
                 <ArrowLeft aria-hidden="true" size={16} strokeWidth={2.4} />
                 {copy.backToBlog}
               </Link>

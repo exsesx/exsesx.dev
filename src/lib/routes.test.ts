@@ -1,11 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  getAdjacentPrimaryNavHref,
-  getPrimaryNavHref,
-  isBlogPostPath,
-  isProjectDetailPath,
-  isProjectsIndexRoutePath,
-} from "./routes";
+import { getAdjacentPrimaryNavHref, getPrimaryNavHref, isBlogPostPath, isProjectDetailPath } from "./routes";
 
 describe("route classification", () => {
   test("classifies every projects-shaped pathname as the projects nav item", () => {
@@ -37,14 +31,6 @@ describe("route classification", () => {
     expect(isProjectDetailPath("/project/quicklizard")).toBe(true);
     expect(isProjectDetailPath("/projects")).toBe(false);
     expect(isProjectDetailPath("/projects/quicklizard")).toBe(false);
-  });
-
-  test("recognizes the projects index route even with search or hash", () => {
-    expect(isProjectsIndexRoutePath("/projects")).toBe(true);
-    expect(isProjectsIndexRoutePath("/projects?filter=ai")).toBe(true);
-    expect(isProjectsIndexRoutePath("/projects#selected")).toBe(true);
-    expect(isProjectsIndexRoutePath("/projects/archive")).toBe(false);
-    expect(isProjectsIndexRoutePath("/project/quicklizard")).toBe(false);
   });
 
   test("distinguishes localized Blog indexes from article routes", () => {

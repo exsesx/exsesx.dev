@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BLOG_UI } from "@/lib/blog";
 import { playInteractionSound } from "@/lib/interaction-sounds";
+import { useMotionReduced } from "@/lib/use-motion-reduced";
 import { useBlogLocale } from "./BlogLocaleContext";
 
 const COPY_FEEDBACK_DURATION = 1800;
@@ -69,6 +70,7 @@ export default function CodeBlock({ children, ...props }: ComponentPropsWithoutR
   const savedScrollLeftRef = useRef(0);
   const shouldRestoreScrollRef = useRef(false);
   const [copyState, setCopyState] = useState<CopyState>("idle");
+  const motionReduced = useMotionReduced();
   const [wrapped, setWrapped] = useState(false);
 
   useEffect(
@@ -165,7 +167,7 @@ export default function CodeBlock({ children, ...props }: ComponentPropsWithoutR
                 <MorphIcon
                   className="blog-code-state-icon"
                   icon={copyIcon}
-                  reducedMotion="user"
+                  reducedMotion={motionReduced ? "always" : "user"}
                   size={15}
                   spring="snappy"
                   strokeWidth={2.4}

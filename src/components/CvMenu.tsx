@@ -280,17 +280,20 @@ function CvMenu() {
 
   return (
     <DropdownMenu onOpenChange={handleMenuOpenChange} open={isOpen}>
+      {/* Each half presses on its own. The shell takes scale-none, not
+          scale-100: an identity scale is still a new transform, and its first
+          press made the menu's first open pay for compositing setup. */}
       <div
         className={cn(
           buttonVariants({ variant: "glass", size: "lg" }),
-          "gap-0 overflow-hidden !p-0 active:scale-100 hover:!bg-secondary",
+          "gap-0 overflow-hidden !p-0 active:scale-none hover:!bg-secondary",
           isOpen && "border-ring/50 text-accent",
         )}
       >
         <a
-          data-cuelume-press=""
+          data-cuelume-tap=""
           href={RESUME_PDF_URL}
-          className="inline-flex h-full min-w-0 flex-none items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/40 active:scale-[0.97]"
+          className="inline-flex h-full min-w-0 flex-none items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:outline-offset-[-3px]! active:scale-[0.97]"
           rel="noopener noreferrer"
           target="_blank"
         >
@@ -310,7 +313,7 @@ function CvMenu() {
                   variant="glass"
                   size="icon"
                   aria-label="Show CV actions"
-                  className="h-full w-12 rounded-none border-0 bg-transparent text-inherit shadow-none backdrop-blur-none hover:border-transparent hover:bg-transparent hover:text-inherit focus-visible:z-10 sm:w-12"
+                  className="h-full w-12 rounded-none border-0 bg-transparent text-inherit shadow-none backdrop-blur-none hover:border-transparent hover:bg-transparent hover:text-inherit focus-visible:z-10 focus-visible:outline-offset-[-3px]! sm:w-12"
                 />
               }
             >
@@ -320,17 +323,9 @@ function CvMenu() {
               />
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] sm:w-52">
+            <DropdownMenuContent align="end" className="w-56 max-w-[calc(100vw-2rem)] sm:w-52" prewarm>
+              {/* Opening the CV is the split button's own action; the menu only holds the other one. */}
               <DropdownMenuGroup>
-                <DropdownMenuLinkItem
-                  data-cuelume-press=""
-                  href={RESUME_PDF_URL}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <FileText size={16} strokeWidth={2.3} />
-                  Open CV
-                </DropdownMenuLinkItem>
                 {secondaryAction === "share" ? (
                   <DropdownMenuItem closeOnClick={false} disabled={isShareBusy} onClick={handleShareCv}>
                     <span className="cv-share-state relative grid min-w-0 flex-1" aria-live="polite">
@@ -360,7 +355,7 @@ function CvMenu() {
                     </span>
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuLinkItem data-cuelume-press="" href={RESUME_PDF_DOWNLOAD_URL}>
+                  <DropdownMenuLinkItem data-cuelume-tap="" href={RESUME_PDF_DOWNLOAD_URL}>
                     <FileDown size={16} strokeWidth={2.3} />
                     Download CV
                   </DropdownMenuLinkItem>

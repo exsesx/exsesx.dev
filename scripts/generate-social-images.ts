@@ -17,21 +17,11 @@ const logoPath = "M84 84 168 96 256 334 344 96 428 84 298 430c-4 10-12 16-23 16h
 
 // The site's light theme tokens (globals.css :root).
 const colors = {
-  background: "#eef2f8",
-  foreground: "#0b1423",
-  muted: "#51607a",
-  accent: "#2440ff",
-  card: "#fbfdff",
-};
-
-const accentColors: Record<Project["accent"], string> = {
-  amber: "#845cf6",
-  controlup: "#3887e8",
-  mint: "#3a80e0",
-  quicklizard: "#40a8c4",
-  rose: "#e85068",
-  steel: "#6096c4",
-  violet: "#9660d6",
+  background: "#f6f3ef",
+  foreground: "#1a1613",
+  muted: "#605a54",
+  accent: "#1552fe",
+  card: "#fefdfa",
 };
 
 const marginX = 80;
@@ -109,12 +99,14 @@ function fittedLines(
 // Rough advance-width estimate for MonoLisaText at a given size (no font metrics in
 // the SVG pipeline). Heavy weights render wider; callers pass a measureScale for that.
 function approxTextWidth(value: string, fontSize: number) {
-  const widths: Record<string, number> = { narrow: 0.34, normal: 0.56, wide: 0.78 };
+  const widths: Record<string, number> = { narrow: 0.34, normal: 0.56, cyrillic: 0.62, wide: 0.78 };
   let units = 0;
 
   for (const char of value) {
     if (".,:;!|'i l".includes(char)) units += widths.narrow;
-    else if ("mwMW—".includes(char)) units += widths.wide;
+    else if ("mwMWшщжмюЖШЩМЮ—".includes(char)) units += widths.wide;
+    // Cyrillic letters set wider than the Latin average.
+    else if (/[\u0400-\u04ff]/.test(char)) units += widths.cyrillic;
     else units += widths.normal;
   }
 
@@ -147,8 +139,8 @@ function textBlock(
 /*
  * A still frame of the site's hero ASCII field: hashed glyphs that fade in from
  * the text column, with an ECG trace drawn in slope glyphs along `baselineY`
- * and a soft accent glow around it. Deterministic per `seed`, so regenerating
- * an unchanged card produces the same image.
+ * and a faint lift in the glyphs right around it. Deterministic per `seed`, so
+ * regenerating an unchanged card produces the same image.
  */
 function asciiField(options: {
   seed: number;
@@ -233,7 +225,7 @@ function asciiField(options: {
 
       const cell = column * 1009 + row;
 
-      if (hashCell(cell, options.seed) < 0.3) {
+      if (hashCell(cell, options.seed) < 0.4) {
         continue;
       }
 
@@ -241,14 +233,14 @@ function asciiField(options: {
         smoothstep(options.startX, fadeInEnd, x) * smoothstep(0, 110, y) * smoothstep(height + 10, height - 120, y);
       const traceAtColumn = traceY(column);
       const glow = traceAtColumn === null ? 0 : glowFalloff(Math.abs(y - traceAtColumn), glowRadius);
-      const opacity = fade * (0.15 + glow * 0.45);
+      const opacity = fade * (0.12 + glow * 0.32);
 
       if (opacity < 0.02) {
         continue;
       }
 
       const glyph = ASCII_GLYPHS[Math.floor(hashCell(cell, options.seed + 1) * ASCII_GLYPHS.length)];
-      const fill = glow > 0.18 ? options.accent : colors.foreground;
+      const fill = glow > 0.5 ? options.accent : colors.foreground;
 
       cells.push(
         `<text x="${x}" y="${textY}" class="field" fill="${fill}" fill-opacity="${opacity.toFixed(2)}">${escapeXml(glyph)}</text>`,
@@ -268,7 +260,6 @@ function pulseTrace(x: number, baselineY: number, traceWidth: number, stroke: st
   const base = `fill="none" stroke-linecap="round" stroke-linejoin="round" d="${TRACE_PATH}"`;
 
   return `<g transform="translate(${x} ${y}) scale(${scale})">
-    <path ${base} stroke="${stroke}" stroke-width="${16 / scale}" opacity="0.16" filter="url(#trace-glow)"/>
     <path ${base} stroke="${stroke}" stroke-width="${6 / scale}"/>
   </g>`;
 }
@@ -293,18 +284,12 @@ function brand(address: string) {
 function baseSvg(inner: string) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="trace-glow" x="-20%" y="-60%" width="140%" height="220%" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="5"/>
-    </filter>
-  </defs>
   <style>
     .brand { font: 800 25px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.foreground}; }
     .address { font: 600 17px MonoLisaText, ui-sans-serif, system-ui, sans-serif; fill: ${colors.muted}; }
     .eyebrow { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.muted}; }
-    .display { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 900; fill: ${colors.foreground}; letter-spacing: -0.02em; }
+    .display { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 800; fill: ${colors.foreground}; letter-spacing: -0.02em; }
     .lede { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 400; fill: ${colors.muted}; }
-    .tags { font-family: MonoLisaText, ui-sans-serif, system-ui, sans-serif; font-weight: 500; fill: ${colors.foreground}; }
     .field { font: 500 15px MonoLisaCode, ui-monospace, monospace; }
     .field-trace { font: 700 16px MonoLisaCode, ui-monospace, monospace; }
   </style>
@@ -351,56 +336,46 @@ function homeSvg() {
 }
 
 function projectsSvg() {
-  const names = projects.map(project => project.name).join(", ");
   const lede = fittedLines("From IT operations to restaurant kitchens, and my part in each.", {
     maxWidth: textColumnWidth,
     maxLines: 2,
     idealSize: 28,
     minSize: 22,
   });
-  const list = fittedLines(names, { maxWidth: 1040, maxLines: 1, idealSize: 20, minSize: 15 });
 
   return baseSvg(`
     ${asciiField({ seed: 3, startX: 780, baselineY: 330, accent: colors.accent, beatOffset: 6 })}
     ${brand(`${SITE_PROFILE.domain}/projects`)}
     ${textBlock(["Client work"], { x: marginX - 4, y: 320, fontSize: 112, lineHeight: 0, className: "display" })}
     ${textBlock(lede.lines, { x: marginX, y: 394, fontSize: lede.fontSize, lineHeight: 38, className: "lede" })}
-    ${textBlock(list.lines, { x: marginX, y: 556, fontSize: list.fontSize, lineHeight: 0, className: "tags" })}
   `);
 }
 
+/*
+ * A project card holds what reads at thumbnail size: the name and one short line saying what the
+ * product is. The trace is the site's cobalt on every card; client colors stay in client media.
+ */
 function projectSvg(project: Project) {
-  const accent = accentColors[project.accent];
   const title = fittedLines(project.name, {
     maxWidth: textColumnWidth,
     maxLines: 1,
-    idealSize: 96,
-    minSize: 56,
+    idealSize: 104,
+    minSize: 60,
     measureScale: 1.04,
   });
-  const headline = fittedLines(project.detail.headline, {
-    maxWidth: textColumnWidth,
-    maxLines: 3,
-    idealSize: 27,
-    minSize: 21,
-  });
-  const eyebrow = fittedLines(`${project.period} · ${project.role}`, {
+  const product = fittedLines(project.period, {
     maxWidth: textColumnWidth,
     maxLines: 1,
-    idealSize: 22,
-    minSize: 16,
-    measureScale: 1.04,
+    idealSize: 36,
+    minSize: 28,
   });
-  // Keep the cap height a fixed distance under the eyebrow when long names shrink.
-  const titleY = Math.round(250 + title.fontSize * 0.73);
+  const titleY = 336;
 
   return baseSvg(`
-    ${asciiField({ seed: seedFrom(project.slug), startX: 720, baselineY: 344, accent, beatOffset: seedFrom(project.slug) % 20 })}
+    ${asciiField({ seed: seedFrom(project.slug), startX: 720, baselineY: 344, accent: colors.accent, beatOffset: seedFrom(project.slug) % 20 })}
     ${brand(`${SITE_PROFILE.domain}/project/${project.slug}`)}
-    ${textBlock(eyebrow.lines, { x: marginX, y: 214, fontSize: eyebrow.fontSize, lineHeight: 0, className: "eyebrow" })}
     ${textBlock(title.lines, { x: marginX - 3, y: titleY, fontSize: title.fontSize, lineHeight: 0, className: "display" })}
-    ${textBlock(headline.lines, { x: marginX, y: titleY + 70, fontSize: headline.fontSize, lineHeight: 37, className: "lede" })}
-    ${textBlock([project.tags.slice(0, 3).join(", ")], { x: marginX, y: 556, fontSize: 20, lineHeight: 0, className: "tags" })}
+    ${textBlock(product.lines, { x: marginX, y: titleY + 78, fontSize: product.fontSize, lineHeight: 0, className: "lede" })}
   `);
 }
 
@@ -435,38 +410,42 @@ function blogIndexSvg() {
   `);
 }
 
+/*
+ * An article card holds the title alone under its date and edition. Descriptions run a
+ * full sentence or more, which no single line at a thumbnail-legible size can hold, and
+ * a cut sentence would misquote the post, so the card carries no deck. The title takes
+ * the room instead and sits centered in the space below the lockup.
+ */
 function blogArticleSvg(post: BlogPostSummary) {
   const title = fittedLines(post.title, {
     maxWidth: 680,
     maxLines: 3,
-    idealSize: 72,
-    minSize: 46,
+    idealSize: 84,
+    minSize: 52,
     measureScale: 1.04,
   });
-  const description = fittedLines(post.description, {
-    maxWidth: 680,
-    maxLines: title.lines.length >= 3 ? 2 : 3,
-    idealSize: 25,
-    minSize: 20,
-  });
   const titleLineHeight = Math.round(title.fontSize * 1.04);
-  const titleY = 236 + title.fontSize * 0.55;
-  const descriptionY = titleY + titleLineHeight * (title.lines.length - 1) + 64;
-  const tagsY = Math.min(590, Math.max(566, descriptionY + 34 * (description.lines.length - 1) + 52));
+  const eyebrowSize = 26;
+  const eyebrowGap = 30;
+  // The block runs from the eyebrow's cap line to the last title line's baseline.
+  const titleCapHeight = title.fontSize * 0.72;
+  const blockHeight = eyebrowSize * 0.72 + eyebrowGap + titleCapHeight + titleLineHeight * (title.lines.length - 1);
+  const contentTop = 150;
+  const contentBottom = height - 64;
+  const eyebrowY = Math.round(contentTop + (contentBottom - contentTop - blockHeight) / 2 + eyebrowSize * 0.72);
+  const titleY = Math.round(eyebrowY + eyebrowGap + titleCapHeight);
 
   return baseSvg(`
     ${asciiField({ seed: seedFrom(`${post.locale}/${post.slug}`), startX: 800, baselineY: 370, accent: colors.accent, beatOffset: seedFrom(post.slug) % 20 })}
-    ${brand(`${SITE_PROFILE.domain}/blog/${post.locale}/${post.slug}`)}
+    ${brand(`${SITE_PROFILE.domain}/blog`)}
     ${textBlock([`${post.publishedAt.slice(0, 10)} · ${BLOG_LOCALE_LABELS[post.locale]}`], {
       x: marginX,
-      y: 206,
-      fontSize: 22,
+      y: eyebrowY,
+      fontSize: eyebrowSize,
       lineHeight: 0,
       className: "eyebrow",
     })}
     ${textBlock(title.lines, { x: marginX - 3, y: titleY, fontSize: title.fontSize, lineHeight: titleLineHeight, className: "display" })}
-    ${textBlock(description.lines, { x: marginX, y: descriptionY, fontSize: description.fontSize, lineHeight: 34, className: "lede" })}
-    ${textBlock([post.tags.slice(0, 3).join(", ")], { x: marginX, y: tagsY, fontSize: 20, lineHeight: 0, className: "tags" })}
   `);
 }
 

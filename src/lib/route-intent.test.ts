@@ -32,13 +32,11 @@ function installRouteRuntime({
   search = "",
   hash = "",
   scrollY = 0,
-  backTransitionType = "project-transition-project-quicklizard",
 }: {
   pathname?: string;
   search?: string;
   hash?: string;
   scrollY?: number;
-  backTransitionType?: string | null;
 } = {}) {
   const storage = new MemoryStorage();
   const dataset: Record<string, string | undefined> = {};
@@ -57,17 +55,6 @@ function installRouteRuntime({
     configurable: true,
     value: {
       documentElement: { dataset },
-      querySelector(selector: string) {
-        if (selector !== `main[${MOTION_ATTRIBUTES.backTransitionType}]` || backTransitionType === null) {
-          return null;
-        }
-
-        return {
-          getAttribute(name: string) {
-            return name === MOTION_ATTRIBUTES.backTransitionType ? backTransitionType : null;
-          },
-        };
-      },
     },
   });
 
@@ -112,7 +99,7 @@ describe("route intent", () => {
     expect(intent).toEqual({
       href: "/projects?filter=ai#selected",
       scroll: false,
-      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack, "project-transition-project-quicklizard"],
+      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack],
     });
     expect(consumeQueuedScrollRestore("/projects?filter=ai#selected")).toBe(240);
   });
@@ -126,26 +113,14 @@ describe("route intent", () => {
     expect(runtime.dataset[MOTION_DATASET_KEYS.viewTransitionNavigated]).toBeUndefined();
   });
 
-  test("falls back to projects with the current page morph type when no previous route exists", () => {
-    const runtime = installRouteRuntime({ backTransitionType: "project-transition-project-huddle" });
+  test("falls back to projects when no previous route exists", () => {
+    const runtime = installRouteRuntime();
 
     const intent = getBackNavigationIntent();
 
     expect(runtime.dataset[MOTION_DATASET_KEYS.viewTransitionNavigated]).toBe("true");
     expect(intent).toEqual({
       href: "/projects",
-      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack, "project-transition-project-huddle"],
-    });
-  });
-
-  test("does not reuse the current page morph when returning to a non-projects-index route", () => {
-    const runtime = installRouteRuntime({ pathname: "/", scrollY: 32 });
-    captureAnchorRouteIntent(routeAnchor(true));
-    runtime.location.pathname = "/project/quicklizard";
-
-    expect(getBackNavigationIntent()).toEqual({
-      href: "/",
-      scroll: false,
       transitionTypes: [ROUTE_TRANSITION_TYPES.navBack],
     });
   });
@@ -178,7 +153,7 @@ describe("route intent", () => {
   });
 
   test("falls back from a directly loaded Blog article to its locale index", () => {
-    installRouteRuntime({ pathname: "/blog/uk/codex-agents-v2", backTransitionType: "project-transition-stale" });
+    installRouteRuntime({ pathname: "/blog/uk/codex-agents-v2" });
 
     expect(getBackNavigationIntent()).toEqual({
       href: "/blog/uk",
@@ -231,7 +206,7 @@ describe("route intent", () => {
     expect(() => captureAnchorRouteIntent(routeAnchor(true))).not.toThrow();
     expect(getBackNavigationIntent()).toEqual({
       href: "/projects",
-      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack, "project-transition-project-quicklizard"],
+      transitionTypes: [ROUTE_TRANSITION_TYPES.navBack],
     });
     expect(consumeQueuedScrollRestore("/projects")).toBeNull();
     expect(runtime.dataset[MOTION_DATASET_KEYS.viewTransitionNavigated]).toBe("true");

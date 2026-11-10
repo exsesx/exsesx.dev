@@ -8,7 +8,7 @@ import BlogLocaleSwitcher from "@/components/blog/BlogLocaleSwitcher";
 import BlogTags from "@/components/blog/BlogTags";
 import BlogTitle from "@/components/blog/BlogTitle";
 import { getBlogPostSummaries, getBlogPosts } from "@/content/blog/manifest";
-import { BLOG_LOCALES, BLOG_UI, formatBlogDateStamp, getBlogPostPath, isBlogLocale } from "@/lib/blog";
+import { BLOG_LOCALES, BLOG_UI, formatBlogDate, getBlogPostPath, isBlogLocale } from "@/lib/blog";
 import { createBlogIndexMetadata } from "@/lib/metadata";
 import { buildBlogIndexStructuredData, serializeStructuredData } from "@/lib/structured-data";
 
@@ -19,7 +19,7 @@ const INDEX_ROW_STYLES = {
     summary: "text-lead",
   },
   rest: {
-    title: "text-balance text-title font-black text-foreground",
+    title: "text-balance text-title font-bold text-foreground",
     summary: "text-base leading-7",
   },
 } as const;
@@ -66,7 +66,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
             field starts below the header's first 64px so the nav never rests on glyphs. */}
         <header className="relative isolate" data-ascii-host="">
           <AsciiField className="absolute inset-x-0 top-16 bottom-0 -z-10" />
-          <div className="page-safe-inline mx-auto grid w-full max-w-7xl gap-8 pb-section-s pt-52 lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
+          <div className="page-safe-inline mx-auto grid w-full max-w-7xl gap-8 pb-section-s pt-36 lg:grid-cols-12 lg:gap-x-8 lg:pt-32">
             <div className="min-w-0 lg:col-span-9">
               <h1 className="display-title motion-rise text-display font-black text-foreground" data-ascii-avoid="">
                 {copy.title}
@@ -84,7 +84,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                     className="blog-rss-link"
                     href={`/blog/${locale}/rss.xml`}
                     aria-label={copy.rssFeed}
-                    data-cuelume-press=""
+                    data-cuelume-tap=""
                   >
                     <Rss size={16} strokeWidth={2.4} />
                   </a>
@@ -113,7 +113,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                           <span className="blog-index-core" />
                         </span>
                       </span>
-                      <time dateTime={post.publishedAt}>{formatBlogDateStamp(post.publishedAt)}</time>
+                      <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt, locale)}</time>
                       <span>
                         {post.readingMinutes} {copy.minRead}
                       </span>
@@ -122,7 +122,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                       <h2 className={styles.title}>
                         <Link
                           className="blog-index-link"
-                          data-cuelume-press="select"
+                          data-cuelume-navigate=""
                           href={getBlogPostPath(locale, post.slug)}
                         >
                           <BlogTitle title={post.title} codeWords={post.titleCodeWords} />

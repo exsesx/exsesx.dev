@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
+import { graphiteCodeThemes } from "./src/lib/blog-code-theme.mts";
 import { buildContentSecurityPolicy } from "./src/lib/content-security-policy.mts";
 
 const withMDX = createMDX({
@@ -14,10 +15,7 @@ const withMDX = createMDX({
         "rehype-pretty-code",
         {
           keepBackground: false,
-          theme: {
-            dark: "github-dark-default",
-            light: "github-light-default",
-          },
+          theme: graphiteCodeThemes,
         },
       ],
     ],
@@ -36,7 +34,6 @@ const nextConfig: NextConfig = {
     // stylesheet (nav pill broke in production, 2026-07-02).
     turbopackFileSystemCacheForBuild: false,
     useTypeScriptCli: true,
-    globalNotFound: true,
   },
   turbopack: {
     root: import.meta.dirname,

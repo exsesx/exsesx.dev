@@ -171,7 +171,7 @@ edge sampler reads the renderer's computed `background-color`. Normal page
 painting applies background clipping later.
 
 ```mermaid
-flowchart LR
+flowchart TD
   accTitle: Safari fixed edge color sampling
   accDescr: WebKit hit-tests the frontmost fixed edge element and reads its computed background color, while the normal painter clips that same element to empty text and draws no page pixels.
 probe["WebKit edge probe"] --> hit["Frontmost fixed element"]

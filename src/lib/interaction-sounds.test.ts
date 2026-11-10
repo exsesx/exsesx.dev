@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
 const bindMock = mock(() => {});
-const playMock = mock((_sound: string) => {});
+const playMock = mock((_sound: string, _options?: { emphasis?: string; direction?: string }) => {});
 const setEnabledMock = mock((_enabled: boolean) => {});
 const setVolumeMock = mock((_volume: number) => {});
+const unlockMock = mock(() => Promise.resolve(true));
 
 mock.module("cuelume", () => ({
   bind: bindMock,
@@ -11,6 +12,7 @@ mock.module("cuelume", () => ({
   setEnabled: setEnabledMock,
   setVolume: setVolumeMock,
   sounds: ["error", "loading", "tap", "ready", "success", "select", "toggle"],
+  unlock: unlockMock,
 }));
 
 const {
@@ -21,6 +23,7 @@ const {
   INTERACTION_SOUND_VOLUME,
   persistSoundEffectsEnabled,
   playPopupToggleSound,
+  scheduleAudioOutputWarmup,
   setSoundEffectsEnabled,
   subscribeToSoundEffects,
 } = await import("./interaction-sounds");
@@ -80,6 +83,7 @@ beforeEach(() => {
   playMock.mockClear();
   setEnabledMock.mockClear();
   setVolumeMock.mockClear();
+  unlockMock.mockClear();
 });
 
 afterEach(() => {
@@ -175,8 +179,86 @@ describe("popup sound decisions", () => {
     playPopupToggleSound(false, "trigger-press");
     playPopupToggleSound(false, "escape-key");
     playPopupToggleSound(false, "outside-press");
+    playPopupToggleSound(true, "trigger-press", null, "panel");
+    playPopupToggleSound(false, "escape-key", null, "panel");
 
-    expect(playMock.mock.calls).toEqual([["toggle"], ["toggle"], ["toggle"], ["toggle"]]);
+    const subtle = { emphasis: "subtle" };
+
+    expect(playMock.mock.calls).toEqual([
+      ["open", subtle],
+      ["close", subtle],
+      ["close", subtle],
+      ["close", subtle],
+      ["open", undefined],
+      ["close", undefined],
+    ]);
+  });
+
+  test("plays the popup cue after the frame that shows the popup", () => {
+    const { testWindow } = installTestWindow();
+    const queued: Array<() => void> = [];
+
+    Object.assign(testWindow, {
+      requestAnimationFrame: (callback: () => void) => queued.push(callback),
+      setTimeout: (callback: () => void) => queued.push(callback),
+    });
+
+    playPopupToggleSound(true, "trigger-press");
+
+    expect(playMock).not.toHaveBeenCalled();
+
+    queued.shift()?.();
+    queued.shift()?.();
+
+    expect(playMock.mock.calls).toEqual([["open", { emphasis: "subtle" }]]);
+  });
+
+  test("warms audio on the first intent, then unlocks it inside a popup press", () => {
+    const { testWindow } = installTestWindow();
+    const queued: Array<() => void> = [];
+    let audioContextsCreated = 0;
+
+    Object.assign(testWindow, {
+      AudioContext: class {
+        constructor() {
+          audioContextsCreated += 1;
+        }
+
+        close() {
+          return Promise.resolve();
+        }
+      },
+      cancelAnimationFrame: () => {},
+      clearTimeout: () => {},
+      requestAnimationFrame: (callback: () => void) => queued.push(callback),
+      setTimeout: (callback: () => void) => queued.push(callback),
+    });
+
+    function runQueued() {
+      while (queued.length > 0) {
+        queued.shift()?.();
+      }
+    }
+
+    const cancelWarmup = scheduleAudioOutputWarmup();
+    playPopupToggleSound(true, "trigger-press");
+    runQueued();
+
+    expect(audioContextsCreated).toBe(0);
+    expect(unlockMock).not.toHaveBeenCalled();
+
+    window.dispatchEvent(new Event("pointermove"));
+    runQueued();
+    window.dispatchEvent(new Event("keydown"));
+    runQueued();
+
+    expect(audioContextsCreated).toBe(1);
+
+    playPopupToggleSound(true, "trigger-press");
+
+    expect(unlockMock).toHaveBeenCalledTimes(1);
+
+    cancelWarmup();
   });
 });
 
@@ -189,7 +271,7 @@ describe("delayed preparation sounds", () => {
 });
 
 describe("app-level sound wiring", () => {
-  test("mounts one interaction sound controller with keyboard activation support", async () => {
+  test("mounts one interaction sound controller", async () => {
     const [appDocument, header, interactionSoundsComponent] = await Promise.all([
       Bun.file(appDocumentUrl).text(),
       Bun.file(headerUrl).text(),
@@ -198,10 +280,8 @@ describe("app-level sound wiring", () => {
 
     expect(appDocument).toContain('import InteractionSounds from "./InteractionSounds";');
     expect(appDocument.match(/<InteractionSounds \/>/g)).toHaveLength(1);
-    expect(header).toMatch(/href="\/"[\s\S]*?data-cuelume-press="select"[\s\S]*?site-nav-brand-link/);
+    expect(header).toMatch(/href="\/"[\s\S]*?data-cuelume-navigate=""[\s\S]*?site-nav-brand-link/);
     expect(interactionSoundsComponent).toContain("useSyncExternalStore");
     expect(interactionSoundsComponent).toContain("initializeInteractionSounds");
-    expect(interactionSoundsComponent).toMatch(/event\.detail !== 0/);
-    expect(interactionSoundsComponent).toMatch(/document\.addEventListener\("click", handleKeyboardActivation, true\)/);
   });
 });
