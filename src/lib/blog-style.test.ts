@@ -23,8 +23,8 @@ describe("Blog production styles", () => {
       Bun.file(blogArticlePageUrl).text(),
     ]);
 
-    expect(indexPage.match(/data-cuelume-press="select"/g)).toHaveLength(1);
-    expect(articlePage.match(/data-cuelume-press=""/g)).toHaveLength(2);
+    expect(indexPage.match(/data-cuelume-navigate=""/g)).toHaveLength(1);
+    expect(articlePage.match(/data-cuelume-navigate=""/g)).toHaveLength(2);
   });
 
   test("uses a Shiki theme selector that survives the Next CSS minifier", async () => {
@@ -359,7 +359,7 @@ describe("Blog production styles", () => {
     expect(toc).toContain("navigateToHeading");
     expect(toc).toContain("actionsRef={drawerActionsRef}");
     expect(toc).toContain("drawerActionsRef.current?.close()");
-    expect(toc).toContain("playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target)");
+    expect(toc).toContain('playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target, "panel")');
     expect(toc).not.toContain("open={");
     expect(toc).not.toContain("handleOpenChange(open");
     expect(toc).not.toContain("initialFocus");

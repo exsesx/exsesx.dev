@@ -291,7 +291,7 @@ function CvMenu() {
         )}
       >
         <a
-          data-cuelume-press=""
+          data-cuelume-tap=""
           href={RESUME_PDF_URL}
           className="inline-flex h-full min-w-0 flex-none items-center justify-center gap-2 rounded-none px-4 pr-5 outline-none transition-transform duration-200 ease-[var(--ease-weight)] focus-visible:z-10 focus-visible:outline-offset-[-3px]! active:scale-[0.97]"
           rel="noopener noreferrer"
@@ -355,7 +355,7 @@ function CvMenu() {
                     </span>
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuLinkItem data-cuelume-press="" href={RESUME_PDF_DOWNLOAD_URL}>
+                  <DropdownMenuLinkItem data-cuelume-tap="" href={RESUME_PDF_DOWNLOAD_URL}>
                     <FileDown size={16} strokeWidth={2.3} />
                     Download CV
                   </DropdownMenuLinkItem>

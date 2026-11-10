@@ -16,7 +16,7 @@ describe("project card performance styles", () => {
   test("sounds every project-card activation surface", async () => {
     const source = await Bun.file(cardUrl).text();
 
-    expect(source.match(/data-cuelume-press=""/g)).toHaveLength(3);
+    expect(source.match(/data-cuelume-navigate=""/g)).toHaveLength(3);
   });
 
   test("keeps hover feedback free of pointer coordinates", async () => {

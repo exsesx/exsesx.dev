@@ -198,7 +198,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               {project.href ? (
                 <a
                   href={project.href}
-                  data-cuelume-press=""
+                  data-cuelume-tap=""
                   className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-bold text-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent hover:decoration-current"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -283,7 +283,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   href={getProjectPath(previousProject)}
                   transitionTypes={[ROUTE_TRANSITION_TYPES.navBack]}
                   {...suppressEntryMotionProps}
-                  data-cuelume-press=""
+                  data-cuelume-navigate=""
                   className="project-adjacent-link project-adjacent-link-previous -my-2 inline-flex min-h-11 items-center gap-2 self-start rounded-sm text-sm font-bold text-muted-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-foreground"
                 >
                   <ArrowLeft className="project-adjacent-arrow size-4" strokeWidth={2.4} />
@@ -299,7 +299,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   href={getProjectPath(nextProject)}
                   transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                   {...suppressEntryMotionProps}
-                  data-cuelume-press=""
+                  data-cuelume-navigate=""
                   className="project-adjacent-link project-adjacent-link-next -my-2 inline-flex min-h-11 items-center gap-2 self-start rounded-sm text-sm font-bold text-muted-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-foreground"
                 >
                   Next

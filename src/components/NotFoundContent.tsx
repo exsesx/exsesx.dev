@@ -89,7 +89,7 @@ export default function NotFoundContent() {
           <Link
             href="/"
             {...suppressEntryMotionProps}
-            data-cuelume-press=""
+            data-cuelume-navigate=""
             className={buttonVariants({ variant: "default", size: "lg" })}
           >
             <Home data-icon="inline-start" strokeWidth={2.5} />
@@ -99,7 +99,7 @@ export default function NotFoundContent() {
             href="/projects"
             transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
             {...suppressEntryMotionProps}
-            data-cuelume-press=""
+            data-cuelume-navigate=""
             className={buttonVariants({ variant: "glass", size: "lg" })}
           >
             See the work

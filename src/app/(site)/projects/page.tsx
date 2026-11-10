@@ -53,7 +53,7 @@ function ProjectRow({ project, preloadMedia }: { project: Project; preloadMedia:
         {project.href ? (
           <a
             href={project.href}
-            data-cuelume-press=""
+            data-cuelume-tap=""
             className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm text-muted-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent hover:decoration-current"
             rel="noopener noreferrer"
             target="_blank"

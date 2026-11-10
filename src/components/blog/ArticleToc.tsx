@@ -122,7 +122,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
             <a
               href={`#${heading.id}`}
               aria-current={isActive ? "location" : undefined}
-              data-cuelume-press="select"
+              data-cuelume-select=""
               onClick={mode === "mobile" ? event => handleMobileLinkClick(event, heading.id) : undefined}
             >
               <span aria-hidden="true" className="blog-toc-tick" />
@@ -161,7 +161,7 @@ export default function ArticleToc({ activeHeadingId, headings, locale, mode }: 
         <Drawer
           actionsRef={drawerActionsRef}
           onOpenChange={(open, eventDetails) =>
-            playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target)
+            playPopupToggleSound(open, eventDetails.reason, eventDetails.event.target, "panel")
           }
           onOpenChangeComplete={handleOpenChangeComplete}
         >

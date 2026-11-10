@@ -1,4 +1,4 @@
-import { bind, play, type SoundName, setEnabled, setVolume, sounds, unlock } from "cuelume";
+import { bind, type PlayOptions, play, type SoundName, setEnabled, setVolume, unlock } from "cuelume";
 
 const SOUND_EFFECTS_CHANGE_EVENT = "exsesx:sound-effects-change";
 const SOUND_EFFECTS_STORAGE_KEY = "exsesx:sound-effects";
@@ -161,14 +161,16 @@ export function syncInteractionSoundsEnabled(enabled: boolean) {
   setEnabled(enabled);
 }
 
-export function playInteractionSound(sound: SoundName) {
-  play(sound);
+export function playInteractionSound(sound: SoundName, options?: PlayOptions) {
+  play(sound, options);
 }
 
 export function setSoundEffectsEnabled(enabled: boolean) {
   if (enabled) {
     setEnabled(true);
     persistSoundEffectsEnabled(true);
+    // Starts audio inside the click that turns it on, as Cuelume recommends; it never rejects.
+    void unlock();
     play("toggle");
     return;
   }
@@ -176,10 +178,6 @@ export function setSoundEffectsEnabled(enabled: boolean) {
   play("toggle");
   setEnabled(false);
   persistSoundEffectsEnabled(false);
-}
-
-export function resolveInteractionSound(value: string | null, fallback: SoundName): SoundName {
-  return value && sounds.includes(value as SoundName) ? (value as SoundName) : fallback;
 }
 
 export function getPreparationCompletionSound(
@@ -190,8 +188,19 @@ export function getPreparationCompletionSound(
 }
 
 const SILENT_POPUP_CLOSE_REASONS = new Set(["focus-out", "imperative-action", "item-press", "none"]);
-const SOUND_OWNING_CONTROL_SELECTOR =
-  "button, [role='button'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], [data-cuelume-press], [data-cuelume-toggle]";
+const SOUND_OWNING_CONTROL_SELECTOR = [
+  "button",
+  "[role='button']",
+  "[role='menuitem']",
+  "[role='menuitemcheckbox']",
+  "[role='menuitemradio']",
+  "[data-cuelume-tap]",
+  "[data-cuelume-select]",
+  "[data-cuelume-toggle]",
+  "[data-cuelume-open]",
+  "[data-cuelume-close]",
+  "[data-cuelume-navigate]",
+].join(", ");
 
 function isSoundOwningControlTarget(target: EventTarget | null | undefined) {
   const closest = (target as Partial<Element> | null)?.closest;
@@ -206,19 +215,36 @@ function isSoundOwningControlTarget(target: EventTarget | null | undefined) {
  * One frame later is still well inside the window where sound and sight read
  * as one event.
  */
-function playAfterNextPaint(sound: SoundName) {
+function playAfterNextPaint(sound: SoundName, options?: PlayOptions) {
   if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") {
-    playInteractionSound(sound);
+    playInteractionSound(sound, options);
 
     return;
   }
 
   // Keyboard opens and shortcuts reach here inside their keydown or click; pointer opens are covered in InteractionSounds.
   unlockInteractionAudio();
-  window.requestAnimationFrame(() => window.setTimeout(() => playInteractionSound(sound), 0));
+  window.requestAnimationFrame(() => window.setTimeout(() => playInteractionSound(sound, options), 0));
 }
 
-export function playPopupToggleSound(open: boolean, reason: string, eventTarget?: EventTarget | null) {
+/*
+ * Cuelume's cues for a surface opening and closing: a menu or popover sits
+ * close to its trigger and plays them subtly; a dialog or drawer takes over
+ * more of the screen and plays them at full weight.
+ */
+export type PopupSurface = "menu" | "panel";
+
+const POPUP_SURFACE_OPTIONS: Record<PopupSurface, PlayOptions | undefined> = {
+  menu: { emphasis: "subtle" },
+  panel: undefined,
+};
+
+export function playPopupToggleSound(
+  open: boolean,
+  reason: string,
+  eventTarget?: EventTarget | null,
+  surface: PopupSurface = "menu",
+) {
   if (!open && SILENT_POPUP_CLOSE_REASONS.has(reason)) {
     return;
   }
@@ -227,5 +253,5 @@ export function playPopupToggleSound(open: boolean, reason: string, eventTarget?
     return;
   }
 
-  playAfterNextPaint("toggle");
+  playAfterNextPaint(open ? "open" : "close", POPUP_SURFACE_OPTIONS[surface]);
 }

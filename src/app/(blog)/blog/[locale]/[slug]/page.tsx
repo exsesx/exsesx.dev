@@ -81,7 +81,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
           <div className="page-safe-inline mx-auto w-full max-w-7xl">
             <header className="blog-article-header">
               <div className="flex flex-wrap items-center justify-between gap-4" data-ascii-avoid="">
-                <Link className="blog-back-link" data-cuelume-press="" href={getBlogIndexPath(locale)}>
+                <Link className="blog-back-link" data-cuelume-navigate="" href={getBlogIndexPath(locale)}>
                   <ArrowLeft aria-hidden="true" size={16} strokeWidth={2.4} />
                   {copy.backToBlog}
                 </Link>
@@ -132,7 +132,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
 
           <footer className="blog-article-footer mt-section-s">
             <div>
-              <Link className="blog-back-link" data-cuelume-press="" href={getBlogIndexPath(locale)}>
+              <Link className="blog-back-link" data-cuelume-navigate="" href={getBlogIndexPath(locale)}>
                 <ArrowLeft aria-hidden="true" size={16} strokeWidth={2.4} />
                 {copy.backToBlog}
               </Link>

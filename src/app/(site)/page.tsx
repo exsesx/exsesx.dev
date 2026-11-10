@@ -129,7 +129,7 @@ function ProjectTitle({ project }: { project: Project }) {
         )}
         scroll
         {...suppressEntryMotionProps}
-        data-cuelume-press=""
+        data-cuelume-navigate=""
         className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
       >
         {project.name}
@@ -160,7 +160,7 @@ function ProjectWebsiteLink({ project, className }: { project: Project; classNam
   return (
     <a
       href={project.href}
-      data-cuelume-press=""
+      data-cuelume-tap=""
       className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start", className)}
       rel="noopener noreferrer"
       target="_blank"
@@ -219,7 +219,7 @@ export default function HomePage() {
                   href="/projects"
                   transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                   {...suppressEntryMotionProps}
-                  data-cuelume-press=""
+                  data-cuelume-navigate=""
                   className={buttonVariants({ variant: "default", size: "lg" })}
                 >
                   See the work
@@ -241,7 +241,7 @@ export default function HomePage() {
                 href="/projects"
                 transitionTypes={[ROUTE_TRANSITION_TYPES.navForward]}
                 {...suppressEntryMotionProps}
-                data-cuelume-press=""
+                data-cuelume-navigate=""
                 className={cn(buttonVariants({ variant: "glass", size: "lg" }), "self-start sm:self-auto")}
               >
                 All projects

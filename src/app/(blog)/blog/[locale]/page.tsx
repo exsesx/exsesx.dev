@@ -84,7 +84,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                     className="blog-rss-link"
                     href={`/blog/${locale}/rss.xml`}
                     aria-label={copy.rssFeed}
-                    data-cuelume-press=""
+                    data-cuelume-tap=""
                   >
                     <Rss size={16} strokeWidth={2.4} />
                   </a>
@@ -122,7 +122,7 @@ export default async function BlogIndexPage({ params }: BlogIndexPageProps) {
                       <h2 className={styles.title}>
                         <Link
                           className="blog-index-link"
-                          data-cuelume-press="select"
+                          data-cuelume-navigate=""
                           href={getBlogPostPath(locale, post.slug)}
                         >
                           <BlogTitle title={post.title} codeWords={post.titleCodeWords} />

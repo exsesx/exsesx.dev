@@ -64,7 +64,7 @@ export function ProjectMediaLink({
       </ViewTransition>
       <Link
         {...getProjectLinkProps(project)}
-        data-cuelume-press=""
+        data-cuelume-navigate=""
         aria-label={`View ${project.name} project details`}
         className="absolute inset-0 z-10 rounded-lg"
       />
@@ -78,7 +78,7 @@ export function ProjectTitleLink({ project, as: Heading }: { project: Project; a
     <Heading className="text-title font-bold text-foreground">
       <Link
         {...getProjectLinkProps(project)}
-        data-cuelume-press=""
+        data-cuelume-navigate=""
         className="rounded-sm transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent"
       >
         {project.name}
@@ -96,7 +96,7 @@ export function ProjectDetailsLink({ project }: { project: Project }) {
   return (
     <Link
       {...getProjectLinkProps(project)}
-      data-cuelume-press=""
+      data-cuelume-navigate=""
       className="-my-2 inline-flex min-h-11 items-center rounded-sm text-sm font-bold text-foreground underline decoration-border underline-offset-4 transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent hover:decoration-current"
     >
       View details<span className="sr-only"> for {project.name}</span>

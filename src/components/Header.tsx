@@ -144,7 +144,7 @@ export default function Header() {
               <Link
                 href="/"
                 {...suppressEntryMotionProps}
-                data-cuelume-press="select"
+                data-cuelume-navigate=""
                 className="site-nav-brand-link flex min-w-0 items-center rounded-full px-0 py-1 text-foreground transition-colors duration-200 ease-[var(--ease-out)] hover:text-accent sm:px-2"
                 aria-label="Oleh Vanin home"
                 onClick={event => handleNavLinkClick(event, "/")}
@@ -186,7 +186,7 @@ export default function Header() {
                     key={item.href}
                     href={item.href as Route}
                     {...suppressEntryMotionProps}
-                    data-cuelume-press="select"
+                    data-cuelume-navigate=""
                     aria-label={item.label}
                     aria-current={activeNavHref === item.href ? "page" : undefined}
                     draggable={false}
@@ -208,7 +208,7 @@ export default function Header() {
 
             <div className="site-nav-actions flex items-center justify-end gap-1 sm:gap-2">
               <a
-                data-cuelume-press=""
+                data-cuelume-tap=""
                 href={SITE_PROFILE.links.github}
                 className={cn(buttonVariants({ variant: "nav", size: "icon" }), "md:w-auto md:gap-2 md:px-4 md:pl-3")}
               >

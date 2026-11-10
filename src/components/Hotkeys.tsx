@@ -139,7 +139,7 @@ function Hotkeys({
 
     const shouldRestoreReadingFocus = isFocusMode && wasOpen && !isOpen;
 
-    playPopupToggleSound(isOpen, eventDetails.reason, eventDetails.event?.target);
+    playPopupToggleSound(isOpen, eventDetails.reason, eventDetails.event?.target, "panel");
     commitHotkeyState({
       ...hotkeyStateRef.current,
       isModalOpen: isOpen,

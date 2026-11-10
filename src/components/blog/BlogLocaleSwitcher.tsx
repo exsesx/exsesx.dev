@@ -58,7 +58,7 @@ function LocaleLink({ href, isCurrent, locale }: LocaleLinkProps) {
   return (
     <Link
       href={href}
-      data-cuelume-press={isCurrent ? undefined : "select"}
+      data-cuelume-select={isCurrent ? undefined : ""}
       hrefLang={locale}
       lang={locale}
       prefetch={hasIntent}
