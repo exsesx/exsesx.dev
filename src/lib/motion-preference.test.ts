@@ -4,12 +4,17 @@ import { getMotionSnapshot, isMotionReduced, setMotionEnabled } from "./motion-p
 const originalWindow = globalThis.window;
 const originalDocument = globalThis.document;
 
+function setGlobal(name: "document" | "window", value: unknown) {
+  Object.defineProperty(globalThis, name, { configurable: true, value, writable: true });
+}
+
 function installTestWindow({ reduced }: { reduced: boolean }) {
   const eventTarget = new EventTarget();
   const storedValues = new Map<string, string>();
   const dataset: Record<string, string> = {};
 
-  globalThis.window = {
+  // Defined, not assigned: other test files redefine window as non-writable, and file order varies.
+  setGlobal("window", {
     addEventListener: eventTarget.addEventListener.bind(eventTarget),
     dispatchEvent: eventTarget.dispatchEvent.bind(eventTarget),
     localStorage: {
@@ -18,15 +23,15 @@ function installTestWindow({ reduced }: { reduced: boolean }) {
     },
     matchMedia: () => ({ matches: reduced }),
     removeEventListener: eventTarget.removeEventListener.bind(eventTarget),
-  } as unknown as Window & typeof globalThis;
-  globalThis.document = { documentElement: { dataset } } as unknown as Document;
+  });
+  setGlobal("document", { documentElement: { dataset } });
 
   return { dataset };
 }
 
 afterEach(() => {
-  globalThis.window = originalWindow;
-  globalThis.document = originalDocument;
+  setGlobal("window", originalWindow);
+  setGlobal("document", originalDocument);
 });
 
 describe("motion preference", () => {
