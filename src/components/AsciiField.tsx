@@ -1488,13 +1488,20 @@ function startAsciiField(
 
   // The field's mono face may not be requested by anything else on the page
   // (phones), so load it explicitly and rebuild the grid with its metrics.
-  document.fonts?.load(`500 ${FONT_SIZE}px ${palette.fontFamily}`, ASCII_GLYPHS).then(() => {
+  // The load rejects when any face in the stack fails, such as the local
+  // fallback on a system without Menlo, even though MonoLisa itself arrived,
+  // so the grid rebuilds either way and the rejection stays handled.
+  function rebuildWithLoadedFont() {
     if (!disposed) {
       palette = readPalette(canvas);
       resize();
       schedule();
     }
-  });
+  }
+
+  document.fonts
+    ?.load(`500 ${FONT_SIZE}px ${palette.fontFamily}`, ASCII_GLYPHS)
+    .then(rebuildWithLoadedFont, rebuildWithLoadedFont);
 
   /* A new rhythm re-draws the trace and shows it with an immediate sweep. */
   function setRhythm(next: AsciiFieldRhythm) {
