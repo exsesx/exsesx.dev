@@ -96,8 +96,10 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
               <p className="mt-6 max-w-[56ch] text-pretty text-lead text-muted-foreground" data-ascii-avoid="">
                 {article.description}
               </p>
-              {/* Byline and facts on one line: columns, not separators. */}
-              <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4" data-ascii-avoid="">
+              {/* Byline and facts on one line: columns, not separators. justify-between pushes the two apart, so
+                  the column gap only decides when the row wraps; at gap-x-8 a row that fit by 2px in MonoLisa
+                  wrapped in the fallback face before the swap. */}
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-4" data-ascii-avoid="">
                 <p className="blog-article-meta">
                   {/* The byline takes its own line on phones; the date and reading time share the next. */}
                   <Link className="basis-full sm:basis-auto" href="/">

@@ -50,13 +50,187 @@
   }
 }
 
+/*
+ * Metric-matched stand-ins for the first paint, before MonoLisa arrives
+ * (font-display: swap). The system faces set far narrower, so a cold load
+ * wrapped the article title onto fewer lines and swapping MonoLisa in pushed
+ * the page down. These faces scale a local font to MonoLisa's widths and give
+ * it MonoLisa's vertical metrics (ascent 1040, descent 340, no line gap, at
+ * 1000 units per em), so text keeps its lines through the swap. The overrides
+ * are divided by each face's scale because size-adjust scales them too.
+ *
+ * MonoLisaText is proportional, not monospaced: Verdana follows its widths
+ * closest of the common system faces (about 1.2 to 1.5% spread per string
+ * across the site's own Latin and Cyrillic copy, against 3.6% for Menlo).
+ * Verdana's bold cut widens more than MonoLisa does, so each weight band has
+ * its own scale, fitted at 400, 700 and 800. Where Verdana is missing, the
+ * stack falls through to the system faces as before.
+ */
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana");
+  font-weight: 1 549;
+  size-adjust: 100.64%;
+  ascent-override: 103.34%;
+  descent-override: 33.78%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 550 749;
+  size-adjust: 91.34%;
+  ascent-override: 113.86%;
+  descent-override: 37.22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 750 1000;
+  size-adjust: 92.02%;
+  ascent-override: 113.02%;
+  descent-override: 36.95%;
+  line-gap-override: 0%;
+}
+
+/*
+ * Glyphs whose widths differ from the letters' ratio get their own faces,
+ * declared after the text faces so they win for their code points:
+ *
+ * - The space is 18% narrower in MonoLisa than in Verdana at 400. Leaving it
+ *   on the letters' scale skewed strings by how many spaces they hold, and on
+ *   Ukrainian pages, where the preloaded Basic Latin face (spaces included)
+ *   usually lands before the Cyrillic one, it left Cyrillic text 1 to 2%
+ *   narrow until the Cyrillic face arrived.
+ * - "0" is set at MonoLisa's exact advance (0.667em at 400). The ch unit is
+ *   the width of "0" in the font that sets it, and the measures here are
+ *   capped in ch (max-w-[60ch] and the like), so this keeps those boxes as
+ *   wide before the swap as after.
+ * - Verdana's 1-9 are tabular and wider than MonoLisa's proportional digits;
+ *   they are scaled to MonoLisa's mean advance, weighted by how often each
+ *   digit appears in the site's copy.
+ */
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana");
+  font-weight: 1 549;
+  size-adjust: 82.20%;
+  ascent-override: 126.52%;
+  descent-override: 41.36%;
+  line-gap-override: 0%;
+  unicode-range: U+0020, U+00A0;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 550 749;
+  size-adjust: 89.53%;
+  ascent-override: 116.16%;
+  descent-override: 37.98%;
+  line-gap-override: 0%;
+  unicode-range: U+0020, U+00A0;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 750 1000;
+  size-adjust: 90.99%;
+  ascent-override: 114.30%;
+  descent-override: 37.37%;
+  line-gap-override: 0%;
+  unicode-range: U+0020, U+00A0;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana");
+  font-weight: 1 549;
+  size-adjust: 104.92%;
+  ascent-override: 99.12%;
+  descent-override: 32.41%;
+  line-gap-override: 0%;
+  unicode-range: U+0030;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 550 749;
+  size-adjust: 95.37%;
+  ascent-override: 109.05%;
+  descent-override: 35.65%;
+  line-gap-override: 0%;
+  unicode-range: U+0030;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 750 1000;
+  size-adjust: 95.79%;
+  ascent-override: 108.57%;
+  descent-override: 35.49%;
+  line-gap-override: 0%;
+  unicode-range: U+0030;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana");
+  font-weight: 1 549;
+  size-adjust: 91.57%;
+  ascent-override: 113.57%;
+  descent-override: 37.13%;
+  line-gap-override: 0%;
+  unicode-range: U+0031-0039;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 550 749;
+  size-adjust: 83.98%;
+  ascent-override: 123.84%;
+  descent-override: 40.49%;
+  line-gap-override: 0%;
+  unicode-range: U+0031-0039;
+}
+
+@font-face {
+  font-family: "MonoLisaText Fallback";
+  src: local("Verdana Bold"), local("Verdana-Bold");
+  font-weight: 750 1000;
+  size-adjust: 84.53%;
+  ascent-override: 123.03%;
+  descent-override: 40.22%;
+  line-gap-override: 0%;
+  unicode-range: U+0031-0039;
+}
+
+/* MonoLisaCode is monospaced at 0.64em; Menlo's 0.602em is scaled up to it. */
+@font-face {
+  font-family: "MonoLisaCode Fallback";
+  src: local("Menlo"), local("Menlo-Regular");
+  size-adjust: 106.3%;
+  ascent-override: 97.83%;
+  descent-override: 31.98%;
+  line-gap-override: 0%;
+}
+
 @theme inline {
-  --font-sans: MonoLisaText, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: MonoLisaText, ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    MonoLisaText, "MonoLisaText Fallback", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-display: MonoLisaText, "MonoLisaText Fallback", ui-sans-serif, system-ui, sans-serif;
   /* One heavy weight. 900 in a wide mono reads loud; 800 keeps the
      headline's presence and gives prose room. */
   --font-weight-black: 800;
-  --font-mono: MonoLisaCode, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: MonoLisaCode, "MonoLisaCode Fallback", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   /* Type roles. MonoLisa sets wide, so the sizes run a step smaller than a
      narrower face would need; the hero head shares its screen with the field. */
   --text-display: clamp(2.75rem, 6.4vw + 0.5rem, 6.75rem);
@@ -3587,7 +3761,7 @@ html[data-blog-focus-bootstrap] [data-blog-article="true"] .blog-toc-desktop,
   padding: 0.85rem 1rem 1.15rem;
   color: var(--foreground);
   background: transparent;
-  font-family: MonoLisaCode, ui-monospace, monospace;
+  font-family: MonoLisaCode, "MonoLisaCode Fallback", ui-monospace, monospace;
   font-size: var(--text-meta);
   line-height: 1.65;
   tab-size: 2;
