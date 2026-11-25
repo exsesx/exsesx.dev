@@ -4,6 +4,7 @@ import { BLOG_LOCALES } from "@/lib/blog";
 import codexAgentsV2 from "./codex-agents-v2/post";
 import codexMemories from "./codex-memories/post";
 import codexUsageTrackers from "./codex-usage-trackers/post";
+import macosTilingWindowManagers from "./macos-tiling-window-managers/post";
 import { analyzeMdxSource } from "./reading";
 import safari26InvisibleTintSampler from "./safari-26-invisible-tint-sampler/post";
 import safariMcp from "./safari-mcp/post";
@@ -13,6 +14,7 @@ import type { AnalyzedBlogPostSummary, BlogLocale, BlogPost, BlogPostEntry, Blog
 import umbraLightDarkWallpapers from "./umbra-light-dark-wallpapers/post";
 
 const posts: readonly BlogPost[] = [
+  macosTilingWindowManagers,
   safariMcp,
   codexUsageTrackers,
   shadcnCnBenchmarks,
@@ -36,6 +38,7 @@ const UK_TAG_LABELS: Readonly<Record<string, string>> = {
   Memory: "Пам’ять",
   Performance: "Продуктивність",
   "Personal setup": "Особисте налаштування",
+  "Window managers": "Віконні менеджери",
 };
 
 function localizeTags(tags: readonly string[], locale: BlogLocale) {

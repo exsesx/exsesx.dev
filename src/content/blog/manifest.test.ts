@@ -6,6 +6,12 @@ describe("Blog manifest", () => {
     expect(getBlogPosts("en", { includeDrafts: false })).toEqual([
       expect.objectContaining({
         locale: "en",
+        slug: "macos-tiling-window-managers",
+        status: "published",
+        title: "Six macOS tiling window managers, ranked",
+      }),
+      expect.objectContaining({
+        locale: "en",
         slug: "safari-mcp",
         status: "published",
         title: "I let my AI agent use Safari",
@@ -70,6 +76,12 @@ describe("Blog manifest", () => {
       }),
     ]);
     expect(getBlogPosts("uk", { includeDrafts: false })).toEqual([
+      expect.objectContaining({
+        locale: "uk",
+        slug: "macos-tiling-window-managers",
+        status: "published",
+        title: "Шість тайлінгових віконних менеджерів для macOS: мій рейтинг",
+      }),
       expect.objectContaining({
         locale: "uk",
         slug: "safari-mcp",

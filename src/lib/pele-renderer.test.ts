@@ -19,8 +19,8 @@ function renderDiagram(source: string, maxWidth = 800, idPrefix = "test") {
 }
 
 describe("Pele flowchart renderer", () => {
-  test("covers the six authored English and Ukrainian diagrams", () => {
-    expect(diagrams).toHaveLength(6);
+  test("covers the eight authored English and Ukrainian diagrams", () => {
+    expect(diagrams).toHaveLength(8);
   });
 
   for (const { path, source } of diagrams) {
